@@ -1147,6 +1147,558 @@ abstract class CrmLocalizations {
   /// In en, this message translates to:
   /// **'Reopen'**
   String get tkReopen;
+
+  /// Conversations eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'Inbox'**
+  String get cvInbox;
+
+  /// Conversations title
+  ///
+  /// In en, this message translates to:
+  /// **'Conversations'**
+  String get cvTitle;
+
+  /// Conversations empty subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Customer messages from connected channels will appear here.'**
+  String get cvEmptySub;
+
+  /// Thread count singular
+  ///
+  /// In en, this message translates to:
+  /// **'1 active customer thread across every channel.'**
+  String get cvThreadsOne;
+
+  /// Thread count plural
+  ///
+  /// In en, this message translates to:
+  /// **'{count} active customer threads across every channel.'**
+  String cvThreadsMany(int count);
+
+  /// Conversations empty
+  ///
+  /// In en, this message translates to:
+  /// **'No conversations yet'**
+  String get cvEmpty;
+
+  /// Conversations empty body
+  ///
+  /// In en, this message translates to:
+  /// **'Connect a messaging channel to bring customer conversations into one queue.'**
+  String get cvEmptyBody;
+
+  /// Unread semantics
+  ///
+  /// In en, this message translates to:
+  /// **'{count} unread messages'**
+  String cvUnread(int count);
+
+  /// Thread message label
+  ///
+  /// In en, this message translates to:
+  /// **'Latest message'**
+  String get cvLatest;
+
+  /// Thread placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'Select a conversation'**
+  String get cvNoThread;
+
+  /// Thread placeholder body
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a thread to read the latest message and customer details.'**
+  String get cvNoThreadBody;
+
+  /// Thread back
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get cvBack;
+
+  /// Dossier title
+  ///
+  /// In en, this message translates to:
+  /// **'Customer dossier'**
+  String get cvDossier;
+
+  /// Dossier row
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get cvStatus;
+
+  /// Dossier row
+  ///
+  /// In en, this message translates to:
+  /// **'Channel'**
+  String get cvChannel;
+
+  /// Dossier row
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get cvTime;
+
+  /// Thread honesty note
+  ///
+  /// In en, this message translates to:
+  /// **'Full message history lives in the connected channel — newest message shown here.'**
+  String get cvHistoryNote;
+
+  /// Team header
+  ///
+  /// In en, this message translates to:
+  /// **'Leaderboard'**
+  String get tmTitle;
+
+  /// Team subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Ranked by revenue won this period.'**
+  String get tmSub;
+
+  /// Team pill
+  ///
+  /// In en, this message translates to:
+  /// **'Leads'**
+  String get tmLeads;
+
+  /// Team pill
+  ///
+  /// In en, this message translates to:
+  /// **'Won'**
+  String get tmWon;
+
+  /// Team pill
+  ///
+  /// In en, this message translates to:
+  /// **'Win Rate'**
+  String get tmWinRate;
+
+  /// Team empty
+  ///
+  /// In en, this message translates to:
+  /// **'No salespeople yet'**
+  String get tmEmpty;
+
+  /// Team empty body
+  ///
+  /// In en, this message translates to:
+  /// **'Team members appear here once added.'**
+  String get tmEmptyBody;
+
+  /// Reports chart
+  ///
+  /// In en, this message translates to:
+  /// **'Conversion Trends'**
+  String get rpConversion;
+
+  /// Reports empty
+  ///
+  /// In en, this message translates to:
+  /// **'No conversion data yet'**
+  String get rpNoConversion;
+
+  /// Chart legend
+  ///
+  /// In en, this message translates to:
+  /// **'Won'**
+  String get rpWon;
+
+  /// Chart legend
+  ///
+  /// In en, this message translates to:
+  /// **'Lost'**
+  String get rpLost;
+
+  /// Chart legend
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get rpActive;
+
+  /// Reports chart
+  ///
+  /// In en, this message translates to:
+  /// **'Lead Sources'**
+  String get rpSources;
+
+  /// Reports empty
+  ///
+  /// In en, this message translates to:
+  /// **'No source data yet'**
+  String get rpNoSources;
+
+  /// Reports chart
+  ///
+  /// In en, this message translates to:
+  /// **'Salesperson Performance'**
+  String get rpPerf;
+
+  /// Reports empty
+  ///
+  /// In en, this message translates to:
+  /// **'No salesperson data yet'**
+  String get rpNoPerf;
+
+  /// Chart legend
+  ///
+  /// In en, this message translates to:
+  /// **'Leads'**
+  String get rpLeads;
+
+  /// Reports chart
+  ///
+  /// In en, this message translates to:
+  /// **'Response Time Analysis'**
+  String get rpResponse;
+
+  /// Reports empty
+  ///
+  /// In en, this message translates to:
+  /// **'No response time data yet'**
+  String get rpNoResponse;
+
+  /// Reports section
+  ///
+  /// In en, this message translates to:
+  /// **'Key Metrics'**
+  String get rpMetrics;
+
+  /// Donut center
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get rpTotal;
+
+  /// Integrations eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'Data sources'**
+  String get itDataSources;
+
+  /// Integrations title
+  ///
+  /// In en, this message translates to:
+  /// **'Integrations'**
+  String get itTitle;
+
+  /// Integrations subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Connect a source to bring leads and customer messages into this workspace.'**
+  String get itSub;
+
+  /// Connected summary
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} sources connected and available to sync.'**
+  String itConnected(int done, int total);
+
+  /// Sync badge
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing...'**
+  String get itSyncing;
+
+  /// Sync badge
+  ///
+  /// In en, this message translates to:
+  /// **'Sync error'**
+  String get itSyncError;
+
+  /// Sync badge
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get itConnectedBadge;
+
+  /// Sync badge
+  ///
+  /// In en, this message translates to:
+  /// **'Not connected'**
+  String get itNotConnected;
+
+  /// Lead count suffix
+  ///
+  /// In en, this message translates to:
+  /// **'leads'**
+  String get itLeads;
+
+  /// Connected sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Connected & syncing leads'**
+  String get itConnectedTitle;
+
+  /// Connected sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get itJustConnected;
+
+  /// Connected sheet row
+  ///
+  /// In en, this message translates to:
+  /// **'Leads fetched'**
+  String get itLeadsFetched;
+
+  /// Connected sheet row
+  ///
+  /// In en, this message translates to:
+  /// **'Last sync'**
+  String get itLastSync;
+
+  /// Connected sheet row
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get itStatus;
+
+  /// Status value
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get itReady;
+
+  /// Sync CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Now'**
+  String get itSyncNow;
+
+  /// Disconnect CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get itDisconnect;
+
+  /// Sync failure
+  ///
+  /// In en, this message translates to:
+  /// **'Sync failed. Check credentials.'**
+  String get itSyncFail;
+
+  /// Sync success
+  ///
+  /// In en, this message translates to:
+  /// **'Sync completed - leads updated'**
+  String get itSyncDone;
+
+  /// Disconnect notice
+  ///
+  /// In en, this message translates to:
+  /// **'{name} disconnected'**
+  String itDisconnected(String name);
+
+  /// Settings eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace'**
+  String get seWorkspace;
+
+  /// Settings title
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get seTitle;
+
+  /// Settings subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Control how your team receives work and how new leads enter the queue.'**
+  String get seSub;
+
+  /// Settings section
+  ///
+  /// In en, this message translates to:
+  /// **'Workflow'**
+  String get seWorkflow;
+
+  /// Settings row
+  ///
+  /// In en, this message translates to:
+  /// **'Push notifications'**
+  String get sePush;
+
+  /// Settings row body
+  ///
+  /// In en, this message translates to:
+  /// **'Alert me when a new lead or customer message arrives.'**
+  String get sePushBody;
+
+  /// Settings row
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically assign leads'**
+  String get seAutoAssign;
+
+  /// Settings row body
+  ///
+  /// In en, this message translates to:
+  /// **'Route incoming leads to available salespeople using the team queue.'**
+  String get seAutoAssignBody;
+
+  /// Settings section
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get seAppearance;
+
+  /// Settings row
+  ///
+  /// In en, this message translates to:
+  /// **'Dark appearance'**
+  String get seDark;
+
+  /// Settings row body
+  ///
+  /// In en, this message translates to:
+  /// **'Use the darker workspace palette when your app theme supports it.'**
+  String get seDarkBody;
+
+  /// Settings note
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance preferences are saved to this workspace profile.'**
+  String get seLangNote;
+
+  /// Connect sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Connect a CRM'**
+  String get csTitle;
+
+  /// Connect sheet subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a platform to automatically fetch leads'**
+  String get csSub;
+
+  /// Platform subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Facebook & Instagram Lead Ads'**
+  String get csMetaSub;
+
+  /// Platform subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Zoho CRM Leads'**
+  String get csZohoSub;
+
+  /// Field label
+  ///
+  /// In en, this message translates to:
+  /// **'Page ID'**
+  String get csPageId;
+
+  /// Field hint
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 123456789012345'**
+  String get csPageIdHint;
+
+  /// Field label
+  ///
+  /// In en, this message translates to:
+  /// **'Access Token'**
+  String get csToken;
+
+  /// Field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Long-lived page access token'**
+  String get csTokenHint;
+
+  /// Field help
+  ///
+  /// In en, this message translates to:
+  /// **'Get these from developers.facebook.com > your app > Lead Ads > API setup'**
+  String get csMetaHelp;
+
+  /// Field label
+  ///
+  /// In en, this message translates to:
+  /// **'Client ID'**
+  String get csClientId;
+
+  /// Field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Zoho OAuth client ID'**
+  String get csClientIdHint;
+
+  /// Field label
+  ///
+  /// In en, this message translates to:
+  /// **'Client Secret'**
+  String get csSecret;
+
+  /// Field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Zoho OAuth client secret'**
+  String get csSecretHint;
+
+  /// Field label
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh Token'**
+  String get csRefresh;
+
+  /// Field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Zoho OAuth refresh token'**
+  String get csRefreshHint;
+
+  /// Field help
+  ///
+  /// In en, this message translates to:
+  /// **'Create an app in Zoho API Console > Server-based client > CRM Leads scope'**
+  String get csZohoHelp;
+
+  /// Connect busy
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting...'**
+  String get csConnecting;
+
+  /// Connect CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Connect {platform}'**
+  String csConnect(String platform);
+
+  /// Meta validation
+  ///
+  /// In en, this message translates to:
+  /// **'Enter both Page ID and Access Token'**
+  String get csNeedMeta;
+
+  /// Zoho validation
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Client ID, Client Secret and Refresh Token'**
+  String get csNeedZoho;
+
+  /// Connect success
+  ///
+  /// In en, this message translates to:
+  /// **'{platform} connected! Tap Sync Now to fetch leads'**
+  String csDone(String platform);
+
+  /// Connect error
+  ///
+  /// In en, this message translates to:
+  /// **'Connection failed. Check your credentials and try again.'**
+  String get csFail;
 }
 
 class _CrmLocalizationsDelegate

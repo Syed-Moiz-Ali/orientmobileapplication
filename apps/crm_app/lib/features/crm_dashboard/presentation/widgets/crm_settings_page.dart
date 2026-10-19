@@ -2,37 +2,42 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/support/crm_l10n.dart';
 
+/// Workspace settings: the three real provider toggles plus the shared
+/// language switcher. Every row maps 1:1 to a provider bool — no invented
+/// routing selectors, no fake sync toggles.
 class CrmSettingsPage extends ConsumerWidget {
   const CrmSettingsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = context.cx;
     final state = ref.watch(crmUiProvider);
     final notifier = ref.read(crmUiProvider.notifier);
     final colors = Theme.of(context).colorScheme;
 
     return AppResponsivePage(
+      maxContentWidth: 720,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const AppPageHeader(
-            eyebrow: 'Workspace',
-            title: 'Settings',
-            subtitle:
-                'Control how your team receives work and how new leads enter the queue.',
-            leading: Icon(Icons.tune_rounded),
+          AppPageHeader(
+            eyebrow: t.seWorkspace,
+            title: t.seTitle,
+            subtitle: t.seSub,
+            leading: const Icon(Icons.tune_rounded),
           ),
           SizedBox(height: context.adaptive.sectionSpacing),
-          Text('Workflow', style: Theme.of(context).textTheme.titleMedium),
+          SectionHeader(title: t.seWorkflow),
           const SizedBox(height: AppDimensions.s10),
           AppRecordRow(
             leading: _SettingIcon(
               icon: Icons.notifications_outlined,
               color: colors.primary,
             ),
-            title: 'Push notifications',
-            subtitle: 'Alert me when a new lead or customer message arrives.',
+            title: t.sePush,
+            subtitle: t.sePushBody,
             trailing: Switch.adaptive(
               value: state.notificationsEnabled,
               onChanged: (_) => notifier.toggleNotifications(),
@@ -44,25 +49,23 @@ class CrmSettingsPage extends ConsumerWidget {
               icon: Icons.alt_route_rounded,
               color: colors.tertiary,
             ),
-            title: 'Automatically assign leads',
-            subtitle:
-                'Route incoming leads to available salespeople using the team queue.',
+            title: t.seAutoAssign,
+            subtitle: t.seAutoAssignBody,
             trailing: Switch.adaptive(
               value: state.autoAssign,
               onChanged: (_) => notifier.toggleAutoAssign(),
             ),
           ),
           SizedBox(height: context.adaptive.sectionSpacing),
-          Text('Appearance', style: Theme.of(context).textTheme.titleMedium),
+          SectionHeader(title: t.seAppearance),
           const SizedBox(height: AppDimensions.s10),
           AppRecordRow(
             leading: _SettingIcon(
               icon: Icons.dark_mode_outlined,
               color: colors.secondary,
             ),
-            title: 'Dark appearance',
-            subtitle:
-                'Use the darker workspace palette when your app theme supports it.',
+            title: t.seDark,
+            subtitle: t.seDarkBody,
             trailing: Switch.adaptive(
               value: state.darkMode,
               onChanged: (_) => notifier.toggleDarkMode(),
@@ -73,10 +76,8 @@ class CrmSettingsPage extends ConsumerWidget {
           const LanguageSwitcher(),
           const SizedBox(height: AppDimensions.s16),
           Text(
-            'Appearance preferences are saved to this workspace profile.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
+            t.seLangNote,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
           ),
         ],
       ),

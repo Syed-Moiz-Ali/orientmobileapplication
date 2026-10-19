@@ -3,14 +3,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/crm_constants.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/support/crm_l10n.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/connect_integration_sheet.dart';
 import 'package:crm_app/features/crm_dashboard/domain/entities/crm_entities.dart';
+import 'package:crm_app/l10n/gen/crm_localizations.dart';
 
+/// Connected-apps hub: platform cards with real sync badges and the
+/// connect/sync/disconnect flows. Lead assignment stays on the single
+/// existing `autoAssign` switch in Settings — there is no routing-rule
+/// record anywhere, so no RoundRobin/Specialist/Shift selectors are
+/// offered (invented config would lie about the backend).
 class CrmIntegrationsPage extends ConsumerWidget {
   const CrmIntegrationsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = context.cx;
     ref.watch(crmUiProvider.select((state) => state.revision));
     final ui = ref.read(crmUiProvider.notifier);
     final integrations = ui.integrations;
@@ -21,11 +29,11 @@ class CrmIntegrationsPage extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AppPageHeader(
-            eyebrow: 'Data sources',
-            title: 'Integrations',
+            eyebrow: t.itDataSources,
+            title: t.itTitle,
             subtitle: connected == 0
-                ? 'Connect a source to bring leads and customer messages into this workspace.'
-                : '$connected of ${integrations.length} sources connected and available to sync.',
+                ? t.itSub
+                : t.itConnected(connected, integrations.length),
             leading: const Icon(Icons.hub_outlined),
           ),
           SizedBox(height: context.adaptive.sectionSpacing),
@@ -85,16 +93,17 @@ class _CrmIntegrationCard extends StatelessWidget {
     return CrmColors.textM;
   }
 
-  String get _statusLabel {
-    if (integration.isSyncing) return 'Syncing...';
-    if (integration.hasError) return 'Sync error';
-    if (integration.connected) return 'Connected';
-    return 'Not connected';
+  String _statusLabel(CrmLocalizations t) {
+    if (integration.isSyncing) return t.itSyncing;
+    if (integration.hasError) return t.itSyncError;
+    if (integration.connected) return t.itConnectedBadge;
+    return t.itNotConnected;
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = context.cx;
     return AppCard(
       onTap: onTap,
       padding: const EdgeInsets.all(AppDimensions.s14),
@@ -126,7 +135,7 @@ class _CrmIntegrationCard extends StatelessWidget {
                 ),
                 const SizedBox(height: AppDimensions.s6),
                 StatusPill(
-                  label: _statusLabel,
+                  label: _statusLabel(t),
                   fg: _statusColor,
                   bg: _statusColor.withValues(alpha: 0.10),
                   showDot: true,
@@ -140,14 +149,17 @@ class _CrmIntegrationCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  '${integration.leadCount}',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.onSurface,
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Text(
+                    '${integration.leadCount}',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.onSurface,
+                    ),
                   ),
                 ),
                 Text(
-                  'leads',
+                  t.itLeads,
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -182,10 +194,11 @@ class _ConnectedSheetState extends ConsumerState<_ConnectedSheet> {
     final result = await notifier.syncIntegration(widget.integration.name);
     if (!mounted) return;
     setState(() => _isBusy = false);
+    final t = context.cx;
     _toast(
       result.hasError
-          ? 'Sync failed. Check credentials.'
-          : 'Sync completed - leads updated',
+          ? t.itSyncFail
+          : t.itSyncDone,
     );
   }
 
@@ -195,7 +208,7 @@ class _ConnectedSheetState extends ConsumerState<_ConnectedSheet> {
     await notifier.disconnectIntegration(widget.integration.name);
     if (!mounted) return;
     setState(() => _isBusy = false);
-    _toast('${widget.integration.name} disconnected');
+    _toast(context.cx.itDisconnected(widget.integration.name));
   }
 
   void _toast(String msg) {
@@ -206,6 +219,7 @@ class _ConnectedSheetState extends ConsumerState<_ConnectedSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.cx;
     final integration = widget.integration;
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -246,7 +260,7 @@ class _ConnectedSheetState extends ConsumerState<_ConnectedSheet> {
                       ),
                     ),
                     Text(
-                      'Connected & syncing leads',
+                      integration.connected ? t.itConnectedTitle : t.itJustConnected,
                       style: const TextStyle(
                         color: CrmColors.textM,
                         fontSize: 12,
@@ -264,9 +278,9 @@ class _ConnectedSheetState extends ConsumerState<_ConnectedSheet> {
                   color: CrmColors.greenBg,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text(
-                  'Connected',
-                  style: TextStyle(
+                child: Text(
+                  t.itConnectedBadge,
+                  style: const TextStyle(
                     color: CrmColors.green,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -278,26 +292,27 @@ class _ConnectedSheetState extends ConsumerState<_ConnectedSheet> {
           const SizedBox(height: 20),
           _infoRow(
             Icons.people_alt_outlined,
-            'Leads fetched',
+            t.itLeadsFetched,
             '${integration.leadCount}',
           ),
           if (integration.lastSyncAt != null &&
               integration.lastSyncAt!.isNotEmpty)
-            _infoRow(Icons.sync_rounded, 'Last sync', integration.lastSyncAt!),
+            _infoRow(Icons.sync_rounded, t.itLastSync, integration.lastSyncAt!),
           _infoRow(
             Icons.circle,
-            'Status',
+            t.itStatus,
             integration.isSyncing
-                ? 'Syncing...'
+                ? t.itSyncing
                 : integration.hasError
-                ? 'Sync error'
-                : 'Ready',
+                ? t.itSyncError
+                : t.itReady,
           ),
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: ElevatedButton.icon(
+                  key: const ValueKey('integrationSyncButton'),
                   onPressed: _isBusy ? null : _sync,
                   icon: _isBusy
                       ? const SizedBox(
@@ -306,7 +321,7 @@ class _ConnectedSheetState extends ConsumerState<_ConnectedSheet> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.refresh_rounded, size: 16),
-                  label: const Text('Sync Now'),
+                  label: Text(t.itSyncNow),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: CrmColors.primary,
                     foregroundColor: Colors.white,
@@ -319,7 +334,7 @@ class _ConnectedSheetState extends ConsumerState<_ConnectedSheet> {
                 child: OutlinedButton.icon(
                   onPressed: _isBusy ? null : _disconnect,
                   icon: const Icon(Icons.link_off_rounded, size: 16),
-                  label: const Text('Disconnect'),
+                  label: Text(t.itDisconnect),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: CrmColors.red,
                     side: const BorderSide(color: CrmColors.red),

@@ -5,6 +5,7 @@ import 'package:shared_core/shared_core.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/crm_constants.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
 import 'package:crm_app/features/crm_dashboard/domain/entities/crm_entities.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/support/crm_l10n.dart';
 
 class CrmCardTitle extends StatelessWidget {
   final String text;
@@ -27,6 +28,7 @@ class CrmReportsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = context.cx;
     final ui = ref.read(crmUiProvider.notifier);
 
     return SingleChildScrollView(
@@ -37,10 +39,10 @@ class CrmReportsPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const CrmCardTitle('Conversion Trends'),
+                CrmCardTitle(t.rpConversion),
                 const SizedBox(height: AppDimensions.s16),
                 if (ui.conversionTrend.isEmpty)
-                  const _EmptyChart('No conversion data yet')
+                  _EmptyChart(t.rpNoConversion)
                 else ...[
                   SizedBox(
                     height: 130,
@@ -69,11 +71,11 @@ class CrmReportsPage extends ConsumerWidget {
                   const SizedBox(height: AppDimensions.s10),
                   Row(
                     children: [
-                      _legendDot(CrmColors.green, 'Won'),
+                      _legendDot(CrmColors.green, t.rpWon),
                       const SizedBox(width: AppDimensions.s12),
-                      _legendDot(CrmColors.red, 'Lost'),
+                      _legendDot(CrmColors.red, t.rpLost),
                       const SizedBox(width: AppDimensions.s12),
-                      _legendDot(CrmColors.accent, 'Active'),
+                      _legendDot(CrmColors.accent, t.rpActive),
                     ],
                   ),
                 ],
@@ -88,16 +90,19 @@ class CrmReportsPage extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const CrmCardTitle('Lead Sources'),
+                      CrmCardTitle(t.rpSources),
                       const SizedBox(height: AppDimensions.s12),
                       if (ui.leadSources.isEmpty)
-                        const _EmptyChart('No source data yet')
+                        _EmptyChart(t.rpNoSources)
                       else ...[
                         SizedBox(
                           height: 140,
                           child: CustomPaint(
                             size: Size.infinite,
-                            painter: _CrmPieChartPainter(slices: ui.leadSources),
+                            painter: _CrmPieChartPainter(
+                            slices: ui.leadSources,
+                            centerLabel: t.rpTotal,
+                          ),
                           ),
                         ),
                         const SizedBox(height: AppDimensions.s10),
@@ -149,10 +154,10 @@ class CrmReportsPage extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const CrmCardTitle('Salesperson\nPerformance'),
+                      CrmCardTitle(t.rpPerf),
                       const SizedBox(height: AppDimensions.s12),
                       if (ui.salespersonPerf.isEmpty)
-                        const _EmptyChart('No salesperson data yet')
+                        _EmptyChart(t.rpNoPerf)
                       else ...[
                         SizedBox(
                           height: 140,
@@ -166,9 +171,9 @@ class CrmReportsPage extends ConsumerWidget {
                         const SizedBox(height: AppDimensions.s10),
                         Row(
                           children: [
-                            _legendRect(CrmColors.accent, 'Leads'),
+                            _legendRect(CrmColors.accent, t.rpLeads),
                             const SizedBox(width: AppDimensions.s8),
-                            _legendRect(CrmColors.green, 'Won'),
+                            _legendRect(CrmColors.green, t.rpWon),
                           ],
                         ),
                       ],
@@ -183,10 +188,10 @@ class CrmReportsPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const CrmCardTitle('Response Time Analysis'),
+                CrmCardTitle(t.rpResponse),
                 const SizedBox(height: AppDimensions.s16),
                 if (ui.responseTimeBuckets.isEmpty)
-                  const _EmptyChart('No response time data yet')
+                  _EmptyChart(t.rpNoResponse)
                 else ...[
                   SizedBox(
                     height: 120,
@@ -221,7 +226,7 @@ class CrmReportsPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const CrmCardTitle('Key Metrics'),
+                CrmCardTitle(t.rpMetrics),
                 const SizedBox(height: AppDimensions.s12),
                 GridView.builder(
                   shrinkWrap: true,
@@ -230,7 +235,10 @@ class CrmReportsPage extends ConsumerWidget {
                     crossAxisCount: 2,
                     mainAxisSpacing: 10,
                     crossAxisSpacing: 10,
-                    childAspectRatio: 2.2,
+                    // Roomy enough for real-font metrics at 1.0x–1.3x; the
+                    // tighter ratio clipped metric cards once real fonts
+                    // replaced fallbacks.
+                    childAspectRatio: 1.9,
                   ),
                   itemCount: ui.keyMetrics.length,
                   itemBuilder: (_, i) =>
@@ -422,7 +430,12 @@ class _CrmConversionTrendPainter extends CustomPainter {
 
 class _CrmPieChartPainter extends CustomPainter {
   final List<LeadSourceSlice> slices;
-  const _CrmPieChartPainter({required this.slices});
+
+  /// Localized donut-center caption, supplied by the owning page (painters
+  /// have no BuildContext for localization).
+  final String centerLabel;
+
+  const _CrmPieChartPainter({required this.slices, required this.centerLabel});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -458,9 +471,9 @@ class _CrmPieChartPainter extends CustomPainter {
               fontWeight: FontWeight.w900,
             ),
           ),
-          const TextSpan(
-            text: 'Total',
-            style: TextStyle(color: CrmColors.textM, fontSize: 9),
+          TextSpan(
+              text: centerLabel,
+            style: const TextStyle(color: CrmColors.textM, fontSize: 9),
           ),
         ],
       ),

@@ -45,6 +45,18 @@ class _CrmKanbanViewState extends ConsumerState<CrmKanbanView> {
     ];
   }
 
+  /// Every stage a card may move to: the known universe plus any backend
+  /// status already present. Moves reuse the shared status-change payload.
+  List<String> get _moveStages {
+    final present = widget.leads
+        .map((lead) => lead.status.toUpperCase())
+        .toSet();
+    return [
+      ..._knownStages,
+      ...present.where((stage) => !_knownStages.contains(stage)),
+    ];
+  }
+
   Future<void> _moveLead(CrmLeadEntity lead, String status) async {
     if (status == lead.status) return;
     await ref
@@ -131,7 +143,7 @@ class _CrmKanbanViewState extends ConsumerState<CrmKanbanView> {
                       const SizedBox(height: AppDimensions.s8),
                   itemBuilder: (_, index) => _LeadRecord(
                     lead: leads[index],
-                    stages: stages,
+                    stages: _moveStages,
                     onMove: _moveLead,
                   ),
                 ),
@@ -203,7 +215,7 @@ class _CrmKanbanViewState extends ConsumerState<CrmKanbanView> {
                               const SizedBox(height: AppDimensions.s8),
                           itemBuilder: (_, index) => _LeadRecord(
                             lead: leads[index],
-                            stages: stages,
+                            stages: _moveStages,
                             onMove: _moveLead,
                           ),
                         ),

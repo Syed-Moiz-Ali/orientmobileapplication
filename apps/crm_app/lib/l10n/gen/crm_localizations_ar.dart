@@ -559,4 +559,298 @@ class CrmLocalizationsAr extends CrmLocalizations {
 
   @override
   String get tkReopen => 'إعادة فتح';
+
+  @override
+  String get cvInbox => 'الوارد';
+
+  @override
+  String get cvTitle => 'المحادثات';
+
+  @override
+  String get cvEmptySub => 'ستظهر رسائل العملاء من القنوات المتصلة هنا.';
+
+  @override
+  String get cvThreadsOne => 'محادثة عميل نشطة واحدة عبر كل القنوات.';
+
+  @override
+  String cvThreadsMany(int count) {
+    return '$count محادثات عملاء نشطة عبر كل القنوات.';
+  }
+
+  @override
+  String get cvEmpty => 'لا توجد محادثات بعد';
+
+  @override
+  String get cvEmptyBody =>
+      'اربط قناة مراسلة لجمع محادثات العملاء في قائمة واحدة.';
+
+  @override
+  String cvUnread(int count) {
+    return '$count رسائل غير مقروءة';
+  }
+
+  @override
+  String get cvLatest => 'أحدث رسالة';
+
+  @override
+  String get cvNoThread => 'اختر محادثة';
+
+  @override
+  String get cvNoThreadBody => 'اختر محادثة لقراءة أحدث رسالة وتفاصيل العميل.';
+
+  @override
+  String get cvBack => 'رجوع';
+
+  @override
+  String get cvDossier => 'ملف العميل';
+
+  @override
+  String get cvStatus => 'الحالة';
+
+  @override
+  String get cvChannel => 'القناة';
+
+  @override
+  String get cvTime => 'الوقت';
+
+  @override
+  String get cvHistoryNote =>
+      'سجل الرسائل الكامل في القناة المتصلة — أحدث رسالة معروضة هنا.';
+
+  @override
+  String get tmTitle => 'لوحة الصدارة';
+
+  @override
+  String get tmSub => 'مرتبة حسب الإيراد المحقق هذه الفترة.';
+
+  @override
+  String get tmLeads => 'العملاء';
+
+  @override
+  String get tmWon => 'الرابح';
+
+  @override
+  String get tmWinRate => 'معدل الفوز';
+
+  @override
+  String get tmEmpty => 'لا يوجد موظفون بعد';
+
+  @override
+  String get tmEmptyBody => 'سيظهر أعضاء الفريق هنا فور إضافتهم.';
+
+  @override
+  String get rpConversion => 'اتجاهات التحويل';
+
+  @override
+  String get rpNoConversion => 'لا توجد بيانات تحويل بعد';
+
+  @override
+  String get rpWon => 'رابح';
+
+  @override
+  String get rpLost => 'خاسر';
+
+  @override
+  String get rpActive => 'نشط';
+
+  @override
+  String get rpSources => 'مصادر العملاء';
+
+  @override
+  String get rpNoSources => 'لا توجد بيانات مصادر بعد';
+
+  @override
+  String get rpPerf => 'أداء الموظفين';
+
+  @override
+  String get rpNoPerf => 'لا توجد بيانات موظفين بعد';
+
+  @override
+  String get rpLeads => 'العملاء';
+
+  @override
+  String get rpResponse => 'تحليل زمن الاستجابة';
+
+  @override
+  String get rpNoResponse => 'لا توجد بيانات زمن استجابة بعد';
+
+  @override
+  String get rpMetrics => 'المقاييس الرئيسية';
+
+  @override
+  String get rpTotal => 'الإجمالي';
+
+  @override
+  String get itDataSources => 'مصادر البيانات';
+
+  @override
+  String get itTitle => 'التكاملات';
+
+  @override
+  String get itSub =>
+      'اربط مصدراً لجلب العملاء ورسائل العملاء إلى مساحة العمل.';
+
+  @override
+  String itConnected(int done, int total) {
+    return '$done من $total مصادر مربوطة وجاهزة للمزامنة.';
+  }
+
+  @override
+  String get itSyncing => 'جارٍ المزامنة...';
+
+  @override
+  String get itSyncError => 'خطأ في المزامنة';
+
+  @override
+  String get itConnectedBadge => 'مربوط';
+
+  @override
+  String get itNotConnected => 'غير مربوط';
+
+  @override
+  String get itLeads => 'عميل';
+
+  @override
+  String get itConnectedTitle => 'مربوط ويزامن العملاء';
+
+  @override
+  String get itJustConnected => 'مربوط';
+
+  @override
+  String get itLeadsFetched => 'العملاء المجلبون';
+
+  @override
+  String get itLastSync => 'آخر مزامنة';
+
+  @override
+  String get itStatus => 'الحالة';
+
+  @override
+  String get itReady => 'جاهز';
+
+  @override
+  String get itSyncNow => 'زامن الآن';
+
+  @override
+  String get itDisconnect => 'افصل';
+
+  @override
+  String get itSyncFail => 'فشلت المزامنة. تحقق من بيانات الاعتماد.';
+
+  @override
+  String get itSyncDone => 'اكتملت المزامنة - تم تحديث العملاء';
+
+  @override
+  String itDisconnected(String name) {
+    return 'تم فصل $name';
+  }
+
+  @override
+  String get seWorkspace => 'مساحة العمل';
+
+  @override
+  String get seTitle => 'الإعدادات';
+
+  @override
+  String get seSub => 'تحكم في كيفية استلام فريقك للعمل ودخول العملاء الجدد.';
+
+  @override
+  String get seWorkflow => 'سير العمل';
+
+  @override
+  String get sePush => 'الإشعارات الفورية';
+
+  @override
+  String get sePushBody => 'نبهني عند وصول عميل جديد أو رسالة عميل.';
+
+  @override
+  String get seAutoAssign => 'إسناد تلقائي للعملاء';
+
+  @override
+  String get seAutoAssignBody =>
+      'وجّه العملاء الواردين إلى الموظفين المتاحين عبر قائمة الفريق.';
+
+  @override
+  String get seAppearance => 'المظهر';
+
+  @override
+  String get seDark => 'مظهر داكن';
+
+  @override
+  String get seDarkBody => 'استخدم لوحة العمل الداكنة عندما يدعمها سمة تطبيقك.';
+
+  @override
+  String get seLangNote => 'تُحفظ تفضيلات المظهر في ملف مساحة العمل هذا.';
+
+  @override
+  String get csTitle => 'اربط CRM';
+
+  @override
+  String get csSub => 'اختر منصة لجلب العملاء تلقائياً';
+
+  @override
+  String get csMetaSub => 'إعلانات فيسبوك وإنستغرام للعملاء';
+
+  @override
+  String get csZohoSub => 'عملاء Zoho CRM';
+
+  @override
+  String get csPageId => 'معرف الصفحة';
+
+  @override
+  String get csPageIdHint => 'مثال: 123456789012345';
+
+  @override
+  String get csToken => 'رمز الوصول';
+
+  @override
+  String get csTokenHint => 'رمز وصول طويل الأمد للصفحة';
+
+  @override
+  String get csMetaHelp =>
+      'احصل عليها من developers.facebook.com > تطبيقك > إعلانات العملاء > إعداد API';
+
+  @override
+  String get csClientId => 'معرف العميل';
+
+  @override
+  String get csClientIdHint => 'معرف عميل Zoho OAuth';
+
+  @override
+  String get csSecret => 'سر العميل';
+
+  @override
+  String get csSecretHint => 'سر عميل Zoho OAuth';
+
+  @override
+  String get csRefresh => 'رمز التحديث';
+
+  @override
+  String get csRefreshHint => 'رمز تحديث Zoho OAuth';
+
+  @override
+  String get csZohoHelp =>
+      'أنشئ تطبيقاً في Zoho API Console > عميل خادم > نطاق عملاء CRM';
+
+  @override
+  String get csConnecting => 'جارٍ الربط...';
+
+  @override
+  String csConnect(String platform) {
+    return 'اربط $platform';
+  }
+
+  @override
+  String get csNeedMeta => 'أدخل معرف الصفحة ورمز الوصول';
+
+  @override
+  String get csNeedZoho => 'أدخل معرف العميل وسر العميل ورمز التحديث';
+
+  @override
+  String csDone(String platform) {
+    return 'تم ربط $platform! اضغط زامن الآن لجلب العملاء';
+  }
+
+  @override
+  String get csFail => 'فشل الاتصال. تحقق من بيانات الاعتماد وحاول مرة أخرى.';
 }

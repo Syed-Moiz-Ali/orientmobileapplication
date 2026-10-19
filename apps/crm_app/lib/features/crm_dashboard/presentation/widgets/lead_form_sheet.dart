@@ -179,6 +179,7 @@ class _LeadFormSheetState extends ConsumerState<LeadFormSheet> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
+                key: const ValueKey('leadSaveButton'),
                 onPressed: _busy ? null : _save,
                 icon: _busy
                     ? const SizedBox(

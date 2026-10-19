@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/crm_constants.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/support/crm_l10n.dart';
+import 'package:crm_app/l10n/gen/crm_localizations.dart';
 
 class ConnectIntegrationSheet extends ConsumerStatefulWidget {
   final String? initialPlatform;
@@ -32,9 +34,9 @@ class _PlatformDef {
 }
 
 class _ConnectIntegrationSheetState extends ConsumerState<ConnectIntegrationSheet> {
-  static const _platforms = [
-    _PlatformDef('META', 'Facebook & Instagram Lead Ads', Icons.facebook_rounded, Color(0xFF1877F2)),
-    _PlatformDef('ZOHO', 'Zoho CRM Leads', Icons.work_rounded, Color(0xFFF0483E)),
+  static List<_PlatformDef> _platforms(CrmLocalizations t) => [
+    _PlatformDef('META', t.csMetaSub, Icons.facebook_rounded, const Color(0xFF1877F2)),
+    _PlatformDef('ZOHO', t.csZohoSub, Icons.work_rounded, const Color(0xFFF0483E)),
   ];
 
   late String _selected;
@@ -46,12 +48,15 @@ class _ConnectIntegrationSheetState extends ConsumerState<ConnectIntegrationShee
   bool _busy = false;
   String? _error;
 
+  /// Platform ids are backend values; only subtitles localize.
+  static const _platformNames = ['META', 'ZOHO'];
+
   @override
   void initState() {
     super.initState();
-    _selected = _platforms.any((p) => p.name == widget.initialPlatform)
+    _selected = _platformNames.contains(widget.initialPlatform)
         ? widget.initialPlatform!
-        : _platforms.first.name;
+        : _platformNames.first;
   }
 
   @override
@@ -68,6 +73,7 @@ class _ConnectIntegrationSheetState extends ConsumerState<ConnectIntegrationShee
 
   @override
   Widget build(BuildContext context) {
+    final t = context.cx;
     return Padding(
       padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 20),
       child: SingleChildScrollView(
@@ -86,8 +92,8 @@ class _ConnectIntegrationSheetState extends ConsumerState<ConnectIntegrationShee
               ),
             ),
             const SizedBox(height: 18),
-            const Text(
-              'Connect a CRM',
+            Text(
+              t.csTitle,
               style: TextStyle(
                 color: CrmColors.textH,
                 fontSize: 20,
@@ -95,34 +101,34 @@ class _ConnectIntegrationSheetState extends ConsumerState<ConnectIntegrationShee
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
-              'Choose a platform to automatically fetch leads',
+            Text(
+              t.csSub,
               style: TextStyle(color: CrmColors.textM, fontSize: 13),
             ),
             const SizedBox(height: 18),
-            ..._platforms.map((p) => _platformCard(p)),
+            ..._platforms(context.cx).map((p) => _platformCard(p)),
             const SizedBox(height: 18),
             if (_isMeta) ...[
-              _fieldLabel('Page ID'),
-              _credField('Page ID', 'e.g. 123456789012345', _pageIdCtrl),
+              _fieldLabel(t.csPageId),
+              _credField(t.csPageId, t.csPageIdHint, _pageIdCtrl),
               const SizedBox(height: 12),
-              _fieldLabel('Access Token'),
-              _credField('Long-lived page access token', 'EAAG...', _tokenCtrl, obscure: true),
+              _fieldLabel(t.csToken),
+              _credField(t.csTokenHint, 'EAAG...', _tokenCtrl, obscure: true),
               const SizedBox(height: 8),
               _hintRow(Icons.info_outline_rounded,
-                  'Get these from developers.facebook.com > your app > Lead Ads > API setup'),
+                  t.csMetaHelp),
             ] else ...[
-              _fieldLabel('Client ID'),
-              _credField('Zoho OAuth client ID', '1000.XXXX', _clientIdCtrl),
+              _fieldLabel(t.csClientId),
+              _credField(t.csClientIdHint, '1000.XXXX', _clientIdCtrl),
               const SizedBox(height: 12),
-              _fieldLabel('Client Secret'),
-              _credField('Zoho OAuth client secret', '••••••••', _clientSecretCtrl, obscure: true),
+              _fieldLabel(t.csSecret),
+              _credField(t.csSecretHint, '••••••••', _clientSecretCtrl, obscure: true),
               const SizedBox(height: 12),
-              _fieldLabel('Refresh Token'),
-              _credField('Zoho OAuth refresh token', '1000.XXXX.XXXX', _refreshTokenCtrl, obscure: true),
+              _fieldLabel(t.csRefresh),
+              _credField(t.csRefreshHint, '1000.XXXX.XXXX', _refreshTokenCtrl, obscure: true),
               const SizedBox(height: 8),
               _hintRow(Icons.info_outline_rounded,
-                  'Create an app in Zoho API Console > Server-based client > CRM Leads scope'),
+                  t.csZohoHelp),
             ],
             if (_error != null) ...[
               const SizedBox(height: 12),
@@ -151,7 +157,7 @@ class _ConnectIntegrationSheetState extends ConsumerState<ConnectIntegrationShee
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
                     : const Icon(Icons.link_rounded, size: 18),
-                label: Text(_busy ? 'Connecting...' : 'Connect $_selected'),
+                label: Text(_busy ? t.csConnecting : t.csConnect(_selected)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: CrmColors.primary,
                   foregroundColor: Colors.white,
@@ -282,10 +288,11 @@ class _ConnectIntegrationSheetState extends ConsumerState<ConnectIntegrationShee
   );
 
   Future<void> _connect() async {
+    final t = context.cx;
     final credentials = <String, String>{};
     if (_isMeta) {
       if (_pageIdCtrl.text.trim().isEmpty || _tokenCtrl.text.trim().isEmpty) {
-        setState(() => _error = 'Enter both Page ID and Access Token');
+        setState(() => _error = t.csNeedMeta);
         return;
       }
       credentials['pageId'] = _pageIdCtrl.text.trim();
@@ -294,7 +301,7 @@ class _ConnectIntegrationSheetState extends ConsumerState<ConnectIntegrationShee
       if (_clientIdCtrl.text.trim().isEmpty ||
           _clientSecretCtrl.text.trim().isEmpty ||
           _refreshTokenCtrl.text.trim().isEmpty) {
-        setState(() => _error = 'Enter Client ID, Client Secret and Refresh Token');
+        setState(() => _error = t.csNeedZoho);
         return;
       }
       credentials['clientId'] = _clientIdCtrl.text.trim();
@@ -313,13 +320,13 @@ class _ConnectIntegrationSheetState extends ConsumerState<ConnectIntegrationShee
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('$_selected connected! Tap Sync Now to fetch leads'),
+          content: Text(t.csDone(_selected)),
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
         ),
       );
     } else {
-      setState(() => _error = 'Connection failed. Check your credentials and try again.');
+      setState(() => _error = t.csFail);
     }
   }
 }

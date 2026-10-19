@@ -244,6 +244,7 @@ class _TaskCard extends StatelessWidget {
             label: task.isDone ? t.tkReopen : t.tkMarkDone,
             excludeSemantics: true,
             child: GestureDetector(
+              key: ValueKey('taskToggle_${task.id}'),
               onTap: onToggle,
               child: Container(
                 width: 24,

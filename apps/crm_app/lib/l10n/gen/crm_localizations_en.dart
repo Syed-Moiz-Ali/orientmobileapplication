@@ -563,4 +563,305 @@ class CrmLocalizationsEn extends CrmLocalizations {
 
   @override
   String get tkReopen => 'Reopen';
+
+  @override
+  String get cvInbox => 'Inbox';
+
+  @override
+  String get cvTitle => 'Conversations';
+
+  @override
+  String get cvEmptySub =>
+      'Customer messages from connected channels will appear here.';
+
+  @override
+  String get cvThreadsOne => '1 active customer thread across every channel.';
+
+  @override
+  String cvThreadsMany(int count) {
+    return '$count active customer threads across every channel.';
+  }
+
+  @override
+  String get cvEmpty => 'No conversations yet';
+
+  @override
+  String get cvEmptyBody =>
+      'Connect a messaging channel to bring customer conversations into one queue.';
+
+  @override
+  String cvUnread(int count) {
+    return '$count unread messages';
+  }
+
+  @override
+  String get cvLatest => 'Latest message';
+
+  @override
+  String get cvNoThread => 'Select a conversation';
+
+  @override
+  String get cvNoThreadBody =>
+      'Pick a thread to read the latest message and customer details.';
+
+  @override
+  String get cvBack => 'Back';
+
+  @override
+  String get cvDossier => 'Customer dossier';
+
+  @override
+  String get cvStatus => 'Status';
+
+  @override
+  String get cvChannel => 'Channel';
+
+  @override
+  String get cvTime => 'Time';
+
+  @override
+  String get cvHistoryNote =>
+      'Full message history lives in the connected channel — newest message shown here.';
+
+  @override
+  String get tmTitle => 'Leaderboard';
+
+  @override
+  String get tmSub => 'Ranked by revenue won this period.';
+
+  @override
+  String get tmLeads => 'Leads';
+
+  @override
+  String get tmWon => 'Won';
+
+  @override
+  String get tmWinRate => 'Win Rate';
+
+  @override
+  String get tmEmpty => 'No salespeople yet';
+
+  @override
+  String get tmEmptyBody => 'Team members appear here once added.';
+
+  @override
+  String get rpConversion => 'Conversion Trends';
+
+  @override
+  String get rpNoConversion => 'No conversion data yet';
+
+  @override
+  String get rpWon => 'Won';
+
+  @override
+  String get rpLost => 'Lost';
+
+  @override
+  String get rpActive => 'Active';
+
+  @override
+  String get rpSources => 'Lead Sources';
+
+  @override
+  String get rpNoSources => 'No source data yet';
+
+  @override
+  String get rpPerf => 'Salesperson Performance';
+
+  @override
+  String get rpNoPerf => 'No salesperson data yet';
+
+  @override
+  String get rpLeads => 'Leads';
+
+  @override
+  String get rpResponse => 'Response Time Analysis';
+
+  @override
+  String get rpNoResponse => 'No response time data yet';
+
+  @override
+  String get rpMetrics => 'Key Metrics';
+
+  @override
+  String get rpTotal => 'Total';
+
+  @override
+  String get itDataSources => 'Data sources';
+
+  @override
+  String get itTitle => 'Integrations';
+
+  @override
+  String get itSub =>
+      'Connect a source to bring leads and customer messages into this workspace.';
+
+  @override
+  String itConnected(int done, int total) {
+    return '$done of $total sources connected and available to sync.';
+  }
+
+  @override
+  String get itSyncing => 'Syncing...';
+
+  @override
+  String get itSyncError => 'Sync error';
+
+  @override
+  String get itConnectedBadge => 'Connected';
+
+  @override
+  String get itNotConnected => 'Not connected';
+
+  @override
+  String get itLeads => 'leads';
+
+  @override
+  String get itConnectedTitle => 'Connected & syncing leads';
+
+  @override
+  String get itJustConnected => 'Connected';
+
+  @override
+  String get itLeadsFetched => 'Leads fetched';
+
+  @override
+  String get itLastSync => 'Last sync';
+
+  @override
+  String get itStatus => 'Status';
+
+  @override
+  String get itReady => 'Ready';
+
+  @override
+  String get itSyncNow => 'Sync Now';
+
+  @override
+  String get itDisconnect => 'Disconnect';
+
+  @override
+  String get itSyncFail => 'Sync failed. Check credentials.';
+
+  @override
+  String get itSyncDone => 'Sync completed - leads updated';
+
+  @override
+  String itDisconnected(String name) {
+    return '$name disconnected';
+  }
+
+  @override
+  String get seWorkspace => 'Workspace';
+
+  @override
+  String get seTitle => 'Settings';
+
+  @override
+  String get seSub =>
+      'Control how your team receives work and how new leads enter the queue.';
+
+  @override
+  String get seWorkflow => 'Workflow';
+
+  @override
+  String get sePush => 'Push notifications';
+
+  @override
+  String get sePushBody =>
+      'Alert me when a new lead or customer message arrives.';
+
+  @override
+  String get seAutoAssign => 'Automatically assign leads';
+
+  @override
+  String get seAutoAssignBody =>
+      'Route incoming leads to available salespeople using the team queue.';
+
+  @override
+  String get seAppearance => 'Appearance';
+
+  @override
+  String get seDark => 'Dark appearance';
+
+  @override
+  String get seDarkBody =>
+      'Use the darker workspace palette when your app theme supports it.';
+
+  @override
+  String get seLangNote =>
+      'Appearance preferences are saved to this workspace profile.';
+
+  @override
+  String get csTitle => 'Connect a CRM';
+
+  @override
+  String get csSub => 'Choose a platform to automatically fetch leads';
+
+  @override
+  String get csMetaSub => 'Facebook & Instagram Lead Ads';
+
+  @override
+  String get csZohoSub => 'Zoho CRM Leads';
+
+  @override
+  String get csPageId => 'Page ID';
+
+  @override
+  String get csPageIdHint => 'e.g. 123456789012345';
+
+  @override
+  String get csToken => 'Access Token';
+
+  @override
+  String get csTokenHint => 'Long-lived page access token';
+
+  @override
+  String get csMetaHelp =>
+      'Get these from developers.facebook.com > your app > Lead Ads > API setup';
+
+  @override
+  String get csClientId => 'Client ID';
+
+  @override
+  String get csClientIdHint => 'Zoho OAuth client ID';
+
+  @override
+  String get csSecret => 'Client Secret';
+
+  @override
+  String get csSecretHint => 'Zoho OAuth client secret';
+
+  @override
+  String get csRefresh => 'Refresh Token';
+
+  @override
+  String get csRefreshHint => 'Zoho OAuth refresh token';
+
+  @override
+  String get csZohoHelp =>
+      'Create an app in Zoho API Console > Server-based client > CRM Leads scope';
+
+  @override
+  String get csConnecting => 'Connecting...';
+
+  @override
+  String csConnect(String platform) {
+    return 'Connect $platform';
+  }
+
+  @override
+  String get csNeedMeta => 'Enter both Page ID and Access Token';
+
+  @override
+  String get csNeedZoho => 'Enter Client ID, Client Secret and Refresh Token';
+
+  @override
+  String csDone(String platform) {
+    return '$platform connected! Tap Sync Now to fetch leads';
+  }
+
+  @override
+  String get csFail =>
+      'Connection failed. Check your credentials and try again.';
 }

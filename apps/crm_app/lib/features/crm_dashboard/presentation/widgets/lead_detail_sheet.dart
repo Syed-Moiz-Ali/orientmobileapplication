@@ -69,14 +69,22 @@ class _LeadDetailSheetState extends ConsumerState<LeadDetailSheet> {
   }
 
   /// Dialer intent over the canonical digits. Fails gracefully with a notice
-  /// when the device cannot place the call.
+  /// when the device cannot place the call. Bounded so a hung handler can
+  /// never leave the customer waiting silently.
   Future<void> _callLead(String phone) async {
     final digits = PhoneNumber.normalizeLoose(phone).replaceAll(
       RegExp(r'[^\d]'),
       '',
     );
     if (digits.isEmpty) return;
-    final opened = await launchUrl(Uri(scheme: 'tel', path: digits));
+    bool opened = false;
+    try {
+      opened = await launchUrl(
+        Uri(scheme: 'tel', path: digits),
+      ).timeout(const Duration(seconds: 3), onTimeout: () => false);
+    } catch (_) {
+      opened = false;
+    }
     if (!opened && mounted) _notice(context.cx.dtCallFail);
   }
 
@@ -88,10 +96,15 @@ class _LeadDetailSheetState extends ConsumerState<LeadDetailSheet> {
       '',
     );
     if (digits.isEmpty) return;
-    final opened = await launchUrl(
-      Uri.parse('https://wa.me/$digits'),
-      mode: LaunchMode.externalApplication,
-    );
+    bool opened = false;
+    try {
+      opened = await launchUrl(
+        Uri.parse('https://wa.me/$digits'),
+        mode: LaunchMode.externalApplication,
+      ).timeout(const Duration(seconds: 3), onTimeout: () => false);
+    } catch (_) {
+      opened = false;
+    }
     if (!opened && mounted) _notice(context.cx.dtWaFail);
   }
 
@@ -179,6 +192,7 @@ class _LeadDetailSheetState extends ConsumerState<LeadDetailSheet> {
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
+                      key: const ValueKey('leadCallButton'),
                       onPressed: _busy ? null : () => _callLead(phone),
                       icon: const Icon(Icons.phone_outlined, size: 18),
                       label: Text(t.dtCall),
@@ -187,6 +201,7 @@ class _LeadDetailSheetState extends ConsumerState<LeadDetailSheet> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: FilledButton.icon(
+                      key: const ValueKey('leadWhatsAppButton'),
                       onPressed: _busy ? null : () => _whatsAppLead(phone),
                       icon: const Icon(Icons.chat_rounded, size: 18),
                       label: Text(t.dtWhatsApp),
