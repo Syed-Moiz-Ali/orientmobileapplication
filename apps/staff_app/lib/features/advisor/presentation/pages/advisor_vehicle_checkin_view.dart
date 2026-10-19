@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:staff_app/core/local/sync_providers.dart';
 import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
@@ -121,6 +120,7 @@ class _AdvisorVehicleCheckinViewState
       if (!mounted) return;
       if (result != null) {
         await _persistBroughtByExtra(result.jobCardId);
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(t.advisorCheckInSuccess)),
         );
@@ -160,40 +160,24 @@ class _AdvisorVehicleCheckinViewState
     }
   }
 
-  /// Local-only brought-by capture (no `broughtBy` field exists on
-  /// `CheckInRequest`/backend). Kept in Hive + queued as a future-key op so
-  /// the value is never silently dropped; the queued pill carries the
-  /// unsynced state truthfully.
+  /// On-device brought-by capture (Hive is truth): persisted per job id so
+  /// the detail identity shows it with a saved state. Never a sync claim.
   Future<void> _persistBroughtByExtra(int jobCardId) async {
     final broughtBy = _broughtByCtrl.text.trim();
     if (broughtBy.isEmpty) return;
     try {
       final box = Hive.box<dynamic>('inspections');
-      await box.put('job_extras_$jobCardId', {
+      final key = 'job_extras_$jobCardId';
+      final raw = box.get(key);
+      final existing = raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+      await box.put(key, {
+        ...existing,
         'type': 'job_card_extras',
+        'version': 2,
         'jobCardId': jobCardId,
         'broughtBy': broughtBy,
-        'broughtByQueued': true,
         'timestamp': DateTime.now().millisecondsSinceEpoch,
       });
-    } catch (_) {}
-    try {
-      final queue = ref.read(syncQueueProvider);
-      await queue.enqueue(
-        SyncOperation(
-          id: await IdGenerator.nextId('JCEX'),
-          entityType: 'job_card_extras',
-          entityId: '$jobCardId',
-          changeType: ChangeType.update,
-          payload: {
-            'jobCardId': jobCardId,
-            // Future backend key proposal (MISSING today):
-            'broughtBy': broughtBy,
-          },
-          timestamp: DateTime.now().millisecondsSinceEpoch,
-        ),
-      );
-      await ref.read(syncEngineProvider).syncAll();
     } catch (_) {}
   }
 
@@ -353,13 +337,6 @@ class _AdvisorVehicleCheckinViewState
               controller: _broughtByCtrl,
               hint: t.advisorClientBroughtByHint,
               textInputAction: TextInputAction.next,
-            ),
-          ),
-          const SizedBox(height: AppDimensions.s12),
-          Text(
-            t.advisorClientBroughtByMissing,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: AppDimensions.s16),

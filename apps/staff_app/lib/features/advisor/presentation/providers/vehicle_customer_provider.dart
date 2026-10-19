@@ -72,6 +72,30 @@ final advisorVehicleMatchesProvider = Provider<List<VehicleMatch>>((ref) {
   }
 });
 
+/// Existing plates for a phone number, shared by the contact-step dropdown
+/// and the vehicle-step plate field. Uses the existing generic
+/// `searchVehicles?q=<phone>` lookup; never invents vehicles. Empty when the
+/// number is too short or the lookup fails — callers fall back to manual
+/// entry. Family caches per number; callers debounce keystrokes.
+final existingPlatesProvider =
+    FutureProvider.autoDispose.family<List<String>, String>((ref, phone) async {
+  final q = phone.trim();
+  if (q.length < 8) return const [];
+  try {
+    final remote = ref.read(advisorRemoteDataSourceProvider);
+    final vehicles = await remote.searchVehicles(q);
+    return vehicles
+        .map((v) => v.plateNumber.isNotEmpty ? v.plateNumber : v.regNo)
+        .map((p) => p.trim())
+        .where((p) => p.isNotEmpty)
+        .toSet()
+        .take(10)
+        .toList();
+  } catch (_) {
+    return const [];
+  }
+});
+
 /// Uses the workshop database for intake search, with the existing local
 /// records as an offline fallback.
 final advisorRemoteVehicleMatchesProvider =
@@ -117,6 +141,31 @@ final advisorRemoteVehicleMatchesProvider =
         return ref.read(advisorVehicleMatchesProvider);
       }
     });
+
+/// Backend/lookup emirate codes → the display names used by the intake
+/// Emirate dropdown (`kEmirates`). Lookups and picked vehicles carry codes
+/// (`DXB`); the dropdown only renders names (`Dubai`), so codes must be
+/// normalized on the way in or the field looks empty until it is opened.
+const Map<String, String> kEmirateCodeToName = {
+  'DXB': 'Dubai',
+  'AUH': 'Abu Dhabi',
+  'SHJ': 'Sharjah',
+  'AJM': 'Ajman',
+  'UAQ': 'Umm Al Quwain',
+  'RAK': 'Ras Al Khaimah',
+  'FUJ': 'Fujairah',
+};
+
+String normalizeEmirate(String raw) {
+  final q = raw.trim();
+  if (q.isEmpty) return '';
+  final upper = q.toUpperCase();
+  if (kEmirateCodeToName.containsKey(upper)) return kEmirateCodeToName[upper]!;
+  for (final name in kEmirateCodeToName.values) {
+    if (name.toLowerCase() == q.toLowerCase()) return name;
+  }
+  return raw;
+}
 
 /// Default priority label; mirrors the client's reference mock-up.
 const String kDefaultJobPriority = 'Green: Normal / Low priority';
@@ -220,6 +269,7 @@ class VehicleCustomerFormState {
   final String accidentNumber;
   final String insuranceExpiryDate;
   final String odometerReading;
+  final String broughtBy;
   final int fuelLevel;
   final bool customerConsent;
   final bool showMoreCustomer;
@@ -268,6 +318,7 @@ class VehicleCustomerFormState {
     this.accidentNumber = '',
     this.insuranceExpiryDate = '',
     this.odometerReading = '',
+    this.broughtBy = '',
     this.fuelLevel = 5,
     this.customerConsent = false,
     this.showMoreCustomer = false,
@@ -317,6 +368,7 @@ class VehicleCustomerFormState {
     String? accidentNumber,
     String? insuranceExpiryDate,
     String? odometerReading,
+    String? broughtBy,
     int? fuelLevel,
     bool? customerConsent,
     bool? showMoreCustomer,
@@ -365,6 +417,7 @@ class VehicleCustomerFormState {
       accidentNumber: accidentNumber ?? this.accidentNumber,
       insuranceExpiryDate: insuranceExpiryDate ?? this.insuranceExpiryDate,
       odometerReading: odometerReading ?? this.odometerReading,
+      broughtBy: broughtBy ?? this.broughtBy,
       fuelLevel: fuelLevel ?? this.fuelLevel,
       customerConsent: customerConsent ?? this.customerConsent,
       showMoreCustomer: showMoreCustomer ?? this.showMoreCustomer,
@@ -394,7 +447,8 @@ class VehicleCustomerFormNotifier extends Notifier<VehicleCustomerFormState> {
   void setOccupation(String v) => state = state.copyWith(occupation: v);
   void setOrganisation(String v) => state = state.copyWith(organisation: v);
   void setSource(String v) => state = state.copyWith(source: v);
-  void setEmirate(String? v) => _setPlateParts(emirate: v ?? '');
+  void setEmirate(String? v) =>
+      _setPlateParts(emirate: normalizeEmirate(v ?? ''));
   void setPlateCode(String v) => _setPlateParts(plateCode: v);
   void setPlateNumber(String v) => _setPlateParts(plateNumber: v);
 
@@ -552,6 +606,7 @@ class VehicleCustomerFormNotifier extends Notifier<VehicleCustomerFormState> {
   void setInsuranceExpiry(String v) =>
       state = state.copyWith(insuranceExpiryDate: v);
   void setOdometer(String v) => state = state.copyWith(odometerReading: v);
+  void setBroughtBy(String v) => state = state.copyWith(broughtBy: v);
   void setFuelLevel(int v) => state = state.copyWith(fuelLevel: v);
   void setConsent(bool v) => state = state.copyWith(customerConsent: v);
   void toggleCustomerMore() =>

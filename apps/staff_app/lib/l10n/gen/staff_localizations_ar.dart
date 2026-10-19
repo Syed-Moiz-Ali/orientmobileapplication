@@ -3895,21 +3895,8 @@ class StaffLocalizationsAr extends StaffLocalizations {
   String get advisorClientBroughtByHint => 'اسم من أحضر المركبة';
 
   @override
-  String get advisorClientBroughtByQueued =>
-      'محفوظ على هذا الجهاز · في الانتظار (يحتاج حقل خادم)';
-
-  @override
-  String get advisorClientBroughtByMissing =>
-      'لا يوجد حقل brought-by في الخادم بعد — محفوظ محلياً وفي الانتظار.';
-
-  @override
   String advisorClientAdvisorHandled(String name) {
     return 'بمعالجة $name';
-  }
-
-  @override
-  String advisorClientQueuedBy(String name) {
-    return 'أضافها $name (في الانتظار)';
   }
 
   @override
@@ -3926,10 +3913,6 @@ class StaffLocalizationsAr extends StaffLocalizations {
 
   @override
   String get advisorClientCommentsDeleteTitle => 'حذف هذه الملاحظة؟';
-
-  @override
-  String get advisorClientCommentsQueued =>
-      'محفوظ على هذا الجهاز · في الانتظار (يحتاج حقل خادم)';
 
   @override
   String get advisorClientSignatures => 'التوقيعات';
@@ -3966,29 +3949,7 @@ class StaffLocalizationsAr extends StaffLocalizations {
   String get advisorClientShareEmail => 'البريد الإلكتروني';
 
   @override
-  String get advisorClientShareWhatsAppDone =>
-      'تم فتح واتساب مع ملخص المهمة (لا يوجد PDF بعد).';
-
-  @override
-  String get advisorClientShareEmailDone =>
-      'تم فتح البريد مع ملخص المهمة (لا يوجد PDF بعد).';
-
-  @override
   String get advisorClientShareNoPhone => 'أضف رقم العميل للمشاركة على واتساب.';
-
-  @override
-  String get advisorClientPdfMissing =>
-      'تصدير PDF يحتاج مولّداً على الجهاز — نشارك رابط المهمة والملخص بدلاً من ذلك.';
-
-  @override
-  String get advisorClientSignLink => 'رابط توقيع العميل';
-
-  @override
-  String get advisorClientSendSignLink => 'إرسال رابط التوقيع';
-
-  @override
-  String get advisorClientSignLinkSoon =>
-      'قريباً — يحتاج نقطة نهاية لروابط التوقيع في الخادم.';
 
   @override
   String get advisorClientPlatesTitle => 'اللوحات المسجلة';
@@ -4000,6 +3961,66 @@ class StaffLocalizationsAr extends StaffLocalizations {
   String get advisorClientPlatesHint => 'اختر لوحة أو أدخل واحدة جديدة';
 
   @override
-  String get advisorClientPlatesNone =>
-      'لا توجد لوحات مسجلة لهذا الرقم — أدخلها يدوياً.';
+  String get advisorClientSavedOnDevice => 'محفوظ على الجهاز';
+
+  @override
+  String advisorClientSavedBy(String name) {
+    return 'حفظه $name على الجهاز';
+  }
+
+  @override
+  String get advisorClientCommentsSave => 'حفظ';
+
+  @override
+  String get advisorClientCommentsDeleteConfirm => 'حذف';
+
+  @override
+  String get advisorClientSigRequest => 'طلب التوقيع';
+
+  @override
+  String get advisorClientSigResend => 'إعادة الإرسال';
+
+  @override
+  String get advisorClientSigMarkSigned => 'تأكيد التوقيع';
+
+  @override
+  String advisorClientSigRequested(String time) {
+    return 'طُلب عبر واتساب · $time';
+  }
+
+  @override
+  String get advisorClientSigRequestSent => 'أُرسل طلب التوقيع عبر واتساب';
+
+  @override
+  String get advisorClientSigLinkError => 'تعذّر فتح واتساب. حاول مجدداً.';
+
+  @override
+  String get advisorClientSharePdf => 'مشاركة PDF';
+
+  @override
+  String get advisorClientSharePdfDone => 'تمت مشاركة PDF';
+
+  @override
+  String get advisorClientSharePdfFail => 'تعذّر مشاركة PDF. حاول مجدداً.';
+
+  @override
+  String get advisorClientSharePdfBuilding => 'جارٍ تجهيز PDF…';
+
+  @override
+  String get advisorClientPdfTitle => 'بطاقة العمل';
+
+  @override
+  String get advisorClientPdfCustomer => 'العميل';
+
+  @override
+  String get advisorClientPdfVehicle => 'المركبة';
+
+  @override
+  String get advisorClientPdfWork => 'الأعمال';
+
+  @override
+  String get advisorClientPdfTotal => 'الإجمالي';
+
+  @override
+  String get advisorClientPlatesSearching => 'جارٍ البحث عن اللوحات…';
 }

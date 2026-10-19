@@ -285,7 +285,9 @@ void main() {
     expect(find.text('Notes'), findsOneWidget);
     expect(find.text('Add Inspection'), findsWidgets);
     expect(find.text('Call'), findsOneWidget);
-    expect(find.text('WhatsApp'), findsOneWidget);
+    // CLIENT ITEMS: the dossier share row adds a second WhatsApp entry point
+    // (deep link with the job summary) beside the identity contact action.
+    expect(find.text('WhatsApp'), findsWidgets);
     expect(find.text('Vehicle Details'), findsNothing);
     expect(find.text('Vehicle Telemetry'), findsNothing);
     expect(tester.takeException(), isNull);

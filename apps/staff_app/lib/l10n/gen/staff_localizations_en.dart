@@ -3925,21 +3925,8 @@ class StaffLocalizationsEn extends StaffLocalizations {
       'Name of the person who brought the vehicle';
 
   @override
-  String get advisorClientBroughtByQueued =>
-      'Saved on this device · queued (needs server field)';
-
-  @override
-  String get advisorClientBroughtByMissing =>
-      'No server field for brought-by yet — kept locally and queued.';
-
-  @override
   String advisorClientAdvisorHandled(String name) {
     return 'Handled by $name';
-  }
-
-  @override
-  String advisorClientQueuedBy(String name) {
-    return 'Queued by $name';
   }
 
   @override
@@ -3956,10 +3943,6 @@ class StaffLocalizationsEn extends StaffLocalizations {
 
   @override
   String get advisorClientCommentsDeleteTitle => 'Delete this comment?';
-
-  @override
-  String get advisorClientCommentsQueued =>
-      'Saved on this device · queued (needs server field)';
 
   @override
   String get advisorClientSignatures => 'Signatures';
@@ -3996,30 +3979,8 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String get advisorClientShareEmail => 'Email';
 
   @override
-  String get advisorClientShareWhatsAppDone =>
-      'Opened WhatsApp with the job summary (no PDF yet).';
-
-  @override
-  String get advisorClientShareEmailDone =>
-      'Opened email with the job summary (no PDF yet).';
-
-  @override
   String get advisorClientShareNoPhone =>
       'Add a customer number to share on WhatsApp.';
-
-  @override
-  String get advisorClientPdfMissing =>
-      'PDF export needs a client generator — sharing the job link and summary instead.';
-
-  @override
-  String get advisorClientSignLink => 'Customer sign link';
-
-  @override
-  String get advisorClientSendSignLink => 'Send sign link';
-
-  @override
-  String get advisorClientSignLinkSoon =>
-      'Coming soon — needs a server sign-link endpoint.';
 
   @override
   String get advisorClientPlatesTitle => 'Existing plates';
@@ -4031,6 +3992,67 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String get advisorClientPlatesHint => 'Choose a plate or enter a new one';
 
   @override
-  String get advisorClientPlatesNone =>
-      'No plates on file for this number — enter it manually.';
+  String get advisorClientSavedOnDevice => 'Saved on device';
+
+  @override
+  String advisorClientSavedBy(String name) {
+    return 'Saved on device by $name';
+  }
+
+  @override
+  String get advisorClientCommentsSave => 'Save';
+
+  @override
+  String get advisorClientCommentsDeleteConfirm => 'Delete';
+
+  @override
+  String get advisorClientSigRequest => 'Request signature';
+
+  @override
+  String get advisorClientSigResend => 'Resend';
+
+  @override
+  String get advisorClientSigMarkSigned => 'Mark signed';
+
+  @override
+  String advisorClientSigRequested(String time) {
+    return 'Requested via WhatsApp · $time';
+  }
+
+  @override
+  String get advisorClientSigRequestSent =>
+      'Signature request sent via WhatsApp';
+
+  @override
+  String get advisorClientSigLinkError => 'Couldn\'t open WhatsApp. Try again.';
+
+  @override
+  String get advisorClientSharePdf => 'Share PDF';
+
+  @override
+  String get advisorClientSharePdfDone => 'PDF shared';
+
+  @override
+  String get advisorClientSharePdfFail => 'Couldn\'t share the PDF. Try again.';
+
+  @override
+  String get advisorClientSharePdfBuilding => 'Preparing PDF…';
+
+  @override
+  String get advisorClientPdfTitle => 'Job Card';
+
+  @override
+  String get advisorClientPdfCustomer => 'Customer';
+
+  @override
+  String get advisorClientPdfVehicle => 'Vehicle';
+
+  @override
+  String get advisorClientPdfWork => 'Work';
+
+  @override
+  String get advisorClientPdfTotal => 'Total';
+
+  @override
+  String get advisorClientPlatesSearching => 'Searching plates…';
 }

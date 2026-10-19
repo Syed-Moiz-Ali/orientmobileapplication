@@ -13,14 +13,17 @@ import 'package:hive/hive.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:staff_app/core/platform/file_ops.dart';
 import 'package:staff_app/core/services/audio_recorder_service.dart';
+import 'package:staff_app/features/advisor/presentation/widgets/job_card_pdf.dart';
+import 'package:staff_app/features/advisor/presentation/widgets/job_card_share_sheet.dart';
 import 'inspection_provider.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 import 'package:staff_app/features/advisor/presentation/providers/vehicle_customer_provider.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/select_brand_sheet.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_signature_pad.dart';
-import 'package:staff_app/features/advisor/data/datasources/advisor_providers.dart';
 import 'package:shared_models/shared_models.dart' as models;
 import 'package:staff_app/features/advisor/data/models/vehicle_customer_model.dart';
 import 'scan_vehicle_view.dart';
@@ -77,6 +80,11 @@ class _BodyState extends ConsumerState<_Body> {
   final List<String> _jobVideoPaths = [];
   String _customerSignaturePath = '';
   String _advisorSignaturePath = '';
+  // On-device intake additions (Hive truth, never a sync claim).
+  final List<Map<String, dynamic>> _intakeComments = [];
+  bool _composingIntakeComment = false;
+  final _intakeComposerCtrl = TextEditingController();
+  String _customerSigRequestedAt = '';
   bool _draftRestored = false;
 
   static const _totalSteps = 4;
@@ -95,6 +103,12 @@ class _BodyState extends ConsumerState<_Body> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _restoreDraft());
   }
 
+  @override
+  void dispose() {
+    _intakeComposerCtrl.dispose();
+    super.dispose();
+  }
+
   bool get _hasUnsavedChanges {
     final s = ref.read(vehicleCustomerFormProvider);
     return s.customerName.trim().isNotEmpty ||
@@ -109,6 +123,9 @@ class _BodyState extends ConsumerState<_Body> {
         _jobVideoPaths.isNotEmpty ||
         _customerSignaturePath.isNotEmpty ||
         _advisorSignaturePath.isNotEmpty ||
+        s.broughtBy.trim().isNotEmpty ||
+        _intakeComments.isNotEmpty ||
+        _customerSigRequestedAt.isNotEmpty ||
         s.jobDescriptions.any((r) => r.description.trim().isNotEmpty);
   }
 
@@ -141,19 +158,21 @@ class _BodyState extends ConsumerState<_Body> {
   void _saveDraft() {
     try {
       final s = ref.read(vehicleCustomerFormProvider);
-      Hive.box<dynamic>('inspections').put(
-        _intakeDraftKey,
-        buildIntakeDraft(
-          s,
-          _step,
-          jobPhotoPaths: _jobPhotoPaths,
-          jobVideoPaths: _jobVideoPaths,
-          customerSignaturePath: _customerSignaturePath,
-          advisorSignaturePath: _advisorSignaturePath,
-          registrationDocumentPath: _registrationDocument?.path ?? '',
-          insuranceDocumentPath: _insuranceDocument?.path ?? '',
-        ),
+      final draft = buildIntakeDraft(
+        s,
+        _step,
+        jobPhotoPaths: _jobPhotoPaths,
+        jobVideoPaths: _jobVideoPaths,
+        customerSignaturePath: _customerSignaturePath,
+        advisorSignaturePath: _advisorSignaturePath,
+        registrationDocumentPath: _registrationDocument?.path ?? '',
+        insuranceDocumentPath: _insuranceDocument?.path ?? '',
       );
+      draft['intakeComments'] = _intakeComments
+          .map((c) => Map<String, dynamic>.from(c))
+          .toList();
+      draft['customerSigRequestedAt'] = _customerSigRequestedAt;
+      Hive.box<dynamic>('inspections').put(_intakeDraftKey, draft);
     } catch (_) {}
   }
 
@@ -161,6 +180,50 @@ class _BodyState extends ConsumerState<_Body> {
     try {
       Hive.box<dynamic>('inspections').delete(_intakeDraftKey);
     } catch (_) {}
+  }
+
+  /// Merges the intake's on-device extras (brought-by, comments, signature
+  /// request/signed states + image paths) into `job_extras_<id>` so the job
+  /// detail dossier shows them. The vehicle_customer sync payload is left
+  /// byte-identical — Hive is the truth here.
+  Future<void> _saveIntakeExtras(
+    String id,
+    VehicleCustomerFormState s,
+  ) async {
+    try {
+      final box = Hive.box<dynamic>('inspections');
+      final key = 'job_extras_$id';
+      final raw = box.get(key);
+      final existing = raw is Map ? Map<String, dynamic>.from(raw) : {};
+      await box.put(key, {
+        ...existing,
+        'type': 'job_card_extras',
+        'version': 2,
+        'broughtBy': s.broughtBy.trim(),
+        'comments': _intakeComments
+            .map((c) => Map<String, dynamic>.from(c))
+            .toList(),
+        'customerSigState': _customerSignaturePath.isNotEmpty
+            ? 'signed'
+            : (_customerSigRequestedAt.isNotEmpty ? 'requested' : 'unsigned'),
+        'customerSigRequestedAt': _customerSigRequestedAt,
+        'customerSignedAt':
+            _customerSignaturePath.isNotEmpty ? _stampNow() : '',
+        'customerSigPath': _customerSignaturePath,
+        'advisorSigState':
+            _advisorSignaturePath.isNotEmpty ? 'signed' : 'unsigned',
+        'advisorSignedAt':
+            _advisorSignaturePath.isNotEmpty ? _stampNow() : '',
+        'advisorSigPath': _advisorSignaturePath,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      });
+    } catch (_) {}
+  }
+
+  String _stampNow() {
+    final now = DateTime.now();
+    String p(int v) => v.toString().padLeft(2, '0');
+    return '${now.year}-${p(now.month)}-${p(now.day)} ${p(now.hour)}:${p(now.minute)}';
   }
 
   void _restoreDraft() {
@@ -201,6 +264,16 @@ class _BodyState extends ConsumerState<_Body> {
       if (advisorSig.isNotEmpty && File(advisorSig).existsSync()) {
         _advisorSignaturePath = advisorSig;
       }
+      final savedComments = draft['intakeComments'];
+      if (savedComments is List) {
+        _intakeComments
+          ..clear()
+          ..addAll(
+            savedComments.whereType<Map>().map(Map<String, dynamic>.from),
+          );
+      }
+      _customerSigRequestedAt =
+          (draft['customerSigRequestedAt'] ?? '').toString();
     });
     final t = StaffLocalizations.of(context);
     if (t != null && _hasUnsavedChanges && mounted) {
@@ -551,8 +624,6 @@ class _BodyState extends ConsumerState<_Body> {
             },
           ),
         ),
-        const SizedBox(height: AppDimensions.s12),
-        _PhonePlatesDropdown(phone: s.phoneNumber),
         const SizedBox(height: AppDimensions.s16),
         AppFormField(
           label: t.advisorIntakeEmail,
@@ -802,6 +873,17 @@ class _BodyState extends ConsumerState<_Body> {
         ),
         const SizedBox(height: AppDimensions.s16),
         AppFormField(
+          label: t.advisorClientBroughtBy,
+          isOptional: true,
+          child: _IntakeField(
+            initialValue: s.broughtBy,
+            hint: t.advisorClientBroughtByHint,
+            textCapitalization: TextCapitalization.words,
+            onChanged: notifier.setBroughtBy,
+          ),
+        ),
+        const SizedBox(height: AppDimensions.s16),
+        AppFormField(
           label: t.advisorIntakeFuelLevel,
           child: _FuelLevelSlider(
             value: s.fuelLevel,
@@ -984,16 +1066,95 @@ class _BodyState extends ConsumerState<_Body> {
           label: t.advisorIntakeJobDescription,
           child: _JobDescriptionTable(state: s, ref: ref),
         ),
+        const SizedBox(height: AppDimensions.s16),
+        _IntakeCommentsCard(
+          comments: _intakeComments,
+          composing: _composingIntakeComment,
+          controller: _intakeComposerCtrl,
+          onAdd: () => setState(() {
+            _composingIntakeComment = true;
+            _intakeComposerCtrl.clear();
+          }),
+          onCancel: () => setState(() {
+            _composingIntakeComment = false;
+            _intakeComposerCtrl.clear();
+          }),
+          onSave: _saveIntakeComment,
+          onDelete: _deleteIntakeComment,
+        ),
       ],
     );
+  }
+
+  void _saveIntakeComment() {
+    final text = _intakeComposerCtrl.text.trim();
+    if (text.isEmpty) return;
+    final advisor = ref.read(advisorInfoProvider).name;
+    setState(() {
+      _intakeComments.add({
+        'text': text,
+        'at': _stampNow(),
+        'author': advisor,
+      });
+      _composingIntakeComment = false;
+      _intakeComposerCtrl.clear();
+    });
+    _saveDraft();
+  }
+
+  void _deleteIntakeComment(int index) {
+    setState(() {
+      _intakeComments.removeAt(index);
+    });
+    _saveDraft();
   }
 
   Widget _signatureFields(StaffLocalizations t) {
     final hasCustomer = _customerSignaturePath.isNotEmpty;
     final hasAdvisor = _advisorSignaturePath.isNotEmpty;
+    final advisor = ref.watch(advisorInfoProvider);
+    final requested = _customerSigRequestedAt.isNotEmpty && !hasCustomer;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // (5) Logged-in advisor shown on the sign-off deck.
+        Row(
+          children: [
+            CircleAvatar(
+              radius: 14,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              child: Text(
+                advisor.initials,
+                textDirection: TextDirection.ltr,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 11,
+                ),
+              ),
+            ),
+            const SizedBox(width: AppDimensions.s10),
+            Expanded(
+              child: Text(
+                t.advisorClientAdvisorHandled(advisor.name),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.s12),
+        if (requested) ...[
+          AppInfoPanel.primary(
+            icon: Icons.schedule_outlined,
+            message: t.advisorClientSigRequested(_customerSigRequestedAt),
+          ),
+          const SizedBox(height: AppDimensions.s12),
+        ],
         _SignatureRow(
           label: t.advisorIntakeSignatureCustomer,
           captured: hasCustomer,
@@ -1001,6 +1162,47 @@ class _BodyState extends ConsumerState<_Body> {
           redoLabel: t.advisorIntakeSignatureRedo,
           onCapture: () => _captureSignature(true),
         ),
+        if (!hasCustomer) ...[
+          const SizedBox(height: AppDimensions.s10),
+          Row(
+            children: [
+              Expanded(
+                child: SecondaryButton(
+                  label: requested
+                      ? t.advisorClientSigResend
+                      : t.advisorClientSigRequest,
+                  leadingIcon: Icons.send_outlined,
+                  isExpanded: false,
+                  height: 40,
+                  onPressed: _displayIntakePhone().isEmpty
+                      ? null
+                      : _requestIntakeSignature,
+                ),
+              ),
+              if (requested) ...[
+                const SizedBox(width: AppDimensions.s8),
+                Expanded(
+                  child: SecondaryButton(
+                    label: t.advisorClientSigMarkSigned,
+                    leadingIcon: Icons.draw_outlined,
+                    isExpanded: false,
+                    height: 40,
+                    onPressed: () => _captureSignature(true),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          if (_displayIntakePhone().isEmpty) ...[
+            const SizedBox(height: AppDimensions.s8),
+            Text(
+              t.advisorClientShareNoPhone,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ],
         const SizedBox(height: AppDimensions.s12),
         _SignatureRow(
           label: t.advisorIntakeSignatureAdvisor,
@@ -1009,7 +1211,257 @@ class _BodyState extends ConsumerState<_Body> {
           redoLabel: t.advisorIntakeSignatureRedo,
           onCapture: () => _captureSignature(false),
         ),
+        const SizedBox(height: AppDimensions.s12),
+        PendingSyncChip(
+          state: SyncChipState.synced,
+          label: t.advisorClientSavedOnDevice,
+        ),
+        const SizedBox(height: AppDimensions.s12),
+        _shareSection(t),
       ],
+    );
+  }
+
+  String _displayIntakePhone() =>
+      ref.read(vehicleCustomerFormProvider).phoneNumber.trim();
+
+  /// (3) "Request signature": fires a WhatsApp text with the job link +
+  /// summary, then records the local pending timestamp. Failures keep the
+  /// row unsigned with an error toast + retry. Explicit on-device copy.
+  Future<void> _requestIntakeSignature() async {
+    final t = StaffLocalizations.of(context)!;
+    final phone = _displayIntakePhone();
+    if (phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.advisorClientShareNoPhone)),
+      );
+      return;
+    }
+    final digits = models.PhoneNumber.normalizeLoose(phone);
+    final summary = _intakeShareSummary(t);
+    final text = Uri.encodeComponent('$summary\n${_intakeShareLink()}');
+    final uri = Uri.parse('https://wa.me/$digits?text=$text');
+    HapticFeedback.lightImpact();
+    try {
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!mounted) return;
+      if (!ok) throw StateError('launch failed');
+      setState(() => _customerSigRequestedAt = _stampNow());
+      _saveDraft();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.advisorClientSigRequestSent)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.advisorClientSigLinkError)),
+      );
+    }
+  }
+
+  String _intakeShareSummary(StaffLocalizations t) {
+    final s = ref.read(vehicleCustomerFormProvider);
+    final customer = s.customerName.trim().isEmpty
+        ? t.advisorIntakeSummaryNoName
+        : s.customerName.trim();
+    final vehicle = [s.make, s.model].where((e) => e.isNotEmpty).join(' ');
+    return t.advisorClientShareSummary(
+      widget.bookingId ?? '',
+      customer,
+      vehicle.isEmpty ? s.registrationNumber : vehicle,
+    );
+  }
+
+  String _intakeShareLink() {
+    final id = widget.bookingId;
+    if (id == null || id.isEmpty) return '';
+    return 'orient://advisor/bookings/$id';
+  }
+
+  /// (2) Share row after the signatures: preview sheet, then the REAL
+  /// on-device PDF via share_plus with the file attached. Toasts fire only
+  /// on actual share/failure.
+  Widget _shareSection(StaffLocalizations t) {
+    final colors = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SectionHeader(
+          title: t.advisorClientShareTitle,
+          leadingIcon: Icons.share_outlined,
+          padding: const EdgeInsets.only(bottom: AppDimensions.s12),
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: SecondaryButton(
+                label: t.advisorClientShareWhatsApp,
+                leadingIcon: Icons.chat_outlined,
+                onPressed: _displayIntakePhone().isEmpty
+                    ? null
+                    : () => _openIntakeShareSheet(t),
+              ),
+            ),
+            const SizedBox(width: AppDimensions.s10),
+            Expanded(
+              child: SecondaryButton(
+                label: t.advisorClientShareEmail,
+                leadingIcon: Icons.mail_outline_rounded,
+                onPressed: () => _openIntakeShareSheet(t),
+              ),
+            ),
+          ],
+        ),
+        if (_displayIntakePhone().isEmpty) ...[
+          const SizedBox(height: AppDimensions.s8),
+          Text(
+            t.advisorClientShareNoPhone,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  void _openIntakeShareSheet(StaffLocalizations t) {
+    final s = ref.read(vehicleCustomerFormProvider);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetContext) => SharePreviewSheet(
+        summary: _intakeShareSummary(t),
+        link: _intakeShareLink(),
+        linesCount: s.jobDescriptions
+            .where((r) => r.description.trim().isNotEmpty)
+            .length,
+        commentsCount: _intakeComments.length,
+        customerSigned: _customerSignaturePath.isNotEmpty,
+        advisorSigned: _advisorSignaturePath.isNotEmpty,
+        totalValue: '',
+        onSharePdf: () => _shareIntakePdf(sheetContext, s),
+      ),
+    );
+  }
+
+  Future<bool> _shareIntakePdf(
+    BuildContext sheetContext,
+    VehicleCustomerFormState s,
+  ) async {
+    final t = StaffLocalizations.of(context)!;
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    Uint8List bytes;
+    try {
+      bytes = await buildJobCardPdf(_intakePdfData(t, s, rtl));
+    } catch (_) {
+      if (sheetContext.mounted) {
+        ScaffoldMessenger.of(sheetContext).showSnackBar(
+          SnackBar(content: Text(t.advisorClientSharePdfFail)),
+        );
+      }
+      return false;
+    }
+    try {
+      final dir = await getTemporaryDirectory();
+      final file = File(
+        '${dir.path}/job-card-intake-${DateTime.now().millisecondsSinceEpoch}.pdf',
+      );
+      await file.writeAsBytes(bytes, flush: true);
+      final result = await Share.shareXFiles(
+        [XFile(file.path)],
+        text: _intakeShareSummary(t),
+      );
+      if (result.status == ShareResultStatus.success) {
+        if (sheetContext.mounted) {
+          ScaffoldMessenger.of(
+            sheetContext,
+          ).showSnackBar(SnackBar(content: Text(t.advisorClientSharePdfDone)));
+        }
+        return true;
+      }
+      if (result.status == ShareResultStatus.dismissed) {
+        if (sheetContext.mounted) Navigator.maybePop(sheetContext);
+        return true;
+      }
+      return false;
+    } catch (_) {
+      if (sheetContext.mounted) {
+        ScaffoldMessenger.of(sheetContext).showSnackBar(
+          SnackBar(content: Text(t.advisorClientSharePdfFail)),
+        );
+      }
+      return false;
+    }
+  }
+
+  Uint8List? _intakeSigBytes(String path) {
+    try {
+      if (path.isEmpty) return null;
+      final file = File(path);
+      if (!file.existsSync()) return null;
+      return file.readAsBytesSync();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  JobCardPdfData _intakePdfData(
+    StaffLocalizations t,
+    VehicleCustomerFormState s,
+    bool rtl,
+  ) {
+    final advisor = ref.read(advisorInfoProvider).name;
+    return JobCardPdfData(
+      title: t.advisorClientPdfTitle,
+      jobId: t.advisorIntakeTitle,
+      generatedAt: _stampNow(),
+      customerLabel: t.advisorClientPdfCustomer,
+      customerName: s.customerName.trim().isEmpty
+          ? t.advisorIntakeSummaryNoName
+          : s.customerName.trim(),
+      phone: s.phoneNumber,
+      vehicleLabel: t.advisorClientPdfVehicle,
+      vehicleInfo: [s.make, s.model].where((e) => e.isNotEmpty).join(' '),
+      plate: s.registrationNumber,
+      vin: s.vin,
+      odometer: s.odometerReading,
+      fuelLevel: '',
+      broughtByLabel: t.advisorClientBroughtBy,
+      broughtBy: s.broughtBy.trim(),
+      advisorLabel: t.advisorFieldAdvisor,
+      advisorName: advisor,
+      statusLabel: t.advisorSectionStages,
+      status: 'New',
+      workLabel: t.advisorClientPdfWork,
+      lines: [
+        for (final row in s.jobDescriptions)
+          if (row.description.trim().isNotEmpty)
+            JobCardPdfLine(
+              description: row.description.trim(),
+              status: row.priority,
+            ),
+      ],
+      commentsLabel: t.advisorClientComments,
+      comments: [
+        for (final c in _intakeComments)
+          JobCardPdfComment(
+            author: (c['author'] ?? '').toString(),
+            at: (c['at'] ?? '').toString(),
+            text: (c['text'] ?? '').toString(),
+          ),
+      ],
+      totalLabel: t.advisorClientPdfTotal,
+      totalValue: '',
+      signaturesLabel: t.advisorClientSignatures,
+      customerSigLabel: t.advisorClientSigCustomer,
+      advisorSigLabel: t.advisorClientSigAdvisor,
+      unsignedLabel: t.advisorClientSigMissing,
+      customerSignature: _intakeSigBytes(_customerSignaturePath),
+      advisorSignature: _intakeSigBytes(_advisorSignaturePath),
+      rtl: rtl,
     );
   }
 
@@ -1410,6 +1862,10 @@ class _BodyState extends ConsumerState<_Body> {
         'lastUpdated': createdDate,
       };
       await local.save(id, payload);
+      // On-device extras (brought-by, intake comments, sign-request state)
+      // ride alongside under `job_extras_<id>` so the job detail dossier
+      // shows them. The sync payload above stays byte-identical.
+      await _saveIntakeExtras(id, formState);
       // The job card is safe locally; the draft has served its purpose.
       _clearDraft();
       final queue = ref.read(syncQueueProvider);
@@ -1440,6 +1896,17 @@ class _BodyState extends ConsumerState<_Body> {
       } catch (_) {}
       _savedJobId = resolvedJobId;
       _savedToServer = savedToServer;
+      // The synced card is opened by its server ref elsewhere; mirror the
+      // on-device extras there too so the dossier finds them either way.
+      if (resolvedJobId != id) {
+        try {
+          final box = Hive.box<dynamic>('inspections');
+          final extras = box.get('job_extras_$id');
+          if (extras != null) {
+            await box.put('job_extras_$resolvedJobId', extras);
+          }
+        } catch (_) {}
+      }
       ref.read(advisorRefreshProvider.notifier).state++;
       if (!mounted) return;
       _showInspectionPrompt(t);
@@ -1795,6 +2262,7 @@ Map<String, dynamic> buildIntakeDraft(
   'accidentNumber': s.accidentNumber,
   'insuranceExpiryDate': s.insuranceExpiryDate,
   'odometerReading': s.odometerReading,
+  'broughtBy': s.broughtBy,
   'fuelLevel': s.fuelLevel,
   'customerConsent': s.customerConsent,
   'jobPhotoPaths': List<String>.from(jobPhotoPaths),
@@ -1849,6 +2317,7 @@ void applyIntakeDraftToForm(
     ..setAccidentNumber(str('accidentNumber'))
     ..setInsuranceExpiry(str('insuranceExpiryDate'))
     ..setOdometer(str('odometerReading'))
+    ..setBroughtBy(str('broughtBy'))
     ..setConsent(draft['customerConsent'] == true);
   final fuel = (draft['fuelLevel'] as num?)?.toInt();
   if (fuel != null) notifier.setFuelLevel(fuel);
@@ -1906,7 +2375,15 @@ class _DeckCard extends StatelessWidget {
 /// UAE plate capture: emirate selector + code letter + number rendered as one
 /// LTR plate identity. The composed `registrationNumber` stays mirrored-safe
 /// because every identifier renders with an explicit LTR direction.
-class _UaePlateField extends StatelessWidget {
+/// UAE plate capture: existing-plates dropdown (list of vehicles) instead
+/// of the manual number field whenever the phone lookup returns plates.
+///
+/// Uses the existing generic `searchVehicles?q=<phone>` lookup (never invents
+/// vehicles). With plates on file the dropdown replaces the manual
+/// emirate/code/number row — picking one fills the identity (PlateNumber
+/// validated inline); "New plate" reveals manual entry. Without plates the
+/// manual row renders exactly as before.
+class _UaePlateField extends ConsumerStatefulWidget {
   final VehicleCustomerFormState state;
   final VehicleCustomerFormNotifier notifier;
   final String? plateError;
@@ -1922,12 +2399,96 @@ class _UaePlateField extends StatelessWidget {
   });
 
   @override
+  ConsumerState<_UaePlateField> createState() => _UaePlateFieldState();
+}
+
+class _UaePlateFieldState extends ConsumerState<_UaePlateField> {
+  String _query = '';
+  String? _picked;
+  bool _manual = false;
+  Timer? _debounce;
+
+  String get _phone => widget.state.phoneNumber.trim();
+
+  @override
+  void initState() {
+    super.initState();
+    _query = _phone;
+  }
+
+  @override
+  void didUpdateWidget(covariant _UaePlateField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.state.phoneNumber != oldWidget.state.phoneNumber) {
+      _picked = null;
+      _manual = false;
+      _scheduleLookup();
+    }
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _scheduleLookup() {
+    _debounce?.cancel();
+    if (_phone.length < 8) return;
+    _debounce = Timer(const Duration(milliseconds: 350), () {
+      if (mounted) setState(() => _query = _phone);
+    });
+  }
+
+  void _pickPlate(String plate, StaffLocalizations t) {
+    if (plate == t.advisorClientPlatesNew) {
+      // Fresh manual entry: clear any previously picked plate parts so the
+      // fields never show stale values.
+      widget.notifier
+        ..setEmirate('')
+        ..setPlateCode('')
+        ..setPlateNumber('');
+      setState(() {
+        _picked = null;
+        _manual = true;
+      });
+      return;
+    }
+    final parsed = models.PlateNumber.tryParse(plate);
+    if (parsed != null) {
+      widget.notifier
+        ..setEmirate(parsed.emirate)
+        ..setPlateCode(parsed.code)
+        ..setPlateNumber(parsed.number);
+    } else {
+      widget.notifier.setRegistrationNumber(plate);
+    }
+    widget.onPlateChanged();
+    setState(() {
+      _picked = plate;
+      _manual = false;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final t = StaffLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final s = state;
+    final s = widget.state;
+    final notifier = widget.notifier;
+    final platesAsync = _phone.length >= 8
+        ? ref.watch(existingPlatesProvider(_query))
+        : const AsyncValue<List<String>>.data([]);
+    final plates = platesAsync.value ?? const <String>[];
+    final searching = _phone.length >= 8 && platesAsync.isLoading;
+    // The vehicle list replaces the manual row while plates are on file
+    // and the user has not asked for manual entry.
+    final showDropdown = plates.isNotEmpty && !_manual;
+    final showManual = plates.isEmpty || _manual;
+
     return Column(
+      key: widget.plateKey,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Plate preview strip: the composed identity, always LTR.
@@ -1969,54 +2530,74 @@ class _UaePlateField extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppDimensions.s12),
-        _ResponsiveFieldGroup(
-          minChildWidth: 150,
-          children: [
-            AppFormField(
-              label: t.advisorIntakeEmirate,
-              child: AppDropdownButton(
-                value: s.emirate,
-                hint: t.advisorIntakeEmirateHint,
-                items: kEmirates,
-                onChanged: (v) => notifier.setEmirate(v),
-              ),
+        if (searching && plates.isEmpty)
+          AppLinearProgress(
+            value: null,
+            label: t.advisorClientPlatesSearching,
+            showPercentage: false,
+          ),
+        if (showDropdown)
+          AppFormField(
+            label: t.advisorClientPlatesTitle,
+            isRequired: true,
+            errorText: widget.plateError,
+            child: AppDropdownButton(
+              value: _picked ?? '',
+              hint: t.advisorClientPlatesHint,
+              items: [...plates, t.advisorClientPlatesNew],
+              onChanged: (v) => _pickPlate(v, t),
             ),
-            AppFormField(
-              label: t.advisorIntakePlateCode,
-              child: _IntakeField(
-                initialValue: s.plateCode,
-                hint: t.advisorIntakePlateCodeHint,
-                textCapitalization: TextCapitalization.characters,
-                isIdentifier: true,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp('[a-zA-Z0-9]')),
-                  LengthLimitingTextInputFormatter(4),
-                ],
-                onChanged: notifier.setPlateCode,
+          ),
+        if (showManual) ...[
+          if (showDropdown) const SizedBox(height: AppDimensions.s12),
+          _ResponsiveFieldGroup(
+            minChildWidth: 150,
+            children: [
+              AppFormField(
+                label: t.advisorIntakeEmirate,
+                child: AppDropdownButton(
+                  value: s.emirate,
+                  hint: t.advisorIntakeEmirateHint,
+                  items: kEmirates,
+                  onChanged: (v) => notifier.setEmirate(v),
+                ),
               ),
-            ),
-            AppFormField(
-              label: t.advisorIntakePlateNumber,
-              isRequired: true,
-              errorText: plateError,
-              child: _IntakeField(
-                key: plateKey,
-                initialValue: s.plateNumber,
-                hint: t.advisorIntakePlateNumberHint,
-                keyboardType: TextInputType.number,
-                isIdentifier: true,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                prefix: (s.emirate.isEmpty && s.plateCode.isEmpty)
-                    ? null
-                    : _AffixPrefix('${s.emirate}-${s.plateCode}'),
-                onChanged: (v) {
-                  notifier.setPlateNumber(v);
-                  if (v.trim().isNotEmpty) onPlateChanged();
-                },
+              AppFormField(
+                label: t.advisorIntakePlateCode,
+                child: _IntakeField(
+                  initialValue: s.plateCode,
+                  hint: t.advisorIntakePlateCodeHint,
+                  textCapitalization: TextCapitalization.characters,
+                  isIdentifier: true,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp('[a-zA-Z0-9]')),
+                    LengthLimitingTextInputFormatter(4),
+                  ],
+                  onChanged: notifier.setPlateCode,
+                ),
               ),
-            ),
-          ],
-        ),
+              AppFormField(
+                label: t.advisorIntakePlateNumber,
+                isRequired: true,
+                errorText: widget.plateError,
+                child: _IntakeField(
+                  initialValue: s.plateNumber,
+                  hint: t.advisorIntakePlateNumberHint,
+                  keyboardType: TextInputType.number,
+                  isIdentifier: true,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  prefix: (s.emirate.isEmpty && s.plateCode.isEmpty)
+                      ? null
+                      : _AffixPrefix('${s.emirate}-${s.plateCode}'),
+                  onChanged: (v) {
+                    notifier.setPlateNumber(v);
+                    if (v.trim().isNotEmpty) widget.onPlateChanged();
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -2441,109 +3022,203 @@ class _ResponsiveFieldGroup extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Existing plates by phone (CLIENT ITEM 6, backend-gated)
-//  Uses the existing generic `searchVehicles?q=<phone>` lookup; never invents
-//  vehicles. When the lookup returns plates a dropdown appears below the
-//  mobile number (existing plates + "New plate" manual entry, PlateNumber
-//  validated inline). When absent, only the manual field + note remain.
+//  Intake comments (CLIENT ITEM 4): repeatable on-device notes after the job
+//  descriptions. Add button, multiple co-existing cards, confirm-guarded
+//  delete, autofocus composer. Hive draft + job extras carry them.
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _PhonePlatesDropdown extends ConsumerStatefulWidget {
-  final String phone;
-  const _PhonePlatesDropdown({required this.phone});
+class _IntakeCommentsCard extends StatelessWidget {
+  final List<Map<String, dynamic>> comments;
+  final bool composing;
+  final TextEditingController controller;
+  final VoidCallback onAdd;
+  final VoidCallback onCancel;
+  final VoidCallback onSave;
+  final ValueChanged<int> onDelete;
 
-  @override
-  ConsumerState<_PhonePlatesDropdown> createState() =>
-      _PhonePlatesDropdownState();
-}
-
-class _PhonePlatesDropdownState extends ConsumerState<_PhonePlatesDropdown> {
-  List<String> _plates = const [];
-  bool _loading = false;
-  String _lastQuery = '';
-  String? _selected;
-
-  @override
-  void didUpdateWidget(covariant _PhonePlatesDropdown oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.phone != oldWidget.phone) _maybeLookup();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _maybeLookup();
-  }
-
-  Future<void> _maybeLookup() async {
-    final q = widget.phone.trim();
-    if (q.length < 8 || q == _lastQuery) return;
-    _lastQuery = q;
-    setState(() => _loading = true);
-    try {
-      final remote = ref.read(advisorRemoteDataSourceProvider);
-      final vehicles = await remote.searchVehicles(q);
-      final plates = vehicles
-          .map((v) => v.plateNumber.isNotEmpty ? v.plateNumber : v.regNo)
-          .map((p) => p.trim())
-          .where((p) => p.isNotEmpty)
-          .toSet()
-          .take(10)
-          .toList();
-      if (!mounted) return;
-      setState(() {
-        _plates = plates;
-        _loading = false;
-      });
-    } catch (_) {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  void _applyPlate(String plate) {
-    final notifier = ref.read(vehicleCustomerFormProvider.notifier);
-    final parsed = models.PlateNumber.tryParse(plate);
-    if (parsed != null) {
-      notifier
-        ..setEmirate(parsed.emirate)
-        ..setPlateCode(parsed.code)
-        ..setPlateNumber(parsed.number);
-    } else {
-      notifier.setRegistrationNumber(plate);
-    }
-    setState(() => _selected = plate);
-  }
+  const _IntakeCommentsCard({
+    required this.comments,
+    required this.composing,
+    required this.controller,
+    required this.onAdd,
+    required this.onCancel,
+    required this.onSave,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
     final t = StaffLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    if (widget.phone.trim().length < 8) return const SizedBox.shrink();
-    if (_loading) {
-      return const AppLinearProgress(value: null, showPercentage: false);
-    }
-    if (_plates.isEmpty) {
-      return Text(
-        t.advisorClientPlatesNone,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: colors.onSurfaceVariant,
-        ),
-      );
-    }
     return AppFormField(
-      label: t.advisorClientPlatesTitle,
-      child: AppDropdownButton(
-        value: _selected ?? '',
-        hint: t.advisorClientPlatesHint,
-        items: [..._plates, t.advisorClientPlatesNew],
-        onChanged: (v) {
-          if (v == t.advisorClientPlatesNew) {
-            setState(() => _selected = null);
-            return;
-          }
-          _applyPlate(v);
-        },
+      label: t.advisorClientComments,
+      child: AppCard.subtle(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    t.advisorClientComments,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: colors.onSurface,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.s10,
+                    vertical: AppDimensions.s4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(
+                      AppDimensions.radiusPill,
+                    ),
+                  ),
+                  child: Text(
+                    '${comments.length}',
+                    textDirection: TextDirection.ltr,
+                    style: AppTextStyles.mono(color: colors.primary).copyWith(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppDimensions.s8),
+                SecondaryButton(
+                  label: t.advisorClientCommentsAdd,
+                  leadingIcon: Icons.add_rounded,
+                  isExpanded: false,
+                  height: 40,
+                  onPressed: composing ? null : onAdd,
+                ),
+              ],
+            ),
+            const SizedBox(height: AppDimensions.s10),
+            if (comments.isEmpty && !composing)
+              EmptyState(
+                icon: Icons.notes_outlined,
+                message: t.advisorClientCommentsEmpty,
+              )
+            else
+              for (var i = 0; i < comments.length; i++)
+                Dismissible(
+                  key: ValueKey(
+                    'intake-comment-$i-${(comments[i]['text'] ?? '').hashCode}',
+                  ),
+                  direction: DismissDirection.endToStart,
+                  confirmDismiss: (_) => showAppConfirmationDialog(
+                    context,
+                    title: t.advisorClientCommentsDeleteTitle,
+                    message: (comments[i]['text'] ?? '').toString(),
+                    confirmLabel: t.advisorClientCommentsDeleteConfirm,
+                    cancelLabel: SharedCoreL10n.of(context).commonCancel,
+                    icon: Icons.delete_outline_rounded,
+                    destructive: true,
+                  ),
+                  onDismissed: (_) => onDelete(i),
+                  background: Container(
+                    alignment: AlignmentDirectional.centerEnd,
+                    padding: const EdgeInsetsDirectional.only(
+                      end: AppDimensions.s16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.error,
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusCard,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.delete_outline_rounded,
+                      color: colors.onError,
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      bottom: AppDimensions.s8,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                (comments[i]['author'] ?? '').toString(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: colors.primary,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                            Directionality(
+                              textDirection: TextDirection.ltr,
+                              child: Text(
+                                (comments[i]['at'] ?? '').toString(),
+                                style: AppTextStyles.mono(
+                                  color: colors.onSurfaceVariant,
+                                ).copyWith(fontSize: 11),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          (comments[i]['text'] ?? '').toString(),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            height: 1.45,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            if (composing) ...[
+              const SizedBox(height: AppDimensions.s4),
+              AppTextField(
+                controller: controller,
+                hint: t.advisorClientCommentsHint,
+                maxLines: 3,
+                minLines: 2,
+                textInputAction: TextInputAction.newline,
+              ),
+              const SizedBox(height: AppDimensions.s10),
+              Row(
+                children: [
+                  Expanded(
+                    child: SecondaryButton(
+                      label: SharedCoreL10n.of(context).commonCancel,
+                      isExpanded: false,
+                      onPressed: onCancel,
+                    ),
+                  ),
+                  const SizedBox(width: AppDimensions.s10),
+                  Expanded(
+                    child: PrimaryButton(
+                      label: t.advisorClientCommentsSave,
+                      icon: Icons.check_rounded,
+                      onPressed: onSave,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            if (comments.isEmpty && !composing) ...[
+              const SizedBox(height: AppDimensions.s12),
+              SecondaryButton(
+                label: t.advisorClientCommentsAdd,
+                leadingIcon: Icons.add_rounded,
+                onPressed: onAdd,
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
