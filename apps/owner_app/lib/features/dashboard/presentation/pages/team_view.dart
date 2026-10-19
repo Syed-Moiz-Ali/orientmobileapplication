@@ -1,9 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:owner_app/features/dashboard/presentation/providers/attendance_provider.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/team_providers.dart';
+import 'package:owner_app/l10n/gen/owner_localizations.dart';
 
+/// Clock-in state for one roster row, joined by staff id against the loaded
+/// day register. Unmatched (or still loading) renders no pill at all — an
+/// absent record is not proof of absence.
+enum _ClockState { onShift, offShift }
+
+_ClockState? _clockFor(
+  StaffMember member,
+  OwnerAttendanceState attendance,
+) {
+  if (attendance.isLoading) return null;
+  for (final record in attendance.records) {
+    if (record.staffId.isNotEmpty && record.staffId == member.id) {
+      return record.status == 'working' || record.status == 'onBreak'
+          ? _ClockState.onShift
+          : _ClockState.offShift;
+    }
+  }
+  return null;
+}
+
+/// Staff roster (O11): directory header with role counts, search + role
+/// filter, member cards with role/active pills and today's clock state, and
+/// the validated add-member + enable/disable flows. Add/toggle call the
+/// frozen notifier; only chrome, copy and states are new. Overtime and
+/// commission have no endpoint fields and are deferred, not fabricated.
 class TeamView extends ConsumerStatefulWidget {
   const TeamView({super.key});
 
@@ -13,21 +40,24 @@ class TeamView extends ConsumerStatefulWidget {
 
 class _TeamViewState extends ConsumerState<TeamView> {
   final _searchCtrl = TextEditingController();
+  final _searchFocus = FocusNode();
   String _selectedRole = 'all';
 
   @override
   void dispose() {
     _searchCtrl.dispose();
+    _searchFocus.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final t = OwnerLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
+    final colors = theme.colorScheme;
     final state = ref.watch(teamProvider);
     final notifier = ref.read(teamProvider.notifier);
+    final attendance = ref.watch(ownerAttendanceProvider);
 
     final query = _searchCtrl.text.trim().toLowerCase();
     final filteredStaff = state.staff.where((m) {
@@ -43,285 +73,137 @@ class _TeamViewState extends ConsumerState<TeamView> {
     }).toList();
 
     final activeCount = state.staff.where((m) => m.isActive).length;
-    final advisorCount = state.staff.where((m) => m.role.toLowerCase() == 'advisor').length;
-    final supervisorCount = state.staff.where((m) => m.role.toLowerCase() == 'supervisor').length;
-    final techCount = state.staff.where((m) => m.role.toLowerCase() == 'technician').length;
+    final advisorCount = state.staff
+        .where((m) => m.role.toLowerCase() == 'advisor')
+        .length;
+    final supervisorCount = state.staff
+        .where((m) => m.role.toLowerCase() == 'supervisor')
+        .length;
+    final techCount = state.staff
+        .where((m) => m.role.toLowerCase() == 'technician')
+        .length;
+    final roles = <String>[t.ownerTmAdvisors, t.ownerTmSupervisors, t.ownerTmTechnicians];
+    final roleValues = <String>['advisor', 'supervisor', 'technician'];
+    final counts = <String, int>{
+      SharedCoreL10n.of(context).filterBarAll: state.staff.length,
+      t.ownerTmAdvisors: state.staff
+          .where((m) => m.role.toLowerCase() == 'advisor')
+          .length,
+      t.ownerTmSupervisors: state.staff
+          .where((m) => m.role.toLowerCase() == 'supervisor')
+          .length,
+      t.ownerTmTechnicians: state.staff
+          .where((m) => m.role.toLowerCase() == 'technician')
+          .length,
+    };
 
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          'Team & Permissions',
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w900,
-            color: colorScheme.onSurface,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh_rounded, color: colorScheme.onSurface),
-            onPressed: notifier.load,
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: colorScheme.primary,
-        foregroundColor: colorScheme.onPrimary,
-        elevation: 3,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        onPressed: () => _showAddStaffSheet(
-          context,
-          notifier,
-          state.branches,
-          colorScheme,
-          textTheme,
-        ),
-        icon: const Icon(Icons.person_add_alt_1_rounded),
-        label: const Text(
-          'Add Member',
-          style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 0.3),
-        ),
-      ),
-      body: state.isLoading
-          ? const AppSkeleton.page()
-          : state.error.isNotEmpty && state.staff.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    state.error,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: notifier.load,
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            )
-          : CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Executive Summary Header Card (Solid Surface, 0 Gradients)
-                        Container(
-                          padding: const EdgeInsets.all(18),
-                          decoration: BoxDecoration(
-                            color: colorScheme.surface,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: colorScheme.outlineVariant.withValues(alpha: 0.6),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: colorScheme.shadow.withValues(alpha: 0.04),
-                                blurRadius: 14,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: colorScheme.primary.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Icon(
-                                      Icons.badge_rounded,
-                                      color: colorScheme.primary,
-                                      size: 18,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    'Workshop Staff Directory',
-                                    style: textTheme.titleSmall?.copyWith(
-                                      fontWeight: FontWeight.w800,
-                                      color: colorScheme.onSurface,
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  // Phase 07.1: hardcoded success hex resolves
-                                  // through the semantic success family.
-                                  StatusPill.success(
-                                    '$activeCount / ${state.staff.length} ACTIVE',
-                                    showDot: true,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 14),
-                              Row(
-                                children: [
-                                  // Phase 07.1: bespoke _SummaryPill migrated
-                                  // to AppKpiCard.compact.
-                                  Expanded(
-                                    child: AppKpiCard.compact(
-                                      label: 'Advisors',
-                                      value: '$advisorCount',
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: AppKpiCard.compact(
-                                      label: 'Supervisors',
-                                      value: '$supervisorCount',
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: AppKpiCard.compact(
-                                      label: 'Technicians',
-                                      value: '$techCount',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-
-                        // Search Bar
-                        Container(
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: colorScheme.outlineVariant),
-                          ),
-                          child: TextField(
-                            controller: _searchCtrl,
-                            onChanged: (_) => setState(() {}),
-                            style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
-                            decoration: InputDecoration(
-                              hintText: 'Search by staff name, ID, phone, role or branch...',
-                              hintStyle: textTheme.bodyMedium?.copyWith(
-                                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-                              ),
-                              prefixIcon: Icon(
-                                Icons.search_rounded,
-                                color: colorScheme.onSurfaceVariant,
-                                size: 20,
-                              ),
-                              suffixIcon: _searchCtrl.text.isNotEmpty
-                                  ? IconButton(
-                                      icon: Icon(Icons.clear_rounded, size: 18, color: colorScheme.onSurfaceVariant),
-                                      onPressed: () {
-                                        _searchCtrl.clear();
-                                        setState(() {});
-                                      },
-                                    )
-                                  : null,
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Filter Chips Bar
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              ('all', 'All Staff'),
-                              ('advisor', 'Service Advisors'),
-                              ('supervisor', 'Supervisors'),
-                              ('technician', 'Technicians'),
-                            ].map((item) {
-                              final sel = _selectedRole == item.$1;
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: FilterChip(
-                                  selected: sel,
-                                  showCheckmark: false,
-                                  label: Text(
-                                    item.$2,
-                                    style: textTheme.labelMedium?.copyWith(
-                                      color: sel ? colorScheme.onPrimary : colorScheme.onSurface,
-                                      fontWeight: sel ? FontWeight.w800 : FontWeight.w600,
-                                    ),
-                                  ),
-                                  backgroundColor: colorScheme.surfaceContainerHighest,
-                                  selectedColor: colorScheme.primary,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  onSelected: (_) => setState(() => _selectedRole = item.$1),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                if (filteredStaff.isEmpty)
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.person_off_outlined, size: 48, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6)),
-                          const SizedBox(height: 12),
-                          Text(
-                            'No staff members match filter criteria',
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, i) {
-                          final m = filteredStaff[i];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _StaffCard(
-                              member: m,
-                              notifier: notifier,
-                              colorScheme: colorScheme,
-                              textTheme: textTheme,
-                            ),
-                          );
-                        },
-                        childCount: filteredStaff.length,
-                      ),
-                    ),
-                  ),
-              ],
+    return WorkspaceSearchShortcuts(
+      onSearch: () => _searchFocus.requestFocus(),
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: WorkspaceAppBar(
+          title: t.ownerTmTitle,
+          subtitle: t.ownerTmSubtitle(activeCount, state.staff.length),
+          showBack: true,
+          showOfflineStatus: true,
+          actions: [
+            IconButton(
+              tooltip: MaterialLocalizations.of(context)
+                  .refreshIndicatorSemanticLabel,
+              icon: const Icon(Icons.refresh_rounded),
+              onPressed: () {
+                HapticFeedback.selectionClick();
+                notifier.load();
+              },
             ),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          backgroundColor: colors.primary,
+          foregroundColor: colors.onPrimary,
+          elevation: 3,
+          onPressed: () => _showAddStaffSheet(context, notifier, state.branches),
+          icon: const Icon(Icons.person_add_alt_1_rounded),
+          label: Text(
+            t.ownerTmAdd,
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+        ),
+        body: SafeArea(
+          child: state.isLoading && state.staff.isEmpty
+              ? const AppSkeleton.page()
+              : state.error.isNotEmpty && state.staff.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppDimensions.s20),
+                        child: ErrorView(
+                          message: state.error,
+                          onRetry: notifier.load,
+                        ),
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: () async => notifier.load(),
+                      color: colors.primary,
+                      child: AppResponsivePage(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _DirectoryHeader(
+                              activeCount: activeCount,
+                              total: state.staff.length,
+                              advisors: advisorCount,
+                              supervisors: supervisorCount,
+                              technicians: techCount,
+                            ),
+                            const SizedBox(height: AppDimensions.s12),
+                            AppSearchField(
+                              controller: _searchCtrl,
+                              focusNode: _searchFocus,
+                              hintText: t.ownerTmSearchHint,
+                              onChanged: (_) => setState(() {}),
+                              onClear: () {
+                                _searchCtrl.clear();
+                                setState(() {});
+                              },
+                            ),
+                            const SizedBox(height: AppDimensions.s12),
+                            AppFilterBar(
+                              options: roles,
+                              selected: _selectedRole == 'all'
+                                  ? null
+                                  : roles[roleValues.indexOf(_selectedRole)],
+                              counts: counts,
+                              onSelected: (label) => setState(() {
+                                if (label == null) {
+                                  _selectedRole = 'all';
+                                } else {
+                                  final i = roles.indexOf(label);
+                                  _selectedRole =
+                                      i < 0 ? 'all' : roleValues[i];
+                                }
+                              }),
+                            ),
+                            const SizedBox(height: AppDimensions.s12),
+                            if (filteredStaff.isEmpty)
+                              EmptyState(
+                                icon: Icons.person_off_outlined,
+                                message: t.ownerTmEmpty,
+                              )
+                            else
+                              _RosterList(
+                                staff: filteredStaff,
+                                attendance: attendance,
+                                notifier: notifier,
+                              ),
+                            const SizedBox(height: 96),
+                          ],
+                        ),
+                      ),
+                    ),
+        ),
+      ),
     );
   }
 
@@ -329,362 +211,104 @@ class _TeamViewState extends ConsumerState<TeamView> {
     BuildContext context,
     TeamNotifier notifier,
     List<BranchOption> branches,
-    ColorScheme colorScheme,
-    TextTheme textTheme,
   ) {
-    final formKey = GlobalKey<FormState>();
-    final nameCtrl = TextEditingController();
-    final empIdCtrl = TextEditingController();
-    final phoneCtrl = TextEditingController();
-    final emailCtrl = TextEditingController();
-    final passwordCtrl = TextEditingController();
-    final confirmPasswordCtrl = TextEditingController();
-    final shiftCtrl = TextEditingController();
-    final designationCtrl = TextEditingController();
-    final departmentCtrl = TextEditingController();
-    var role = 'advisor';
-    String? branchId;
-    var isSubmitting = false;
-    const roles = ['advisor', 'supervisor', 'technician'];
-
-    InputDecoration fieldDecoration(String label, IconData icon) =>
-        InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon),
-          filled: true,
-          fillColor: colorScheme.surfaceContainerLow,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-        );
-
-    showModalBottomSheet<void>(
+    HapticFeedback.selectionClick();
+    showAppModalSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) => Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-          ),
-          child: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Create Staff Login',
-                        style: textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          Icons.close_rounded,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                        onPressed: isSubmitting
-                            ? null
-                            : () => Navigator.pop(ctx),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    'Create their Staff app access and add their workshop details.',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: nameCtrl,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: fieldDecoration(
-                      'Full name',
-                      Icons.person_outline_rounded,
-                    ),
-                    validator: (value) => value == null || value.trim().isEmpty
-                        ? 'Enter the staff member name'
-                        : null,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: empIdCtrl,
-                    textCapitalization: TextCapitalization.characters,
-                    decoration: fieldDecoration(
-                      'Staff ID (e.g. ADV002)',
-                      Icons.badge_outlined,
-                    ),
-                    validator: (value) => value == null || value.trim().isEmpty
-                        ? 'Enter a unique staff ID'
-                        : null,
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    initialValue: role,
-                    decoration: fieldDecoration(
-                      'Staff app role',
-                      Icons.admin_panel_settings_outlined,
-                    ),
-                    items: roles
-                        .map(
-                          (value) => DropdownMenuItem(
-                            value: value,
-                            child: Text(
-                              value[0].toUpperCase() + value.substring(1),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) => role = value ?? 'advisor',
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Login credentials',
-                    style: textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: phoneCtrl,
-                    keyboardType: TextInputType.phone,
-                    decoration: fieldDecoration(
-                      'Mobile number with country code',
-                      Icons.phone_outlined,
-                    ),
-                    validator: (value) {
-                      final digits = (value ?? '').replaceAll(
-                        RegExp(r'[^0-9]'),
-                        '',
-                      );
-                      return digits.length < 8
-                          ? 'Enter a valid mobile number'
-                          : null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: emailCtrl,
-                    keyboardType: TextInputType.emailAddress,
-                    autocorrect: false,
-                    decoration: fieldDecoration(
-                      'Email address',
-                      Icons.email_outlined,
-                    ),
-                    validator: (value) {
-                      final email = (value ?? '').trim();
-                      return !email.contains('@') || !email.contains('.')
-                          ? 'Enter a valid email address'
-                          : null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: passwordCtrl,
-                    obscureText: true,
-                    autocorrect: false,
-                    enableSuggestions: false,
-                    decoration: fieldDecoration(
-                      'Initial password (minimum 8 characters)',
-                      Icons.lock_outline_rounded,
-                    ),
-                    validator: (value) => (value ?? '').length < 8
-                        ? 'Password must be at least 8 characters'
-                        : null,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: confirmPasswordCtrl,
-                    obscureText: true,
-                    autocorrect: false,
-                    enableSuggestions: false,
-                    decoration: fieldDecoration(
-                      'Confirm initial password',
-                      Icons.lock_reset_rounded,
-                    ),
-                    validator: (value) => value != passwordCtrl.text
-                        ? 'Passwords do not match'
-                        : null,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'They can sign in with email or mobile + password, or use an OTP.',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Work details',
-                    style: textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: designationCtrl,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: fieldDecoration(
-                      'Designation',
-                      Icons.work_outline_rounded,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: departmentCtrl,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: fieldDecoration(
-                      'Department',
-                      Icons.business_outlined,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    initialValue: branchId,
-                    decoration: fieldDecoration('Branch', Icons.store_outlined),
-                    hint: Text(
-                      branches.isEmpty
-                          ? 'No branches configured'
-                          : 'Select a branch',
-                    ),
-                    items: branches
-                        .map(
-                          (branch) => DropdownMenuItem(
-                            value: branch.id,
-                            child: Text(branch.name),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: branches.isEmpty
-                        ? null
-                        : (value) => branchId = value,
-                    validator: (_) => branches.isNotEmpty && branchId == null
-                        ? 'Select the staff member branch'
-                        : null,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: shiftCtrl,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: fieldDecoration(
-                      'Shift',
-                      Icons.schedule_outlined,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: FilledButton(
-                      onPressed: isSubmitting
-                          ? null
-                          : () async {
-                              if (!(formKey.currentState?.validate() ??
-                                  false)) {
-                                return;
-                              }
-                              setSheetState(() => isSubmitting = true);
-                              final error = await notifier.addMember({
-                                'name': nameCtrl.text.trim(),
-                                'empId': empIdCtrl.text.trim().toUpperCase(),
-                                'role': role,
-                                'phone': phoneCtrl.text.trim(),
-                                'email': emailCtrl.text.trim().toLowerCase(),
-                                'password': passwordCtrl.text,
-                                if (branchId != null)
-                                  'branchId': int.parse(branchId!),
-                                'branch':
-                                    branches
-                                        .where(
-                                          (branch) => branch.id == branchId,
-                                        )
-                                        .map((branch) => branch.name)
-                                        .firstOrNull ??
-                                    '',
-                                'shift': shiftCtrl.text.trim(),
-                                'designation': designationCtrl.text.trim(),
-                                'department': departmentCtrl.text.trim(),
-                              });
-                              if (!ctx.mounted) return;
-                              setSheetState(() => isSubmitting = false);
-                              if (error != null) {
-                                ScaffoldMessenger.of(
-                                  context,
-                                ).showSnackBar(SnackBar(content: Text(error)));
-                                return;
-                              }
-                              Navigator.pop(ctx);
-                              if (context.mounted) {
-                                _showLoginCreatedDialog(
-                                  context,
-                                  name: nameCtrl.text.trim(),
-                                  email: emailCtrl.text.trim().toLowerCase(),
-                                  phone: phoneCtrl.text.trim(),
-                                  password: passwordCtrl.text,
-                                );
-                              }
-                            },
-                      child: isSubmitting
-                          ? const SizedBox.square(
-                              dimension: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text(
-                              'Create Staff Account',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 15,
-                              ),
-                            ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
+      builder: (sheetContext) => _AddMemberSheet(
+        notifier: notifier,
+        branches: branches,
       ),
     );
   }
+}
 
-  void _showLoginCreatedDialog(
-    BuildContext context, {
-    required String name,
-    required String email,
-    required String phone,
-    required String password,
-  }) {
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        icon: const Icon(Icons.verified_user_rounded, size: 38),
-        title: const Text('Staff login created'),
-        content: Text(
-          '$name can now sign in to the Staff app with:\n\n'
-          '• $email + the password you created\n'
-          '• $phone + the password you created\n'
-          '• Email or mobile OTP\n\n'
-          'Initial password: $password\n\n'
-          'Share this securely and ask them to change it after signing in.',
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Done'),
+/// Directory header: active pill plus per-role compact KPIs. Counts derive
+/// from the frozen roster list.
+class _DirectoryHeader extends StatelessWidget {
+  final int activeCount;
+  final int total;
+  final int advisors;
+  final int supervisors;
+  final int technicians;
+
+  const _DirectoryHeader({
+    required this.activeCount,
+    required this.total,
+    required this.advisors,
+    required this.supervisors,
+    required this.technicians,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = OwnerLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    // Counts ride along from the caller so they can never drift from the
+    // roster list below.
+    final counts = [advisors, supervisors, technicians];
+    return AppCard.standard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(AppDimensions.s8),
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: 0.1),
+                  borderRadius:
+                      BorderRadius.circular(AppDimensions.radiusSm),
+                ),
+                child: Icon(
+                  Icons.badge_rounded,
+                  color: colors.primary,
+                  size: AppDimensions.iconSm,
+                ),
+              ),
+              const SizedBox(width: AppDimensions.s10),
+              Expanded(
+                child: Text(
+                  t.ownerTmDirectory,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colors.onSurface,
+                  ),
+                ),
+              ),
+              StatusPill.success(
+                '$activeCount / $total ${t.ownerTmActive}',
+                showDot: true,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s14),
+          Row(
+            children: [
+              Expanded(
+                child: AppKpiCard.compact(
+                  label: t.ownerTmAdvisors,
+                  value: '${counts[0]}',
+                ),
+              ),
+              const SizedBox(width: AppDimensions.s8),
+              Expanded(
+                child: AppKpiCard.compact(
+                  label: t.ownerTmSupervisors,
+                  value: '${counts[1]}',
+                ),
+              ),
+              const SizedBox(width: AppDimensions.s8),
+              Expanded(
+                child: AppKpiCard.compact(
+                  label: t.ownerTmTechnicians,
+                  value: '${counts[2]}',
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -692,143 +316,198 @@ class _TeamViewState extends ConsumerState<TeamView> {
   }
 }
 
-class _StaffCard extends StatelessWidget {
-  final StaffMember member;
+/// Roster rows: avatar, name, role pill + id, active pill + enable switch,
+/// today's clock pill when the day register names them, branch/phone
+/// footer. Decorative role colors are gone; tone carries meaning.
+class _RosterList extends StatelessWidget {
+  final List<StaffMember> staff;
+  final OwnerAttendanceState attendance;
   final TeamNotifier notifier;
-  final ColorScheme colorScheme;
-  final TextTheme textTheme;
 
-  const _StaffCard({
-    required this.member,
+  const _RosterList({
+    required this.staff,
+    required this.attendance,
     required this.notifier,
-    required this.colorScheme,
-    required this.textTheme,
   });
 
   @override
   Widget build(BuildContext context) {
-    final roleColor = switch (member.role.toLowerCase()) {
-      'supervisor' => const Color(0xFF8B5CF6),
-      'technician' => const Color(0xFF06B6D4),
-      _ => colorScheme.primary,
-    };
+    final wide = context.adaptive.pick(
+      compact: false,
+      medium: false,
+      expanded: true,
+      large: true,
+    );
+    final medium = context.adaptive.pick(
+      compact: false,
+      medium: true,
+      expanded: true,
+      large: true,
+    );
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: member.isActive
-              ? colorScheme.outlineVariant.withValues(alpha: 0.6)
-              : colorScheme.error.withValues(alpha: 0.3),
+    Widget card(StaffMember m) => _StaffCard(
+          member: m,
+          clock: _clockFor(m, attendance),
+          notifier: notifier,
+        );
+
+    if (wide || medium) {
+      const columns = 2;
+      return GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: staff.length,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: columns,
+          crossAxisSpacing: AppDimensions.s12,
+          mainAxisSpacing: AppDimensions.s12,
+          // Fits the avatar row plus the branch/phone footer at 1.3x.
+          mainAxisExtent: 176,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.04),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
+        itemBuilder: (_, i) => card(staff[i]),
+      );
+    }
+    return Column(
+      children: [
+        for (final m in staff) ...[
+          card(m),
+          const SizedBox(height: AppDimensions.s12),
         ],
-      ),
+      ],
+    );
+  }
+}
+
+class _StaffCard extends StatelessWidget {
+  final StaffMember member;
+  final _ClockState? clock;
+  final TeamNotifier notifier;
+
+  const _StaffCard({
+    required this.member,
+    required this.clock,
+    required this.notifier,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = OwnerLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return AppCard.standard(
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
               CircleAvatar(
                 radius: 22,
                 backgroundColor: member.isActive
-                    ? roleColor.withValues(alpha: 0.12)
-                    : colorScheme.surfaceContainerHighest,
+                    ? colors.primary.withValues(alpha: 0.12)
+                    : colors.surfaceContainerHighest,
                 child: Text(
-                  member.name.isNotEmpty ? member.name[0].toUpperCase() : '?',
-                  style: textTheme.titleSmall?.copyWith(
-                    color: member.isActive ? roleColor : colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w900,
+                  member.name.isNotEmpty
+                      ? member.name.characters.first.toUpperCase()
+                      : '?',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: member.isActive
+                        ? colors.primary
+                        : colors.onSurfaceVariant,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: AppDimensions.s12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       member.name,
-                      style: textTheme.titleSmall?.copyWith(
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
-                        color: colorScheme.onSurface,
+                        color: colors.onSurface,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Row(
+                    Wrap(
+                      spacing: AppDimensions.s6,
+                      runSpacing: AppDimensions.s4,
                       children: [
-                        StatusPill(
-                          label: member.role.toUpperCase(),
-                          bg: roleColor.withValues(alpha: 0.12),
-                          fg: roleColor,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          member.empId,
-                          style: textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                            fontFamily: AppFontFamilies.mono,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 11,
-                          ),
-                        ),
+                        StatusPill.neutral(member.role.toUpperCase()),
+                        if (clock == _ClockState.onShift)
+                          StatusPill.success(t.ownerTmOnShift, showDot: true)
+                        else if (clock == _ClockState.offShift)
+                          StatusPill.neutral(t.ownerTmOffShift),
                       ],
                     ),
                   ],
                 ),
               ),
-              StatusPill(
-                label: member.isActive ? 'ACTIVE' : 'DISABLED',
-                showDot: true,
-                bg: member.isActive
-                    ? const Color(0xFF10B981).withValues(alpha: 0.12)
-                    : const Color(0xFFEF4444).withValues(alpha: 0.12),
-                fg: member.isActive
-                    ? const Color(0xFF10B981)
-                    : const Color(0xFFEF4444),
-              ),
-              const SizedBox(width: 4),
-              Switch.adaptive(
-                value: member.isActive,
-                activeTrackColor: const Color(0xFF10B981),
-                onChanged: (_) => notifier.toggleActive(member),
+              const SizedBox(width: AppDimensions.s8),
+              Column(
+                children: [
+                  member.isActive
+                      ? StatusPill.success(t.ownerTmActive, showDot: true)
+                      : StatusPill.danger(t.ownerTmOff, showDot: true),
+                  Switch.adaptive(
+                    value: member.isActive,
+                    onChanged: (_) {
+                      HapticFeedback.selectionClick();
+                      notifier.toggleActive(member);
+                    },
+                  ),
+                ],
               ),
             ],
           ),
           if (member.phone.isNotEmpty || member.branch.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Divider(height: 1, color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppDimensions.s10),
+            Divider(
+              height: 1,
+              color: colors.outlineVariant.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: AppDimensions.s8),
             Row(
               children: [
                 if (member.branch.isNotEmpty) ...[
-                  Icon(Icons.store_outlined, size: 14, color: colorScheme.onSurfaceVariant),
-                  const SizedBox(width: 6),
-                  Text(
-                    member.branch,
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 11,
+                  Icon(
+                    Icons.store_outlined,
+                    size: AppDimensions.iconXs,
+                    color: colors.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: AppDimensions.s6),
+                  Expanded(
+                    child: Text(
+                      member.branch,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
-                const Spacer(),
                 if (member.phone.isNotEmpty) ...[
-                  Icon(Icons.phone_outlined, size: 14, color: colorScheme.primary),
-                  const SizedBox(width: 6),
-                  Text(
-                    member.phone,
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.primary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 11,
+                  Icon(
+                    Icons.phone_outlined,
+                    size: AppDimensions.iconXs,
+                    color: colors.primary,
+                  ),
+                  const SizedBox(width: AppDimensions.s6),
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      member.phone,
+                      style: AppTextStyles.mono(color: colors.primary)
+                          .copyWith(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11,
+                          ),
                     ),
                   ),
                 ],
@@ -836,6 +515,303 @@ class _StaffCard extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// Frozen role values stay English in state; only the rendered labels
+/// localize — presentation-only mapping.
+String _roleLabel(OwnerLocalizations t, String value) => switch (value) {
+      'supervisor' => t.ownerTmSupervisors,
+      'technician' => t.ownerTmTechnicians,
+      _ => t.ownerTmAdvisors,
+    };
+
+String _roleValue(OwnerLocalizations t, String label) {
+  if (label == t.ownerTmSupervisors) return 'supervisor';
+  if (label == t.ownerTmTechnicians) return 'technician';
+  return 'advisor';
+}
+
+/// Add-member sheet: the frozen `addMember` contract with shared inputs.
+/// Validation mirrors the old rules with localized copy; the provider's
+/// error string toasts on failure and the created dialog confirms success.
+class _AddMemberSheet extends StatefulWidget {
+  final TeamNotifier notifier;
+  final List<BranchOption> branches;
+
+  const _AddMemberSheet({required this.notifier, required this.branches});
+
+  @override
+  State<_AddMemberSheet> createState() => _AddMemberSheetState();
+}
+
+class _AddMemberSheetState extends State<_AddMemberSheet> {
+  final _name = TextEditingController();
+  final _empId = TextEditingController();
+  final _phone = TextEditingController();
+  final _email = TextEditingController();
+  final _password = TextEditingController();
+  final _confirm = TextEditingController();
+  final _shift = TextEditingController();
+  final _designation = TextEditingController();
+  final _department = TextEditingController();
+  String _role = 'advisor';
+  String? _branchId;
+  bool _busy = false;
+  final _errors = <String, String?>{};
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _empId.dispose();
+    _phone.dispose();
+    _email.dispose();
+    _password.dispose();
+    _confirm.dispose();
+    _shift.dispose();
+    _designation.dispose();
+    _department.dispose();
+    super.dispose();
+  }
+
+  String? _required(OwnerLocalizations t, String value) =>
+      value.trim().isEmpty ? t.ownerReqRequired : null;
+
+  Future<void> _submit() async {
+    final t = OwnerLocalizations.of(context)!;
+    final errors = <String, String?>{
+      'name': _required(t, _name.text),
+      'empId': _required(t, _empId.text),
+      'phone': _phone.text.replaceAll(RegExp(r'[^0-9]'), '').length < 8
+          ? t.ownerReqPhone
+          : null,
+      'email': () {
+        final email = _email.text.trim();
+        return !email.contains('@') || !email.contains('.')
+            ? t.ownerReqEmail
+            : null;
+      }(),
+      'password':
+          _password.text.length < 8 ? t.ownerReqPassword : null,
+      'confirm':
+          _confirm.text != _password.text ? t.ownerReqMatch : null,
+      'branch': widget.branches.isNotEmpty && _branchId == null
+          ? t.ownerReqRequired
+          : null,
+    };
+    setState(() {
+      _errors
+        ..clear()
+        ..addAll(errors);
+    });
+    if (errors.values.any((e) => e != null)) return;
+    setState(() => _busy = true);
+    final branchName = widget.branches
+        .where((b) => b.id == _branchId)
+        .map((b) => b.name)
+        .firstOrNull;
+    final error = await widget.notifier.addMember({
+      'name': _name.text.trim(),
+      'empId': _empId.text.trim().toUpperCase(),
+      'role': _role,
+      'phone': _phone.text.trim(),
+      'email': _email.text.trim().toLowerCase(),
+      'password': _password.text,
+      if (_branchId != null) 'branchId': int.parse(_branchId!),
+      'branch': branchName ?? '',
+      'shift': _shift.text.trim(),
+      'designation': _designation.text.trim(),
+      'department': _department.text.trim(),
+    });
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error), behavior: SnackBarBehavior.floating),
+      );
+      return;
+    }
+    Navigator.pop(context);
+    if (!mounted) return;
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        icon: const Icon(Icons.verified_user_rounded, size: 38),
+        title: Text(t.ownerTmCreated),
+        content: Text(
+          '${_name.text.trim()}\n\n${t.ownerTmCreatedBody}',
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(t.ownerTmDone),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = OwnerLocalizations.of(context)!;
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          AppDimensions.s20,
+          AppDimensions.s8,
+          AppDimensions.s20,
+          AppDimensions.s20 + MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Semantics(
+                header: true,
+                child: SectionHeader(
+                  title: t.ownerTmAddTitle,
+                  subtitle: t.ownerTmAddSubtitle,
+                  padding:
+                      const EdgeInsets.only(bottom: AppDimensions.s12),
+                ),
+              ),
+              AppTextField(
+                controller: _name,
+                label: t.ownerTmName,
+                hint: t.ownerTmName,
+                errorText: _errors['name'],
+              ),
+              const SizedBox(height: AppDimensions.s12),
+              AppTextField(
+                controller: _empId,
+                label: t.ownerTmEmpId,
+                hint: t.ownerTmEmpId,
+                errorText: _errors['empId'],
+              ),
+              const SizedBox(height: AppDimensions.s12),
+              AppDropdownButton(
+                value: _roleLabel(t, _role),
+                items: [
+                  _roleLabel(t, 'advisor'),
+                  _roleLabel(t, 'supervisor'),
+                  _roleLabel(t, 'technician'),
+                ],
+                label: t.ownerTmRole,
+                onChanged: (v) => setState(() => _role = _roleValue(t, v)),
+              ),
+              const SizedBox(height: AppDimensions.s16),
+              Text(
+                t.ownerTmLogin,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+              const SizedBox(height: AppDimensions.s10),
+              AppTextField(
+                controller: _phone,
+                label: t.ownerTmPhone,
+                hint: t.ownerTmPhone,
+                keyboardType: TextInputType.phone,
+                errorText: _errors['phone'],
+              ),
+              const SizedBox(height: AppDimensions.s12),
+              AppTextField(
+                controller: _email,
+                label: t.ownerTmEmail,
+                hint: t.ownerTmEmail,
+                keyboardType: TextInputType.emailAddress,
+                errorText: _errors['email'],
+              ),
+              const SizedBox(height: AppDimensions.s12),
+              AppTextField(
+                controller: _password,
+                label: t.ownerTmPassword,
+                hint: t.ownerTmPassword,
+                obscureText: true,
+                errorText: _errors['password'],
+              ),
+              const SizedBox(height: AppDimensions.s12),
+              AppTextField(
+                controller: _confirm,
+                label: t.ownerTmPassword2,
+                hint: t.ownerTmPassword2,
+                obscureText: true,
+                errorText: _errors['confirm'],
+              ),
+              const SizedBox(height: AppDimensions.s8),
+              Text(
+                t.ownerTmOtpNote,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
+              const SizedBox(height: AppDimensions.s16),
+              Text(
+                t.ownerTmWork,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+              const SizedBox(height: AppDimensions.s10),
+              AppTextField(
+                controller: _designation,
+                label: t.ownerTmDesignation,
+                hint: t.ownerTmDesignation,
+              ),
+              const SizedBox(height: AppDimensions.s12),
+              AppTextField(
+                controller: _department,
+                label: t.ownerTmDepartment,
+                hint: t.ownerTmDepartment,
+              ),
+              const SizedBox(height: AppDimensions.s12),
+              AppDropdownButton(
+                value: _branchId ?? '',
+                items: [
+                  for (final b in widget.branches) b.name,
+                ],
+                label: t.ownerTmBranch,
+                hint: widget.branches.isEmpty
+                    ? t.ownerTmNoBranches
+                    : t.ownerTmBranchHint,
+                enabled: widget.branches.isNotEmpty,
+                onChanged: (name) {
+                  final match = widget.branches
+                      .where((b) => b.name == name)
+                      .firstOrNull;
+                  setState(() => _branchId = match?.id);
+                },
+              ),
+              if (_errors['branch'] != null) ...[
+                const SizedBox(height: AppDimensions.s6),
+                Text(
+                  _errors['branch']!,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                ),
+              ],
+              const SizedBox(height: AppDimensions.s12),
+              AppTextField(
+                controller: _shift,
+                label: t.ownerTmShift,
+                hint: t.ownerTmShift,
+              ),
+              const SizedBox(height: AppDimensions.s20),
+              PrimaryButton(
+                label: t.ownerTmSubmit,
+                icon: Icons.person_add_alt_1_rounded,
+                isLoading: _busy,
+                onPressed: _busy ? null : _submit,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

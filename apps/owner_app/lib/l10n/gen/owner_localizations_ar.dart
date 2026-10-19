@@ -552,4 +552,468 @@ class OwnerLocalizationsAr extends OwnerLocalizations {
 
   @override
   String get ownerApNoAction => 'إجراءات الموافقة غير متاحة في هذه النسخة.';
+
+  @override
+  String get ownerReqRequired => 'هذا الحقل مطلوب.';
+
+  @override
+  String get ownerReqEmail => 'أدخل بريدًا إلكترونيًا صالحًا.';
+
+  @override
+  String get ownerReqPhone => 'أدخل رقم جوال صالحًا.';
+
+  @override
+  String get ownerReqPassword => 'يجب أن تكون كلمة المرور 8 أحرف على الأقل.';
+
+  @override
+  String get ownerReqMatch => 'كلمتا المرور غير متطابقتين.';
+
+  @override
+  String get ownerArTitle => 'الذمم';
+
+  @override
+  String ownerArSubtitle(String amount) {
+    return 'المستحق $amount';
+  }
+
+  @override
+  String get ownerArSearchHint => 'ابحث بالعميل أو الفاتورة أو رقم الذمة…';
+
+  @override
+  String get ownerArCurrent => 'الحالية';
+
+  @override
+  String get ownerArOverdue => 'المتأخرة';
+
+  @override
+  String get ownerArCritical => 'الحرجة';
+
+  @override
+  String get ownerArAge030 => '0–30 يومًا';
+
+  @override
+  String get ownerArAge3160 => '31–60 يومًا';
+
+  @override
+  String get ownerArAge61 => '60+ يومًا';
+
+  @override
+  String get ownerArRef => 'المرجع';
+
+  @override
+  String get ownerArCustomer => 'العميل';
+
+  @override
+  String get ownerArAmount => 'المبلغ';
+
+  @override
+  String get ownerArAge => 'العمر';
+
+  @override
+  String get ownerArAge030pill => '0–30';
+
+  @override
+  String get ownerArAge3160pill => '31–60';
+
+  @override
+  String get ownerArAge6190pill => '61–90';
+
+  @override
+  String get ownerArAge90pill => '90+';
+
+  @override
+  String get ownerArEmpty => 'لا ذمم مستحقة.';
+
+  @override
+  String get ownerArNoMatch => 'لا مدينين يطابقون هذا البحث.';
+
+  @override
+  String get ownerArContact => 'جهة الفوترة';
+
+  @override
+  String ownerArCount(int count) {
+    return '$count مدينين';
+  }
+
+  @override
+  String get ownerInTitle => 'المخزون';
+
+  @override
+  String get ownerInValuation => 'تقييم المخزون';
+
+  @override
+  String get ownerInAtCost => 'بالتكلفة';
+
+  @override
+  String ownerInLow(int count) {
+    return '$count عند حد إعادة الطلب أو دونه';
+  }
+
+  @override
+  String ownerInOut(int count) {
+    return '$count نافذة';
+  }
+
+  @override
+  String get ownerInStockOk => 'مستويات المخزون سليمة.';
+
+  @override
+  String get ownerInParts => 'القطع';
+
+  @override
+  String get ownerInSuppliers => 'الموردون';
+
+  @override
+  String get ownerInOrders => 'الطلبات';
+
+  @override
+  String get ownerInSearchHint => 'ابحث بالاسم أو الرمز أو الفئة…';
+
+  @override
+  String get ownerInFilter => 'تصفية المخزون';
+
+  @override
+  String get ownerInCategory => 'الفئة';
+
+  @override
+  String get ownerInAvailability => 'التوفر';
+
+  @override
+  String get ownerInAllStock => 'كل المخزون';
+
+  @override
+  String get ownerInLowOnly => 'المنخفض فقط';
+
+  @override
+  String get ownerInApply => 'تطبيق';
+
+  @override
+  String get ownerInClear => 'مسح';
+
+  @override
+  String get ownerInEmpty => 'لا قطع في المخزون.';
+
+  @override
+  String get ownerInNoMatch => 'لا قطع تطابق هذا البحث.';
+
+  @override
+  String ownerInStockLeft(int count) {
+    return 'المتبقي $count';
+  }
+
+  @override
+  String get ownerInAdd => 'إضافة قطعة';
+
+  @override
+  String get ownerInAddTitle => 'إضافة قطعة للمخزون';
+
+  @override
+  String get ownerInName => 'اسم القطعة';
+
+  @override
+  String get ownerInSku => 'الرمز / رقم القطعة';
+
+  @override
+  String get ownerInPrice => 'السعر (د.إ)';
+
+  @override
+  String get ownerInQty => 'الكمية الأولية';
+
+  @override
+  String get ownerInQtyCol => 'الكمية';
+
+  @override
+  String get ownerInReorder => 'حد تنبيه إعادة الطلب';
+
+  @override
+  String get ownerInSubmit => 'إضافة للمستودع';
+
+  @override
+  String get ownerInAdded => 'تمت إضافة القطعة للمستودع.';
+
+  @override
+  String get ownerInAddFail => 'تعذر إضافة الصنف.';
+
+  @override
+  String get ownerInAdjustFail => 'تعذر تعديل المخزون.';
+
+  @override
+  String get ownerInNoSuppliers => 'لا موردون مسجلون.';
+
+  @override
+  String get ownerInNoOrders => 'لا طلبات شراء.';
+
+  @override
+  String get ownerInNoPhone => 'لا هاتف مسجل.';
+
+  @override
+  String get ownerTmTitle => 'الفريق';
+
+  @override
+  String ownerTmSubtitle(int active, int total) {
+    return '$active من $total نشطون';
+  }
+
+  @override
+  String get ownerTmDirectory => 'دليل الموظفين';
+
+  @override
+  String get ownerTmSearchHint =>
+      'ابحث بالاسم أو الرقم أو الهاتف أو الدور أو الفرع…';
+
+  @override
+  String get ownerTmAdvisors => 'المستشارون';
+
+  @override
+  String get ownerTmSupervisors => 'المشرفون';
+
+  @override
+  String get ownerTmTechnicians => 'الفنيون';
+
+  @override
+  String get ownerTmEmpty => 'لا موظفون يطابقون هذا الترشيح.';
+
+  @override
+  String get ownerTmActive => 'نشط';
+
+  @override
+  String get ownerTmOff => 'موقوف';
+
+  @override
+  String get ownerTmOnShift => 'على رأس العمل';
+
+  @override
+  String get ownerTmOffShift => 'خارج العمل';
+
+  @override
+  String get ownerTmAdd => 'إضافة عضو';
+
+  @override
+  String get ownerTmAddTitle => 'إنشاء دخول موظف';
+
+  @override
+  String get ownerTmAddSubtitle => 'أنشئ دخوله لتطبيق الموظفين وبيانات الورشة.';
+
+  @override
+  String get ownerTmName => 'الاسم الكامل';
+
+  @override
+  String get ownerTmEmpId => 'الرقم الوظيفي (مثال ADV002)';
+
+  @override
+  String get ownerTmRole => 'دور تطبيق الموظفين';
+
+  @override
+  String get ownerTmLogin => 'بيانات الدخول';
+
+  @override
+  String get ownerTmPhone => 'الجوال مع رمز الدولة';
+
+  @override
+  String get ownerTmEmail => 'البريد الإلكتروني';
+
+  @override
+  String get ownerTmPassword => 'كلمة مرور أولية (8 أحرف على الأقل)';
+
+  @override
+  String get ownerTmPassword2 => 'تأكيد كلمة المرور الأولية';
+
+  @override
+  String get ownerTmOtpNote =>
+      'يمكنه الدخول بالبريد أو الجوال + كلمة المرور، أو برمز لمرة واحدة.';
+
+  @override
+  String get ownerTmWork => 'بيانات العمل';
+
+  @override
+  String get ownerTmDesignation => 'المسمى';
+
+  @override
+  String get ownerTmDepartment => 'القسم';
+
+  @override
+  String get ownerTmBranch => 'الفرع';
+
+  @override
+  String get ownerTmBranchHint => 'اختر الفرع';
+
+  @override
+  String get ownerTmNoBranches => 'لا فروع مُعدّة.';
+
+  @override
+  String get ownerTmShift => 'الوردية';
+
+  @override
+  String get ownerTmSubmit => 'إنشاء حساب الموظف';
+
+  @override
+  String get ownerTmCreated => 'تم إنشاء دخول الموظف.';
+
+  @override
+  String get ownerTmCreatedBody =>
+      'شارك كلمة المرور الأولية بأمان واطلب منه تغييرها بعد الدخول.';
+
+  @override
+  String get ownerTmDone => 'تم';
+
+  @override
+  String get ownerAtTitle => 'الحضور';
+
+  @override
+  String get ownerAtSubtitle => 'سجل الدوام اليومي';
+
+  @override
+  String get ownerAtTotal => 'إجمالي الموظفين';
+
+  @override
+  String get ownerAtPresent => 'الحاضرون';
+
+  @override
+  String get ownerAtDone => 'المكتملون';
+
+  @override
+  String get ownerAtAbsent => 'الغائبون';
+
+  @override
+  String get ownerAtAllRoles => 'كل الأدوار';
+
+  @override
+  String get ownerAtEmpty => 'لا سجلات حضور.';
+
+  @override
+  String get ownerAtIn => 'الحضور';
+
+  @override
+  String get ownerAtOut => 'الانصراف';
+
+  @override
+  String get ownerAtHours => 'الساعات';
+
+  @override
+  String get ownerAtWorking => 'يعمل';
+
+  @override
+  String get ownerAtBreak => 'في استراحة';
+
+  @override
+  String get ownerAtComplete => 'مكتمل';
+
+  @override
+  String get ownerAtIdle => 'لم يسجل حضور';
+
+  @override
+  String get ownerExTitle => 'الامتثال';
+
+  @override
+  String get ownerExSubtitle => 'الرخص والتصاريح والتأشيرات';
+
+  @override
+  String get ownerExSearchHint => 'ابحث بالموظف أو الدور أو المستند…';
+
+  @override
+  String get ownerExCritical => 'حرجة';
+
+  @override
+  String get ownerExUrgent => 'عاجلة';
+
+  @override
+  String get ownerExWatch => 'للمراقبة';
+
+  @override
+  String ownerExDaysLeft(int days) {
+    return 'متبقٍ $days يوم';
+  }
+
+  @override
+  String ownerExOverdue(int days) {
+    return 'متأخر $days يوم';
+  }
+
+  @override
+  String get ownerExEmpty => 'لا مستندات.';
+
+  @override
+  String ownerExAlerts(int count) {
+    return '$count تنبيهات';
+  }
+
+  @override
+  String get ownerFbTitle => 'التقييمات';
+
+  @override
+  String get ownerFbSubtitle => 'صندوق تقييمات العملاء';
+
+  @override
+  String get ownerFbEmpty => 'لا تقييمات بانتظار المراجعة.';
+
+  @override
+  String get ownerFbVerified => 'عميل موثّق';
+
+  @override
+  String get ownerFbApprove => 'اعتماد';
+
+  @override
+  String get ownerFbReject => 'رفض';
+
+  @override
+  String get ownerFbDone => 'تمت مراجعة التقييم.';
+
+  @override
+  String get ownerFbFail => 'فشلت المراجعة. حاول مرة أخرى.';
+
+  @override
+  String get ownerFbNoRespond => 'الردود غير متاحة في هذه النسخة.';
+
+  @override
+  String get ownerSbTitle => 'الاشتراك';
+
+  @override
+  String get ownerSbCurrent => 'الباقة الحالية';
+
+  @override
+  String ownerSbRenews(String date) {
+    return 'التجديد $date';
+  }
+
+  @override
+  String get ownerSbPlans => 'باقات الورشة';
+
+  @override
+  String get ownerSbSelect => 'اختيار';
+
+  @override
+  String get ownerSbCurrentPlan => 'الحالية';
+
+  @override
+  String get ownerSbChanged => 'تم تحديث الباقة.';
+
+  @override
+  String get ownerSbChangeFail => 'تعذر تحديث الباقة.';
+
+  @override
+  String get ownerSbStarter => 'الأساسية';
+
+  @override
+  String get ownerSbStarterHint => 'ورش الفروع الواحدة';
+
+  @override
+  String get ownerSbPro => 'الاحترافية';
+
+  @override
+  String get ownerSbProHint => 'متعدد الفروع + CRM + مخزون';
+
+  @override
+  String get ownerSbEnterprise => 'المؤسسات';
+
+  @override
+  String get ownerSbEnterpriseHint => 'SSO واتفاقيات ومدير مخصص';
+
+  @override
+  String get ownerSbStarterPrice => '499 د.إ / شهر';
+
+  @override
+  String get ownerSbProPrice => '1,299 د.إ / شهر';
+
+  @override
+  String get ownerSbEnterprisePrice => '2,499 د.إ / شهر';
 }

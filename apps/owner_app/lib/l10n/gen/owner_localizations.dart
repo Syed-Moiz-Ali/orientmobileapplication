@@ -1147,6 +1147,888 @@ abstract class OwnerLocalizations {
   /// In en, this message translates to:
   /// **'Approval actions are not available in this version.'**
   String get ownerApNoAction;
+
+  /// Shared required-field error
+  ///
+  /// In en, this message translates to:
+  /// **'This field is required.'**
+  String get ownerReqRequired;
+
+  /// Shared email error
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address.'**
+  String get ownerReqEmail;
+
+  /// Shared phone error
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid mobile number.'**
+  String get ownerReqPhone;
+
+  /// Shared password error
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 8 characters.'**
+  String get ownerReqPassword;
+
+  /// Shared password-match error
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match.'**
+  String get ownerReqMatch;
+
+  /// AR app-bar title
+  ///
+  /// In en, this message translates to:
+  /// **'Receivables'**
+  String get ownerArTitle;
+
+  /// AR app-bar subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Outstanding {amount}'**
+  String ownerArSubtitle(String amount);
+
+  /// AR search hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search customer, invoice or AR ID…'**
+  String get ownerArSearchHint;
+
+  /// Aging bucket
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get ownerArCurrent;
+
+  /// Aging bucket
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get ownerArOverdue;
+
+  /// Aging bucket
+  ///
+  /// In en, this message translates to:
+  /// **'Critical'**
+  String get ownerArCritical;
+
+  /// Bucket range
+  ///
+  /// In en, this message translates to:
+  /// **'0–30 days'**
+  String get ownerArAge030;
+
+  /// Bucket range
+  ///
+  /// In en, this message translates to:
+  /// **'31–60 days'**
+  String get ownerArAge3160;
+
+  /// Bucket range
+  ///
+  /// In en, this message translates to:
+  /// **'60+ days'**
+  String get ownerArAge61;
+
+  /// Ledger column
+  ///
+  /// In en, this message translates to:
+  /// **'Ref'**
+  String get ownerArRef;
+
+  /// Ledger column
+  ///
+  /// In en, this message translates to:
+  /// **'Customer'**
+  String get ownerArCustomer;
+
+  /// Ledger column
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get ownerArAmount;
+
+  /// Ledger column
+  ///
+  /// In en, this message translates to:
+  /// **'Age'**
+  String get ownerArAge;
+
+  /// Age pill
+  ///
+  /// In en, this message translates to:
+  /// **'0–30'**
+  String get ownerArAge030pill;
+
+  /// Age pill
+  ///
+  /// In en, this message translates to:
+  /// **'31–60'**
+  String get ownerArAge3160pill;
+
+  /// Age pill
+  ///
+  /// In en, this message translates to:
+  /// **'61–90'**
+  String get ownerArAge6190pill;
+
+  /// Age pill
+  ///
+  /// In en, this message translates to:
+  /// **'90+'**
+  String get ownerArAge90pill;
+
+  /// Ledger empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No receivables found.'**
+  String get ownerArEmpty;
+
+  /// Ledger no-match state
+  ///
+  /// In en, this message translates to:
+  /// **'No debtors match this search.'**
+  String get ownerArNoMatch;
+
+  /// Contact sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Billing contact'**
+  String get ownerArContact;
+
+  /// Ledger count pill
+  ///
+  /// In en, this message translates to:
+  /// **'{count} debtors'**
+  String ownerArCount(int count);
+
+  /// Inventory app-bar title
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory'**
+  String get ownerInTitle;
+
+  /// Valuation hero label
+  ///
+  /// In en, this message translates to:
+  /// **'Stock valuation'**
+  String get ownerInValuation;
+
+  /// Valuation basis note
+  ///
+  /// In en, this message translates to:
+  /// **'At cost'**
+  String get ownerInAtCost;
+
+  /// Reorder strip
+  ///
+  /// In en, this message translates to:
+  /// **'{count} at or below reorder level'**
+  String ownerInLow(int count);
+
+  /// Out-of-stock strip
+  ///
+  /// In en, this message translates to:
+  /// **'{count} out of stock'**
+  String ownerInOut(int count);
+
+  /// Healthy strip
+  ///
+  /// In en, this message translates to:
+  /// **'Stock levels healthy.'**
+  String get ownerInStockOk;
+
+  /// Parts tab
+  ///
+  /// In en, this message translates to:
+  /// **'Parts'**
+  String get ownerInParts;
+
+  /// Suppliers tab
+  ///
+  /// In en, this message translates to:
+  /// **'Suppliers'**
+  String get ownerInSuppliers;
+
+  /// Orders tab
+  ///
+  /// In en, this message translates to:
+  /// **'Orders'**
+  String get ownerInOrders;
+
+  /// Parts search hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search parts by name, SKU or category…'**
+  String get ownerInSearchHint;
+
+  /// Filter sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Filter stock'**
+  String get ownerInFilter;
+
+  /// Filter section
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get ownerInCategory;
+
+  /// Filter section
+  ///
+  /// In en, this message translates to:
+  /// **'Availability'**
+  String get ownerInAvailability;
+
+  /// Filter option
+  ///
+  /// In en, this message translates to:
+  /// **'All stock'**
+  String get ownerInAllStock;
+
+  /// Filter option
+  ///
+  /// In en, this message translates to:
+  /// **'Low stock only'**
+  String get ownerInLowOnly;
+
+  /// Filter apply
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get ownerInApply;
+
+  /// Filter clear
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get ownerInClear;
+
+  /// Parts empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No parts in stock.'**
+  String get ownerInEmpty;
+
+  /// Parts no-match state
+  ///
+  /// In en, this message translates to:
+  /// **'No parts match this search.'**
+  String get ownerInNoMatch;
+
+  /// Quantity pill
+  ///
+  /// In en, this message translates to:
+  /// **'{count} left'**
+  String ownerInStockLeft(int count);
+
+  /// Add CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Add part'**
+  String get ownerInAdd;
+
+  /// Add sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Add inventory part'**
+  String get ownerInAddTitle;
+
+  /// Name field
+  ///
+  /// In en, this message translates to:
+  /// **'Part / item name'**
+  String get ownerInName;
+
+  /// SKU field
+  ///
+  /// In en, this message translates to:
+  /// **'SKU / part number'**
+  String get ownerInSku;
+
+  /// Price field
+  ///
+  /// In en, this message translates to:
+  /// **'Price (AED)'**
+  String get ownerInPrice;
+
+  /// Qty field
+  ///
+  /// In en, this message translates to:
+  /// **'Initial qty'**
+  String get ownerInQty;
+
+  /// Qty column
+  ///
+  /// In en, this message translates to:
+  /// **'Qty'**
+  String get ownerInQtyCol;
+
+  /// Reorder field
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder alert level'**
+  String get ownerInReorder;
+
+  /// Add submit
+  ///
+  /// In en, this message translates to:
+  /// **'Add to warehouse'**
+  String get ownerInSubmit;
+
+  /// Add toast
+  ///
+  /// In en, this message translates to:
+  /// **'Part added to warehouse.'**
+  String get ownerInAdded;
+
+  /// Add failure toast
+  ///
+  /// In en, this message translates to:
+  /// **'Could not add item.'**
+  String get ownerInAddFail;
+
+  /// Adjust failure toast
+  ///
+  /// In en, this message translates to:
+  /// **'Could not adjust stock.'**
+  String get ownerInAdjustFail;
+
+  /// Suppliers empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No suppliers recorded.'**
+  String get ownerInNoSuppliers;
+
+  /// Orders empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No purchase orders placed.'**
+  String get ownerInNoOrders;
+
+  /// Missing phone note
+  ///
+  /// In en, this message translates to:
+  /// **'No contact phone.'**
+  String get ownerInNoPhone;
+
+  /// Team app-bar title
+  ///
+  /// In en, this message translates to:
+  /// **'Team'**
+  String get ownerTmTitle;
+
+  /// Team app-bar subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'{active} of {total} active'**
+  String ownerTmSubtitle(int active, int total);
+
+  /// Directory header
+  ///
+  /// In en, this message translates to:
+  /// **'Staff directory'**
+  String get ownerTmDirectory;
+
+  /// Team search hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search name, ID, phone, role or branch…'**
+  String get ownerTmSearchHint;
+
+  /// Role chip
+  ///
+  /// In en, this message translates to:
+  /// **'Advisors'**
+  String get ownerTmAdvisors;
+
+  /// Role chip
+  ///
+  /// In en, this message translates to:
+  /// **'Supervisors'**
+  String get ownerTmSupervisors;
+
+  /// Role chip
+  ///
+  /// In en, this message translates to:
+  /// **'Technicians'**
+  String get ownerTmTechnicians;
+
+  /// Directory empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No staff match this filter.'**
+  String get ownerTmEmpty;
+
+  /// Active pill
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get ownerTmActive;
+
+  /// Inactive pill
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get ownerTmOff;
+
+  /// Clock-in pill
+  ///
+  /// In en, this message translates to:
+  /// **'On shift'**
+  String get ownerTmOnShift;
+
+  /// Clock-out pill
+  ///
+  /// In en, this message translates to:
+  /// **'Off shift'**
+  String get ownerTmOffShift;
+
+  /// Add CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Add member'**
+  String get ownerTmAdd;
+
+  /// Add sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Create staff login'**
+  String get ownerTmAddTitle;
+
+  /// Add sheet subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Create their Staff app access and workshop details.'**
+  String get ownerTmAddSubtitle;
+
+  /// Name field
+  ///
+  /// In en, this message translates to:
+  /// **'Full name'**
+  String get ownerTmName;
+
+  /// ID field
+  ///
+  /// In en, this message translates to:
+  /// **'Staff ID (e.g. ADV002)'**
+  String get ownerTmEmpId;
+
+  /// Role field
+  ///
+  /// In en, this message translates to:
+  /// **'Staff app role'**
+  String get ownerTmRole;
+
+  /// Credentials section
+  ///
+  /// In en, this message translates to:
+  /// **'Login credentials'**
+  String get ownerTmLogin;
+
+  /// Phone field
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile number with country code'**
+  String get ownerTmPhone;
+
+  /// Email field
+  ///
+  /// In en, this message translates to:
+  /// **'Email address'**
+  String get ownerTmEmail;
+
+  /// Password field
+  ///
+  /// In en, this message translates to:
+  /// **'Initial password (minimum 8 characters)'**
+  String get ownerTmPassword;
+
+  /// Confirm field
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm initial password'**
+  String get ownerTmPassword2;
+
+  /// OTP note
+  ///
+  /// In en, this message translates to:
+  /// **'They can sign in with email or mobile + password, or use an OTP.'**
+  String get ownerTmOtpNote;
+
+  /// Work section
+  ///
+  /// In en, this message translates to:
+  /// **'Work details'**
+  String get ownerTmWork;
+
+  /// Designation field
+  ///
+  /// In en, this message translates to:
+  /// **'Designation'**
+  String get ownerTmDesignation;
+
+  /// Department field
+  ///
+  /// In en, this message translates to:
+  /// **'Department'**
+  String get ownerTmDepartment;
+
+  /// Branch field
+  ///
+  /// In en, this message translates to:
+  /// **'Branch'**
+  String get ownerTmBranch;
+
+  /// Branch hint
+  ///
+  /// In en, this message translates to:
+  /// **'Select a branch'**
+  String get ownerTmBranchHint;
+
+  /// Empty branches note
+  ///
+  /// In en, this message translates to:
+  /// **'No branches configured.'**
+  String get ownerTmNoBranches;
+
+  /// Shift field
+  ///
+  /// In en, this message translates to:
+  /// **'Shift'**
+  String get ownerTmShift;
+
+  /// Add submit
+  ///
+  /// In en, this message translates to:
+  /// **'Create staff account'**
+  String get ownerTmSubmit;
+
+  /// Created title
+  ///
+  /// In en, this message translates to:
+  /// **'Staff login created.'**
+  String get ownerTmCreated;
+
+  /// Created body
+  ///
+  /// In en, this message translates to:
+  /// **'Share the initial password securely and ask them to change it after signing in.'**
+  String get ownerTmCreatedBody;
+
+  /// Dialog done
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get ownerTmDone;
+
+  /// Attendance app-bar title
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance'**
+  String get ownerAtTitle;
+
+  /// Attendance subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Daily clock register'**
+  String get ownerAtSubtitle;
+
+  /// Strip label
+  ///
+  /// In en, this message translates to:
+  /// **'Total staff'**
+  String get ownerAtTotal;
+
+  /// Strip label
+  ///
+  /// In en, this message translates to:
+  /// **'Present'**
+  String get ownerAtPresent;
+
+  /// Strip label
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get ownerAtDone;
+
+  /// Strip label
+  ///
+  /// In en, this message translates to:
+  /// **'Absent'**
+  String get ownerAtAbsent;
+
+  /// Role chip
+  ///
+  /// In en, this message translates to:
+  /// **'All roles'**
+  String get ownerAtAllRoles;
+
+  /// Records empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No attendance records.'**
+  String get ownerAtEmpty;
+
+  /// Punch-in row
+  ///
+  /// In en, this message translates to:
+  /// **'Clock in'**
+  String get ownerAtIn;
+
+  /// Punch-out row
+  ///
+  /// In en, this message translates to:
+  /// **'Clock out'**
+  String get ownerAtOut;
+
+  /// Hours row
+  ///
+  /// In en, this message translates to:
+  /// **'Hours'**
+  String get ownerAtHours;
+
+  /// Status pill
+  ///
+  /// In en, this message translates to:
+  /// **'Working'**
+  String get ownerAtWorking;
+
+  /// Status pill
+  ///
+  /// In en, this message translates to:
+  /// **'On break'**
+  String get ownerAtBreak;
+
+  /// Status pill
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get ownerAtComplete;
+
+  /// Status pill
+  ///
+  /// In en, this message translates to:
+  /// **'Not punched in'**
+  String get ownerAtIdle;
+
+  /// Expiry app-bar title
+  ///
+  /// In en, this message translates to:
+  /// **'Compliance'**
+  String get ownerExTitle;
+
+  /// Expiry subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Licenses, permits and visas'**
+  String get ownerExSubtitle;
+
+  /// Expiry search hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search employee, role or document…'**
+  String get ownerExSearchHint;
+
+  /// Urgency band
+  ///
+  /// In en, this message translates to:
+  /// **'Critical'**
+  String get ownerExCritical;
+
+  /// Urgency band
+  ///
+  /// In en, this message translates to:
+  /// **'Urgent'**
+  String get ownerExUrgent;
+
+  /// Urgency band
+  ///
+  /// In en, this message translates to:
+  /// **'Watch'**
+  String get ownerExWatch;
+
+  /// Countdown pill
+  ///
+  /// In en, this message translates to:
+  /// **'{days}d left'**
+  String ownerExDaysLeft(int days);
+
+  /// Overdue pill
+  ///
+  /// In en, this message translates to:
+  /// **'{days}d overdue'**
+  String ownerExOverdue(int days);
+
+  /// Expiry empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No documents found.'**
+  String get ownerExEmpty;
+
+  /// Alert count pill
+  ///
+  /// In en, this message translates to:
+  /// **'{count} alerts'**
+  String ownerExAlerts(int count);
+
+  /// Feedback app-bar title
+  ///
+  /// In en, this message translates to:
+  /// **'Reviews'**
+  String get ownerFbTitle;
+
+  /// Feedback subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Customer ratings inbox'**
+  String get ownerFbSubtitle;
+
+  /// Inbox empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No reviews awaiting moderation.'**
+  String get ownerFbEmpty;
+
+  /// Anonymous fallback
+  ///
+  /// In en, this message translates to:
+  /// **'Verified customer'**
+  String get ownerFbVerified;
+
+  /// Approve CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get ownerFbApprove;
+
+  /// Reject CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get ownerFbReject;
+
+  /// Moderation toast
+  ///
+  /// In en, this message translates to:
+  /// **'Review moderated.'**
+  String get ownerFbDone;
+
+  /// Moderation failure toast
+  ///
+  /// In en, this message translates to:
+  /// **'Moderation failed. Try again.'**
+  String get ownerFbFail;
+
+  /// Honest read-only note
+  ///
+  /// In en, this message translates to:
+  /// **'Replies are not available in this version.'**
+  String get ownerFbNoRespond;
+
+  /// Subscription app-bar title
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription'**
+  String get ownerSbTitle;
+
+  /// Tier eyebrow
+  ///
+  /// In en, this message translates to:
+  /// **'Current tier'**
+  String get ownerSbCurrent;
+
+  /// Renewal line
+  ///
+  /// In en, this message translates to:
+  /// **'Renews {date}'**
+  String ownerSbRenews(String date);
+
+  /// Plans header
+  ///
+  /// In en, this message translates to:
+  /// **'Workshop plans'**
+  String get ownerSbPlans;
+
+  /// Plan CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get ownerSbSelect;
+
+  /// Current plan badge
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
+  String get ownerSbCurrentPlan;
+
+  /// Plan toast
+  ///
+  /// In en, this message translates to:
+  /// **'Plan updated.'**
+  String get ownerSbChanged;
+
+  /// Plan failure toast
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update plan.'**
+  String get ownerSbChangeFail;
+
+  /// Plan name
+  ///
+  /// In en, this message translates to:
+  /// **'Starter'**
+  String get ownerSbStarter;
+
+  /// Plan blurb
+  ///
+  /// In en, this message translates to:
+  /// **'Single-branch workshops'**
+  String get ownerSbStarterHint;
+
+  /// Plan name
+  ///
+  /// In en, this message translates to:
+  /// **'Professional'**
+  String get ownerSbPro;
+
+  /// Plan blurb
+  ///
+  /// In en, this message translates to:
+  /// **'Multi-branch + CRM + inventory'**
+  String get ownerSbProHint;
+
+  /// Plan name
+  ///
+  /// In en, this message translates to:
+  /// **'Enterprise'**
+  String get ownerSbEnterprise;
+
+  /// Plan blurb
+  ///
+  /// In en, this message translates to:
+  /// **'SSO, SLAs, dedicated manager'**
+  String get ownerSbEnterpriseHint;
+
+  /// Plan price
+  ///
+  /// In en, this message translates to:
+  /// **'AED 499 / mo'**
+  String get ownerSbStarterPrice;
+
+  /// Plan price
+  ///
+  /// In en, this message translates to:
+  /// **'AED 1,299 / mo'**
+  String get ownerSbProPrice;
+
+  /// Plan price
+  ///
+  /// In en, this message translates to:
+  /// **'AED 2,499 / mo'**
+  String get ownerSbEnterprisePrice;
 }
 
 class _OwnerLocalizationsDelegate

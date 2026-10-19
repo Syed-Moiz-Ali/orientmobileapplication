@@ -1,189 +1,327 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/subscription_providers.dart';
+import 'package:owner_app/l10n/gen/owner_localizations.dart';
 
+/// Plan catalog copy. Tier ids are the frozen `setPlan` contract values;
+/// only the rendered names change per locale.
+class _Plan {
+  final String id;
+  final String Function(OwnerLocalizations t) name;
+  final String Function(OwnerLocalizations t) hint;
+  final String Function(OwnerLocalizations t) price;
+
+  const _Plan({
+    required this.id,
+    required this.name,
+    required this.hint,
+    required this.price,
+  });
+}
+
+final _plans = <_Plan>[
+  _Plan(
+    id: 'starter',
+    name: (t) => t.ownerSbStarter,
+    hint: (t) => t.ownerSbStarterHint,
+    price: (t) => t.ownerSbStarterPrice,
+  ),
+  _Plan(
+    id: 'pro',
+    name: (t) => t.ownerSbPro,
+    hint: (t) => t.ownerSbProHint,
+    price: (t) => t.ownerSbProPrice,
+  ),
+  _Plan(
+    id: 'enterprise',
+    name: (t) => t.ownerSbEnterprise,
+    hint: (t) => t.ownerSbEnterpriseHint,
+    price: (t) => t.ownerSbEnterprisePrice,
+  ),
+];
+
+String _planName(OwnerLocalizations t, String id) =>
+    _plans.where((p) => p.id == id).firstOrNull?.name(t) ?? id;
+
+/// Subscription (O15): current-tier hero with renewal line plus the plan
+/// catalog over the frozen `setPlan` contract. There is no external manage
+/// route — the in-app plan switch (with themed result toasts) is the real
+/// management action.
 class SubscriptionView extends ConsumerWidget {
   const SubscriptionView({super.key});
 
-  static const _plans = [
-    ('starter', 'Starter Tier', 'For single-branch workshops & garages', 'AED 499 / mo'),
-    ('pro', 'Professional Hub', 'Multi-branch operations + CRM + inventory', 'AED 1,299 / mo'),
-    ('enterprise', 'Enterprise Fleet', 'Custom integrations, SSO, SLAs, dedicated AM', 'AED 2,499 / mo'),
-  ];
+  void _toast(BuildContext context, String msg, {required bool ok}) {
+    final ink = context.semanticColors.onPrimary;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              ok
+                  ? Icons.check_circle_outline_rounded
+                  : Icons.error_outline_rounded,
+              color: ink,
+              size: AppDimensions.iconSm,
+            ),
+            const SizedBox(width: AppDimensions.s8),
+            Expanded(
+              child: Text(
+                msg,
+                style: TextStyle(color: ink, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: ok
+            ? context.semanticColors.success.base
+            : Theme.of(context).colorScheme.error,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = OwnerLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
+    final colors = theme.colorScheme;
     final state = ref.watch(subscriptionProvider);
     final notifier = ref.read(subscriptionProvider.notifier);
 
+    final wide = context.adaptive.pick(
+      compact: false,
+      medium: false,
+      expanded: true,
+      large: true,
+    );
+
     return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          'Subscription & Billing',
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w900,
-            color: colorScheme.onSurface,
-          ),
-        ),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: WorkspaceAppBar(
+        title: t.ownerSbTitle,
+        showBack: true,
+        showOfflineStatus: true,
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh_rounded, color: colorScheme.onSurface),
-            onPressed: notifier.load,
+            tooltip: MaterialLocalizations.of(context)
+                .refreshIndicatorSemanticLabel,
+            icon: const Icon(Icons.refresh_rounded),
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              notifier.load();
+            },
           ),
         ],
       ),
-      body: state.isLoading
-          ? Center(child: CircularProgressIndicator(color: colorScheme.primary))
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-              children: [
-                AppCard(
-                  padding: const EdgeInsets.all(20),
-                  borderRadius: AppDimensions.r24,
-                  color: colorScheme.surface,
-                  borderColor: colorScheme.outlineVariant,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: SafeArea(
+        child: state.isLoading
+            ? const AppSkeleton.page()
+            : AppResponsivePage(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AppCard.standard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'CURRENT TIER',
-                            style: textTheme.labelSmall?.copyWith(
-                              fontWeight: FontWeight.w900,
-                              color: colorScheme.onSurfaceVariant,
-                              letterSpacing: 1.0,
-                            ),
-                          ),
-                          StatusPill(
-                            label: state.status.toUpperCase(),
-                            showDot: true,
-                            bg: const Color(0xFF10B981).withValues(alpha: 0.12),
-                            fg: const Color(0xFF10B981),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        state.plan.toUpperCase(),
-                        style: textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          color: colorScheme.primary,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      if (state.renewsAt.isNotEmpty) ...[
-                        const SizedBox(height: 6),
-                        Text(
-                          'Next billing cycle renewal: ${state.renewsAt}',
-                          style: textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'AVAILABLE WORKSHOP PLANS',
-                  style: textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: colorScheme.onSurfaceVariant,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ..._plans.map((p) {
-                  final selected = state.plan == p.$1;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: AppCard(
-                      padding: const EdgeInsets.all(18),
-                      borderRadius: AppDimensions.r20,
-                      color: selected
-                          ? colorScheme.primary.withValues(alpha: 0.06)
-                          : colorScheme.surface,
-                      borderColor: selected
-                          ? colorScheme.primary
-                          : colorScheme.outlineVariant,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      p.$2,
-                                      style: textTheme.titleSmall?.copyWith(
-                                        fontWeight: FontWeight.w900,
-                                        color: colorScheme.onSurface,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      p.$4,
-                                      style: textTheme.labelSmall?.copyWith(
-                                        color: colorScheme.primary,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  p.$3,
-                                  style: textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  t.ownerSbCurrent.toUpperCase(),
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: colors.onSurfaceVariant,
+                                    letterSpacing: 0.8,
                                   ),
                                 ),
-                              ],
+                              ),
+                              StatusPill.success(
+                                state.status.toUpperCase(),
+                                showDot: true,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppDimensions.s10),
+                          Directionality(
+                            textDirection: TextDirection.ltr,
+                            child: Text(
+                              _planName(t, state.plan).toUpperCase(),
+                              style: theme.textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: colors.primary,
+                                letterSpacing: -0.5,
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          if (selected)
-                            Icon(Icons.check_circle_rounded, color: colorScheme.primary, size: 24)
-                          else
-                            OutlinedButton(
-                              onPressed: () async {
-                                final err = await notifier.setPlan(p.$1);
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                    content: Text(err ?? 'Plan updated to ${p.$2}'),
-                                  ));
-                                }
-                              },
-                              style: OutlinedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(AppDimensions.r10),
+                          if (state.renewsAt.isNotEmpty) ...[
+                            const SizedBox(height: AppDimensions.s6),
+                            Directionality(
+                              textDirection: TextDirection.ltr,
+                              child: Text(
+                                t.ownerSbRenews(state.renewsAt),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: colors.onSurfaceVariant,
                                 ),
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               ),
-                              child: const Text('Select', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
                             ),
+                          ],
                         ],
                       ),
                     ),
-                  );
-                }),
-              ],
+                    const SizedBox(height: AppDimensions.s24),
+                    Semantics(
+                      header: true,
+                      child: SectionHeader(title: t.ownerSbPlans),
+                    ),
+                    if (wide)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (var i = 0; i < _plans.length; i++) ...[
+                            if (i > 0)
+                              const SizedBox(width: AppDimensions.s12),
+                            Expanded(
+                              child: _PlanCard(
+                                plan: _plans[i],
+                                selected:
+                                    state.plan == _plans[i].id,
+                                onSelect: () async {
+                                  HapticFeedback.selectionClick();
+                                  final err = await notifier
+                                      .setPlan(_plans[i].id);
+                                  if (!context.mounted) return;
+                                  _toast(
+                                    context,
+                                    err ?? t.ownerSbChanged,
+                                    ok: err == null,
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ],
+                      )
+                    else
+                      for (final plan in _plans) ...[
+                        _PlanCard(
+                          plan: plan,
+                          selected: state.plan == plan.id,
+                          onSelect: () async {
+                            HapticFeedback.selectionClick();
+                            final err =
+                                await notifier.setPlan(plan.id);
+                            if (!context.mounted) return;
+                            _toast(
+                              context,
+                              err ?? t.ownerSbChanged,
+                              ok: err == null,
+                            );
+                          },
+                        ),
+                        const SizedBox(height: AppDimensions.s12),
+                      ],
+                    const SizedBox(height: AppDimensions.s32),
+                  ],
+                ),
+              ),
+      ),
+    );
+  }
+}
+
+class _PlanCard extends StatelessWidget {
+  final _Plan plan;
+  final bool selected;
+  final VoidCallback onSelect;
+
+  const _PlanCard({
+    required this.plan,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = OwnerLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return AppCard(
+      padding: const EdgeInsets.all(AppDimensions.s16),
+      borderRadius: AppDimensions.radiusCard,
+      color: selected
+          ? colors.primary.withValues(alpha: 0.06)
+          : colors.surface,
+      borderColor:
+          selected ? colors.primary : colors.outlineVariant,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  plan.name(t),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colors.onSurface,
+                  ),
+                ),
+              ),
+              if (selected)
+                Icon(
+                  Icons.check_circle_rounded,
+                  color: colors.primary,
+                  size: 24,
+                ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              plan.price(t),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: colors.primary,
+                fontWeight: FontWeight.w800,
+              ),
             ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            plan.hint(t),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
+          ),
+          if (!selected) ...[
+            const SizedBox(height: AppDimensions.s12),
+            SizedBox(
+              height: AppDimensions.touchTarget,
+              child: OutlinedButton(
+                onPressed: onSelect,
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                      AppDimensions.radiusButton,
+                    ),
+                  ),
+                ),
+                child: Text(
+                  t.ownerSbSelect,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+          ] else ...[
+            const SizedBox(height: AppDimensions.s8),
+            StatusPill.neutral(t.ownerSbCurrentPlan),
+          ],
+        ],
+      ),
     );
   }
 }

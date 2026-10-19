@@ -1,17 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/attendance_provider.dart';
+import 'package:owner_app/l10n/gen/owner_localizations.dart';
 
-class AttendanceView extends ConsumerWidget {
+/// Day register (O12): date picker, present/completed summary strip, role
+/// filter and per-staff clock cards over the frozen attendance provider.
+/// Punch states resolve theme tones (idle stays neutral — never bare red);
+/// the selected date formats through `MaterialLocalizations` so Arabic
+/// month and weekday names render correctly with Latin digits.
+class AttendanceView extends ConsumerStatefulWidget {
   const AttendanceView({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AttendanceView> createState() => _AttendanceViewState();
+}
+
+class _AttendanceViewState extends ConsumerState<AttendanceView> {
+  final _searchFocus = FocusNode();
+
+  @override
+  void dispose() {
+    _searchFocus.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickDate(
+    BuildContext context,
+    OwnerAttendanceNotifier notifier,
+    DateTime current,
+  ) async {
+    final t = OwnerLocalizations.of(context)!;
+    HapticFeedback.selectionClick();
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: current,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      helpText: t.ownerAtTitle,
+    );
+    if (selected != null) await notifier.selectDate(selected);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = OwnerLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
+    final colors = theme.colorScheme;
     final state = ref.watch(ownerAttendanceProvider);
     final notifier = ref.read(ownerAttendanceProvider.notifier);
     final records = notifier.filteredRecords;
@@ -22,409 +58,353 @@ class AttendanceView extends ConsumerWidget {
         .where((record) => record.status == 'punchedOut')
         .length;
 
+    final wide = context.adaptive.pick(
+      compact: false,
+      medium: false,
+      expanded: true,
+      large: true,
+    );
+
+    final roles = <String>[
+      t.ownerAtAllRoles,
+      t.ownerTmAdvisors,
+      t.ownerTmSupervisors,
+      t.ownerTmTechnicians,
+    ];
+    const roleValues = <String>['all', 'advisor', 'supervisor', 'technician'];
+
     return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
-          onPressed: () => Navigator.maybePop(context),
-        ),
-        title: Text(
-          'Staff Attendance',
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w900,
-            color: colorScheme.onSurface,
-          ),
-        ),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: WorkspaceAppBar(
+        title: t.ownerAtTitle,
+        subtitle: t.ownerAtSubtitle,
+        showBack: true,
+        showOfflineStatus: true,
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh_rounded, color: colorScheme.onSurface),
-            onPressed: notifier.load,
+            tooltip: MaterialLocalizations.of(context)
+                .refreshIndicatorSemanticLabel,
+            icon: const Icon(Icons.refresh_rounded),
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              notifier.load();
+            },
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: notifier.load,
-        color: colorScheme.primary,
-        child: AppResponsivePage(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: colorScheme.surface,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: colorScheme.outlineVariant.withValues(alpha: 0.6),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colorScheme.shadow.withValues(alpha: 0.04),
-                      blurRadius: 16,
-                      offset: const Offset(0, 4),
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: notifier.load,
+          color: colors.primary,
+          child: AppResponsivePage(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _DateHeader(
+                  selectedDate: state.selectedDate,
+                  onPick: () =>
+                      _pickDate(context, notifier, state.selectedDate),
+                ),
+                const SizedBox(height: AppDimensions.s16),
+                _SummaryStrip(
+                  total: state.records.length,
+                  present: present,
+                  completed: completed,
+                  absent: state.records.length - present,
+                ),
+                const SizedBox(height: AppDimensions.s16),
+                AppFilterBar(
+                  options: roles.sublist(1),
+                  selected: state.roleFilter == 'all'
+                      ? null
+                      : roles[roleValues.indexOf(state.roleFilter)],
+                  onSelected: (label) {
+                    HapticFeedback.selectionClick();
+                    if (label == null) {
+                      notifier.setRoleFilter('all');
+                    } else {
+                      final value =
+                          roleValues[roles.indexOf(label)];
+                      notifier.setRoleFilter(
+                        state.roleFilter == value ? 'all' : value,
+                      );
+                    }
+                  },
+                ),
+                const SizedBox(height: AppDimensions.s12),
+                if (state.isLoading && state.records.isEmpty)
+                  const AppSkeleton.page()
+                else if (state.error.isNotEmpty && records.isEmpty)
+                  ErrorView(message: state.error, onRetry: notifier.load)
+                else if (records.isEmpty)
+                  EmptyState(
+                    icon: Icons.event_busy_rounded,
+                    message: t.ownerAtEmpty,
+                  )
+                else if (wide)
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: records.length,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: AppDimensions.s12,
+                      mainAxisSpacing: AppDimensions.s12,
+                      mainAxisExtent: 190,
                     ),
+                    itemBuilder: (_, i) =>
+                        _AttendanceCard(record: records[i]),
+                  )
+                else
+                  for (final record in records) ...[
+                    _AttendanceCard(record: record),
+                    const SizedBox(height: AppDimensions.s12),
                   ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: colorScheme.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.badge_rounded, color: colorScheme.primary, size: 14),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Shift Register',
-                                style: textTheme.labelSmall?.copyWith(
-                                  color: colorScheme.primary,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.3,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Spacer(),
-                        InkWell(
-                          onTap: () => _pickDate(context, notifier, state.selectedDate),
-                          borderRadius: BorderRadius.circular(14),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: colorScheme.outlineVariant),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.calendar_month_rounded, color: colorScheme.primary, size: 15),
-                                const SizedBox(width: 6),
-                                Text(
-                                  DateFormat('dd MMM yyyy').format(state.selectedDate),
-                                  style: textTheme.labelMedium?.copyWith(
-                                    color: colorScheme.onSurface,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      DateFormat('EEEE, d MMMM yyyy').format(state.selectedDate),
-                      style: textTheme.titleLarge?.copyWith(
-                        color: colorScheme.onSurface,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Real-time clock in/out status and working hour breakdown across all garage branches.',
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w500,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppDimensions.s20),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _Summary(
-                      label: 'Total Staff',
-                      value: state.records.length,
-                      color: colorScheme.primary,
-                      icon: Icons.groups_rounded,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _Summary(
-                      label: 'Present',
-                      value: present,
-                      color: AppColors.success,
-                      icon: Icons.check_circle_rounded,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: _Summary(
-                      label: 'Completed',
-                      value: completed,
-                      color: colorScheme.secondary,
-                      icon: Icons.task_alt_rounded,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _Summary(
-                      label: 'Absent / Pending',
-                      value: state.records.length - present,
-                      color: colorScheme.error,
-                      icon: Icons.do_not_disturb_on_rounded,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppDimensions.s20),
-
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: ['all', 'advisor', 'supervisor', 'technician'].map((role) {
-                    final sel = state.roleFilter == role;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        selected: sel,
-                        showCheckmark: false,
-                        label: Text(
-                          role == 'all' ? 'All Roles' : _title(role),
-                          style: textTheme.labelMedium?.copyWith(
-                            color: sel ? colorScheme.onPrimary : colorScheme.onSurface,
-                            fontWeight: sel ? FontWeight.w800 : FontWeight.w600,
-                          ),
-                        ),
-                        backgroundColor: colorScheme.surfaceContainerHighest,
-                        selectedColor: colorScheme.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        onSelected: (_) => notifier.setRoleFilter(role),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-              const SizedBox(height: AppDimensions.s16),
-
-              if (state.isLoading)
-                const AppSkeleton.page()
-              else if (state.error.isNotEmpty)
-                ErrorView(message: state.error, onRetry: notifier.load)
-              else if (records.isEmpty)
-                const EmptyState(
-                  icon: Icons.event_busy_rounded,
-                  title: 'No staff attendance records',
-                  message: 'No staff match this date and role filter.',
-                )
-              else
-                ...records.map((record) => _AttendanceCard(record: record)),
-              const SizedBox(height: 40),
-            ],
+                const SizedBox(height: AppDimensions.s32),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-
-  Future<void> _pickDate(
-    BuildContext context,
-    OwnerAttendanceNotifier notifier,
-    DateTime current,
-  ) async {
-    final selected = await showDatePicker(
-      context: context,
-      initialDate: current,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-    );
-    if (selected != null) await notifier.selectDate(selected);
-  }
-
-  static String _title(String value) =>
-      value.isEmpty ? value : '${value[0].toUpperCase()}${value.substring(1)}';
 }
 
-class _Summary extends StatelessWidget {
-  final String label;
-  final int value;
-  final Color color;
-  final IconData icon;
+/// Date header: locale-aware full date plus the picker trigger.
+class _DateHeader extends StatelessWidget {
+  final DateTime selectedDate;
+  final VoidCallback onPick;
 
-  const _Summary({
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.icon,
+  const _DateHeader({required this.selectedDate, required this.onPick});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return AppCard.standard(
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  MaterialLocalizations.of(context)
+                      .formatFullDate(selectedDate),
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: colors.onSurface,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppDimensions.s12),
+          SecondaryButton(
+            label: MaterialLocalizations.of(context)
+                .formatMediumDate(selectedDate),
+            leadingIcon: Icons.calendar_month_rounded,
+            isExpanded: false,
+            onPressed: onPick,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SummaryStrip extends StatelessWidget {
+  final int total;
+  final int present;
+  final int completed;
+  final int absent;
+
+  const _SummaryStrip({
+    required this.total,
+    required this.present,
+    required this.completed,
+    required this.absent,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.6),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.08),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
+    final t = OwnerLocalizations.of(context)!;
+    final adaptive = context.adaptive;
+    final metrics = <_Metric>[
+      _Metric(
+        label: t.ownerAtTotal,
+        value: total,
+        icon: Icons.groups_rounded,
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
+      _Metric(
+        label: t.ownerAtPresent,
+        value: present,
+        icon: Icons.check_circle_rounded,
+      ),
+      _Metric(
+        label: t.ownerAtDone,
+        value: completed,
+        icon: Icons.task_alt_rounded,
+      ),
+      _Metric(
+        label: t.ownerAtAbsent,
+        value: absent,
+        icon: Icons.do_not_disturb_on_rounded,
+      ),
+    ];
+    return AppAdaptiveGrid(
+      columns: adaptive.pick(compact: 2, medium: 4, expanded: 4, large: 4),
+      minChildWidth: 140,
+      spacing: adaptive.itemSpacing,
+      runSpacing: adaptive.itemSpacing,
+      childAspectRatio: adaptive.pick(
+        compact: 1.65,
+        medium: 1.5,
+        expanded: 1.7,
+        large: 1.8,
+      ),
+      children: [
+        for (final m in metrics)
+          AppCard.standard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  m.icon,
+                  size: AppDimensions.iconSm,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(height: AppDimensions.s6),
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Text(
+                    '${m.value}',
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineSmall
+                        ?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color:
+                              Theme.of(context).colorScheme.onSurface,
+                          fontFeatures: const [
+                            FontFeature.tabularFigures()
+                          ],
+                        ),
+                  ),
+                ),
+                Text(
+                  m.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ],
             ),
-            child: Icon(icon, color: color, size: 19),
           ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '$value',
-                style: textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: colorScheme.onSurface,
-                  height: 1.1,
-                ),
-              ),
-              Text(
-                label,
-                style: textTheme.labelSmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+      ],
     );
   }
 }
 
+class _Metric {
+  final String label;
+  final int value;
+  final IconData icon;
+
+  const _Metric({required this.label, required this.value, required this.icon});
+}
+
 class _AttendanceCard extends StatelessWidget {
   final OwnerAttendanceRecord record;
+
   const _AttendanceCard({required this.record});
 
   @override
   Widget build(BuildContext context) {
+    final t = OwnerLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-    final (label, color) = switch (record.status) {
-      'working' => ('WORKING', AppColors.success),
-      'onBreak' => ('ON BREAK', AppColors.warning),
-      'punchedOut' => ('COMPLETED', colorScheme.primary),
-      _ => ('NOT PUNCHED IN', colorScheme.error),
-    };
+    final colors = theme.colorScheme;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.6),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.04),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return AppCard.standard(
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor: colorScheme.primary.withValues(alpha: 0.12),
+                backgroundColor: colors.primary.withValues(alpha: 0.12),
                 child: Text(
-                  record.name.isEmpty ? '?' : record.name[0].toUpperCase(),
-                  style: textTheme.titleMedium?.copyWith(
-                    color: colorScheme.primary,
+                  record.name.isEmpty
+                      ? '?'
+                      : record.name.characters.first.toUpperCase(),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: colors.primary,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppDimensions.s12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       record.name,
-                      style: textTheme.titleSmall?.copyWith(
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
-                        color: colorScheme.onSurface,
+                        color: colors.onSurface,
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      '${record.empId} · ${AttendanceView._title(record.role)}${record.branch.isEmpty ? '' : ' · ${record.branch}'}',
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w500,
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Text(
+                        '${record.empId} · ${record.role}${record.branch.isEmpty ? '' : ' · ${record.branch}'}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-              StatusPill(
-                label: label,
-                bg: color.withValues(alpha: 0.12),
-                fg: color,
-              ),
+              _ClockPill(status: record.status),
             ],
           ),
-          const SizedBox(height: 12),
-          Divider(height: 1, color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.s12),
+          Divider(
+            height: 1,
+            color: colors.outlineVariant.withValues(alpha: 0.6),
+          ),
+          const SizedBox(height: AppDimensions.s12),
           Row(
             children: [
               Expanded(
-                child: _Value(label: 'Clock In', value: record.punchIn),
+                child: _ClockValue(label: t.ownerAtIn, value: record.punchIn),
               ),
               Expanded(
-                child: _Value(label: 'Clock Out', value: record.punchOut),
+                child: _ClockValue(label: t.ownerAtOut, value: record.punchOut),
               ),
               Expanded(
-                child: _Value(label: 'Total Hours', value: record.workHours),
+                child: _ClockValue(
+                  label: t.ownerAtHours,
+                  value: record.workHours,
+                ),
               ),
             ],
           ),
@@ -434,34 +414,57 @@ class _AttendanceCard extends StatelessWidget {
   }
 }
 
-class _Value extends StatelessWidget {
+/// Punch-state pill: working resolves success, break warning, completion
+/// info — and the idle state stays neutral, never an error accusation.
+class _ClockPill extends StatelessWidget {
+  final String status;
+
+  const _ClockPill({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = OwnerLocalizations.of(context)!;
+    return switch (status) {
+      'working' => StatusPill.success(t.ownerAtWorking, showDot: true),
+      'onBreak' => StatusPill.warning(t.ownerAtBreak, showDot: true),
+      'punchedOut' => StatusPill.info(t.ownerAtComplete, showDot: true),
+      _ => StatusPill.neutral(t.ownerAtIdle),
+    };
+  }
+}
+
+class _ClockValue extends StatelessWidget {
   final String label;
   final String value;
-  const _Value({required this.label, required this.value});
+
+  const _ClockValue({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: textTheme.labelSmall?.copyWith(
-            color: colorScheme.onSurfaceVariant,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w600,
             fontSize: 10,
           ),
         ),
         const SizedBox(height: 2),
-        Text(
-          value.isEmpty ? '--' : value,
-          style: textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w800,
-            color: colorScheme.onSurface,
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: Text(
+            value.isEmpty ? '--' : value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.mono(
+              color: theme.colorScheme.onSurface,
+            ).copyWith(fontWeight: FontWeight.w800),
           ),
         ),
       ],
