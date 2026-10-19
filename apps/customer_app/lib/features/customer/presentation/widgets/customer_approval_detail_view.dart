@@ -6,7 +6,9 @@ import 'package:shared_core/shared_core.dart';
 import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_approval_presentation.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_surface_panel.dart';
+import 'package:customer_app/l10n/gen/customer_localizations.dart';
 
 /// One estimate decision in full.
 ///
@@ -15,6 +17,10 @@ import 'package:customer_app/features/customer/presentation/widgets/customer_sur
 /// parts / grand totals, the vehicle it is for, and — while the decision is
 /// still open — the approve and reject actions. Everything shown comes from the
 /// approval detail endpoint; nothing is calculated that the API does not send.
+/// The decision is whole-estimate because that is the only endpoint the
+/// backend exposes — per-line approve buttons would be fake, so line rows
+/// stay read-only with a note saying so nowhere needed: they simply have no
+/// actions. Safety flags do not exist on the record, so none are shown.
 class CustomerApprovalDetailView extends ConsumerStatefulWidget {
   final String estimateId;
 
@@ -63,8 +69,10 @@ class _CustomerApprovalDetailViewState
     CustomerApprovalDetailResponse detail,
     String Function(double amount) formatAmount,
   ) {
+    final t = context.cx;
     final pending = CustomerApprovalPresentation.isPending(detail.status);
     final isEstimate = detail.approvalType == 'estimate';
+    final subject = _subject(t, detail.approvalType);
 
     return Column(
       children: [
@@ -72,60 +80,92 @@ class _CustomerApprovalDetailViewState
           child: AppResponsivePage(
             physics: const AlwaysScrollableScrollPhysics(),
             maxContentWidth: 1040,
-            child: AppSplitView(
-              primaryFlex: 3,
-              secondaryFlex: 2,
-              spacing: AppDimensions.s20,
-              primary: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _EstimateRecord(detail: detail, formatAmount: formatAmount),
-                  if (detail.services.isNotEmpty ||
-                      detail.parts.isNotEmpty) ...[
-                    const SizedBox(height: AppDimensions.s16),
-                    _WorkBreakdown(
-                      services: detail.services,
-                      parts: detail.parts,
-                      formatAmount: formatAmount,
-                    ),
-                  ],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _EstimateRecord(detail: detail, formatAmount: formatAmount),
+                if (detail.services.isNotEmpty ||
+                    detail.parts.isNotEmpty) ...[
+                  const SizedBox(height: AppDimensions.s16),
+                  _WorkBreakdown(
+                    services: detail.services,
+                    parts: detail.parts,
+                    formatAmount: formatAmount,
+                  ),
                 ],
-              ),
-              secondary: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (isEstimate)
-                    _FinancialSummary(
-                      detail: detail,
-                      formatAmount: formatAmount,
-                    ),
-                  if (!pending) ...[
-                    const SizedBox(height: AppDimensions.s16),
-                    _DecidedNote(
-                      status: detail.status,
-                      approvalType: detail.approvalType,
-                    ),
-                  ],
+                if (isEstimate) ...[
+                  const SizedBox(height: AppDimensions.s16),
+                  _FinancialSummary(
+                    detail: detail,
+                    formatAmount: formatAmount,
+                    // While the decision is open the sticky dock owns the
+                    // authorized total; the summary keeps services/parts so
+                    // no amount renders twice.
+                    showTotal: !pending,
+                  ),
                 ],
-              ),
+                if (!pending) ...[
+                  const SizedBox(height: AppDimensions.s16),
+                  _DecidedNote(
+                    status: detail.status,
+                    approvalType: detail.approvalType,
+                  ),
+                ],
+                // Room for the quiet reject action under the dock.
+                if (pending) const SizedBox(height: AppDimensions.s16),
+              ],
             ),
           ),
         ),
-        if (pending)
-          _DecisionBar(
-            deciding: _deciding,
-            subject: _approvalLabel(detail.approvalType).toLowerCase(),
-            onApprove: () => _confirm(
+        if (pending) ...[
+          Align(
+            alignment: Alignment.center,
+            child: TextButton.icon(
+              onPressed: _deciding
+                  ? null
+                  : () => _confirm(
+                      detail: detail,
+                      action: 'reject',
+                      formatAmount: formatAmount,
+                    ),
+              icon: const Icon(Icons.close_rounded, size: 18),
+              label: Text(t.apRejectSubject(subject)),
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+                disabledForegroundColor: Theme.of(
+                  context,
+                ).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          if (_deciding)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppDimensions.s4),
+              child: Text(
+                t.apSendingNote,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          // The dock carries the authorized total and the decision; the
+          // itemized services/parts live once in the summary above, so the
+          // dock stays total-only instead of repeating them.
+          PriceBreakdownDock(
+            totalLabel: t.apTotal,
+            totalAmount: formatAmount(detail.grandTotal),
+            ctaLabel: t.apApproveSubject(subject),
+            busyLabel: t.apSending,
+            busy: _deciding,
+            ctaEnabled: true,
+            onCta: () => _confirm(
               detail: detail,
               action: 'approve',
               formatAmount: formatAmount,
             ),
-            onReject: () => _confirm(
-              detail: detail,
-              action: 'reject',
-              formatAmount: formatAmount,
-            ),
           ),
+        ],
       ],
     );
   }
@@ -136,26 +176,34 @@ class _CustomerApprovalDetailViewState
     required String Function(double amount) formatAmount,
   }) async {
     if (_deciding) return;
+    final t = context.cx;
     final approving = action == 'approve';
     final amount = detail.grandTotal;
-    final subject = _approvalLabel(detail.approvalType).toLowerCase();
+    final subject = _subject(t, detail.approvalType);
     final isEstimate = detail.approvalType == 'estimate';
+    final vehicle = detail.vehicleInfo.trim();
 
     final confirmed = await showAppConfirmationDialog(
       context,
-      title: approving ? 'Approve $subject?' : 'Reject $subject?',
+      title: approving
+          ? t.apConfirmApproveTitle(subject)
+          : t.apConfirmRejectTitle(subject),
       message: approving
           ? isEstimate
-                ? 'You are approving work totaling ${formatAmount(amount)}'
-                      '${detail.vehicleInfo.trim().isEmpty ? '' : ' for ${detail.vehicleInfo.trim()}'}.'
-                : 'You are approving this $subject'
-                      '${detail.vehicleInfo.trim().isEmpty ? '' : ' for ${detail.vehicleInfo.trim()}'}.'
+                ? vehicle.isEmpty
+                      ? t.apConfirmApproveEst(formatAmount(amount))
+                      : t.apConfirmApproveEstVehicle(
+                          formatAmount(amount),
+                          vehicle,
+                        )
+                : vehicle.isEmpty
+                ? t.apConfirmApproveSubject(subject)
+                : t.apConfirmApproveSubjectVehicle(subject, vehicle)
           : isEstimate
-          ? 'The workshop will be told you do not accept this estimate. '
-                'You can ask them for a revised one.'
-          : 'The workshop will be told you do not accept this $subject.',
-      confirmLabel: approving ? 'Approve' : 'Reject $subject',
-      cancelLabel: approving ? 'Not now' : 'Keep reviewing',
+          ? t.apConfirmRejectEst
+          : t.apConfirmRejectSubject(subject),
+      confirmLabel: approving ? t.apConfirm : t.apConfirmReject(subject),
+      cancelLabel: approving ? t.apNotNow : t.apKeepReviewing,
       icon: approving ? Icons.verified_outlined : Icons.cancel_outlined,
       destructive: !approving,
     );
@@ -172,19 +220,22 @@ class _CustomerApprovalDetailViewState
     if (!mounted) return;
     setState(() => _deciding = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+    messenger.showSnackBar(
       SnackBar(
         content: Text(
           ok
               ? approving
-                    ? '${_approvalLabel(detail.approvalType)} approved — the workshop has been told.'
-                    : '${_approvalLabel(detail.approvalType)} rejected — the workshop has been told.'
-              : "We couldn't send your decision. Please try again.",
+                    ? t.apApprovedToast(_toastLabel(detail.approvalType))
+                    : t.apRejectedToast(_toastLabel(detail.approvalType))
+              : t.apDecisionFail,
         ),
         action: ok
             ? null
             : SnackBarAction(
-                label: 'Retry',
+                label: t.apRetry,
                 onPressed: () => _confirm(
                   detail: detail,
                   action: action,
@@ -195,11 +246,20 @@ class _CustomerApprovalDetailViewState
     );
   }
 
-  String _approvalLabel(String type) => switch (type) {
-    'job_card' => 'Job card',
-    'inspection' => 'Inspection',
-    _ => 'Estimate',
+  String _subject(CustomerLocalizations t, String type) => switch (type) {
+    'job_card' => t.apSubjectJobCard,
+    'inspection' => t.apSubjectInspection,
+    _ => t.apSubjectEstimate,
   };
+
+  String _toastLabel(String type) {
+    final t = context.cx;
+    return switch (type) {
+      'job_card' => t.apLabelJobCard,
+      'inspection' => t.apLabelInspection,
+      _ => t.apLabelEstimate,
+    };
+  }
 }
 
 /// The estimate itself: decision state, amount, vehicle, reference and when the
@@ -214,15 +274,16 @@ class _EstimateRecord extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = context.cx;
     final tone = CustomerApprovalPresentation.statusTone(colors, detail.status);
     final pending = CustomerApprovalPresentation.isPending(detail.status);
     final vehicle = detail.vehicleInfo.trim();
     final requested = detail.createdAt.trim();
     final isEstimate = detail.approvalType == 'estimate';
     final recordLabel = switch (detail.approvalType) {
-      'job_card' => 'Job card approval',
-      'inspection' => 'Inspection approval',
-      _ => 'Estimated total',
+      'job_card' => t.apRecordJobCard,
+      'inspection' => t.apRecordInspection,
+      _ => t.apRecordEstimate,
     };
 
     return CustomerSurfacePanel(
@@ -248,14 +309,17 @@ class _EstimateRecord extends StatelessWidget {
                 fg: tone,
               ),
               if (detail.estimateId.isNotEmpty)
-                Text(
-                  detail.estimateId,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                    fontFamily: AppFontFamilies.mono,
-                    fontWeight: FontWeight.w600,
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Text(
+                    detail.estimateId,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                      fontFamily: AppFontFamilies.mono,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
             ],
@@ -270,12 +334,15 @@ class _EstimateRecord extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.s4),
           if (isEstimate)
-            Text(
-              formatAmount(detail.grandTotal),
-              style: theme.textTheme.headlineSmall?.copyWith(
-                color: colors.onSurface,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.4,
+            Directionality(
+              textDirection: TextDirection.ltr,
+              child: Text(
+                formatAmount(detail.grandTotal),
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  color: colors.onSurface,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.4,
+                ),
               ),
             )
           else if (detail.description.trim().isNotEmpty)
@@ -300,7 +367,7 @@ class _EstimateRecord extends StatelessWidget {
               if (vehicle.isNotEmpty) const SizedBox(height: AppDimensions.s6),
               _IconLine(
                 icon: Icons.schedule_rounded,
-                text: 'Sent $requested',
+                text: t.apSentAt(requested),
                 colour: colors.onSurfaceVariant,
               ),
             ],
@@ -311,7 +378,8 @@ class _EstimateRecord extends StatelessWidget {
   }
 }
 
-/// Real line items, grouped into services and parts.
+/// Real line items, grouped into services and parts. Rows are read-only: the
+/// only decision endpoint is whole-estimate, so per-line buttons would lie.
 class _WorkBreakdown extends StatelessWidget {
   final List<ApprovalLineItem> services;
   final List<ApprovalLineItem> parts;
@@ -327,6 +395,7 @@ class _WorkBreakdown extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = context.cx;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -345,7 +414,7 @@ class _WorkBreakdown extends StatelessWidget {
               AppDimensions.s10,
             ),
             child: Text(
-              'What this estimate covers',
+              t.apCovers,
               style: theme.textTheme.titleMedium?.copyWith(
                 color: colors.onSurface,
                 fontWeight: FontWeight.w800,
@@ -355,7 +424,7 @@ class _WorkBreakdown extends StatelessWidget {
           Divider(height: 1, color: colors.outlineVariant),
           if (services.isNotEmpty) ...[
             _LineItemGroup(
-              title: 'Services',
+              title: t.apServices,
               items: services,
               formatAmount: formatAmount,
             ),
@@ -364,7 +433,7 @@ class _WorkBreakdown extends StatelessWidget {
             Divider(height: 1, color: colors.outlineVariant),
           if (parts.isNotEmpty)
             _LineItemGroup(
-              title: 'Parts',
+              title: t.apParts,
               items: parts,
               formatAmount: formatAmount,
             ),
@@ -389,6 +458,7 @@ class _LineItemGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = context.cx;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -425,36 +495,44 @@ class _LineItemGroup extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item.name.trim().isEmpty ? 'Item' : item.name.trim(),
+                        item.name.trim().isEmpty
+                            ? t.apItemFallback
+                            : item.name.trim(),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: colors.onSurface,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: AppDimensions.r2),
-                      Text(
-                        _metaFor(item),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colors.onSurfaceVariant,
+                      Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Text(
+                          _metaFor(t, item),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(width: AppDimensions.s12),
-                Text(
-                  formatAmount(
-                    CustomerApprovalPresentation.lineAmount(
-                          item.rate,
-                          item.qty,
-                          item.discountAmount,
-                        ) ??
-                        0,
-                  ),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colors.onSurface,
-                    fontFamily: AppFontFamilies.mono,
-                    fontWeight: FontWeight.w700,
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Text(
+                    formatAmount(
+                      CustomerApprovalPresentation.lineAmount(
+                            item.rate,
+                            item.qty,
+                            item.discountAmount,
+                          ) ??
+                          0,
+                    ),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colors.onSurface,
+                      fontFamily: AppFontFamilies.mono,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
@@ -464,12 +542,12 @@ class _LineItemGroup extends StatelessWidget {
     );
   }
 
-  String _metaFor(ApprovalLineItem item) {
+  String _metaFor(CustomerLocalizations t, ApprovalLineItem item) {
     final quantity = item.qty <= 0 ? 1 : item.qty;
     final parts = <String>[
-      'Qty $quantity \u00d7 ${formatAmount(item.rate)}',
+      t.apQtyRate(quantity, formatAmount(item.rate)),
       if (item.discountPercent > 0)
-        '\u2212${item.discountPercent.toStringAsFixed(0)}%',
+        t.apDiscount(item.discountPercent.toStringAsFixed(0)),
     ];
     return parts.join(' \u00b7 ');
   }
@@ -480,12 +558,20 @@ class _FinancialSummary extends StatelessWidget {
   final CustomerApprovalDetailResponse detail;
   final String Function(double amount) formatAmount;
 
-  const _FinancialSummary({required this.detail, required this.formatAmount});
+  /// False while the decision is open: the sticky dock owns the total then.
+  final bool showTotal;
+
+  const _FinancialSummary({
+    required this.detail,
+    required this.formatAmount,
+    this.showTotal = true,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = context.cx;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -499,7 +585,7 @@ class _FinancialSummary extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Summary',
+              t.apSummary,
               style: theme.textTheme.titleMedium?.copyWith(
                 color: colors.onSurface,
                 fontWeight: FontWeight.w800,
@@ -508,41 +594,46 @@ class _FinancialSummary extends StatelessWidget {
             const SizedBox(height: AppDimensions.s12),
             if (detail.servicesTotal > 0)
               _SummaryRow(
-                label: 'Services',
+                label: t.apServices,
                 value: formatAmount(detail.servicesTotal),
               ),
             if (detail.partsTotal > 0) ...[
               if (detail.servicesTotal > 0)
                 const SizedBox(height: AppDimensions.s8),
               _SummaryRow(
-                label: 'Parts',
+                label: t.apParts,
                 value: formatAmount(detail.partsTotal),
               ),
             ],
             const SizedBox(height: AppDimensions.s12),
             Divider(height: 1, color: colors.outlineVariant),
-            const SizedBox(height: AppDimensions.s12),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Total',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: colors.onSurface,
-                      fontWeight: FontWeight.w800,
+            if (showTotal) ...[
+              const SizedBox(height: AppDimensions.s12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      t.apTotal,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: colors.onSurface,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
-                ),
-                Text(
-                  formatAmount(detail.grandTotal),
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: colors.primary,
-                    fontFamily: AppFontFamilies.mono,
-                    fontWeight: FontWeight.w800,
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      formatAmount(detail.grandTotal),
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: colors.primary,
+                        fontFamily: AppFontFamilies.mono,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
@@ -571,12 +662,15 @@ class _SummaryRow extends StatelessWidget {
             ),
           ),
         ),
-        Text(
-          value,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: colors.onSurface,
-            fontFamily: AppFontFamilies.mono,
-            fontWeight: FontWeight.w700,
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: Text(
+            value,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colors.onSurface,
+              fontFamily: AppFontFamilies.mono,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       ],
@@ -595,21 +689,21 @@ class _DecidedNote extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = context.cx;
     final tone = CustomerApprovalPresentation.statusTone(colors, status);
     final approved =
         CustomerApprovalPresentation.normalize(status) ==
         CustomerApprovalPresentation.approved;
     final subject = switch (approvalType) {
-      'job_card' => 'job card',
-      'inspection' => 'inspection',
-      _ => 'estimate',
+      'job_card' => t.apSubjectJobCard,
+      'inspection' => t.apSubjectInspection,
+      _ => t.apSubjectEstimate,
     };
-    final approvedMessage = approvalType == 'estimate'
-        ? 'You approved this estimate. The workshop will carry out the work listed above.'
-        : 'You approved this $subject. The workshop has been told.';
-    final rejectedMessage = approvalType == 'estimate'
-        ? 'You rejected this estimate. The workshop has been told and can send a revised one.'
-        : 'You rejected this $subject. The workshop has been told.';
+    final message = approvalType == 'estimate'
+        ? (approved ? t.apDecidedApprovedEst : t.apDecidedRejectedEst)
+        : (approved
+              ? t.apDecidedApprovedSubject(subject)
+              : t.apDecidedRejectedSubject(subject));
 
     return CustomerSurfacePanel(
       accent: tone,
@@ -624,7 +718,7 @@ class _DecidedNote extends StatelessWidget {
           const SizedBox(width: AppDimensions.s10),
           Expanded(
             child: Text(
-              approved ? approvedMessage : rejectedMessage,
+              message,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colors.onSurface,
                 height: 1.45,
@@ -632,83 +726,6 @@ class _DecidedNote extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// The decision itself: one clear primary action, one clearly available but
-/// less prominent rejection.
-class _DecisionBar extends StatelessWidget {
-  final bool deciding;
-  final String subject;
-  final VoidCallback onApprove;
-  final VoidCallback onReject;
-
-  const _DecisionBar({
-    required this.deciding,
-    required this.subject,
-    required this.onApprove,
-    required this.onReject,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return Material(
-      color: colors.surface,
-      child: SafeArea(
-        top: false,
-        child: Container(
-          padding: const EdgeInsets.all(AppDimensions.s16),
-          decoration: BoxDecoration(
-            border: Border(top: BorderSide(color: colors.outlineVariant)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              FilledButton.icon(
-                onPressed: deciding ? null : onApprove,
-                icon: deciding
-                    ? SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            colors.onPrimary,
-                          ),
-                        ),
-                      )
-                    : const Icon(Icons.verified_outlined, size: 18),
-                label: Text(deciding ? 'Sending\u2026' : 'Approve $subject'),
-              ),
-              const SizedBox(height: AppDimensions.s8),
-              TextButton.icon(
-                onPressed: deciding ? null : onReject,
-                icon: const Icon(Icons.close_rounded, size: 18),
-                label: Text('Reject $subject'),
-                style: TextButton.styleFrom(
-                  foregroundColor: colors.error,
-                  disabledForegroundColor: colors.onSurfaceVariant,
-                ),
-              ),
-              if (deciding)
-                Padding(
-                  padding: const EdgeInsets.only(top: AppDimensions.s4),
-                  child: Text(
-                    'Sending your decision to the workshop\u2026',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -758,6 +775,7 @@ class _DetailError extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = context.cx;
 
     return AppResponsivePage(
       maxContentWidth: 640,
@@ -771,7 +789,7 @@ class _DetailError extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  "We couldn't load this request",
+                  t.apDetailLoadFail,
                   style: theme.textTheme.titleSmall?.copyWith(
                     color: colors.onSurface,
                     fontWeight: FontWeight.w800,
@@ -779,8 +797,7 @@ class _DetailError extends StatelessWidget {
                 ),
                 const SizedBox(height: AppDimensions.s4),
                 Text(
-                  'The workshop may have replaced it. You can try again or '
-                  'review your other approvals.',
+                  t.apDetailReplaced,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
                     height: 1.45,
@@ -789,12 +806,12 @@ class _DetailError extends StatelessWidget {
                 const SizedBox(height: AppDimensions.s16),
                 FilledButton(
                   onPressed: onRetry,
-                  child: const Text('Try again'),
+                  child: Text(t.apTryAgain),
                 ),
                 const SizedBox(height: AppDimensions.s8),
                 TextButton(
                   onPressed: () => context.go(AppRoutes.approvalsLocation()),
-                  child: const Text('View all approvals'),
+                  child: Text(t.apViewAll),
                 ),
               ],
             ),

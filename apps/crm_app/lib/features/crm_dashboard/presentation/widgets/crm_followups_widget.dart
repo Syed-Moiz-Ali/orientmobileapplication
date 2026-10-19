@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:crm_app/features/crm_dashboard/domain/entities/crm_entities.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/crm_constants.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/support/crm_l10n.dart';
 
 class FollowUpsWidget extends StatelessWidget {
   final List<FollowUpEntity> followUps;
@@ -8,6 +9,7 @@ class FollowUpsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.cx;
     if (followUps.isEmpty) {
       return Container(
         width: double.infinity,
@@ -17,12 +19,12 @@ class FollowUpsWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: CrmColors.border),
         ),
-        child: const Column(
+        child: Column(
           children: [
-            Icon(Icons.event_available_outlined, size: 30, color: CrmColors.textM),
-            SizedBox(height: 10),
+            const Icon(Icons.event_available_outlined, size: 30, color: CrmColors.textM),
+            const SizedBox(height: 10),
             Text(
-              'No follow-ups scheduled',
+              t.fuEmpty,
               style: TextStyle(color: CrmColors.textM, fontSize: 12),
             ),
           ],
@@ -41,8 +43,8 @@ class FollowUpsWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Upcoming Follow-ups',
+          Text(
+            t.fuTitle,
             style: TextStyle(color: CrmColors.textH, fontSize: 13, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 12),
@@ -104,7 +106,7 @@ class FollowUpsWidget extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      overdue ? 'OVERDUE' : f.status,
+                      overdue ? t.fuOverdue : f.status,
                       style: TextStyle(
                         color: color,
                         fontSize: 9,

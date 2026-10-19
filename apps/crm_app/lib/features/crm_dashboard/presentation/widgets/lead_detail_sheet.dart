@@ -1,11 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_models/shared_models.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:crm_app/features/crm_dashboard/domain/entities/crm_entities.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/crm_constants.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_lead_provider.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/support/crm_board_filter.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/support/crm_l10n.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/lead_form_sheet.dart';
 
+/// Lead dossier drawer: contact, vehicle interest, value, follow-up, notes,
+/// quote activity history, one-tap WhatsApp / phone launchers and the status
+/// quick-select + edit/delete actions.
+///
+/// Launchers use the canonical [PhoneNumber] normalization for URIs only;
+/// the displayed number is formatted when parseable, raw otherwise. Status
+/// moves reuse the shared status-change payload — identical fields and
+/// endpoint, no invented transitions.
 class LeadDetailSheet extends ConsumerStatefulWidget {
   final CrmLeadEntity lead;
   const LeadDetailSheet({super.key, required this.lead});
@@ -50,9 +62,47 @@ class _LeadDetailSheetState extends ConsumerState<LeadDetailSheet> {
     setState(() => _activities = activities);
   }
 
+  void _notice(String message) {
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  /// Dialer intent over the canonical digits. Fails gracefully with a notice
+  /// when the device cannot place the call.
+  Future<void> _callLead(String phone) async {
+    final digits = PhoneNumber.normalizeLoose(phone).replaceAll(
+      RegExp(r'[^\d]'),
+      '',
+    );
+    if (digits.isEmpty) return;
+    final opened = await launchUrl(Uri(scheme: 'tel', path: digits));
+    if (!opened && mounted) _notice(context.cx.dtCallFail);
+  }
+
+  /// WhatsApp chat intent over the canonical digits (wa.me needs the full
+  /// international number without `+`).
+  Future<void> _whatsAppLead(String phone) async {
+    final digits = PhoneNumber.normalizeLoose(phone).replaceAll(
+      RegExp(r'[^\d]'),
+      '',
+    );
+    if (digits.isEmpty) return;
+    final opened = await launchUrl(
+      Uri.parse('https://wa.me/$digits'),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!opened && mounted) _notice(context.cx.dtWaFail);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final t = context.cx;
     final lead = widget.lead;
+    final phone = lead.phone.trim();
+    final displayPhone = phone.isEmpty
+        ? ''
+        : (PhoneNumber.tryParse(phone)?.format() ?? phone);
     return Padding(
       padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 20),
       child: SingleChildScrollView(
@@ -86,9 +136,12 @@ class _LeadDetailSheetState extends ConsumerState<LeadDetailSheet> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        lead.leadNumber,
-                        style: const TextStyle(color: CrmColors.textM, fontSize: 12),
+                      Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Text(
+                          lead.leadNumber,
+                          style: const TextStyle(color: CrmColors.textM, fontSize: 12),
+                        ),
                       ),
                     ],
                   ),
@@ -120,21 +173,47 @@ class _LeadDetailSheetState extends ConsumerState<LeadDetailSheet> {
                 ),
               ],
             ),
+            if (phone.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _busy ? null : () => _callLead(phone),
+                      icon: const Icon(Icons.phone_outlined, size: 18),
+                      label: Text(t.dtCall),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: _busy ? null : () => _whatsAppLead(phone),
+                      icon: const Icon(Icons.chat_rounded, size: 18),
+                      label: Text(t.dtWhatsApp),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: CrmColors.green,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 16),
-            _infoRow(Icons.phone_outlined, 'Phone', lead.phone),
-            _infoRow(Icons.email_outlined, 'Email', lead.email),
-            _infoRow(Icons.track_changes_rounded, 'Source', lead.source),
-            _infoRow(Icons.person_outline_rounded, 'Assigned to', lead.assignedTo.isEmpty ? 'Unassigned' : lead.assignedTo),
+            _infoRow(Icons.phone_outlined, t.dtPhone, displayPhone, ltr: true),
+            _infoRow(Icons.email_outlined, t.dtEmail, lead.email, ltr: true),
+            _infoRow(Icons.track_changes_rounded, t.dtSource, lead.source),
+            _infoRow(Icons.person_outline_rounded, t.dtAssigned, lead.assignedTo.isEmpty ? t.dtUnassigned : lead.assignedTo),
             if (lead.leadValue > 0)
-              _infoRow(Icons.payments_outlined, 'Lead Value', 'AED ${lead.leadValue.toStringAsFixed(0)}'),
+              _infoRow(Icons.payments_outlined, t.dtValue, 'AED ${lead.leadValue.toStringAsFixed(0)}', ltr: true),
             if (lead.followUpDate.isNotEmpty)
-              _infoRow(Icons.event_outlined, 'Follow-up', lead.followUpDate),
-            _infoRow(Icons.access_time_rounded, 'Last activity', lead.lastActivity),
+              _infoRow(Icons.event_outlined, t.dtFollowUp, lead.followUpDate, ltr: true),
+            _infoRow(Icons.access_time_rounded, t.dtLastActivity, lead.lastActivity),
             if (lead.notes.isNotEmpty) ...[
               const Divider(height: 24, color: CrmColors.border),
-              const Text(
-                'Notes',
-                style: TextStyle(color: CrmColors.textM, fontSize: 11, fontWeight: FontWeight.w700),
+              Text(
+                t.dtNotes,
+                style: const TextStyle(color: CrmColors.textM, fontSize: 11, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 6),
               Container(
@@ -150,19 +229,23 @@ class _LeadDetailSheetState extends ConsumerState<LeadDetailSheet> {
                 ),
               ),
             ],
-            if (_activities.isNotEmpty) ...[
-              const Divider(height: 28, color: CrmColors.border),
-              const Text(
-                'Activity History',
-                style: TextStyle(color: CrmColors.textH, fontSize: 14, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 10),
-              ..._activities.map((a) => _activityRow(a)),
-            ],
             const Divider(height: 28, color: CrmColors.border),
-            const Text(
-              'Change Status',
-              style: TextStyle(color: CrmColors.textH, fontSize: 14, fontWeight: FontWeight.w700),
+            Text(
+              t.dtActivity,
+              style: const TextStyle(color: CrmColors.textH, fontSize: 14, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 10),
+            if (_activities.isEmpty)
+              Text(
+                t.dtNoActivity,
+                style: const TextStyle(color: CrmColors.textM, fontSize: 12),
+              )
+            else
+              ..._activities.map((a) => _activityRow(a)),
+            const Divider(height: 28, color: CrmColors.border),
+            Text(
+              t.dtChangeStatus,
+              style: const TextStyle(color: CrmColors.textH, fontSize: 14, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 10),
             Wrap(
@@ -215,7 +298,17 @@ class _LeadDetailSheetState extends ConsumerState<LeadDetailSheet> {
     );
   }
 
-  Widget _infoRow(IconData icon, String label, String value) {
+  Widget _infoRow(IconData icon, String label, String value, {bool ltr = false}) {
+    if (value.trim().isEmpty) return const SizedBox.shrink();
+    final valueText = Text(
+      value.trim(),
+      textAlign: TextAlign.right,
+      style: const TextStyle(
+        color: CrmColors.textH,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+      ),
+    );
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -225,15 +318,12 @@ class _LeadDetailSheetState extends ConsumerState<LeadDetailSheet> {
           Text(label, style: const TextStyle(color: CrmColors.textM, fontSize: 12)),
           const Spacer(),
           Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: const TextStyle(
-                color: CrmColors.textH,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            child: ltr
+                ? Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: valueText,
+                  )
+                : valueText,
           ),
         ],
       ),
@@ -243,24 +333,16 @@ class _LeadDetailSheetState extends ConsumerState<LeadDetailSheet> {
   Future<void> _changeStatus(String status) async {
     if (status == widget.lead.status) return;
     setState(() => _busy = true);
-    await ref.read(crmLeadProvider.notifier).updateLead(widget.lead.id, {
-      'customerName': widget.lead.customerName,
-      'phone': widget.lead.phone,
-      'email': widget.lead.email,
-      'source': widget.lead.source,
-      'assignedTo': widget.lead.assignedTo,
-      'status': status,
-      'lastActivity': 'Status changed to $status',
-      'notes': widget.lead.notes,
-      'leadValue': widget.lead.leadValue,
-      'followUpDate': widget.lead.followUpDate,
-    });
+    await ref.read(crmLeadProvider.notifier).updateLead(
+      widget.lead.id,
+      crmLeadStatusMap(widget.lead, status),
+    );
     if (!mounted) return;
     setState(() => _busy = false);
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Lead marked as $status'),
+        content: Text(context.cx.dtMarked(status)),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
       ),
@@ -322,19 +404,20 @@ class _LeadDetailSheetState extends ConsumerState<LeadDetailSheet> {
   }
 
   Future<void> _confirmDelete(CrmLeadEntity lead) async {
+    final t = context.cx;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Delete Lead', style: TextStyle(fontWeight: FontWeight.w700)),
-        content: Text('Delete ${lead.customerName} (${lead.leadNumber})? This cannot be undone.'),
+        title: Text(t.dtDeleteTitle, style: const TextStyle(fontWeight: FontWeight.w700)),
+        content: Text(t.dtDeleteBody(lead.customerName, lead.leadNumber)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(t.dtCancel)),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: CrmColors.red, foregroundColor: Colors.white),
-            child: const Text('Delete'),
+            child: Text(t.dtDelete),
           ),
         ],
       ),
@@ -345,7 +428,7 @@ class _LeadDetailSheetState extends ConsumerState<LeadDetailSheet> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Lead deleted'),
+        content: Text(t.dtDeleted),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
       ),

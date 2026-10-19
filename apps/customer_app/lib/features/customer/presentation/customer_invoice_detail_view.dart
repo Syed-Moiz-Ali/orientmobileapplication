@@ -1,12 +1,17 @@
-import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 
-/// What an invoice actually is, from the fields the workshop really returns.
+import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
+
+/// One workshop invoice as an itemized receipt: who it bills, when it was
+/// issued, the subtotal, the server-computed VAT line and the total.
 ///
-/// The backend offers no customer payment, receipt, PDF or by-ref fetch, so
-/// this screen presents no actions at all: it reports the invoice and stops.
+/// Display-only by honesty law: the invoice record carries no line items, no
+/// discounts and no payment method, and no payment route exists — so there
+/// are no pay actions, only the receipt. Amounts render exactly as the API
+/// sends them through the shared formatter.
 class CustomerInvoiceDetailView extends ConsumerWidget {
   final InvoiceResponse invoice;
 
@@ -15,7 +20,10 @@ class CustomerInvoiceDetailView extends ConsumerWidget {
   (Color, Color) _getStatusColors(ColorScheme colors) {
     switch (invoice.status.toLowerCase()) {
       case 'paid':
-        return (colors.tertiary, colors.tertiary.withValues(alpha: 0.12));
+        return (
+          colors.tertiary,
+          colors.tertiary.withValues(alpha: 0.12),
+        );
       case 'overdue':
         return (colors.error, colors.error.withValues(alpha: 0.12));
       default:
@@ -28,6 +36,7 @@ class CustomerInvoiceDetailView extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final t = context.cx;
     final (statusColor, statusBg) = _getStatusColors(colorScheme);
     final total = invoice.grandTotal > 0 ? invoice.grandTotal : invoice.amount;
     final formatAmount = ref.watch(customerDashboardProvider).formatAmount;
@@ -36,127 +45,135 @@ class CustomerInvoiceDetailView extends ConsumerWidget {
       backgroundColor: colorScheme.surface,
       // Phase 07.1: bespoke AppTopBar migrated to the shared workspace bar
       // (same title + back behavior; divider now drawn by the bar itself).
-      appBar: const WorkspaceAppBar(title: 'Invoice Detail', showBack: true),
+      appBar: WorkspaceAppBar(title: t.invTitle, showBack: true),
       body: SafeArea(
         bottom: false,
-        child: Column(
-          children: [
-            Expanded(
-              child: AppResponsivePage(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    AppCard(
-                      borderRadius: AppDimensions.r24,
-                      color: colorScheme.surface,
-                      borderColor: colorScheme.outlineVariant,
-                      child: Column(
-                        children: [
-                          Container(
-                            width: 64,
-                            height: 64,
-                            decoration: BoxDecoration(
-                              color: colorScheme.primary.withValues(alpha: 0.1),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: colorScheme.primary.withValues(
-                                  alpha: 0.22,
-                                ),
-                              ),
-                            ),
-                            child: Icon(
-                              Icons.receipt_long_rounded,
-                              size: 30,
-                              color: colorScheme.primary,
-                            ),
+        child: AppResponsivePage(
+          physics: const AlwaysScrollableScrollPhysics(),
+          maxContentWidth: 720,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: AppDimensions.s12),
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: colorScheme.primary.withValues(alpha: 0.22),
+                  ),
+                ),
+                child: Icon(
+                  Icons.receipt_long_rounded,
+                  size: 30,
+                  color: colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: AppDimensions.s12),
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: Text(
+                  invoice.id,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppDimensions.s8),
+              Align(
+                child: StatusPill(
+                  label: AppStatusLabels.invoice(invoice.status),
+                  bg: statusBg,
+                  fg: statusColor,
+                ),
+              ),
+              const SizedBox(height: AppDimensions.s20),
+              _InfoCard(label: t.invBilledTo, value: invoice.customerName),
+              const SizedBox(height: AppDimensions.s8),
+              _InfoCard(label: t.invIssued, value: invoice.date),
+              const SizedBox(height: AppDimensions.s16),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(
+                    AppDimensions.radiusCard,
+                  ),
+                  border: Border.all(color: colorScheme.outlineVariant),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(AppDimensions.s16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _AmountRow(
+                        label: t.invSubtotal,
+                        amount: formatAmount(invoice.amount),
+                      ),
+                      if (invoice.taxAmount > 0) ...[
+                        const SizedBox(height: AppDimensions.s10),
+                        _AmountRow(
+                          label: t.invVat(
+                            (invoice.taxRate * 100).toStringAsFixed(0),
                           ),
-                          const SizedBox(height: AppDimensions.s16),
+                          amount: formatAmount(invoice.taxAmount),
+                        ),
+                      ],
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppDimensions.s14,
+                        ),
+                        child: Divider(
+                          height: 1,
+                          color: colorScheme.outlineVariant,
+                        ),
+                      ),
+                      Row(
+                        children: [
                           Text(
-                            invoice.id,
-                            textAlign: TextAlign.center,
-                            style: textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w900,
+                            t.invTotal,
+                            style: textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w800,
                               color: colorScheme.onSurface,
                             ),
                           ),
-                          const SizedBox(height: AppDimensions.s10),
-                          StatusPill(
-                            label: AppStatusLabels.invoice(invoice.status),
-                            bg: statusBg,
-                            fg: statusColor,
+                          const Spacer(),
+                          Flexible(
+                            child: Directionality(
+                              textDirection: TextDirection.ltr,
+                              child: Text(
+                                formatAmount(total),
+                                textAlign: TextAlign.end,
+                                style: textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.w900,
+                                  color: colorScheme.primary,
+                                  fontFamily: AppFontFamilies.mono,
+                                ),
+                              ),
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: AppDimensions.s16),
-                    AppAdaptiveGrid(
-                      minChildWidth: 300,
-                      children: [
-                        _InfoCard(
-                          label: 'Billed to',
-                          value: invoice.customerName,
-                        ),
-                        _InfoCard(label: 'Issued', value: invoice.date),
-                      ],
-                    ),
-                    const SizedBox(height: AppDimensions.s16),
-                    AppCard(
-                      borderRadius: AppDimensions.r20,
-                      color: colorScheme.surface,
-                      borderColor: colorScheme.outlineVariant,
-                      child: Column(
-                        children: [
-                          _AmountRow(
-                            label: 'Subtotal',
-                            amount: formatAmount(invoice.amount),
-                          ),
-                          if (invoice.taxAmount > 0) ...[
-                            const SizedBox(height: AppDimensions.s10),
-                            _AmountRow(
-                              label:
-                                  'VAT (${(invoice.taxRate * 100).toStringAsFixed(0)}%)',
-                              amount: formatAmount(invoice.taxAmount),
-                            ),
-                          ],
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: AppDimensions.s14,
-                            ),
-                            child: Divider(
-                              height: 1,
-                              color: colorScheme.outlineVariant,
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              Text(
-                                'Total',
-                                style: textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: colorScheme.onSurface,
-                                ),
-                              ),
-                              const Spacer(),
-                              Flexible(
-                                child: Text(
-                                  formatAmount(total),
-                                  textAlign: TextAlign.right,
-                                  style: textTheme.headlineSmall?.copyWith(
-                                    fontWeight: FontWeight.w900,
-                                    color: colorScheme.primary,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: AppDimensions.s16),
+              Text(
+                t.invReceiptNote,
+                textAlign: TextAlign.center,
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: AppDimensions.s32),
+            ],
+          ),
         ),
       ),
     );
@@ -172,31 +189,38 @@ class _InfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
-    return AppCard(
-      color: colorScheme.surface,
-      borderColor: colorScheme.outlineVariant,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
+    final colors = theme.colorScheme;
+    if (value.trim().isEmpty) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.s16,
+        vertical: AppDimensions.s12,
+      ),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: Row(
         children: [
-          Text(
-            label,
-            style: textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: colorScheme.onSurfaceVariant,
+          Expanded(
+            child: Text(
+              label,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
             ),
           ),
-          const SizedBox(height: AppDimensions.s6),
-          Text(
-            value,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: colorScheme.onSurface,
+          const SizedBox(width: AppDimensions.s12),
+          Flexible(
+            child: Text(
+              value.trim(),
+              textAlign: TextAlign.end,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -214,27 +238,28 @@ class _AmountRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
+    final colors = theme.colorScheme;
     return Row(
       children: [
         Expanded(
           child: Text(
             label,
-            style: textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colors.onSurfaceVariant,
             ),
           ),
         ),
         const SizedBox(width: AppDimensions.s12),
         Flexible(
-          child: Text(
-            amount,
-            textAlign: TextAlign.right,
-            style: textTheme.bodyLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: colorScheme.onSurface,
+          child: Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              amount,
+              textAlign: TextAlign.end,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontFamily: AppFontFamilies.mono,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ),

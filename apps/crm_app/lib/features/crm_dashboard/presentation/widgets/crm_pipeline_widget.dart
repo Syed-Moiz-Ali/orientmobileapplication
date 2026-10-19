@@ -1,13 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:crm_app/features/crm_dashboard/domain/entities/crm_entities.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/crm_constants.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/support/crm_l10n.dart';
 
 class LeadPipelineWidget extends StatelessWidget {
   final LeadStatsEntity stats;
-  const LeadPipelineWidget({super.key, required this.stats});
+
+  /// Tapping a stage filters the leads board. Null keeps the widget a pure
+  /// readout (existing callers unaffected).
+  final ValueChanged<String>? onStageTap;
+
+  /// Uppercase stage currently filtering the board, if any.
+  final String selectedStage;
+
+  const LeadPipelineWidget({
+    super.key,
+    required this.stats,
+    this.onStageTap,
+    this.selectedStage = '',
+  });
 
   @override
   Widget build(BuildContext context) {
+    final t = context.cx;
     if (stats.pipeline.isEmpty) {
       return Container(
         width: double.infinity,
@@ -17,13 +32,13 @@ class LeadPipelineWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: CrmColors.border),
         ),
-        child: const Column(
+        child: Column(
           children: [
-            Icon(Icons.filter_alt_outlined, size: 30, color: CrmColors.textM),
-            SizedBox(height: 10),
+            const Icon(Icons.filter_alt_outlined, size: 30, color: CrmColors.textM),
+            const SizedBox(height: 10),
             Text(
-              'No pipeline data yet',
-              style: TextStyle(color: CrmColors.textM, fontSize: 12),
+              t.fnEmpty,
+              style: const TextStyle(color: CrmColors.textM, fontSize: 12),
             ),
           ],
         ),
@@ -31,6 +46,7 @@ class LeadPipelineWidget extends StatelessWidget {
     }
 
     final maxCount = stats.pipeline.fold<int>(1, (m, s) => s.count > m ? s.count : m);
+    final tap = onStageTap;
 
     return Container(
       width: double.infinity,
@@ -43,9 +59,9 @@ class LeadPipelineWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Lead Pipeline',
-            style: TextStyle(color: CrmColors.textH, fontSize: 13, fontWeight: FontWeight.w800),
+          Text(
+            t.fnPipeline,
+            style: const TextStyle(color: CrmColors.textH, fontSize: 13, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 12),
           ...stats.pipeline.map((stage) {
@@ -55,7 +71,10 @@ class LeadPipelineWidget extends StatelessWidget {
               'UNANSWERED' => (CrmColors.amber, CrmColors.amberBg),
               _ => (CrmColors.accent, CrmColors.accentLight),
             };
-            return Padding(
+            final selected =
+                selectedStage.isNotEmpty &&
+                stage.status.toUpperCase() == selectedStage;
+            final body = Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,9 +106,22 @@ class LeadPipelineWidget extends StatelessWidget {
                       ),
                       if (stage.value > 0) ...[
                         const SizedBox(width: 6),
-                        Text(
-                          'AED ${stage.value.toStringAsFixed(0)}',
-                          style: const TextStyle(color: CrmColors.textM, fontSize: 10),
+                        Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: Text(
+                            'AED ${stage.value.toStringAsFixed(0)}',
+                            style: const TextStyle(color: CrmColors.textM, fontSize: 10),
+                          ),
+                        ),
+                      ],
+                      if (tap != null) ...[
+                        const SizedBox(width: 4),
+                        Icon(
+                          selected
+                              ? Icons.check_circle_rounded
+                              : Icons.chevron_right_rounded,
+                          size: 16,
+                          color: selected ? color : CrmColors.textM,
                         ),
                       ],
                     ],
@@ -107,23 +139,40 @@ class LeadPipelineWidget extends StatelessWidget {
                 ],
               ),
             );
+            if (tap == null) return body;
+            return InkWell(
+              onTap: () => tap(stage.status),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                decoration: selected
+                    ? BoxDecoration(
+                        border: Border.all(color: color.withValues(alpha: 0.5)),
+                        borderRadius: BorderRadius.circular(8),
+                      )
+                    : null,
+                child: body,
+              ),
+            );
           }),
           const SizedBox(height: 6),
           const Divider(height: 1, color: CrmColors.border),
           const SizedBox(height: 10),
           Row(
             children: [
-              const Text(
-                'Conversion Rate',
-                style: TextStyle(color: CrmColors.textM, fontSize: 11),
+              Text(
+                t.fnConversion,
+                style: const TextStyle(color: CrmColors.textM, fontSize: 11),
               ),
               const Spacer(),
-              Text(
-                '${stats.conversionRate.toStringAsFixed(1)}%',
-                style: const TextStyle(
-                  color: CrmColors.green,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: Text(
+                  '${stats.conversionRate.toStringAsFixed(1)}%',
+                  style: const TextStyle(
+                    color: CrmColors.green,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ],
@@ -131,17 +180,20 @@ class LeadPipelineWidget extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              const Text(
-                'Won Revenue',
-                style: TextStyle(color: CrmColors.textM, fontSize: 11),
+              Text(
+                t.fnWonRevenue,
+                style: const TextStyle(color: CrmColors.textM, fontSize: 11),
               ),
               const Spacer(),
-              Text(
-                'AED ${stats.wonValue.toStringAsFixed(0)}',
-                style: const TextStyle(
-                  color: CrmColors.green,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: Text(
+                  'AED ${stats.wonValue.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                    color: CrmColors.green,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ],

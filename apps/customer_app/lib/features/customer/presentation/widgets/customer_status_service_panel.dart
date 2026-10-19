@@ -193,8 +193,8 @@ class CustomerStatusLivePanel extends StatelessWidget {
 }
 
 /// Honest indeterminate wait: confirmation comes from the bay, so no arrival
-/// time is promised. The bar is indeterminate — it marks waiting, never
-/// progress.
+/// time is promised. Deliberately static (icon + copy, no animation): it marks
+/// waiting, never progress, and never hangs test harnesses.
 class _WaitLine extends StatelessWidget {
   final String title;
   final String body;
@@ -205,40 +205,44 @@ class _WaitLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(
-              Icons.hourglass_top_rounded,
-              size: AppDimensions.iconSm,
-              color: colors.primary,
-            ),
-            const SizedBox(width: AppDimensions.s6),
-            Expanded(
-              child: Text(
-                title,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppDimensions.s8),
-        Semantics(
-          label: body,
-          child: const LinearProgressIndicator(),
-        ),
-        const SizedBox(height: AppDimensions.s4),
-        Text(
-          body,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: colors.onSurfaceVariant,
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.s12),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.hourglass_top_rounded,
+            size: AppDimensions.iconMd,
+            color: colors.primary,
           ),
-        ),
-      ],
+          const SizedBox(width: AppDimensions.s10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.s4),
+                Text(
+                  body,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

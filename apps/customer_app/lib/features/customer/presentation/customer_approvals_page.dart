@@ -7,8 +7,10 @@ import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_approval_presentation.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_bookings_presentation.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_approval_detail_view.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_surface_panel.dart';
+import 'package:customer_app/l10n/gen/customer_localizations.dart';
 
 /// Contextual Approvals page.
 ///
@@ -27,6 +29,7 @@ class CustomerApprovalsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final t = context.cx;
     final id = estimateId.trim();
 
     return Scaffold(
@@ -34,7 +37,7 @@ class CustomerApprovalsPage extends ConsumerWidget {
       // Phase 07.1: bespoke AppTopBar migrated to the shared workspace bar
       // (same title + deep-link-safe back behavior).
       appBar: WorkspaceAppBar(
-        title: id.isEmpty ? 'Approvals & billing' : 'Approval',
+        title: id.isEmpty ? t.apTitle : t.apDetailTitle,
         showBack: true,
         onBack: () => _back(context),
       ),
@@ -61,8 +64,7 @@ class _ApprovalsOverview extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
+    final colors = Theme.of(context).colorScheme;
     final dash = ref.watch(customerDashboardProvider);
     final approvalsAsync = ref.watch(customerApprovalsProvider);
     final approvals =
@@ -104,7 +106,9 @@ class _ApprovalsOverview extends ConsumerWidget {
   }
 }
 
-/// Pending estimate decisions — the reason this page exists.
+/// Pending estimate decisions — the reason this page exists — as one
+/// resolution card per request: what it is, what it costs, when it arrived,
+/// and the single way to review it.
 class _NeedsDecision extends StatelessWidget {
   final List<CustomerApprovalSummaryResponse> approvals;
   final bool loading;
@@ -124,6 +128,7 @@ class _NeedsDecision extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = context.cx;
 
     if (loading) {
       // Phase 07.1: bespoke CustomerSkeleton engine migrated to AppSkeleton.
@@ -140,7 +145,7 @@ class _NeedsDecision extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                'Needs your decision',
+                t.apNeedsDecision,
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: colors.onSurface,
                   fontWeight: FontWeight.w800,
@@ -158,7 +163,7 @@ class _NeedsDecision extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  "We couldn't load your approvals",
+                  t.apLoadFail,
                   style: theme.textTheme.titleSmall?.copyWith(
                     color: colors.onSurface,
                     fontWeight: FontWeight.w800,
@@ -166,7 +171,7 @@ class _NeedsDecision extends StatelessWidget {
                 ),
                 const SizedBox(height: AppDimensions.s4),
                 Text(
-                  'Pull down to try again.',
+                  t.apPullRetry,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
                   ),
@@ -181,7 +186,7 @@ class _NeedsDecision extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Nothing waiting',
+                  t.apEmptyTitle,
                   style: theme.textTheme.titleSmall?.copyWith(
                     color: colors.onSurface,
                     fontWeight: FontWeight.w800,
@@ -189,8 +194,7 @@ class _NeedsDecision extends StatelessWidget {
                 ),
                 const SizedBox(height: AppDimensions.s4),
                 Text(
-                  'When the workshop sends an estimate, job card, or inspection '
-                  'for your approval, it appears here and on your booking.',
+                  t.apEmptyBody,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
                     height: 1.45,
@@ -200,43 +204,41 @@ class _NeedsDecision extends StatelessWidget {
             ),
           )
         else
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-              border: Border.all(color: colors.outlineVariant),
+          for (var index = 0; index < approvals.length; index++) ...[
+            _PendingApprovalCard(
+              approval: approvals[index],
+              formatAmount: formatAmount,
+              t: t,
+              onReview: () => onReview(approvals[index].estimateId),
             ),
-            child: Column(
-              children: [
-                for (var index = 0; index < approvals.length; index++) ...[
-                  _PendingApprovalRow(
-                    approval: approvals[index],
-                    formatAmount: formatAmount,
-                    onReview: () => onReview(approvals[index].estimateId),
-                  ),
-                  if (index < approvals.length - 1)
-                    Divider(height: 1, color: colors.outlineVariant),
-                ],
-              ],
-            ),
-          ),
+            if (index < approvals.length - 1)
+              const SizedBox(height: AppDimensions.s12),
+          ],
       ],
     );
   }
 }
 
-/// The list only identifies *which* estimate needs a decision; the breakdown and
-/// the decision itself live in the detail.
-class _PendingApprovalRow extends StatelessWidget {
+/// One card per pending request: the list only identifies *which* estimate
+/// needs a decision; the breakdown and the decision itself live in the detail.
+class _PendingApprovalCard extends StatelessWidget {
   final CustomerApprovalSummaryResponse approval;
   final String Function(double amount) formatAmount;
+  final CustomerLocalizations t;
   final VoidCallback onReview;
 
-  const _PendingApprovalRow({
+  const _PendingApprovalCard({
     required this.approval,
     required this.formatAmount,
+    required this.t,
     required this.onReview,
   });
+
+  String _approvalLabel(String type) => switch (type) {
+    'job_card' => t.apTypeJobCard,
+    'inspection' => t.apTypeInspection,
+    _ => t.apTypeEstimate,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -251,109 +253,124 @@ class _PendingApprovalRow extends StatelessWidget {
     final requested = CustomerBookingsPresentation.compactDateLabel(
       approval.createdAt,
     );
+    final label = _approvalLabel(approval.approvalType);
 
     return Semantics(
       button: true,
       excludeSemantics: true,
       label: [
-        'Action required',
+        t.apActionRequired,
         if (approval.amount > 0) formatAmount(approval.amount),
         if (approval.estimateId.isNotEmpty)
-          '${_approvalLabel(approval.approvalType)} ${approval.estimateId}',
-        if (requested.isNotEmpty) 'Sent $requested',
+          '$label ${approval.estimateId}',
+        if (requested.isNotEmpty) t.apSentAt(requested),
       ].join(', '),
       child: InkWell(
         onTap: onReview,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.s14,
-            vertical: AppDimensions.s12,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        child: Container(
+          padding: const EdgeInsets.all(AppDimensions.s16),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+            border: Border.all(color: tone.withValues(alpha: 0.4)),
           ),
-          child: Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: tone.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(
-                    AppDimensions.radiusControl,
-                  ),
-                ),
-                child: Icon(Icons.fact_check_outlined, size: 20, color: tone),
-              ),
-              const SizedBox(width: AppDimensions.s12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'ACTION REQUIRED',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: tone,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.4,
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: tone.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusControl,
                       ),
                     ),
-                    const SizedBox(height: AppDimensions.s4),
-                    if (approval.amount > 0)
-                      Text(
+                    child: Icon(
+                      Icons.fact_check_outlined,
+                      size: 20,
+                      color: tone,
+                    ),
+                  ),
+                  const SizedBox(width: AppDimensions.s12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          t.apActionRequired,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: tone,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                        const SizedBox(height: AppDimensions.s4),
+                        Text(
+                          label,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (approval.amount > 0)
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Text(
                         formatAmount(approval.amount),
                         style: theme.textTheme.titleMedium?.copyWith(
-                          color: colors.onSurface,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                    if (approval.estimateId.isNotEmpty) ...[
-                      const SizedBox(height: AppDimensions.s4),
-                      Text(
-                        approval.estimateId,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: colors.onSurfaceVariant,
-                          fontFamily: AppFontFamilies.mono,
-                          fontWeight: FontWeight.w600,
+                    ),
+                ],
+              ),
+              if (approval.estimateId.isNotEmpty ||
+                  requested.isNotEmpty) ...[
+                const SizedBox(height: AppDimensions.s8),
+                Row(
+                  children: [
+                    if (approval.estimateId.isNotEmpty)
+                      Expanded(
+                        child: Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: Text(
+                            approval.estimateId,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: colors.onSurfaceVariant,
+                              fontFamily: AppFontFamilies.mono,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ),
-                    ],
-                    if (requested.isNotEmpty) ...[
-                      const SizedBox(height: AppDimensions.s4),
+                    if (requested.isNotEmpty)
                       Text(
-                        'Sent $requested',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        t.apSentAt(requested),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colors.onSurfaceVariant,
                         ),
                       ),
-                    ],
                   ],
                 ),
-              ),
-              const SizedBox(width: AppDimensions.s8),
-              SizedBox(
-                height: AppDimensions.touchTarget,
-                child: TextButton(
+              ],
+              const SizedBox(height: AppDimensions.s8),
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: TextButton.icon(
                   onPressed: onReview,
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimensions.s8,
-                    ),
-                    minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Review ${_approvalLabel(approval.approvalType).toLowerCase()}',
-                      ),
-                      const SizedBox(width: AppDimensions.s4),
-                      const Icon(Icons.arrow_forward_rounded, size: 14),
-                    ],
-                  ),
+                  icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                  label: Text('${t.apReviewPrefix} ${label.toLowerCase()}'),
                 ),
               ),
             ],
@@ -362,12 +379,6 @@ class _PendingApprovalRow extends StatelessWidget {
       ),
     );
   }
-
-  String _approvalLabel(String type) => switch (type) {
-    'job_card' => 'Job card',
-    'inspection' => 'Inspection',
-    _ => 'Estimate',
-  };
 }
 
 /// Settled invoices keep their existing home here: this page is their only
@@ -382,6 +393,7 @@ class _SettledInvoices extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = context.cx;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -390,7 +402,7 @@ class _SettledInvoices extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                'Invoices',
+                t.apInvoices,
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: colors.onSurface,
                   fontWeight: FontWeight.w800,
@@ -405,7 +417,7 @@ class _SettledInvoices extends StatelessWidget {
           CustomerSurfacePanel(
             accent: colors.onSurfaceVariant,
             child: Text(
-              'Invoices appear here once your work has been billed.',
+              t.apInvoicesEmpty,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colors.onSurfaceVariant,
                 height: 1.45,
@@ -472,14 +484,17 @@ class _InvoiceRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    invoice.id,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: colors.onSurface,
-                      fontFamily: AppFontFamilies.mono,
-                      fontWeight: FontWeight.w700,
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      invoice.id,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: colors.onSurface,
+                        fontFamily: AppFontFamilies.mono,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                   if (invoice.date.trim().isNotEmpty) ...[
@@ -497,13 +512,16 @@ class _InvoiceRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppDimensions.s8),
-            Text(
-              formatAmount(
-                invoice.grandTotal > 0 ? invoice.grandTotal : invoice.amount,
-              ),
-              style: theme.textTheme.titleSmall?.copyWith(
-                color: colors.onSurface,
-                fontWeight: FontWeight.w800,
+            Directionality(
+              textDirection: TextDirection.ltr,
+              child: Text(
+                formatAmount(
+                  invoice.grandTotal > 0 ? invoice.grandTotal : invoice.amount,
+                ),
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: colors.onSurface,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
             const SizedBox(width: AppDimensions.s10),

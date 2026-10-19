@@ -1,10 +1,20 @@
 import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
 
+/// Service review as a warm three-step flow: overall stars, per-area stars,
+/// then structured tags + comment + recommend.
+///
+/// The payload keys are exactly the contracted ones. Structured tags travel
+/// inside the existing free-text `comment` field (like valet notes in the
+/// booking flow) because no tag key exists on the contract. Nothing in the
+/// app links here, so no review is ever prompted on an uncompleted job;
+/// proper status-gating needs route input, which is a frozen nav semantic
+/// and therefore documented, not improvised.
 class CustomerFeedbackView extends ConsumerStatefulWidget {
   const CustomerFeedbackView({super.key});
 
@@ -22,6 +32,7 @@ class _CustomerFeedbackViewState extends ConsumerState<CustomerFeedbackView> {
   int _communication = 0;
   int _timeliness = 0;
   int _valueForMoney = 0;
+  final Set<String> _tags = <String>{};
   final _commentCtrl = TextEditingController();
   bool? _wouldRecommend;
 
@@ -29,6 +40,15 @@ class _CustomerFeedbackViewState extends ConsumerState<CustomerFeedbackView> {
   void dispose() {
     _commentCtrl.dispose();
     super.dispose();
+  }
+
+  /// The `comment` value: selected tags first, then the typed comment.
+  String get _commentText {
+    final typed = _commentCtrl.text.trim();
+    if (_tags.isEmpty) return _commentCtrl.text;
+    final tags = _tags.join(', ');
+    if (typed.isEmpty) return tags;
+    return '$tags — $typed';
   }
 
   Future<void> _submit() async {
@@ -40,7 +60,7 @@ class _CustomerFeedbackViewState extends ConsumerState<CustomerFeedbackView> {
       'timeliness': _timeliness,
       'valueForMoney': _valueForMoney,
       'wouldRecommend': _wouldRecommend ?? true,
-      'comment': _commentCtrl.text,
+      'comment': _commentText,
     };
 
     final ok = await ref
@@ -53,10 +73,10 @@ class _CustomerFeedbackViewState extends ConsumerState<CustomerFeedbackView> {
       _submitted = ok;
     });
 
-    if (!ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to submit feedback. Try again.')),
-      );
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.cx.fbSubmitFail)));
     }
   }
 
@@ -64,6 +84,7 @@ class _CustomerFeedbackViewState extends ConsumerState<CustomerFeedbackView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final t = context.cx;
 
     if (_submitted) {
       return _SubmittedView(
@@ -77,7 +98,7 @@ class _CustomerFeedbackViewState extends ConsumerState<CustomerFeedbackView> {
       // Phase 07.1: bespoke AppTopBar migrated to the shared workspace bar
       // (same title, no back chevron, same close action).
       appBar: WorkspaceAppBar(
-        title: 'Feedback',
+        title: t.fbTitle,
         actions: [
           IconButton(
             onPressed: () {
@@ -101,48 +122,53 @@ class _CustomerFeedbackViewState extends ConsumerState<CustomerFeedbackView> {
           ),
           Expanded(
             child: AppResponsivePage(
-                child: switch (_page) {
-                  0 => _OverallStep(
-                    value: _overall,
-                    onChanged: (value) => setState(() => _overall = value),
-                  ),
-                  1 => _CategoryStep(
-                    workQuality: _workQuality,
-                    communication: _communication,
-                    timeliness: _timeliness,
-                    valueForMoney: _valueForMoney,
-                    onWorkQuality: (value) =>
-                        setState(() => _workQuality = value),
-                    onCommunication: (value) =>
-                        setState(() => _communication = value),
-                    onTimeliness: (value) =>
-                        setState(() => _timeliness = value),
-                    onValueForMoney: (value) =>
-                        setState(() => _valueForMoney = value),
-                  ),
-                  _ => _CommentStep(
-                    controller: _commentCtrl,
-                    wouldRecommend: _wouldRecommend,
-                    onRecommend: (value) =>
-                        setState(() => _wouldRecommend = value),
-                  ),
-                },
-              ),
-            ),
-            _BottomBar(
-              label: _page == 2 ? 'Submit' : 'Next',
-              loading: _isSubmitting,
-              enabled: _canContinue,
-              onTap: () {
-                if (_page < 2) {
-                  setState(() => _page++);
-                } else {
-                  _submit();
-                }
+              maxContentWidth: 640,
+              child: switch (_page) {
+                0 => _OverallStep(
+                  value: _overall,
+                  onChanged: (value) => setState(() => _overall = value),
+                ),
+                1 => _CategoryStep(
+                  workQuality: _workQuality,
+                  communication: _communication,
+                  timeliness: _timeliness,
+                  valueForMoney: _valueForMoney,
+                  onWorkQuality: (value) =>
+                      setState(() => _workQuality = value),
+                  onCommunication: (value) =>
+                      setState(() => _communication = value),
+                  onTimeliness: (value) =>
+                      setState(() => _timeliness = value),
+                  onValueForMoney: (value) =>
+                      setState(() => _valueForMoney = value),
+                ),
+                _ => _CommentStep(
+                  controller: _commentCtrl,
+                  wouldRecommend: _wouldRecommend,
+                  onRecommend: (value) =>
+                      setState(() => _wouldRecommend = value),
+                  tags: _tags,
+                  onToggleTag: (tag) => setState(() {
+                    if (!_tags.remove(tag)) _tags.add(tag);
+                  }),
+                ),
               },
             ),
-          ],
-        ),
+          ),
+          _BottomBar(
+            label: _page == 2 ? t.fbSubmit : t.fbNext,
+            loading: _isSubmitting,
+            enabled: _canContinue,
+            onTap: () {
+              if (_page < 2) {
+                setState(() => _page++);
+              } else {
+                _submit();
+              }
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -169,11 +195,13 @@ class _SubmittedView extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final t = context.cx;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: AppResponsivePage(
+          maxContentWidth: 640,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -192,7 +220,7 @@ class _SubmittedView extends StatelessWidget {
               ),
               const SizedBox(height: AppDimensions.s24),
               Text(
-                'Thank You',
+                t.fbThanks,
                 style: textTheme.displaySmall?.copyWith(
                   fontWeight: FontWeight.w900,
                   color: colorScheme.onSurface,
@@ -200,7 +228,7 @@ class _SubmittedView extends StatelessWidget {
               ),
               const SizedBox(height: AppDimensions.s12),
               Text(
-                'Your feedback helps us improve our service.',
+                t.fbThanksBody,
                 textAlign: TextAlign.center,
                 style: textTheme.bodyLarge?.copyWith(
                   color: colorScheme.onSurfaceVariant,
@@ -212,11 +240,14 @@ class _SubmittedView extends StatelessWidget {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: onBook,
-                  child: const Text('Book Next Service'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                  ),
+                  child: Text(t.fbBookNext),
                 ),
               ),
               const SizedBox(height: AppDimensions.s12),
-              TextButton(onPressed: onHome, child: const Text('Back to Home')),
+              TextButton(onPressed: onHome, child: Text(t.fbBackHome)),
             ],
           ),
         ),
@@ -236,12 +267,14 @@ class _OverallStep extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final t = context.cx;
+    final starOn = context.semanticColors.warning.ink;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          'How was your experience?',
+          t.fbOverallTitle,
           textAlign: TextAlign.center,
           style: textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w900,
@@ -254,16 +287,20 @@ class _OverallStep extends StatelessWidget {
           spacing: AppDimensions.s8,
           children: [
             for (var index = 0; index < 5; index++)
-              IconButton(
-                onPressed: () => onChanged(index + 1),
-                iconSize: 48,
-                icon: Icon(
-                  index < value
-                      ? Icons.star_rounded
-                      : Icons.star_outline_rounded,
-                  color: index < value
-                      ? const Color(0xFFFFB800)
-                      : colorScheme.outlineVariant,
+              Semantics(
+                button: true,
+                selected: index < value,
+                label: '${index + 1} of 5',
+                excludeSemantics: true,
+                child: IconButton(
+                  onPressed: () => onChanged(index + 1),
+                  iconSize: 48,
+                  icon: Icon(
+                    index < value
+                        ? Icons.star_rounded
+                        : Icons.star_outline_rounded,
+                    color: index < value ? starOn : colorScheme.outlineVariant,
+                  ),
                 ),
               ),
           ],
@@ -299,12 +336,14 @@ class _CategoryStep extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final t = context.cx;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const SizedBox(height: AppDimensions.s20),
         Text(
-          'Rate specific areas',
+          t.fbCategoriesTitle,
           style: textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w900,
             color: colorScheme.onSurface,
@@ -312,25 +351,25 @@ class _CategoryStep extends StatelessWidget {
         ),
         const SizedBox(height: AppDimensions.s24),
         _CategoryRating(
-          label: 'Work Quality',
+          label: t.fbCatWork,
           value: workQuality,
           onChanged: onWorkQuality,
         ),
         Divider(height: AppDimensions.s32, color: colorScheme.outlineVariant),
         _CategoryRating(
-          label: 'Communication',
+          label: t.fbCatComm,
           value: communication,
           onChanged: onCommunication,
         ),
         Divider(height: AppDimensions.s32, color: colorScheme.outlineVariant),
         _CategoryRating(
-          label: 'Timeliness',
+          label: t.fbCatTime,
           value: timeliness,
           onChanged: onTimeliness,
         ),
         Divider(height: AppDimensions.s32, color: colorScheme.outlineVariant),
         _CategoryRating(
-          label: 'Value for Money',
+          label: t.fbCatValue,
           value: valueForMoney,
           onChanged: onValueForMoney,
         ),
@@ -355,6 +394,7 @@ class _CategoryRating extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final starOn = context.semanticColors.warning.ink;
 
     return Row(
       children: [
@@ -370,15 +410,19 @@ class _CategoryRating extends StatelessWidget {
         Row(
           children: [
             for (var index = 0; index < 5; index++)
-              IconButton(
-                onPressed: () => onChanged(index + 1),
-                icon: Icon(
-                  index < value
-                      ? Icons.star_rounded
-                      : Icons.star_outline_rounded,
-                  color: index < value
-                      ? const Color(0xFFFFB800)
-                      : colorScheme.outlineVariant,
+              Semantics(
+                button: true,
+                selected: index < value,
+                label: '$label ${index + 1} of 5',
+                excludeSemantics: true,
+                child: IconButton(
+                  onPressed: () => onChanged(index + 1),
+                  icon: Icon(
+                    index < value
+                        ? Icons.star_rounded
+                        : Icons.star_outline_rounded,
+                    color: index < value ? starOn : colorScheme.outlineVariant,
+                  ),
                 ),
               ),
           ],
@@ -392,11 +436,15 @@ class _CommentStep extends StatelessWidget {
   final TextEditingController controller;
   final bool? wouldRecommend;
   final ValueChanged<bool> onRecommend;
+  final Set<String> tags;
+  final ValueChanged<String> onToggleTag;
 
   const _CommentStep({
     required this.controller,
     required this.wouldRecommend,
     required this.onRecommend,
+    required this.tags,
+    required this.onToggleTag,
   });
 
   @override
@@ -404,12 +452,36 @@ class _CommentStep extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final t = context.cx;
+    final tagOptions = [t.fbTagFast, t.fbTagClean, t.fbTagClear];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const SizedBox(height: AppDimensions.s20),
         Text(
-          'Any other comments?',
+          t.fbTagsTitle,
+          style: textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: colorScheme.onSurface,
+          ),
+        ),
+        const SizedBox(height: AppDimensions.s12),
+        Wrap(
+          spacing: AppDimensions.s8,
+          runSpacing: AppDimensions.s8,
+          children: [
+            for (final tag in tagOptions)
+              ChoiceChip(
+                label: Text(tag),
+                selected: tags.contains(tag),
+                onSelected: (_) => onToggleTag(tag),
+              ),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.s24),
+        Text(
+          t.fbCommentTitle,
           style: textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w900,
             color: colorScheme.onSurface,
@@ -425,7 +497,7 @@ class _CommentStep extends StatelessWidget {
             maxLines: 4,
             style: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface),
             decoration: InputDecoration(
-              hintText: 'Tell us more (optional)',
+              hintText: t.fbCommentHint,
               hintStyle: textTheme.bodyLarge?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -436,7 +508,7 @@ class _CommentStep extends StatelessWidget {
         ),
         const SizedBox(height: AppDimensions.s32),
         Text(
-          'Would you recommend us?',
+          t.fbRecommend,
           style: textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w800,
             color: colorScheme.onSurface,
@@ -448,13 +520,13 @@ class _CommentStep extends StatelessWidget {
           childAspectRatio: 4,
           children: [
             _RecommendOption(
-              label: 'Yes',
+              label: t.fbYes,
               selected: wouldRecommend == true,
               color: colorScheme.primary,
               onTap: () => onRecommend(true),
             ),
             _RecommendOption(
-              label: 'No',
+              label: t.fbNo,
               selected: wouldRecommend == false,
               color: colorScheme.error,
               onTap: () => onRecommend(false),
@@ -528,6 +600,9 @@ class _BottomBar extends StatelessWidget {
           width: double.infinity,
           child: FilledButton(
             onPressed: !enabled || loading ? null : onTap,
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(52),
+            ),
             child: loading
                 ? SizedBox(
                     height: 20,

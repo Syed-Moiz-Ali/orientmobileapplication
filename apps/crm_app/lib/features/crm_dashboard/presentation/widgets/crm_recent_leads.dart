@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/crm_constants.dart';
 import 'package:crm_app/features/crm_dashboard/domain/entities/crm_entities.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/support/crm_l10n.dart';
 
 class CrmRecentLeadsCard extends StatelessWidget {
   final List<CrmLeadEntity> leads;
@@ -9,6 +10,7 @@ class CrmRecentLeadsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.cx;
     return AppCard.surface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -21,11 +23,11 @@ class CrmRecentLeadsCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                _th('S.No', flex: 1),
-                _th('Lead Number', flex: 3),
-                _th('Customer Name', flex: 3),
-                _th('Source'),
-                _th('Status'),
+                _th(t.rlNo, flex: 1),
+                _th(t.rlNumber, flex: 3),
+                _th(t.rlName, flex: 3),
+                _th(t.rlSource),
+                _th(t.rlStatus),
               ],
             ),
           ),

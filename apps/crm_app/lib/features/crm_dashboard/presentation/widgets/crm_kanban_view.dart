@@ -1,18 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:crm_app/features/crm_dashboard/domain/entities/crm_entities.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_lead_provider.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/support/crm_board_filter.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/support/crm_l10n.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/lead_detail_sheet.dart';
 
-class CrmKanbanView extends StatefulWidget {
+/// Pipeline swimlanes over the real lead statuses: known stages first, then
+/// any backend status the board has never seen (never dropped, never
+/// invented). Cards offer the same status quick-select the detail sheet
+/// uses — identical payload, identical endpoint, no invented transitions.
+class CrmKanbanView extends ConsumerStatefulWidget {
   final List<CrmLeadEntity> leads;
 
   const CrmKanbanView({super.key, required this.leads});
 
   @override
-  State<CrmKanbanView> createState() => _CrmKanbanViewState();
+  ConsumerState<CrmKanbanView> createState() => _CrmKanbanViewState();
 }
 
-class _CrmKanbanViewState extends State<CrmKanbanView> {
+class _CrmKanbanViewState extends ConsumerState<CrmKanbanView> {
   static const _knownStages = <String>[
     'ACTIVE',
     'NEW',
@@ -37,14 +45,26 @@ class _CrmKanbanViewState extends State<CrmKanbanView> {
     ];
   }
 
+  Future<void> _moveLead(CrmLeadEntity lead, String status) async {
+    if (status == lead.status) return;
+    await ref
+        .read(crmLeadProvider.notifier)
+        .updateLead(lead.id, crmLeadStatusMap(lead, status));
+    if (!mounted) return;
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(content: Text(context.cx.kbMoved(status))),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final t = context.cx;
     final stages = _stages;
     if (stages.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.view_kanban_outlined,
-        title: 'No pipeline stages',
-        message: 'New leads will appear here as they enter the pipeline.',
+        title: t.kbNoStages,
+        message: t.kbNoStagesBody,
       );
     }
 
@@ -53,6 +73,7 @@ class _CrmKanbanViewState extends State<CrmKanbanView> {
   }
 
   Widget _buildCompact(BuildContext context, List<String> stages) {
+    final t = context.cx;
     final selectedIndex = _selectedStage.clamp(0, stages.length - 1);
     final selected = stages[selectedIndex];
     final leads = _leadsFor(selected);
@@ -91,13 +112,13 @@ class _CrmKanbanViewState extends State<CrmKanbanView> {
             AppDimensions.s10,
           ),
           child: Text(
-            '${_stageLabel(selected)} · ${leads.length} ${leads.length == 1 ? 'lead' : 'leads'}',
+            '${_stageLabel(selected)} · ${leads.length} ${leads.length == 1 ? t.kbLeadOne : t.kbLeadsMany}',
             style: Theme.of(context).textTheme.titleSmall,
           ),
         ),
         Expanded(
           child: leads.isEmpty
-              ? const Center(child: Text('No leads in this stage'))
+              ? Center(child: Text(t.kbEmptyStage))
               : ListView.separated(
                   padding: const EdgeInsets.fromLTRB(
                     AppDimensions.s16,
@@ -108,7 +129,11 @@ class _CrmKanbanViewState extends State<CrmKanbanView> {
                   itemCount: leads.length,
                   separatorBuilder: (_, __) =>
                       const SizedBox(height: AppDimensions.s8),
-                  itemBuilder: (_, index) => _LeadRecord(lead: leads[index]),
+                  itemBuilder: (_, index) => _LeadRecord(
+                    lead: leads[index],
+                    stages: stages,
+                    onMove: _moveLead,
+                  ),
                 ),
         ),
       ],
@@ -116,6 +141,7 @@ class _CrmKanbanViewState extends State<CrmKanbanView> {
   }
 
   Widget _buildBoard(BuildContext context, List<String> stages) {
+    final t = context.cx;
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: EdgeInsets.all(context.adaptive.gutter),
@@ -166,7 +192,7 @@ class _CrmKanbanViewState extends State<CrmKanbanView> {
                   child: leads.isEmpty
                       ? Center(
                           child: Text(
-                            'No leads',
+                            t.kbEmptyStage,
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         )
@@ -175,8 +201,11 @@ class _CrmKanbanViewState extends State<CrmKanbanView> {
                           itemCount: leads.length,
                           separatorBuilder: (_, __) =>
                               const SizedBox(height: AppDimensions.s8),
-                          itemBuilder: (_, index) =>
-                              _LeadRecord(lead: leads[index]),
+                          itemBuilder: (_, index) => _LeadRecord(
+                            lead: leads[index],
+                            stages: stages,
+                            onMove: _moveLead,
+                          ),
                         ),
                 ),
               ],
@@ -213,21 +242,29 @@ class _CrmKanbanViewState extends State<CrmKanbanView> {
 
 class _LeadRecord extends StatelessWidget {
   final CrmLeadEntity lead;
+  final List<String> stages;
+  final Future<void> Function(CrmLeadEntity lead, String status) onMove;
 
-  const _LeadRecord({required this.lead});
+  const _LeadRecord({
+    required this.lead,
+    required this.stages,
+    required this.onMove,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = context.cx;
     final contact = lead.phone.isNotEmpty ? lead.phone : lead.email;
 
     return AppRecordRow(
       padding: const EdgeInsets.all(AppDimensions.s12),
       title: lead.customerName,
-      subtitle: contact.isEmpty ? 'No contact information' : contact,
+      subtitle: contact.isEmpty ? t.kbNoContact : contact,
       metadata: Wrap(
         spacing: AppDimensions.s8,
         runSpacing: AppDimensions.s4,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           StatusPill(
             label: lead.source,
@@ -235,16 +272,27 @@ class _LeadRecord extends StatelessWidget {
             fg: lead.sourceColor,
           ),
           Text(
-            lead.assignedTo.isEmpty ? 'Unassigned' : lead.assignedTo,
+            lead.assignedTo.isEmpty ? t.kbUnassigned : lead.assignedTo,
             style: theme.textTheme.labelSmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
       ),
-      trailing: Icon(
-        Icons.chevron_right_rounded,
-        color: theme.colorScheme.onSurfaceVariant,
+      trailing: PopupMenuButton<String>(
+        tooltip: t.dtChangeStatus,
+        icon: Icon(
+          Icons.more_vert_rounded,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+        onSelected: (status) => onMove(lead, status),
+        itemBuilder: (_) => [
+          for (final stage in stages)
+            PopupMenuItem(
+              value: stage,
+              child: Text(t.kbMoveTo(stage)),
+            ),
+        ],
       ),
       onTap: () => LeadDetailSheet.show(context, lead),
     );

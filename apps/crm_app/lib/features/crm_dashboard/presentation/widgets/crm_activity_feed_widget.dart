@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:crm_app/features/crm_dashboard/domain/entities/crm_entities.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/crm_constants.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/support/crm_l10n.dart';
 
 class ActivityFeedWidget extends StatelessWidget {
   final List<ActivityFeedEntity> feed;
@@ -8,6 +9,7 @@ class ActivityFeedWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.cx;
     if (feed.isEmpty) {
       return Container(
         width: double.infinity,
@@ -17,12 +19,12 @@ class ActivityFeedWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: CrmColors.border),
         ),
-        child: const Column(
+        child: Column(
           children: [
-            Icon(Icons.history_rounded, size: 30, color: CrmColors.textM),
-            SizedBox(height: 10),
+            const Icon(Icons.history_rounded, size: 30, color: CrmColors.textM),
+            const SizedBox(height: 10),
             Text(
-              'No activity yet',
+              t.acEmpty,
               style: TextStyle(color: CrmColors.textM, fontSize: 12),
             ),
           ],
@@ -41,8 +43,8 @@ class ActivityFeedWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Recent Activity',
+          Text(
+            t.acTitle,
             style: TextStyle(color: CrmColors.textH, fontSize: 13, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 12),

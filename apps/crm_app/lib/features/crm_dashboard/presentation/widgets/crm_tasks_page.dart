@@ -5,12 +5,19 @@ import 'package:crm_app/features/crm_dashboard/domain/entities/crm_entities.dart
 import 'package:crm_app/features/crm_dashboard/presentation/crm_constants.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_task_provider.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_team_provider.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/support/crm_l10n.dart';
 
+/// Follow-up checklist: priority flags, call reminders, overdue badges and
+/// the same complete/edit/delete flows. Due badges derive from parseable
+/// due dates only — free-text dates that cannot be parsed get no badge
+/// rather than a guessed one. There is no snooze endpoint, so none is
+/// offered (documented, not improvised).
 class CrmTasksPage extends ConsumerWidget {
   const CrmTasksPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = context.cx;
     final notifier = ref.read(crmTaskProvider.notifier);
     final tasks = ref.watch(crmTaskProvider).tasks;
 
@@ -28,7 +35,7 @@ class CrmTasksPage extends ConsumerWidget {
                   border: Border.all(color: CrmColors.accent.withValues(alpha: 0.3)),
                 ),
                 child: Text(
-                  '${tasks.length} Tasks',
+                  t.tkCount(tasks.length),
                   style: const TextStyle(
                     color: CrmColors.accent,
                     fontSize: 12,
@@ -58,14 +65,14 @@ class CrmTasksPage extends ConsumerWidget {
                     color: CrmColors.primary,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.add_rounded, size: 15, color: Colors.white),
-                      SizedBox(width: 4),
+                      const Icon(Icons.add_rounded, size: 15, color: Colors.white),
+                      const SizedBox(width: 4),
                       Text(
-                        'Add Task',
-                        style: TextStyle(
+                        t.tkAdd,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -88,17 +95,17 @@ class CrmTasksPage extends ConsumerWidget {
                     Container(
                       width: 80,
                       height: 80,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: CrmColors.accentLight,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.task_alt_rounded, size: 36, color: CrmColors.accent),
                     ),
                     const SizedBox(height: 20),
-                    const Center(
+                    Center(
                       child: Text(
-                        'No tasks yet',
-                        style: TextStyle(
+                        t.tkEmpty,
+                        style: const TextStyle(
                           color: CrmColors.textH,
                           fontSize: 17,
                           fontWeight: FontWeight.w800,
@@ -106,11 +113,11 @@ class CrmTasksPage extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    const Center(
+                    Center(
                       child: Text(
-                        'Create tasks for your team to follow up on leads',
+                        t.tkEmptyBody,
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: CrmColors.textM, fontSize: 12),
+                        style: const TextStyle(color: CrmColors.textM, fontSize: 12),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -118,7 +125,7 @@ class CrmTasksPage extends ConsumerWidget {
                       child: ElevatedButton.icon(
                         onPressed: () => _showTaskForm(context, ref),
                         icon: const Icon(Icons.add_rounded, size: 18),
-                        label: const Text('Add Task'),
+                        label: Text(t.tkAdd),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: CrmColors.primary,
                           foregroundColor: Colors.white,
@@ -162,19 +169,20 @@ class CrmTasksPage extends ConsumerWidget {
   }
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref, CrmTaskEntity task) async {
+    final t = context.cx;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Delete Task', style: TextStyle(fontWeight: FontWeight.w700)),
-        content: Text('Delete "${task.title}"?'),
+        title: Text(t.tkDeleteTitle, style: const TextStyle(fontWeight: FontWeight.w700)),
+        content: Text(t.tkDeleteBody(task.title)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(t.tkCancel)),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: CrmColors.red, foregroundColor: Colors.white),
-            child: const Text('Delete'),
+            child: Text(t.tkDelete),
           ),
         ],
       ),
@@ -183,6 +191,22 @@ class CrmTasksPage extends ConsumerWidget {
       await ref.read(crmTaskProvider.notifier).deleteTask(task.id);
     }
   }
+}
+
+/// Task due state from the stored string. Only ISO-parseable dates produce
+/// badges; anything else (including empty) yields none — never a guess.
+enum _DueState { none, overdue, today, upcoming }
+
+_DueState _dueStateOf(CrmTaskEntity task) {
+  if (task.isDone) return _DueState.none;
+  final due = DateTime.tryParse(task.dueDate.trim());
+  if (due == null) return _DueState.none;
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final day = DateTime(due.year, due.month, due.day);
+  if (day.isBefore(today)) return _DueState.overdue;
+  if (day == today) return _DueState.today;
+  return _DueState.upcoming;
 }
 
 class _TaskCard extends StatelessWidget {
@@ -194,12 +218,16 @@ class _TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.cx;
+    final due = _dueStateOf(task);
     return Container(
       padding: const EdgeInsets.all(AppDimensions.s14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppDimensions.r14),
-        border: Border.all(color: CrmColors.border),
+        border: Border.all(
+          color: due == _DueState.overdue ? CrmColors.red.withValues(alpha: 0.4) : CrmColors.border,
+        ),
         boxShadow: [
           BoxShadow(
             color: CrmColors.primary.withValues(alpha: 0.05),
@@ -210,22 +238,28 @@ class _TaskCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: onToggle,
-            child: Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: task.isDone ? CrmColors.green : CrmColors.textM,
-                  width: 2,
+          Semantics(
+            button: true,
+            selected: task.isDone,
+            label: task.isDone ? t.tkReopen : t.tkMarkDone,
+            excludeSemantics: true,
+            child: GestureDetector(
+              onTap: onToggle,
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: task.isDone ? CrmColors.green : CrmColors.textM,
+                    width: 2,
+                  ),
+                  color: task.isDone ? CrmColors.green : Colors.transparent,
                 ),
-                color: task.isDone ? CrmColors.green : Colors.transparent,
+                child: task.isDone
+                    ? const Icon(Icons.check, color: Colors.white, size: 14)
+                    : null,
               ),
-              child: task.isDone
-                  ? const Icon(Icons.check, color: Colors.white, size: 14)
-                  : null,
             ),
           ),
           const SizedBox(width: AppDimensions.s12),
@@ -243,21 +277,65 @@ class _TaskCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Row(
+                Wrap(
+                  spacing: AppDimensions.s12,
+                  runSpacing: 2,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    const Icon(Icons.person_outline_rounded, color: CrmColors.textM, size: 12),
-                    const SizedBox(width: 4),
-                    Text(
-                      task.assignedTo.isEmpty ? 'Unassigned' : task.assignedTo,
-                      style: const TextStyle(color: CrmColors.textM, fontSize: 11),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.person_outline_rounded, color: CrmColors.textM, size: 12),
+                        const SizedBox(width: 4),
+                        Text(
+                          task.assignedTo.isEmpty ? t.tkUnassigned : task.assignedTo,
+                          style: const TextStyle(color: CrmColors.textM, fontSize: 11),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: AppDimensions.s12),
-                    const Icon(Icons.calendar_today_rounded, color: CrmColors.textM, size: 11),
-                    const SizedBox(width: 4),
-                    Text(
-                      task.dueDate.isEmpty ? 'No due date' : task.dueDate,
-                      style: const TextStyle(color: CrmColors.textM, fontSize: 11),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.calendar_today_rounded, color: CrmColors.textM, size: 11),
+                        const SizedBox(width: 4),
+                        Text(
+                          task.dueDate.isEmpty ? t.tkNoDue : task.dueDate,
+                          style: const TextStyle(color: CrmColors.textM, fontSize: 11),
+                        ),
+                      ],
                     ),
+                    if (due == _DueState.overdue)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: CrmColors.redBg,
+                          borderRadius: BorderRadius.circular(AppDimensions.r8),
+                        ),
+                        child: Text(
+                          t.tkOverdue,
+                          style: const TextStyle(
+                            color: CrmColors.red,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    if (due == _DueState.today)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: CrmColors.amberBg,
+                          borderRadius: BorderRadius.circular(AppDimensions.r8),
+                        ),
+                        child: Text(
+                          t.tkDueToday,
+                          style: const TextStyle(
+                            color: CrmColors.amber,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ],
@@ -328,6 +406,15 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
 
   static const _priorities = ['High', 'Medium', 'Low'];
 
+  String _priorityLabel(String p) {
+    final t = context.cx;
+    return switch (p) {
+      'High' => t.tkHigh,
+      'Low' => t.tkLow,
+      _ => t.tkMedium,
+    };
+  }
+
   @override
   void initState() {
     super.initState();
@@ -347,6 +434,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.cx;
     final isEdit = widget.task != null;
     return Padding(
       padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 20),
@@ -367,7 +455,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
             ),
             const SizedBox(height: 18),
             Text(
-              isEdit ? 'Edit Task' : 'Add Task',
+              isEdit ? t.tkFormEdit : t.tkFormAdd,
               style: const TextStyle(
                 color: CrmColors.textH,
                 fontSize: 20,
@@ -375,15 +463,15 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
               ),
             ),
             const SizedBox(height: 18),
-            _field('Task Title', _titleCtrl, Icons.task_alt_rounded),
+            _field(t.tkFormTitle, _titleCtrl, Icons.task_alt_rounded),
             const SizedBox(height: 12),
             _assigneeDropdown(),
             const SizedBox(height: 12),
-            _field('Due Date', _dueCtrl, Icons.calendar_today_rounded),
+            _field(t.tkFormDue, _dueCtrl, Icons.calendar_today_rounded),
             const SizedBox(height: 12),
-            const Text(
-              'Priority',
-              style: TextStyle(color: CrmColors.textM, fontSize: 11, fontWeight: FontWeight.w700),
+            Text(
+              t.tkFormPriority,
+              style: const TextStyle(color: CrmColors.textM, fontSize: 11, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             Row(
@@ -402,7 +490,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                       ),
                       child: Center(
                         child: Text(
-                          p,
+                          _priorityLabel(p),
                           style: TextStyle(
                             color: sel ? Colors.white : CrmColors.textB,
                             fontSize: 12,
@@ -439,7 +527,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
                     : Icon(isEdit ? Icons.save_outlined : Icons.add_rounded, size: 18),
-                label: Text(_busy ? 'Saving...' : (isEdit ? 'Save Changes' : 'Add Task')),
+                label: Text(_busy ? t.tkSaving : (isEdit ? t.tkSaveChanges : t.tkFormAdd)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: CrmColors.primary,
                   foregroundColor: Colors.white,
@@ -487,11 +575,12 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
   }
 
   Widget _assigneeDropdown() {
+    final t = context.cx;
     final teamAsync = ref.watch(teamMembersProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Assigned To', style: TextStyle(color: CrmColors.textM, fontSize: 11, fontWeight: FontWeight.w700)),
+        Text(t.tkFormAssigned, style: const TextStyle(color: CrmColors.textM, fontSize: 11, fontWeight: FontWeight.w700)),
         const SizedBox(height: 6),
         teamAsync.when(
           loading: () => Container(
@@ -501,11 +590,11 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: CrmColors.border),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
-                SizedBox(width: 10),
-                Text('Loading team...', style: TextStyle(color: CrmColors.textM, fontSize: 13)),
+                const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                const SizedBox(width: 10),
+                Text(t.tkLoadingTeam, style: const TextStyle(color: CrmColors.textM, fontSize: 13)),
               ],
             ),
           ),
@@ -515,10 +604,10 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
               color: CrmColors.redBg,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Text('Could not load team', style: TextStyle(color: CrmColors.red, fontSize: 12)),
+            child: Text(t.tkTeamFail, style: const TextStyle(color: CrmColors.red, fontSize: 12)),
           ),
           data: (members) {
-            final options = [...members.map((m) => m.name), 'Unassigned'];
+            final options = [...members.map((m) => m.name), t.tkUnassigned];
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
@@ -530,7 +619,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                 child: DropdownButton<String>(
                   value: options.contains(_assignCtrl.text) ? _assignCtrl.text : null,
                   hint: Text(
-                    _assignCtrl.text.isEmpty ? 'Select assignee' : _assignCtrl.text,
+                    _assignCtrl.text.isEmpty ? t.tkSelectAssignee : _assignCtrl.text,
                     style: const TextStyle(color: CrmColors.textM, fontSize: 13),
                   ),
                   dropdownColor: Colors.white,
@@ -548,8 +637,9 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
   }
 
   Future<void> _save() async {
+    final t = context.cx;
     if (_titleCtrl.text.trim().isEmpty) {
-      setState(() => _error = 'Task title is required');
+      setState(() => _error = t.tkTitleRequired);
       return;
     }
     setState(() {
@@ -557,19 +647,22 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
       _error = null;
     });
     final notifier = ref.read(crmTaskProvider.notifier);
-    final assigned = _assignCtrl.text.trim() == 'Unassigned' ? '' : _assignCtrl.text.trim();
     if (widget.task != null) {
       await notifier.updateTask(
         widget.task!,
         title: _titleCtrl.text.trim(),
-        assignedTo: assigned,
+        assignedTo: _assignCtrl.text.trim() == t.tkUnassigned || _assignCtrl.text.trim() == 'Unassigned'
+            ? ''
+            : _assignCtrl.text.trim(),
         dueDate: _dueCtrl.text.trim(),
         priority: _priority,
       );
     } else {
       await notifier.addTask(
         title: _titleCtrl.text.trim(),
-        assignedTo: assigned,
+        assignedTo: _assignCtrl.text.trim() == t.tkUnassigned || _assignCtrl.text.trim() == 'Unassigned'
+            ? ''
+            : _assignCtrl.text.trim(),
         dueDate: _dueCtrl.text.trim(),
         priority: _priority,
       );
