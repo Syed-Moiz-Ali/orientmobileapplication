@@ -1,28 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/dashboard_ui_providers.dart';
+import 'package:owner_app/l10n/gen/owner_localizations.dart';
+
+/// Display labels for the frozen period state values. The notifier keeps the
+/// canonical English values (`setPeriod('Today')` etc.) — only the rendered
+/// copy is localized, so this widget is presentation-only.
+String _periodLabel(OwnerLocalizations t, String value) => switch (value) {
+      'Today' => t.ownerPeriodToday,
+      'This Month' => t.ownerPeriodMonth,
+      'This Year' => t.ownerPeriodYear,
+      _ => t.ownerPeriodWeek,
+    };
 
 class PeriodDropdown extends ConsumerWidget {
   const PeriodDropdown({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = OwnerLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     final state = ref.watch(dashboardUiProvider);
     final notifier = ref.read(dashboardUiProvider.notifier);
 
+    const values = <String>['Today', 'This Week', 'This Month', 'This Year'];
+
     return PopupMenuButton<String>(
       initialValue: state.period,
-      onSelected: (v) => notifier.setPeriod(v),
+      tooltip: _periodLabel(t, state.period),
+      onSelected: (v) {
+        HapticFeedback.selectionClick();
+        notifier.setPeriod(v);
+      },
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 6,
-      itemBuilder: (context) => const [
-        PopupMenuItem(value: 'Today', child: Text('Today')),
-        PopupMenuItem(value: 'This Week', child: Text('This Week')),
-        PopupMenuItem(value: 'This Month', child: Text('This Month')),
-        PopupMenuItem(value: 'This Year', child: Text('This Year')),
+      itemBuilder: (context) => [
+        for (final v in values)
+          PopupMenuItem(value: v, child: Text(_periodLabel(t, v))),
       ],
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -43,7 +60,7 @@ class PeriodDropdown extends ConsumerWidget {
             ),
             const SizedBox(width: 5),
             Text(
-              state.period,
+              _periodLabel(t, state.period),
               style: textTheme.labelSmall?.copyWith(
                 color: colorScheme.primary,
                 fontWeight: FontWeight.w800,

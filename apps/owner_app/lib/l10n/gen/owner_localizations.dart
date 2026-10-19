@@ -127,6 +127,522 @@ abstract class OwnerLocalizations {
   /// In en, this message translates to:
   /// **'By signing in, you agree to the Orient Owner App Terms of Service and Privacy Policy.'**
   String get authSecurityNotice;
+
+  /// Bottom-nav / rail label: cockpit
+  ///
+  /// In en, this message translates to:
+  /// **'Dashboard'**
+  String get ownerNavDashboard;
+
+  /// Bottom-nav / rail label: leaderboard
+  ///
+  /// In en, this message translates to:
+  /// **'Top sales'**
+  String get ownerNavTopSales;
+
+  /// Bottom-nav / rail label: comms
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get ownerNavMessages;
+
+  /// Bottom-nav / rail label: activity log
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get ownerNavActivity;
+
+  /// Brand-mark workspace word
+  ///
+  /// In en, this message translates to:
+  /// **'Executive'**
+  String get ownerShellWorkspace;
+
+  /// Rail footer identity
+  ///
+  /// In en, this message translates to:
+  /// **'Owner suite'**
+  String get ownerShellSuite;
+
+  /// App-bar title: cockpit
+  ///
+  /// In en, this message translates to:
+  /// **'Owner dashboard'**
+  String get ownerBarDashboard;
+
+  /// App-bar title: leaderboard
+  ///
+  /// In en, this message translates to:
+  /// **'Top sales'**
+  String get ownerBarTopSales;
+
+  /// App-bar subtitle: leaderboard
+  ///
+  /// In en, this message translates to:
+  /// **'Performance breakdown by category'**
+  String get ownerBarTopSalesSub;
+
+  /// App-bar title: comms
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get ownerBarMessages;
+
+  /// App-bar subtitle: comms
+  ///
+  /// In en, this message translates to:
+  /// **'Internal messaging'**
+  String get ownerBarMessagesSub;
+
+  /// App-bar title: activity log
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get ownerBarActivity;
+
+  /// App-bar subtitle: activity log
+  ///
+  /// In en, this message translates to:
+  /// **'Workshop activity feed'**
+  String get ownerBarActivitySub;
+
+  /// Back-to-cockpit tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Back to overview'**
+  String get ownerBarBack;
+
+  /// Command-palette hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search destinations…'**
+  String get ownerSearchHint;
+
+  /// Period option
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get ownerPeriodToday;
+
+  /// Period option
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get ownerPeriodWeek;
+
+  /// Period option
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get ownerPeriodMonth;
+
+  /// Period option
+  ///
+  /// In en, this message translates to:
+  /// **'This year'**
+  String get ownerPeriodYear;
+
+  /// Cockpit header title
+  ///
+  /// In en, this message translates to:
+  /// **'Executive Operations Control'**
+  String get ownerOpsTitle;
+
+  /// Cockpit header subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Real-time overview of branch performance, revenue, and active repair pipelines.'**
+  String get ownerOpsSubtitle;
+
+  /// Cockpit live pill
+  ///
+  /// In en, this message translates to:
+  /// **'Live operations'**
+  String get ownerPillLive;
+
+  /// Active-jobs pill
+  ///
+  /// In en, this message translates to:
+  /// **'{value} active'**
+  String ownerPillActive(String value);
+
+  /// Today-jobs pill
+  ///
+  /// In en, this message translates to:
+  /// **'{value} today'**
+  String ownerPillToday(String value);
+
+  /// Hero empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No figures yet.'**
+  String get ownerHeroEmpty;
+
+  /// Hero empty hint
+  ///
+  /// In en, this message translates to:
+  /// **'Pull to refresh when you are back online.'**
+  String get ownerHeroEmptyHint;
+
+  /// Curve card title
+  ///
+  /// In en, this message translates to:
+  /// **'Sales & profit'**
+  String get ownerChartSalesProfit;
+
+  /// Curve legend: sales
+  ///
+  /// In en, this message translates to:
+  /// **'Sales'**
+  String get ownerChartSales;
+
+  /// Curve legend: profit
+  ///
+  /// In en, this message translates to:
+  /// **'Profit'**
+  String get ownerChartProfit;
+
+  /// Cost card title
+  ///
+  /// In en, this message translates to:
+  /// **'Profit & expenses'**
+  String get ownerChartCost;
+
+  /// Cost legend: expenses
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses'**
+  String get ownerChartExpenses;
+
+  /// Curve placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'No trend data yet.'**
+  String get ownerChartEmpty;
+
+  /// Register section title
+  ///
+  /// In en, this message translates to:
+  /// **'Job register'**
+  String get ownerRegisterTitle;
+
+  /// Register see-all action
+  ///
+  /// In en, this message translates to:
+  /// **'View all'**
+  String get ownerRegisterAll;
+
+  /// Register column
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get ownerRegisterCategory;
+
+  /// Register column
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get ownerRegisterOpen;
+
+  /// Register column
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get ownerRegisterTotal;
+
+  /// Register empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No register rows.'**
+  String get ownerRegisterEmpty;
+
+  /// Actions section title
+  ///
+  /// In en, this message translates to:
+  /// **'Quick actions'**
+  String get ownerActionsTitle;
+
+  /// Quick action
+  ///
+  /// In en, this message translates to:
+  /// **'Job cards'**
+  String get ownerActionJobCards;
+
+  /// Quick-action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Repair register'**
+  String get ownerActionJobCardsHint;
+
+  /// Quick action
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory'**
+  String get ownerActionInventory;
+
+  /// Quick-action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Spare parts & stock'**
+  String get ownerActionInventoryHint;
+
+  /// Quick action
+  ///
+  /// In en, this message translates to:
+  /// **'Receivables'**
+  String get ownerActionReceivables;
+
+  /// Quick-action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Ageing & invoices'**
+  String get ownerActionReceivablesHint;
+
+  /// Quick action
+  ///
+  /// In en, this message translates to:
+  /// **'Approvals'**
+  String get ownerActionApprovals;
+
+  /// Quick-action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Estimates & discounts'**
+  String get ownerActionApprovalsHint;
+
+  /// Quick action
+  ///
+  /// In en, this message translates to:
+  /// **'Job status'**
+  String get ownerActionJobStatus;
+
+  /// Quick-action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Live repair pipeline'**
+  String get ownerActionJobStatusHint;
+
+  /// Quick action
+  ///
+  /// In en, this message translates to:
+  /// **'Compliance'**
+  String get ownerActionCompliance;
+
+  /// Quick-action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Document expiry'**
+  String get ownerActionComplianceHint;
+
+  /// Quick action
+  ///
+  /// In en, this message translates to:
+  /// **'Reviews'**
+  String get ownerActionReviews;
+
+  /// Quick-action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Customer ratings'**
+  String get ownerActionReviewsHint;
+
+  /// Quick action
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance'**
+  String get ownerActionAttendance;
+
+  /// Quick-action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Shift register'**
+  String get ownerActionAttendanceHint;
+
+  /// Quick action
+  ///
+  /// In en, this message translates to:
+  /// **'Team & roles'**
+  String get ownerActionTeam;
+
+  /// Quick-action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Staff permissions'**
+  String get ownerActionTeamHint;
+
+  /// Quick action
+  ///
+  /// In en, this message translates to:
+  /// **'Top sales'**
+  String get ownerActionTopSales;
+
+  /// Quick-action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Category insights'**
+  String get ownerActionTopSalesHint;
+
+  /// Quick action
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get ownerActionMessages;
+
+  /// Quick-action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Internal chat'**
+  String get ownerActionMessagesHint;
+
+  /// Quick action
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription'**
+  String get ownerActionSubscription;
+
+  /// Quick-action subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Workshop plan'**
+  String get ownerActionSubscriptionHint;
+
+  /// Leaderboard header
+  ///
+  /// In en, this message translates to:
+  /// **'Top sales'**
+  String get ownerSalesHeader;
+
+  /// Leaderboard count line
+  ///
+  /// In en, this message translates to:
+  /// **'{count} categories'**
+  String ownerSalesCount(int count);
+
+  /// Leaderboard empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No sales data.'**
+  String get ownerSalesEmpty;
+
+  /// Leaderboard column
+  ///
+  /// In en, this message translates to:
+  /// **'No.'**
+  String get ownerSalesNo;
+
+  /// Leaderboard column
+  ///
+  /// In en, this message translates to:
+  /// **'Item'**
+  String get ownerSalesItem;
+
+  /// Leaderboard column
+  ///
+  /// In en, this message translates to:
+  /// **'Revenue'**
+  String get ownerSalesRevenue;
+
+  /// Sent-count pill
+  ///
+  /// In en, this message translates to:
+  /// **'{count} sent'**
+  String ownerMsgSent(int count);
+
+  /// Composer title
+  ///
+  /// In en, this message translates to:
+  /// **'Broadcast message to team'**
+  String get ownerMsgCompose;
+
+  /// Recipient label
+  ///
+  /// In en, this message translates to:
+  /// **'Recipient'**
+  String get ownerMsgRecipient;
+
+  /// Recipient hint
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a staff recipient…'**
+  String get ownerMsgRecipientHint;
+
+  /// Body label
+  ///
+  /// In en, this message translates to:
+  /// **'Message body'**
+  String get ownerMsgBody;
+
+  /// Body hint
+  ///
+  /// In en, this message translates to:
+  /// **'Type internal instructions or workshop notes here…'**
+  String get ownerMsgBodyHint;
+
+  /// Send CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Send message'**
+  String get ownerMsgSend;
+
+  /// Send success toast
+  ///
+  /// In en, this message translates to:
+  /// **'Message delivered to staff portal.'**
+  String get ownerMsgSentToast;
+
+  /// Send failure toast
+  ///
+  /// In en, this message translates to:
+  /// **'Message failed. Check recipient selection.'**
+  String get ownerMsgFailToast;
+
+  /// History section
+  ///
+  /// In en, this message translates to:
+  /// **'Dispatch history'**
+  String get ownerMsgHistory;
+
+  /// History empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No broadcasts yet.'**
+  String get ownerMsgEmpty;
+
+  /// History empty hint
+  ///
+  /// In en, this message translates to:
+  /// **'Messages to the team will appear here.'**
+  String get ownerMsgEmptyHint;
+
+  /// Empty team note
+  ///
+  /// In en, this message translates to:
+  /// **'No active staff found.'**
+  String get ownerMsgNoTeam;
+
+  /// Activity empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No activity yet'**
+  String get ownerActEmpty;
+
+  /// Activity empty hint
+  ///
+  /// In en, this message translates to:
+  /// **'Job cards, approvals and payments will show up here.'**
+  String get ownerActEmptyHint;
+
+  /// Activity group: today
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get ownerActToday;
+
+  /// Activity group: yesterday
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get ownerActYesterday;
 }
 
 class _OwnerLocalizationsDelegate

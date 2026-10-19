@@ -1,10 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:owner_app/features/dashboard/domain/entities/dashboard_entities.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/dashboard_ui_providers.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/owner_dashboard_page.dart';
+import 'package:owner_app/l10n/gen/owner_localizations.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
+
+const _smokeDelegates = <LocalizationsDelegate<dynamic>>[
+  OwnerLocalizations.delegate,
+  SharedCoreLocalizations.delegate,
+  SharedAuthLocalizations.delegate,
+  GlobalMaterialLocalizations.delegate,
+  GlobalWidgetsLocalizations.delegate,
+  GlobalCupertinoLocalizations.delegate,
+];
 
 /// Phase 01 (H3) — real-context layout smoke test.
 ///
@@ -26,7 +38,12 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Executive Operations Control'), findsOneWidget);
-      expect(find.text('KPI Overview'), findsOneWidget);
+      // Phase 13 recomposition: revenue hero + pods + curves + register +
+      // quick actions replace the old KPI-overview grid.
+      expect(find.text('AED 84K'), findsOneWidget);
+      expect(find.text('Job register'), findsOneWidget);
+      expect(find.text('Quick actions'), findsOneWidget);
+      expect(find.text('Sales & profit'), findsOneWidget);
 
       final context = tester.element(find.byType(OwnerDashboardPage));
       expect(
@@ -78,6 +95,8 @@ Future<void> _pumpDashboard(
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(BrandConfig.orient),
+        supportedLocales: AppLocales.supported,
+        localizationsDelegates: _smokeDelegates,
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(
             context,

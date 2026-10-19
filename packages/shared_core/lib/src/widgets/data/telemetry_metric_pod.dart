@@ -141,8 +141,13 @@ class TelemetryMetricPod extends StatelessWidget {
             Row(
               children: [
                 if (deltaRow != null) ...[
-                  deltaRow,
-                  const SizedBox(width: AppDimensions.s8),
+                  // System gap (Phase 13): the badge was unshrinkable, so a
+                  // long delta clipped at 320px/1.3x. It now flexes and the
+                  // inner label ellipsizes; the gap renders only when a
+                  // supporting line actually follows.
+                  Flexible(child: deltaRow),
+                  if (supportingText != null)
+                    const SizedBox(width: AppDimensions.s8),
                 ],
                 if (supportingText != null)
                   Expanded(
@@ -199,12 +204,16 @@ class TelemetryMetricPod extends StatelessWidget {
         children: [
           Icon(icon, size: AppDimensions.iconXs, color: tone.ink),
           const SizedBox(width: AppDimensions.s4),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.metadata(color: tone.ink, arabic: arabic)
-                .copyWith(fontWeight: FontWeight.w700),
+          // Bounded so long deltas ellipsize instead of forcing the badge
+          // (and its parent row) past narrow viewports.
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.metadata(color: tone.ink, arabic: arabic)
+                  .copyWith(fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),

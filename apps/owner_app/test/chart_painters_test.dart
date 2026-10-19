@@ -1,52 +1,61 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:owner_app/features/dashboard/domain/entities/dashboard_entities.dart';
-import 'package:owner_app/features/dashboard/presentation/widgets/bar_chart_painter.dart';
-import 'package:owner_app/features/dashboard/presentation/widgets/dual_line_painter.dart';
+import 'package:shared_core/shared_core.dart';
 
+/// P0/P1 regression guards (migrated Phase 13): the bespoke owner painters
+/// crashed on empty/failed data via `reduce()` on empty lists. The cockpit
+/// now plots through the shared [SparklineChart], which renders
+/// [AppChartPlaceholder] on empty input — these guards lock that contract so
+/// the dashboard can never crash on unfetchable trends again.
 void main() {
-  // P0/P1 regression guards: the owner dashboard crashed on empty/failed data
-  // because the painters called reduce() on empty lists.
-  test('BarChartPainter does not crash on empty data', () {
-    final recorder = ui.PictureRecorder();
-    final canvas = ui.Canvas(recorder);
-    const painter = BarChartPainter(salesData: [], expenseData: []);
-    painter.paint(canvas, const ui.Size(300, 150));
+  testWidgets('SparklineChart renders placeholder on empty data', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SparklineChart(
+            series: [SparklineSeries([]), SparklineSeries([])],
+          ),
+        ),
+      ),
+    );
+    expect(find.byType(AppChartPlaceholder), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
-  test('BarChartPainter paints normally with data', () {
-    final recorder = ui.PictureRecorder();
-    final canvas = ui.Canvas(recorder);
-    const painter = BarChartPainter(
-      salesData: [SalesTrendPoint('Mon', 10)],
-      expenseData: [SalesTrendPoint('Mon', 5)],
+  testWidgets('SparklineChart paints normally with data', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SparklineChart(
+            series: [
+              SparklineSeries([10.0]),
+              SparklineSeries([5.0]),
+            ],
+          ),
+        ),
+      ),
     );
-    painter.paint(canvas, const ui.Size(300, 150));
+    expect(find.byType(AppChartPlaceholder), findsNothing);
+    expect(find.byType(CustomPaint), findsWidgets);
+    expect(tester.takeException(), isNull);
   });
 
-  test('DualLinePainter does not crash on empty data', () {
-    final recorder = ui.PictureRecorder();
-    final canvas = ui.Canvas(recorder);
-    const painter = DualLinePainter(
-      primaryData: [],
-      secondaryData: [],
-      primaryColor: Color(0xFF000000),
-      secondaryColor: Color(0xFF000000),
+  testWidgets('SparklineChart survives a single data point', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SparklineChart(
+            series: [
+              SparklineSeries([10.0]),
+              SparklineSeries([]),
+            ],
+          ),
+        ),
+      ),
     );
-    painter.paint(canvas, const ui.Size(300, 150));
-  });
-
-  test('DualLinePainter does not crash on a single data point', () {
-    final recorder = ui.PictureRecorder();
-    final canvas = ui.Canvas(recorder);
-    const painter = DualLinePainter(
-      primaryData: [SalesTrendPoint('Mon', 10)],
-      secondaryData: [],
-      primaryColor: Color(0xFF000000),
-      secondaryColor: Color(0xFF000000),
-    );
-    painter.paint(canvas, const ui.Size(300, 150));
+    expect(find.byType(AppChartPlaceholder), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 }

@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:owner_app/features/dashboard/domain/entities/dashboard_entities.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/dashboard_ui_providers.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/team_providers.dart';
-import 'package:owner_app/features/dashboard/presentation/widgets/message_tile.dart';
+import 'package:owner_app/l10n/gen/owner_localizations.dart';
 
+/// Workshop comms thread (O3): broadcast composer over the frozen
+/// send/merge notifier plus the server-merged dispatch history. Recipients
+/// come from the real team roster (active staff only); the send path,
+/// validation (`false` when recipient/body missing) and Hive persistence are
+/// untouched — only chrome, copy and states are new.
 class MessagesPage extends ConsumerStatefulWidget {
   const MessagesPage({super.key});
 
@@ -46,7 +52,7 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
             ),
           )
           .toList();
-      if (server.isNotEmpty) {
+      if (server.isNotEmpty && mounted) {
         ref.read(dashboardUiProvider.notifier).mergeMessages(server);
       }
     } catch (_) {
@@ -65,241 +71,281 @@ class _MessagesPageState extends ConsumerState<MessagesPage> {
     super.dispose();
   }
 
+  void _toast(String msg, {required bool ok}) {
+    final theme = Theme.of(context);
+    final ink = context.semanticColors.onPrimary;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              ok
+                  ? Icons.check_circle_outline_rounded
+                  : Icons.error_outline_rounded,
+              color: ink,
+              size: AppDimensions.iconSm,
+            ),
+            const SizedBox(width: AppDimensions.s8),
+            Expanded(
+              child: Text(
+                msg,
+                style: TextStyle(color: ink, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor:
+            ok ? context.semanticColors.success.base : theme.colorScheme.error,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
+    final t = OwnerLocalizations.of(context)!;
     final state = ref.watch(dashboardUiProvider);
     final notifier = ref.read(dashboardUiProvider.notifier);
     final team = ref.watch(teamProvider);
     final recipients = team.staff.where((member) => member.isActive).toList();
-    final selectedValue = recipients.any((m) => m.name == state.selectedUser)
-        ? state.selectedUser
-        : null;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: Row(
-              children: [
-                StatusPill(
-                  label: '${state.sentMessages.length} SENT MESSAGES',
-                  bg: colorScheme.primary.withValues(alpha: 0.12),
-                  fg: colorScheme.primary,
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: colorScheme.surface,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+    final wide = context.adaptive.pick(
+      compact: false,
+      medium: false,
+      expanded: true,
+      large: true,
+    );
+
+    final composer = _Composer(
+      controller: _msgController,
+      recipients: [for (final m in recipients) m.name],
+      selectedUser: state.selectedUser,
+      hasTeam: recipients.isNotEmpty,
+      onSelectUser: (v) {
+        HapticFeedback.selectionClick();
+        notifier.selectUser(v);
+      },
+      onSend: () async {
+        HapticFeedback.lightImpact();
+        final delivered = await notifier.sendMessage();
+        if (!context.mounted) return;
+        if (delivered) _msgController.clear();
+        _toast(
+          delivered ? t.ownerMsgSentToast : t.ownerMsgFailToast,
+          ok: delivered,
+        );
+      },
+    );
+
+    final history = state.sentMessages.isEmpty
+        ? EmptyState(
+            icon: Icons.outgoing_mail,
+            message: t.ownerMsgEmpty,
+          )
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Semantics(
+                header: true,
+                child: SectionHeader(title: t.ownerMsgHistory),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: colorScheme.shadow.withValues(alpha: 0.04),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
+              const SizedBox(height: AppDimensions.s8),
+              for (final msg in state.sentMessages) ...[
+                _MessageRow(message: msg),
+                const SizedBox(height: AppDimensions.s8),
               ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'BROADCAST MESSAGE TO TEAM',
-                  style: textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: colorScheme.primary,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'RECIPIENT',
-                  style: textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  height: 52,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: colorScheme.outlineVariant),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: selectedValue,
-                      hint: Row(
-                        children: [
-                          Icon(
-                            Icons.person_outline_rounded,
-                            color: colorScheme.onSurfaceVariant,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Choose a staff recipient...',
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                      dropdownColor: colorScheme.surface,
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurface,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      icon: Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: colorScheme.onSurfaceVariant,
-                        size: 20,
-                      ),
-                      isExpanded: true,
-                      onChanged: recipients.isEmpty
-                          ? null
-                          : (v) => notifier.selectUser(v ?? ''),
-                      items: recipients
-                          .map(
-                            (member) => DropdownMenuItem(
-                              value: member.name,
-                              child: Text('${member.name} · ${member.role.toUpperCase()}'),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Text(
-                  'MESSAGE BODY',
-                  style: textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _msgController,
-                  onChanged: notifier.updateMessage,
-                  maxLines: 4,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurface,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Type internal instructions or workshop notes here...',
-                    hintStyle: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-                    ),
-                    filled: true,
-                    fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                    contentPadding: const EdgeInsets.all(14),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: colorScheme.outlineVariant),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: colorScheme.outlineVariant),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(
-                        color: colorScheme.primary,
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: FilledButton.icon(
-                    onPressed: () async {
-                      final delivered = await notifier.sendMessage();
-                      if (!context.mounted) return;
-                      if (delivered) {
-                        _msgController.clear();
-                      }
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            delivered
-                                ? 'Message delivered to staff portal.'
-                                : 'Message failed. Check recipient selection.',
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: colorScheme.primary,
-                      foregroundColor: colorScheme.onPrimary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    icon: const Icon(Icons.send_rounded, size: 18),
-                    label: const Text(
-                      'SEND MESSAGE',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+            ],
+          );
+
+    if (wide) {
+      return ListView(
+        padding: EdgeInsets.fromLTRB(
+          context.pagePadding.left,
+          AppDimensions.s16,
+          context.pagePadding.right,
+          AppDimensions.s32,
+        ),
+        children: [
+          _SentPill(count: state.sentMessages.length),
+          const SizedBox(height: AppDimensions.s12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 5, child: composer),
+              const SizedBox(width: AppDimensions.s24),
+              Expanded(flex: 6, child: history),
+            ],
+          ),
+        ],
+      );
+    }
+
+    return ListView(
+      padding: EdgeInsets.fromLTRB(
+        context.pagePadding.left,
+        AppDimensions.s16,
+        context.pagePadding.right,
+        AppDimensions.s32,
+      ),
+      children: [
+        _SentPill(count: state.sentMessages.length),
+        const SizedBox(height: AppDimensions.s12),
+        composer,
+        const SizedBox(height: AppDimensions.s24),
+        history,
+      ],
+    );
+  }
+}
+
+class _SentPill extends StatelessWidget {
+  final int count;
+
+  const _SentPill({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = OwnerLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        StatusPill(
+          label: t.ownerMsgSent(count),
+          bg: colors.primary.withValues(alpha: 0.12),
+          fg: colors.primary,
+        ),
+      ],
+    );
+  }
+}
+
+class _Composer extends StatelessWidget {
+  final TextEditingController controller;
+  final List<String> recipients;
+  final String selectedUser;
+  final bool hasTeam;
+  final ValueChanged<String> onSelectUser;
+  final VoidCallback onSend;
+
+  const _Composer({
+    required this.controller,
+    required this.recipients,
+    required this.selectedUser,
+    required this.hasTeam,
+    required this.onSelectUser,
+    required this.onSend,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = OwnerLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return AppCard.standard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Semantics(
+            header: true,
+            child: SectionHeader(
+              title: t.ownerMsgCompose,
+              padding: const EdgeInsets.only(bottom: AppDimensions.s12),
             ),
           ),
-          if (state.sentMessages.isNotEmpty) ...[
-            const SizedBox(height: 28),
+          AppDropdownButton(
+            value: selectedUser,
+            items: recipients,
+            label: t.ownerMsgRecipient,
+            hint: t.ownerMsgRecipientHint,
+            enabled: hasTeam,
+            onChanged: onSelectUser,
+          ),
+          if (!hasTeam) ...[
+            const SizedBox(height: AppDimensions.s8),
             Row(
               children: [
-                Container(
-                  width: 4,
-                  height: 18,
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: AppDimensions.iconXs,
+                  color: colors.onSurfaceVariant,
                 ),
-                const SizedBox(width: 10),
-                Text(
-                  'DISPATCH HISTORY',
-                  style: textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: colorScheme.onSurface,
-                    letterSpacing: 0.5,
+                const SizedBox(width: AppDimensions.s6),
+                Expanded(
+                  child: Text(
+                    t.ownerMsgNoTeam,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 14),
-            ...state.sentMessages.map(
-              (msg) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: MessageTile(message: msg),
-              ),
-            ),
           ],
+          const SizedBox(height: AppDimensions.s16),
+          AppTextField(
+            controller: controller,
+            label: t.ownerMsgBody,
+            hint: t.ownerMsgBodyHint,
+            maxLines: 4,
+            minLines: 3,
+            textInputAction: TextInputAction.newline,
+            onChanged: (_) {},
+          ),
+          const SizedBox(height: AppDimensions.s16),
+          PrimaryButton(
+            label: t.ownerMsgSend,
+            icon: Icons.send_rounded,
+            onPressed: onSend,
+            height: 52,
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _MessageRow extends StatelessWidget {
+  final Message message;
+
+  const _MessageRow({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final semantic = context.semanticColors;
+
+    return AppRecordRow(
+      leading: CircleAvatar(
+        radius: 20,
+        backgroundColor: colors.primary.withValues(alpha: 0.12),
+        child: Text(
+          message.recipient.isEmpty
+              ? '?'
+              : message.recipient.characters.first.toUpperCase(),
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: colors.primary,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+      title: message.recipient,
+      subtitle: message.message,
+      metadata: Directionality(
+        textDirection: TextDirection.ltr,
+        child: Text(
+          message.time,
+          style: AppTextStyles.mono(color: colors.onSurfaceVariant),
+        ),
+      ),
+      status: Icon(
+        message.delivered
+            ? Icons.done_all_rounded
+            : Icons.error_outline_rounded,
+        size: AppDimensions.iconSm,
+        color: message.delivered ? semantic.success.base : colors.error,
+        semanticLabel: message.delivered ? 'delivered' : 'failed',
       ),
     );
   }
