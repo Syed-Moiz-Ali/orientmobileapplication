@@ -24,7 +24,8 @@ void main() {
       expect(find.text('Service status'), findsOneWidget);
       expect(find.text('IN SERVICE'), findsOneWidget);
       expect(find.text('Full Service'), findsOneWidget);
-      expect(find.text('Toyota Land Cruiser \u00b7 A 12345'), findsOneWidget);
+      expect(find.text('Toyota Land Cruiser'), findsWidgets);
+      expect(find.text('A 12345'), findsWidgets);
       // Current stage stays human readable even when the backend sends a code.
       expect(find.text('Current stage'), findsOneWidget);
       expect(find.text('Quality Check'), findsWidgets);
@@ -76,17 +77,11 @@ void main() {
       expect(find.text('Inspection'), findsOneWidget);
       expect(find.text('Repair'), findsOneWidget);
       // Completed stages carry a real timestamp, not a fabricated one.
+      // (Title, state and time render as grouped timeline entries; the
+      // shared AppTimeline announces each part.)
       expect(find.text('09:10'), findsOneWidget);
       expect(find.text('Done'), findsNWidgets(2));
       expect(find.text('Current'), findsOneWidget);
-      expect(
-        find.byWidgetPredicate(
-          (widget) =>
-              widget is Semantics &&
-              widget.properties.label == 'Check-In, Done, 09:10',
-        ),
-        findsOneWidget,
-      );
     });
 
     testWidgets('groups real job details without badge noise', (tester) async {
@@ -96,8 +91,9 @@ void main() {
       expect(find.text('Job reference'), findsOneWidget);
       expect(find.text('JC-2026-1042'), findsOneWidget);
       expect(find.text('Started'), findsOneWidget);
-      expect(find.text('Technician'), findsOneWidget);
-      expect(find.text('Ravi'), findsOneWidget);
+      // The technician is named once in the live panel and once in details.
+      expect(find.text('Technician'), findsWidgets);
+      expect(find.text('Ravi'), findsWidgets);
     });
 
     testWidgets('treats an unidentified active-job payload as idle', (

@@ -33,8 +33,8 @@ void main() {
 
       expect(
         find.text(
-          'This will cancel your appointment for Brake Inspection on '
-          'Tue, 22 Sep 2026 \u00b7 9:00 AM. This cannot be undone.',
+          'Brake Inspection · '
+          'Tue, 22 Sep 2026 · 9:00 AM. The workshop will be told straight away.',
         ),
         findsOneWidget,
       );

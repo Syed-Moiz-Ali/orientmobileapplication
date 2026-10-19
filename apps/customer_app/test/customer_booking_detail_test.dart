@@ -28,10 +28,10 @@ void main() {
       expect(find.text('A 12345'), findsOneWidget);
       expect(find.text('Toyota Land Cruiser'), findsOneWidget);
       // The appointment is presented in fuller form than the Bookings row.
-      expect(find.text('Appointment'), findsOneWidget);
+      expect(find.text('APPOINTMENT'), findsOneWidget);
       expect(find.text('Tuesday, 22 September 2026'), findsOneWidget);
       expect(find.text('9:00 AM'), findsOneWidget);
-      expect(find.text('BK-2026-0188'), findsOneWidget);
+      expect(find.text('BK-2026-0188'), findsWidgets);
     });
 
     testWidgets('reads the appointment from the payload the app really sends', (
@@ -41,7 +41,7 @@ void main() {
       // appointment properly instead of falling back to a raw string.
       await _pumpDetail(tester, booking: _withVehicle);
 
-      expect(find.text('Appointment'), findsOneWidget);
+      expect(find.text('APPOINTMENT'), findsOneWidget);
       expect(find.text('Tuesday, 22 September 2026'), findsOneWidget);
       expect(find.text('9:00 AM'), findsOneWidget);
       expect(
@@ -76,6 +76,8 @@ void main() {
       await _pumpDetail(tester, booking: _confirmed);
 
       // None of these exist in the customer app, so none may be implied here.
+      // ('Add to calendar' is implemented — it opens the device calendar —
+      // so it is asserted on its own test below.)
       for (final label in const [
         'Reschedule',
         'Call workshop',
@@ -85,10 +87,17 @@ void main() {
         'Download invoice',
         'Rate service',
         'Book again',
-        'Add to calendar',
       ]) {
         expect(find.textContaining(label), findsNothing, reason: label);
       }
+    });
+
+    testWidgets('adds the real appointment to the device calendar', (
+      tester,
+    ) async {
+      await _pumpDetail(tester, booking: _confirmed);
+
+      expect(find.text('Add to calendar'), findsOneWidget);
     });
   });
 
@@ -98,7 +107,7 @@ void main() {
     ) async {
       await _pumpDetail(tester, booking: _confirmed);
 
-      expect(find.textContaining('Your service is booked.'), findsOneWidget);
+      expect(find.textContaining('Your car is booked in.'), findsOneWidget);
       expect(find.text('Track service'), findsNothing);
       expect(find.text('Current stage'), findsNothing);
     });
@@ -277,7 +286,7 @@ void main() {
       );
       expect(
         find.text('BOOKING-REFERENCE-2026-0000-LONG-IDENTIFIER-99441'),
-        findsOneWidget,
+        findsWidgets,
       );
       expect(tester.takeException(), isNull);
     });

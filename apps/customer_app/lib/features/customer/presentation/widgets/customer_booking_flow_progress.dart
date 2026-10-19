@@ -2,92 +2,168 @@ import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_booking_draft.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_bookings_presentation.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_plate_chip.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_surface_panel.dart';
 
-/// Live summary of the booking being built.
-///
-/// On wide screens it stays beside the steps so the customer never has to
-/// remember earlier choices; every row that has a selection can jump straight
-/// back to the step that owns it.
+/// The running booking beside (tablet+) or below (compact) the wizard
+/// steps: vehicle, services, slot and drop-off lines with Change links, the
+/// live total and the trust line. Pure record surface — every value comes
+/// from the draft the customer is building.
 class CustomerBookingSummaryPanel extends StatelessWidget {
   final CustomerVehicleEntity? vehicle;
-  final ServiceTypeResponse? service;
+  final List<ServiceTypeResponse> services;
   final DateTime? date;
   final String? time;
+  final bool valet;
   final ValueChanged<int> onChangeStep;
-  final List<String> stepLabels;
 
   const CustomerBookingSummaryPanel({
     super.key,
     required this.vehicle,
-    required this.service,
+    required this.services,
     required this.date,
     required this.time,
+    required this.valet,
     required this.onChangeStep,
-    required this.stepLabels,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final selected = vehicle != null || service != null || date != null;
-    final schedule = date == null
+    final t = context.cx;
+    final d = date;
+    final schedule = d == null
         ? ''
         : CustomerBookingsPresentation.scheduleLabel(
-            CustomerBookingsPresentation.isoDate(date!),
+            CustomerBookingsPresentation.isoDate(d),
             time ?? '',
           );
-
-    return CustomerSurfacePanel(
-      accent: colors.primary,
+    final total = CustomerBookingDraft.totalFor(services);
+    final names = CustomerBookingDraft.serviceNames(services);
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.s16),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        border: Border.all(color: colors.outlineVariant),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Your booking',
+            t.wizSummaryTitle,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: colors.onSurface,
               fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: AppDimensions.s12),
-          if (!selected)
+          if (vehicle == null && services.isEmpty && schedule.isEmpty)
             Text(
-              'Nothing selected yet. Your vehicle, service and appointment '
-              'appear here as you choose them.',
-              style: theme.textTheme.bodySmall?.copyWith(
+              t.wizSummaryEmpty,
+              style: theme.textTheme.bodyMedium?.copyWith(
                 color: colors.onSurfaceVariant,
-                height: 1.45,
               ),
             )
           else ...[
-            if (vehicle != null)
-              _SummaryEntry(
-                label: 'Vehicle',
-                value: vehicle!.displayName,
-                trailing: vehicle!.plateNumber,
-                onChange: () => onChangeStep(0),
+            _Entry(
+              label: t.wizRowVehicle,
+              onChange: () => onChangeStep(0),
+              changeLabel: t.wizChange,
+              child: vehicle == null
+                  ? null
+                  : Row(
+                      children: [
+                        if (vehicle!.plateNumber.trim().isNotEmpty) ...[
+                          CustomerPlateChip(
+                            plate: vehicle!.plateNumber.trim(),
+                          ),
+                          const SizedBox(width: AppDimensions.s8),
+                        ],
+                        Expanded(
+                          child: Text(
+                            vehicle!.displayName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+            _Entry(
+              label: t.wizRowServices,
+              onChange: () => onChangeStep(1),
+              changeLabel: t.wizChange,
+              child: names.isEmpty
+                  ? null
+                  : Text(
+                      names,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+            ),
+            _Entry(
+              label: t.wizRowSlot,
+              onChange: () => onChangeStep(2),
+              changeLabel: t.wizChange,
+              child: schedule.isEmpty
+                  ? null
+                  : Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Text(
+                        schedule,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+            ),
+            const Divider(height: AppDimensions.s24),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    t.wizTotal,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Text(
+                    total == null
+                        ? (services.isEmpty ? '—' : t.wizTotalPending)
+                        : CustomerBookingDraft.formatAed(total),
+                    style: AppTextStyles.mono(
+                      color: colors.onSurface,
+                    ).copyWith(fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppDimensions.s4),
+            Text(
+              valet ? t.wizValetTitle : t.wizSelfTitle,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
               ),
-            if (service != null) ...[
-              if (vehicle != null) const SizedBox(height: AppDimensions.s10),
-              _SummaryEntry(
-                label: 'Service',
-                value: service!.name,
-                onChange: () => onChangeStep(1),
+            ),
+            const SizedBox(height: AppDimensions.s8),
+            Text(
+              t.wizTrust,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
               ),
-            ],
-            if (schedule.isNotEmpty) ...[
-              if (vehicle != null || service != null)
-                const SizedBox(height: AppDimensions.s10),
-              _SummaryEntry(
-                label: 'Appointment',
-                value: schedule,
-                onChange: () => onChangeStep(2),
-              ),
-            ],
+            ),
           ],
         ],
       ),
@@ -95,63 +171,51 @@ class CustomerBookingSummaryPanel extends StatelessWidget {
   }
 }
 
-class _SummaryEntry extends StatelessWidget {
+class _Entry extends StatelessWidget {
   final String label;
-  final String value;
-  final String? trailing;
+  final Widget? child;
   final VoidCallback onChange;
+  final String changeLabel;
 
-  const _SummaryEntry({
+  const _Entry({
     required this.label,
-    required this.value,
+    required this.child,
     required this.onChange,
-    this.trailing,
+    required this.changeLabel,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppDimensions.s4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Text(
-                label,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: colors.onSurfaceVariant,
-                  fontWeight: FontWeight.w700,
+              Expanded(
+                child: Text(
+                  label.toUpperCase(),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
-              const SizedBox(height: AppDimensions.r2),
-              Text(
-                value,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colors.onSurface,
-                  fontWeight: FontWeight.w700,
+              TextButton(
+                onPressed: onChange,
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(48, 32),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
+                child: Text(changeLabel),
               ),
-              if (trailing != null && trailing!.trim().isNotEmpty) ...[
-                const SizedBox(height: AppDimensions.s4),
-                CustomerPlateChip(plate: trailing!.trim()),
-              ],
             ],
           ),
-        ),
-        TextButton(
-          onPressed: onChange,
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s8),
-          ),
-          child: const Text('Change'),
-        ),
-      ],
+          if (child != null) child!,
+        ],
+      ),
     );
   }
 }

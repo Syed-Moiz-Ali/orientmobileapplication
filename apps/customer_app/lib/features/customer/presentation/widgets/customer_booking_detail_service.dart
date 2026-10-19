@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_surface_panel.dart';
 
@@ -41,6 +42,7 @@ class CustomerBookingDetailService extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final t = context.cx;
 
     final stage = CustomerServiceTracking.humanize(
       liveService?.currentStage ?? '',
@@ -67,7 +69,7 @@ class CustomerBookingDetailService extends StatelessWidget {
                 const SizedBox(width: AppDimensions.s6),
                 Expanded(
                   child: Text(
-                    'Action required',
+                    t.bkdActionRequired,
                     style: textTheme.labelMedium?.copyWith(
                       color: colors.error,
                       fontWeight: FontWeight.w800,
@@ -88,7 +90,7 @@ class CustomerBookingDetailService extends StatelessWidget {
             FilledButton.icon(
               onPressed: onReviewEstimate,
               icon: const Icon(Icons.fact_check_outlined, size: 18),
-              label: const Text('Review estimate'),
+              label: Text(t.bkdReviewEstimate),
             ),
           ],
           if (trackable) ...[
@@ -98,7 +100,7 @@ class CustomerBookingDetailService extends StatelessWidget {
               const SizedBox(height: AppDimensions.s14),
             ],
             Text(
-              'Current stage',
+              t.bkdCurrentStage,
               style: textTheme.labelSmall?.copyWith(
                 color: colors.onSurfaceVariant,
                 fontWeight: FontWeight.w700,
@@ -106,7 +108,7 @@ class CustomerBookingDetailService extends StatelessWidget {
             ),
             const SizedBox(height: AppDimensions.s4),
             Text(
-              stage.isEmpty ? 'Service in progress' : stage,
+              stage.isEmpty ? t.bkdInProgress : stage,
               style: textTheme.titleMedium?.copyWith(
                 color: colors.onSurface,
                 fontWeight: FontWeight.w800,
@@ -116,7 +118,7 @@ class CustomerBookingDetailService extends StatelessWidget {
               const SizedBox(height: AppDimensions.s12),
               Semantics(
                 excludeSemantics: true,
-                label: 'Service progress, $progress percent',
+                label: t.bkdProgressLabel(progress),
                 child: Row(
                   children: [
                     Expanded(
@@ -158,7 +160,7 @@ class CustomerBookingDetailService extends StatelessWidget {
                   const SizedBox(width: AppDimensions.s6),
                   Expanded(
                     child: Text(
-                      'Estimated completion \u00b7 $eta',
+                      t.bkdEstCompletion(eta),
                       style: textTheme.bodySmall?.copyWith(
                         color: colors.onSurfaceVariant,
                       ),
@@ -173,13 +175,13 @@ class CustomerBookingDetailService extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onTrackService,
                 icon: const Icon(Icons.track_changes_rounded, size: 18),
-                label: const Text('Track service'),
+                label: Text(t.bkdTrack),
               )
             else
               FilledButton.icon(
                 onPressed: onTrackService,
                 icon: const Icon(Icons.track_changes_rounded, size: 18),
-                label: const Text('Track service'),
+                label: Text(t.bkdTrack),
               ),
           ],
         ],

@@ -154,7 +154,7 @@ void main() {
       await _pumpFlow(tester, vehicles: const [_camry], remote: remote);
       await _selectService(tester);
 
-      expect(find.textContaining('Choose a date'), findsWidgets);
+      expect(find.textContaining('Choose a day'), findsWidgets);
       await _pickFirstDate(tester);
 
       expect(remote.availabilityDates, hasLength(1));
@@ -173,7 +173,7 @@ void main() {
       await _pickFirstDate(tester);
 
       expect(
-        find.text('No times available on this date. Choose another date.'),
+        find.text('No times left on this day'),
         findsOneWidget,
       );
       expect(_continueEnabled(tester), isFalse);
@@ -248,18 +248,20 @@ void main() {
       await _pickFirstSlot(tester);
       await _next(tester);
 
-      expect(find.text('YOUR VEHICLE'), findsOneWidget);
+      expect(find.text('VEHICLE'), findsOneWidget);
       expect(find.text('Toyota Camry'), findsWidgets);
-      expect(find.text('SERVICE'), findsOneWidget);
+      expect(find.text('SERVICES'), findsOneWidget);
       expect(find.text('Full Service'), findsWidgets);
       expect(find.text('APPOINTMENT'), findsOneWidget);
       expect(find.textContaining('9:00 AM'), findsWidgets);
       expect(find.text('Confirm booking'), findsOneWidget);
 
       // Every decision can be changed without restarting the flow.
+      await tester.ensureVisible(find.text('Change').first);
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Change').first);
       await tester.pumpAndSettle();
-      expect(find.text('Which vehicle?'), findsOneWidget);
+      expect(find.text('Which car is coming in?'), findsOneWidget);
     });
 
     testWidgets('creates the booking and carries the result forward', (
@@ -376,9 +378,11 @@ void main() {
       await _next(tester);
 
       // The service section owns the second Change action.
+      await tester.ensureVisible(find.text('Change').at(1));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Change').at(1));
       await tester.pumpAndSettle();
-      expect(find.text('What service?'), findsOneWidget);
+      expect(find.text('What does it need?'), findsOneWidget);
 
       await tester.tap(find.text('Brake Inspection'));
       await tester.pumpAndSettle();
@@ -473,7 +477,7 @@ void main() {
       );
       await _next(tester);
 
-      final step = tester.getRect(find.text('What service?'));
+      final step = tester.getRect(find.text('What does it need?'));
       final summary = tester.getRect(find.text('Your booking'));
       expect(summary.left, greaterThan(step.left));
       expect(tester.takeException(), isNull);
@@ -487,7 +491,7 @@ void main() {
       );
 
       expect(tester.takeException(), isNull);
-      expect(find.text('Which vehicle?'), findsOneWidget);
+      expect(find.text('Which car is coming in?'), findsOneWidget);
     });
   });
 
@@ -519,14 +523,14 @@ void main() {
       );
     });
 
-    testWidgets('review step mobile', (tester) async {
+    testWidgets('dropoff step mobile', (tester) async {
       await _pumpFlow(tester, vehicles: const [_camry]);
       await _selectService(tester);
       await _pickFirstSlot(tester);
       await _next(tester);
       await expectLater(
         find.byType(CustomerBookServiceView),
-        matchesGoldenFile('goldens/customer_book_service_review_mobile.png'),
+        matchesGoldenFile('goldens/customer_book_service_dropoff_mobile.png'),
       );
     });
 
@@ -676,7 +680,7 @@ void main() {
       );
       await _next(tester);
 
-      final step = tester.getRect(find.text('What service?'));
+      final step = tester.getRect(find.text('What does it need?'));
       final summary = tester.getRect(find.text('Your booking'));
       expect(summary.left, greaterThan(step.left));
       expect(tester.takeException(), isNull);
@@ -690,7 +694,7 @@ void main() {
       );
 
       expect(tester.takeException(), isNull);
-      expect(find.text('Which vehicle?'), findsOneWidget);
+      expect(find.text('Which car is coming in?'), findsOneWidget);
     });
   });
 
@@ -722,14 +726,14 @@ void main() {
       );
     });
 
-    testWidgets('review step mobile', (tester) async {
+    testWidgets('dropoff step mobile', (tester) async {
       await _pumpFlow(tester, vehicles: const [_camry]);
       await _selectService(tester);
       await _pickFirstSlot(tester);
       await _next(tester);
       await expectLater(
         find.byType(CustomerBookServiceView),
-        matchesGoldenFile('goldens/customer_book_service_review_mobile.png'),
+        matchesGoldenFile('goldens/customer_book_service_dropoff_mobile.png'),
       );
     });
 
@@ -1023,6 +1027,10 @@ Future<void> _pickFirstDate(WidgetTester tester) async {
 
 Future<void> _pickFirstSlot(WidgetTester tester) async {
   await _pickFirstDate(tester);
+  // The sticky price dock can cover the slot list on small screens: scroll
+  // the slot into view the way a customer would.
+  await tester.ensureVisible(find.text('9:00 AM'));
+  await tester.pumpAndSettle();
   await tester.tap(find.text('9:00 AM'));
   await tester.pumpAndSettle();
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_plate_chip.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_surface_panel.dart';
 
@@ -34,6 +35,7 @@ class CustomerBookingDetailVehicle extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final t = context.cx;
 
     final model = [
       vehicle.brand.trim(),
@@ -66,7 +68,7 @@ class CustomerBookingDetailVehicle extends StatelessWidget {
               const SizedBox(width: AppDimensions.s10),
               Expanded(
                 child: Text(
-                  'Vehicle',
+                  t.bkdVehicleLabel,
                   style: textTheme.labelSmall?.copyWith(
                     color: colors.onSurfaceVariant,
                     fontWeight: FontWeight.w700,
@@ -77,7 +79,7 @@ class CustomerBookingDetailVehicle extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.s10),
           Text(
-            name.isEmpty ? 'Your vehicle' : name,
+            name.isEmpty ? t.bkdYourVehicle : name,
             style: textTheme.titleSmall?.copyWith(
               color: colors.onSurface,
               fontWeight: FontWeight.w800,

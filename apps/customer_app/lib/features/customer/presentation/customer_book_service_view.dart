@@ -3,22 +3,28 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
 
+import 'package:customer_app/core/local/vehicle_identity_store.dart';
 import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:customer_app/l10n/gen/customer_localizations.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_booking_draft.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_bookings_presentation.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_booking_flow_progress.dart';
-import 'package:customer_app/core/local/vehicle_identity_store.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_booking_steps.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_notice_panel.dart';
 
-/// Creating a service booking, end to end.
+/// Booking a service as an Airbnb-style guided flow.
 ///
-/// Four short decisions — which vehicle, which service, which real appointment
-/// slot, and a review of exactly what will be submitted — followed by the
-/// booking result. Every value shown comes from the customer's own records or
-/// the workshop's own catalogue and availability; nothing is invented, and the
-/// flow is the only place a booking is created.
+/// Four short decisions — which vehicle, which packages, which real slot,
+/// how the car reaches us — with a running summary and a price dock beside
+/// every step. Every value shown comes from the customer's own garage, the
+/// workshop's own catalogue or the workshop's own availability; nothing is
+/// invented. Multi-select names travel in the existing `serviceType` field
+/// and the valet choice travels inside the existing free-text `notes`
+/// field, because the backend rejects unknown payload keys. The flow is the
+/// only place a booking is created.
 class CustomerBookServiceView extends ConsumerStatefulWidget {
   /// A vehicle to preselect, when the customer came here for one car.
   final String vehicleId;
@@ -32,9 +38,10 @@ class CustomerBookServiceView extends ConsumerStatefulWidget {
 
 class _CustomerBookServiceViewState
     extends ConsumerState<CustomerBookServiceView> {
-  static const _stepLabels = ['Vehicle', 'Service', 'Appointment', 'Review'];
+  static const _stepCount = 4;
 
   final _notesCtrl = TextEditingController();
+  final _addressCtrl = TextEditingController();
 
   List<ServiceTypeResponse> _services = const [];
   List<String> _slots = const [];
@@ -47,10 +54,11 @@ class _CustomerBookServiceViewState
   bool _retryVehicleSync = false;
 
   int _currentStep = 0;
-  String? _selectedServiceId;
+  final Set<String> _selectedServiceIds = <String>{};
   CustomerVehicleEntity? _selectedVehicle;
   DateTime? _selectedDate;
   String? _selectedTime;
+  bool _valet = false;
   late final List<DateTime> _dates;
 
   @override
@@ -63,11 +71,12 @@ class _CustomerBookServiceViewState
   @override
   void dispose() {
     _notesCtrl.dispose();
+    _addressCtrl.dispose();
     super.dispose();
   }
 
-  /// Today plus the next two weeks: the workshop publishes hourly slots for
-  /// every working day, so the choice belongs to the customer, not to us.
+  /// Today plus the next two weeks: the workshop publishes slots per
+  /// working day, so the choice belongs to the customer, not to us.
   List<DateTime> _bookableDates() {
     final today = DateTime.now();
     final start = DateTime(today.year, today.month, today.day);
@@ -89,11 +98,13 @@ class _CustomerBookServiceViewState
     return _selectedVehicle;
   }
 
-  ServiceTypeResponse? get _selectedService {
-    for (final service in _services) {
-      if (service.id == _selectedServiceId) return service;
-    }
-    return null;
+  /// Selected catalogue entries in catalogue order.
+  List<ServiceTypeResponse> get _selectedServices {
+    final byId = {for (final s in _services) s.id: s};
+    return [
+      for (final id in _selectedServiceIds)
+        if (byId[id] != null) byId[id]!,
+    ];
   }
 
   bool get _canProceed {
@@ -101,11 +112,11 @@ class _CustomerBookServiceViewState
       case 0:
         return _resolvedVehicle != null;
       case 1:
-        return _selectedService != null;
+        return _selectedServices.isNotEmpty;
       case 2:
         return _selectedDate != null && _selectedTime != null;
       case 3:
-        return true;
+        return !_valet || _addressCtrl.text.trim().isNotEmpty;
       default:
         return false;
     }
@@ -128,6 +139,9 @@ class _CustomerBookServiceViewState
     if (!mounted) return;
     setState(() {
       _services = services;
+      _selectedServiceIds.removeWhere(
+        (id) => services.every((s) => s.id != id),
+      );
       _loadingServices = false;
       _servicesError = error;
     });
@@ -160,8 +174,8 @@ class _CustomerBookServiceViewState
     });
   }
 
-  /// The workshop offers fixed hourly slots, so on today's date any slot that
-  /// has already passed is not actually bookable.
+  /// The workshop offers fixed slots, so on today's date any slot that has
+  /// already passed is not actually bookable.
   List<String> _bookableSlots(List<String> slots, DateTime date) {
     final now = DateTime.now();
     final isToday =
@@ -211,19 +225,29 @@ class _CustomerBookServiceViewState
 
   void _goToStep(int step) {
     if (_submitting) return;
-    setState(() => _currentStep = step.clamp(0, _stepLabels.length - 1));
+    setState(() => _currentStep = step.clamp(0, _stepCount - 1));
+  }
+
+  void _toggleService(ServiceTypeResponse service) {
+    setState(() {
+      if (!_selectedServiceIds.remove(service.id)) {
+        _selectedServiceIds.add(service.id);
+      }
+    });
   }
 
   Future<void> _confirm() async {
     final vehicle = _resolvedVehicle;
-    final service = _selectedService;
+    final services = _selectedServices;
     final date = _selectedDate;
     final time = _selectedTime;
+    final address = _addressCtrl.text.trim();
     if (_submitting ||
         vehicle == null ||
-        service == null ||
+        services.isEmpty ||
         date == null ||
-        time == null) {
+        time == null ||
+        (_valet && address.isEmpty)) {
       return;
     }
 
@@ -237,13 +261,21 @@ class _CustomerBookServiceViewState
     final bookingDate =
         '${CustomerBookingsPresentation.isoDate(date)}T'
         '${time.length >= 5 ? time.substring(0, 5) : time}:00';
+    // Same payload keys as ever: the joined names ride the existing
+    // serviceType string, the valet line rides the free-text notes.
+    final serviceName = CustomerBookingDraft.serviceNames(services);
+    final notes = CustomerBookingDraft.notesWithValet(
+      typed: _notesCtrl.text,
+      valet: _valet,
+      address: address,
+    );
     final response = await customerSubmitBooking(
       ref,
       vehicle: vehicle,
-      serviceName: service.name,
+      serviceName: serviceName,
       bookingDate: bookingDate,
       bookingTime: time,
-      notes: _notesCtrl.text.trim(),
+      notes: notes,
       localId: localId,
     );
 
@@ -267,7 +299,7 @@ class _CustomerBookServiceViewState
       extra: <String, dynamic>{
         'ref': response.bookingRef,
         'id': response.bookingId,
-        'service': service.name,
+        'service': serviceName,
         'date': CustomerBookingsPresentation.isoDate(date),
         'time': time,
         'vehicle': vehicle.displayName,
@@ -280,6 +312,7 @@ class _CustomerBookServiceViewState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = context.cx;
     final dashboard = ref.watch(customerDashboardProvider);
     final vehicles = dashboard.vehicles;
 
@@ -295,94 +328,27 @@ class _CustomerBookServiceViewState
     }
 
     final vehicle = _resolvedVehicle;
-    final service = _selectedService;
-    final lastStep = _stepLabels.length - 1;
-    final onReview = _currentStep == lastStep;
+    final services = _selectedServices;
+    final stepLabels = [
+      t.wizStepVehicle,
+      t.wizStepPackage,
+      t.wizStepSlot,
+      t.wizStepDropoff,
+    ];
+    final total = CustomerBookingDraft.totalFor(services);
 
-    final step = _stepContent(
-      vehicles: vehicles,
-      loadingVehicles: dashboard.isLoading,
-      vehicle: vehicle,
-      service: service,
-    );
-    final summary = CustomerBookingSummaryPanel(
-      vehicle: vehicle,
-      service: service,
-      date: _selectedDate,
-      time: _selectedTime,
-      onChangeStep: _goToStep,
-      stepLabels: _stepLabels,
-    );
-
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      // Phase 07.1: bespoke AppTopBar migrated to the shared workspace bar.
-      appBar: const WorkspaceAppBar(title: 'Book service', showBack: true),
-      bottomNavigationBar: _ActionBar(
-        step: _currentStep,
-        lastStep: lastStep,
-        busy: _submitting,
-        enabled: _canProceed,
-        onBack: () => _goToStep(_currentStep - 1),
-        onContinue: () {
-          if (_currentStep < lastStep) {
-            _goToStep(_currentStep + 1);
-          } else {
-            _confirm();
-          }
-        },
-      ),
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            Expanded(
-              child: AppResponsivePage(
-                physics: const AlwaysScrollableScrollPhysics(),
-                maxContentWidth: 1040,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: AppDimensions.s16),
-                    // Phase 07.1: bespoke progress migrated to AppStepper
-                    // (same steps + position; localized Step X of Y built in).
-                    AppStepper(
-                      steps: _stepLabels,
-                      currentIndex: _currentStep,
-                      onStepTap: _goToStep,
-                    ),
-                    const SizedBox(height: AppDimensions.s20),
-                    _stepBody(step: step, summary: summary, onReview: onReview),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// The review step *is* the summary, so it takes the whole width instead of
-  /// repeating itself beside the step.
-  Widget _stepBody({
-    required Widget step,
-    required Widget summary,
-    required bool onReview,
-  }) {
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Phase 07.1: bespoke _StepHeading migrated to SectionHeader.
         SectionHeader(
-          title: _stepTitle(_currentStep),
-          subtitle: _stepSubtitle(_currentStep),
+          title: _stepTitle(t, _currentStep),
+          subtitle: _stepSubtitle(t, _currentStep),
         ),
         const SizedBox(height: AppDimensions.s16),
         if (_submitError.isNotEmpty) ...[
           CustomerNoticePanel(
             message: _submitError,
-            actionLabel: _retryVehicleSync ? 'Retry vehicle sync' : 'Try again',
+            actionLabel: _retryVehicleSync ? t.wizRetrySync : t.wizTryAgain,
             onAction: _retryVehicleSync
                 ? () async {
                     await customerRetryVehicleSync(ref);
@@ -392,54 +358,146 @@ class _CustomerBookServiceViewState
           ),
           const SizedBox(height: AppDimensions.s16),
         ],
-        step,
+        if (!_canProceed && !_submitting) ...[
+          _InlineHint(text: _stepHint(t, _currentStep)),
+          const SizedBox(height: AppDimensions.s12),
+        ],
+        _stepContent(
+          vehicles: vehicles,
+          loadingVehicles: dashboard.isLoading,
+        ),
         const SizedBox(height: AppDimensions.s32),
       ],
     );
+    final summary = CustomerBookingSummaryPanel(
+      vehicle: vehicle,
+      services: services,
+      date: _selectedDate,
+      time: _selectedTime,
+      valet: _valet,
+      onChangeStep: _goToStep,
+    );
 
-    if (onReview) return content;
-
-    return AppSplitView(
-      primaryFlex: 3,
-      secondaryFlex: 2,
-      spacing: AppDimensions.s20,
-      primary: content,
-      secondary: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          summary,
-          const SizedBox(height: AppDimensions.s32),
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      // Phase 07.1: bespoke AppTopBar migrated to the shared workspace bar.
+      appBar: WorkspaceAppBar(title: t.wizTitle, showBack: true),
+      bottomNavigationBar: PriceBreakdownDock(
+        items: [
+          for (final service in services)
+            PriceBreakdownItem(
+              label: service.name.trim().isEmpty
+                  ? 'Service'
+                  : service.name.trim(),
+              amount: service.price.trim().isNotEmpty
+                  ? service.price.trim()
+                  : (service.duration.trim().isNotEmpty
+                        ? service.duration.trim()
+                        : '—'),
+            ),
         ],
+        totalLabel: t.wizTotal,
+        totalAmount: total == null
+            ? (services.isEmpty ? '—' : t.wizTotalPending)
+            : CustomerBookingDraft.formatAed(total),
+        ctaLabel: _currentStep == _stepCount - 1 ? t.wizConfirm : t.wizContinue,
+        busyLabel: t.wizBooking,
+        busy: _submitting,
+        ctaEnabled: _canProceed,
+        trustLine: t.wizTrust,
+        onCta: () {
+          if (_currentStep < _stepCount - 1) {
+            _goToStep(_currentStep + 1);
+          } else {
+            _confirm();
+          }
+        },
+      ),
+      body: SafeArea(
+        bottom: false,
+        child: AppResponsivePage(
+          physics: const AlwaysScrollableScrollPhysics(),
+          maxContentWidth: 1040,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: AppDimensions.s16),
+              // Phase 07.1: bespoke progress migrated to AppStepper
+              // (same steps + position; localized Step X of Y built in).
+              AppStepper(
+                steps: stepLabels,
+                currentIndex: _currentStep,
+                onStepTap: _goToStep,
+              ),
+              if (_currentStep > 0) ...[
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: TextButton.icon(
+                    onPressed: _submitting
+                        ? null
+                        : () => _goToStep(_currentStep - 1),
+                    icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                    label: Text(t.wizBack),
+                  ),
+                ),
+              ] else
+                const SizedBox(height: AppDimensions.s20),
+              if (context.adaptive.isCompact) ...[
+                content,
+                summary,
+                const SizedBox(height: AppDimensions.s32),
+              ] else
+                AppSplitView(
+                  primaryFlex: 3,
+                  secondaryFlex: 2,
+                  spacing: AppDimensions.s20,
+                  primary: content,
+                  secondary: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      summary,
+                      const SizedBox(height: AppDimensions.s32),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  String _stepTitle(int step) => switch (step) {
-    0 => 'Which vehicle?',
-    1 => 'What service?',
-    2 => 'When suits you?',
-    _ => 'Check your booking',
+  String _stepTitle(CustomerLocalizations t, int step) => switch (step) {
+    0 => t.wizVehicleTitle,
+    1 => t.wizPackageTitle,
+    2 => t.wizSlotTitle,
+    _ => t.wizDropTitle,
   };
 
-  String _stepSubtitle(int step) => switch (step) {
-    0 => 'Choose the registered vehicle the workshop should service.',
-    1 => 'Services come from the workshop catalogue.',
-    2 => 'Times shown are the workshop’s real availability for that date.',
-    _ => 'This is exactly what we will send to the workshop.',
+  String _stepSubtitle(CustomerLocalizations t, int step) => switch (step) {
+    0 => t.wizVehicleSub,
+    1 => t.wizPackageSub,
+    2 => t.wizSlotSub,
+    _ => t.wizDropSub,
+  };
+
+  String _stepHint(CustomerLocalizations t, int step) => switch (step) {
+    0 => t.wizNeedVehicle,
+    1 => t.wizNeedPackage,
+    2 => t.wizNeedSlot,
+    _ => t.wizAddressRequired,
   };
 
   Widget _stepContent({
     required List<CustomerVehicleEntity> vehicles,
     required bool loadingVehicles,
-    required CustomerVehicleEntity? vehicle,
-    required ServiceTypeResponse? service,
   }) {
     switch (_currentStep) {
       case 0:
         return CustomerBookingVehicleStep(
           vehicles: vehicles,
           loading: loadingVehicles,
-          selected: vehicle,
+          selected: _resolvedVehicle,
           onSelect: (selected) => setState(() => _selectedVehicle = selected),
           onAddVehicle: _openAddVehicle,
         );
@@ -448,9 +506,8 @@ class _CustomerBookServiceViewState
           services: _services,
           loading: _loadingServices,
           error: _servicesError,
-          selectedId: _selectedServiceId,
-          onSelect: (selected) =>
-              setState(() => _selectedServiceId = selected.id),
+          selectedIds: _selectedServiceIds,
+          onToggle: _toggleService,
           onRetry: _loadServices,
         );
       case 2:
@@ -469,100 +526,53 @@ class _CustomerBookServiceViewState
           },
         );
       default:
-        return CustomerBookingReviewStep(
-          vehicle: vehicle,
-          service: service,
-          date: _selectedDate,
-          time: _selectedTime,
-          notes: _notesCtrl,
-          onChangeStep: _goToStep,
+        return CustomerBookingDropoffStep(
+          valet: _valet,
+          onValetChanged: (valet) => setState(() => _valet = valet),
+          addressCtrl: _addressCtrl,
+          notesCtrl: _notesCtrl,
         );
     }
   }
 }
 
-/// The single place the flow moves forward: one primary action, plus a step
-/// back that keeps every selection.
-class _ActionBar extends StatelessWidget {
-  final int step;
-  final int lastStep;
-  final bool busy;
-  final bool enabled;
-  final VoidCallback onBack;
-  final VoidCallback onContinue;
+/// Inline per-step guidance: the one thing still missing before Continue
+/// activates. Always visible (never color-only), never a toast.
+class _InlineHint extends StatelessWidget {
+  final String text;
 
-  const _ActionBar({
-    required this.step,
-    required this.lastStep,
-    required this.busy,
-    required this.enabled,
-    required this.onBack,
-    required this.onContinue,
-  });
+  const _InlineHint({required this.text});
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final last = step == lastStep;
-
-    return Material(
-      color: colors.surface,
-      child: SafeArea(
-        top: false,
-        child: Container(
-          padding: const EdgeInsets.all(AppDimensions.s16),
-          decoration: BoxDecoration(
-            border: Border(top: BorderSide(color: colors.outlineVariant)),
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.s12,
+        vertical: AppDimensions.s8,
+      ),
+      decoration: BoxDecoration(
+        color: colors.secondary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.info_outline_rounded,
+            size: 18,
+            color: colors.onSurfaceVariant,
           ),
-          child: Row(
-            children: [
-              if (step > 0) ...[
-                OutlinedButton(
-                  onPressed: busy ? null : onBack,
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(88, AppDimensions.touchTarget),
-                  ),
-                  child: const Text('Back'),
-                ),
-                const SizedBox(width: AppDimensions.s12),
-              ],
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: busy || !enabled ? null : onContinue,
-                  icon: busy
-                      ? SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              colors.onPrimary,
-                            ),
-                          ),
-                        )
-                      : Icon(
-                          last
-                              ? Icons.check_rounded
-                              : Icons.arrow_forward_rounded,
-                          size: 18,
-                        ),
-                  label: Text(
-                    busy
-                        ? 'Booking…'
-                        : last
-                        ? 'Confirm booking'
-                        : 'Continue',
-                  ),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(
-                      AppDimensions.touchTarget,
-                    ),
-                  ),
-                ),
+          const SizedBox(width: AppDimensions.s8),
+          Expanded(
+            child: Text(
+              text,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

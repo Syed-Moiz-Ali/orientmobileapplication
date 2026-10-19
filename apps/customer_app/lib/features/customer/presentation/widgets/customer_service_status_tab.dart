@@ -9,6 +9,7 @@ import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_destination.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_service_journey.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_status_details.dart';
@@ -63,6 +64,7 @@ class _CustomerServiceStatusTabState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = context.cx;
     final dash = ref.watch(customerDashboardProvider);
     final notifier = ref.read(customerDashboardProvider.notifier);
     final bookings =
@@ -116,11 +118,11 @@ class _CustomerServiceStatusTabState
       return AppResponsivePage(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: AppDimensions.s48),
-          child: EmptyState(
+          child:           EmptyState(
             icon: Icons.sync_problem_rounded,
-            title: "We couldn't load your service status",
-            message: 'Please try again in a moment.',
-            actionLabel: 'Retry',
+            title: t.stLoadFail,
+            message: t.stLoadRetry,
+            actionLabel: t.stRetry,
             onAction: notifier.refresh,
           ),
         ),
@@ -146,12 +148,13 @@ class _CustomerServiceStatusTabState
     final hasAttention = approvals.isNotEmpty || unpaid.isNotEmpty;
 
     final subtitle = liveService != null
-        ? 'Your vehicle is in the workshop right now.'
+        ? t.stLiveSub
         : activeBooking != null
-        ? 'Your appointment is booked.'
-        : 'Nothing is booked or in progress.';
+        ? t.stBookedSub
+        : t.stIdleSub;
 
     final detailRows = _detailRows(
+      context,
       liveService: liveService,
       activeBooking: activeBooking,
     );
@@ -161,7 +164,7 @@ class _CustomerServiceStatusTabState
       children: [
         if (hasAttention) ...[
           CustomerAttentionPanel(
-            title: 'Action required',
+            title: t.stActionRequired,
             approvals: approvals,
             unpaidInvoices: unpaid.length,
             formatAmount: dash.formatAmount,
@@ -209,7 +212,7 @@ class _CustomerServiceStatusTabState
           const SizedBox(height: AppDimensions.s24),
         ],
         if (detailRows.isNotEmpty) ...[
-          CustomerStatusDetails(rows: detailRows),
+          CustomerStatusDetails(rows: detailRows, title: t.stServiceDetails),
           const SizedBox(height: AppDimensions.s24),
         ],
         if (otherLive.isNotEmpty)
@@ -238,7 +241,7 @@ class _CustomerServiceStatusTabState
               Semantics(
                 header: true,
                 child: Text(
-                  'Service status',
+                  t.stTitle,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     color: colors.onSurface,
                     fontWeight: FontWeight.w800,
@@ -276,10 +279,12 @@ class _CustomerServiceStatusTabState
     context.push(AppRoutes.approvalsLocation(estimateId: target));
   }
 
-  List<CustomerStatusDetail> _detailRows({
+  List<CustomerStatusDetail> _detailRows(
+    BuildContext context, {
     CustomerServiceEntity? liveService,
     CustomerBookingEntity? activeBooking,
   }) {
+    final t = context.cx;
     final rows = <CustomerStatusDetail>[];
     final service = liveService;
 
@@ -288,7 +293,7 @@ class _CustomerServiceStatusTabState
         rows.add(
           CustomerStatusDetail(
             icon: Icons.confirmation_number_outlined,
-            label: 'Job reference',
+            label: t.stJobRef,
             value: service.jobCardId.trim(),
           ),
         );
@@ -297,7 +302,7 @@ class _CustomerServiceStatusTabState
         rows.add(
           CustomerStatusDetail(
             icon: Icons.play_circle_outline_rounded,
-            label: 'Started',
+            label: t.stStarted,
             value: service.started.trim(),
           ),
         );
@@ -306,7 +311,7 @@ class _CustomerServiceStatusTabState
         rows.add(
           CustomerStatusDetail(
             icon: Icons.person_outline_rounded,
-            label: 'Technician',
+            label: t.stTechnician,
             value: service.technicianName.trim(),
           ),
         );
@@ -319,7 +324,7 @@ class _CustomerServiceStatusTabState
       rows.add(
         CustomerStatusDetail(
           icon: Icons.confirmation_number_outlined,
-          label: 'Booking reference',
+          label: t.stBookingRef,
           value: booking.jobCardRef.trim(),
         ),
       );
@@ -338,9 +343,8 @@ class _OtherBookingsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final label = count == 1
-        ? '1 more upcoming booking'
-        : '$count more upcoming bookings';
+    final t = context.cx;
+    final label = count == 1 ? t.stOtherOne : t.stOtherMany(count);
 
     return Semantics(
       button: true,

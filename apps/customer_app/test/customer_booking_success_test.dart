@@ -29,7 +29,7 @@ void main() {
 
       expect(find.text('Booking requested'), findsOneWidget);
       expect(
-        find.text('The workshop will confirm your appointment.'),
+        find.text('The workshop will confirm your slot shortly.'),
         findsOneWidget,
       );
       expect(find.text('BK-2026-0042'), findsOneWidget);
@@ -46,7 +46,7 @@ void main() {
       await _pumpSuccess(tester, queuedOffline: true);
 
       expect(find.text('Booking saved'), findsOneWidget);
-      expect(find.textContaining('stored on this device'), findsOneWidget);
+      expect(find.text('Stored on this device'), findsOneWidget);
       expect(find.text('Booking reference'), findsNothing);
       // Offline bookings are not yet created at the workshop, so there is
       // nothing to open in Booking Details.
@@ -65,6 +65,8 @@ void main() {
       );
 
       expect(find.text('View booking'), findsOneWidget);
+      await tester.ensureVisible(find.text('View booking'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('View booking'));
       await tester.pumpAndSettle();
       expect(find.text('BOOKING_DETAIL'), findsOneWidget);
@@ -88,6 +90,8 @@ void main() {
       await _pumpSuccess(tester, bookingRef: 'BK-2026-0042', bookingId: '77');
 
       expect(find.text('View booking'), findsNothing);
+      await tester.ensureVisible(find.text('View bookings'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('View bookings'));
       await tester.pumpAndSettle();
       // The named Bookings destination, never a numeric tab index.
@@ -97,7 +101,7 @@ void main() {
     testWidgets('returns home deliberately', (tester) async {
       await _pumpSuccess(tester, bookingRef: 'BK-2026-0042');
 
-      await tester.tap(find.text('Back to Home'));
+      await tester.tap(find.text('Done'));
       await tester.pumpAndSettle();
       expect(find.text('DASHBOARD '), findsOneWidget);
     });

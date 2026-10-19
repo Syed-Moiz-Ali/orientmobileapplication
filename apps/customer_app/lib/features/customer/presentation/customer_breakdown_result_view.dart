@@ -1,3 +1,4 @@
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_plate_chip.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_surface_panel.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +9,9 @@ import 'package:shared_core/shared_core.dart';
 /// The backend offers no way to read a breakdown back, so this page is not a
 /// tracking surface: it reports the request the customer just made, and it is
 /// careful to distinguish a request the workshop has actually received from one
-/// that is still waiting on this device.
+/// that is still waiting on this device. A sent request shows an honest
+/// indeterminate wait — the workshop confirms by phone, so no arrival time,
+/// dispatch or towing is ever claimed.
 class CustomerBreakdownResultView extends StatelessWidget {
   final Map<String, dynamic> result;
 
@@ -25,6 +28,7 @@ class CustomerBreakdownResultView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = context.cx;
     final sent = _sent;
     // A queued request is not a success: it gets a neutral accent, not the
     // positive tone, so the colour cannot contradict the copy.
@@ -33,7 +37,7 @@ class CustomerBreakdownResultView extends StatelessWidget {
     return Scaffold(
       // Phase 07.1: bespoke AppTopBar migrated to the shared workspace bar.
       appBar: WorkspaceAppBar(
-        title: sent ? 'Request sent' : 'Request saved',
+        title: sent ? t.sosSent : t.sosSaved,
         showBack: true,
       ),
       body: AppResponsivePage(
@@ -43,6 +47,10 @@ class CustomerBreakdownResultView extends StatelessWidget {
           children: [
             const SizedBox(height: AppDimensions.s12),
             _Outcome(sent: sent, accent: accent, reference: _reference),
+            if (sent) ...[
+              const SizedBox(height: AppDimensions.s16),
+              _WaitPanel(),
+            ],
             const SizedBox(height: AppDimensions.s20),
             _Details(
               vehicleName: _vehicleName,
@@ -55,7 +63,10 @@ class CustomerBreakdownResultView extends StatelessWidget {
             const SizedBox(height: AppDimensions.s24),
             FilledButton(
               onPressed: () => Navigator.of(context).maybePop(),
-              child: const Text('Done'),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+              ),
+              child: Text(t.sosDone),
             ),
             const SizedBox(height: AppDimensions.s32),
           ],
@@ -81,6 +92,7 @@ class _Outcome extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = context.cx;
 
     return CustomerSurfacePanel(
       accent: accent,
@@ -98,9 +110,7 @@ class _Outcome extends StatelessWidget {
               const SizedBox(width: AppDimensions.s10),
               Expanded(
                 child: Text(
-                  sent
-                      ? 'The workshop has received your request.'
-                      : "Saved on this device — it hasn't been sent yet.",
+                  sent ? t.sosSentBody : t.sosSavedOutcome,
                   style: theme.textTheme.titleSmall?.copyWith(
                     color: colors.onSurface,
                     fontWeight: FontWeight.w800,
@@ -112,9 +122,7 @@ class _Outcome extends StatelessWidget {
           if (!sent) ...[
             const SizedBox(height: AppDimensions.s8),
             Text(
-              "It will be sent automatically when you're back online. Until "
-              'then the workshop cannot see this request — call the workshop '
-              'if you need help now.',
+              t.sosQueuedNote,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colors.onSurfaceVariant,
                 height: 1.45,
@@ -124,22 +132,79 @@ class _Outcome extends StatelessWidget {
           if (sent && reference.isNotEmpty) ...[
             const SizedBox(height: AppDimensions.s12),
             Text(
-              'Reference',
+              t.sosRef,
               style: theme.textTheme.labelMedium?.copyWith(
                 color: colors.onSurfaceVariant,
                 fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 2),
-            Text(
-              reference,
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: colors.onSurface,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.4,
+            Directionality(
+              textDirection: TextDirection.ltr,
+              child: Text(
+                reference,
+                style: AppTextStyles.mono(color: colors.onSurface).copyWith(
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.4,
+                ),
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Honest indeterminate wait: the request is with the workshop, confirmation
+/// comes by phone, and nothing about arrival is known. The bar is
+/// indeterminate — it marks waiting, never progress.
+class _WaitPanel extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final t = context.cx;
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.s16),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.hourglass_top_rounded,
+                color: colors.primary,
+              ),
+              const SizedBox(width: AppDimensions.s8),
+              Expanded(
+                child: Text(
+                  t.sosWaitingTitle,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s12),
+          Semantics(
+            label: t.sosWaitingBody,
+            child: const LinearProgressIndicator(),
+          ),
+          const SizedBox(height: AppDimensions.s8),
+          Text(
+            t.sosWaitingBody,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colors.onSurfaceVariant,
+              height: 1.45,
+            ),
+          ),
         ],
       ),
     );
@@ -163,7 +228,8 @@ class _Details extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final vehicle = vehicleName.isEmpty ? 'No vehicle selected' : vehicleName;
+    final t = context.cx;
+    final vehicle = vehicleName.isEmpty ? t.sosNoVehicle : vehicleName;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -177,7 +243,7 @@ class _Details extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'What you asked for',
+              t.sosDetails,
               style: theme.textTheme.labelMedium?.copyWith(
                 color: colors.onSurfaceVariant,
                 fontWeight: FontWeight.w800,
@@ -185,7 +251,7 @@ class _Details extends StatelessWidget {
             ),
             const SizedBox(height: AppDimensions.s10),
             _Row(
-              label: 'Vehicle',
+              label: t.bkdVehicleLabel,
               child: Row(
                 children: [
                   Flexible(
@@ -208,7 +274,7 @@ class _Details extends StatelessWidget {
             ),
             if (location.isNotEmpty)
               _Row(
-                label: 'Location',
+                label: t.sosLocationRow,
                 child: Text(
                   location,
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -219,7 +285,7 @@ class _Details extends StatelessWidget {
               ),
             if (issue.isNotEmpty)
               _Row(
-                label: "What's wrong",
+                label: t.sosIssueRow,
                 child: Text(
                   issue,
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -279,29 +345,58 @@ class _WhatHappensNext extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = context.cx;
+    final steps = sent
+        ? [t.sosNotifySent, t.sosNextSentTwo]
+        : [t.sosNextSavedOne, t.sosNextSavedTwo];
 
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          Icons.campaign_outlined,
-          size: AppDimensions.iconMd,
-          color: colors.onSurfaceVariant,
-        ),
-        const SizedBox(width: AppDimensions.s10),
-        Expanded(
-          child: Text(
-            sent
-                ? "We'll notify you when the workshop assigns an advisor to "
-                      'this request.'
-                : "We'll send this request and notify you as soon as a "
-                      'connection is available.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colors.onSurfaceVariant,
-              height: 1.45,
-            ),
+        Text(
+          t.sosWhatNext,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w800,
           ),
         ),
+        const SizedBox(height: AppDimensions.s8),
+        for (var i = 0; i < steps.length; i++)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppDimensions.s4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    '${i + 1}',
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: colors.primary,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppDimensions.s12),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: AppDimensions.s4),
+                    child: Text(
+                      steps[i],
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }

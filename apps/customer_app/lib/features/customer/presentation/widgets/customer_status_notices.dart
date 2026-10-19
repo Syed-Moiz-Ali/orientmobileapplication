@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
+
 /// Real, action-required states only — a pending estimate approval or a
 /// genuinely unpaid invoice.
 ///
 /// Shared by Customer Home (summary) and Status (detail). Both screens route
 /// into the existing Approvals destination; neither invents a payment flow.
 class CustomerAttentionPanel extends StatelessWidget {
-  final String title;
+  final String? title;
   final List<CustomerApprovalSummaryResponse> approvals;
   final int unpaidInvoices;
   final String Function(double amount) formatAmount;
@@ -21,7 +23,7 @@ class CustomerAttentionPanel extends StatelessWidget {
     required this.formatAmount,
     required this.onReviewEstimate,
     required this.onViewInvoices,
-    this.title = 'Needs your attention',
+    this.title,
   });
 
   bool get _hasContent => approvals.isNotEmpty || unpaidInvoices > 0;
@@ -32,6 +34,7 @@ class CustomerAttentionPanel extends StatelessWidget {
 
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = context.cx;
     final rows = <Widget>[];
 
     if (approvals.isNotEmpty) {
@@ -42,9 +45,9 @@ class CustomerAttentionPanel extends StatelessWidget {
           icon: Icons.fact_check_rounded,
           message: single
               ? (amount > 0
-                    ? 'Estimate ${formatAmount(amount)} awaiting your approval'
-                    : 'An estimate is awaiting your approval')
-              : '${approvals.length} estimates awaiting your approval',
+                    ? t.stAttentionEst(formatAmount(amount))
+                    : t.stAttentionGeneric)
+              : t.stAttentionEstMany(approvals.length),
           onTap: () => onReviewEstimate(approvals.first.estimateId),
         ),
       );
@@ -55,8 +58,8 @@ class CustomerAttentionPanel extends StatelessWidget {
         _AttentionRow(
           icon: Icons.receipt_long_rounded,
           message: unpaidInvoices == 1
-              ? '1 unpaid invoice'
-              : '$unpaidInvoices unpaid invoices',
+              ? t.stUnpaidOne
+              : t.stUnpaidMany(unpaidInvoices),
           onTap: onViewInvoices,
         ),
       );
@@ -81,7 +84,7 @@ class CustomerAttentionPanel extends StatelessWidget {
               Icon(Icons.error_outline_rounded, size: 16, color: colors.error),
               const SizedBox(width: AppDimensions.s6),
               Text(
-                title,
+                title ?? t.stAttentionTitle,
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: colors.error,
                   fontWeight: FontWeight.w800,
@@ -157,19 +160,20 @@ class _AttentionRow extends StatelessWidget {
 /// Compact inline feedback for a failed refresh when usable data is already on
 /// screen — the information itself is never replaced by an error page.
 class CustomerRefreshNotice extends StatelessWidget {
-  final String message;
+  final String? message;
   final Future<void> Function() onRetry;
 
   const CustomerRefreshNotice({
     super.key,
     required this.onRetry,
-    this.message = "We couldn't refresh your information.",
+    this.message,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = context.cx;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(
@@ -192,14 +196,14 @@ class CustomerRefreshNotice extends StatelessWidget {
           const SizedBox(width: AppDimensions.s10),
           Expanded(
             child: Text(
-              message,
+              message ?? t.stRefreshFail,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colors.onSurface,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
+          TextButton(onPressed: onRetry, child: Text(t.stRetry)),
         ],
       ),
     );

@@ -2,23 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_booking_relations.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_bookings_presentation.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_booking_detail_service.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_booking_detail_summary.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_booking_detail_vehicle.dart';
 
-/// The complete detailed representation of ONE booking: what it is, where it
-/// stands, and what the customer can legitimately do with it.
+/// The complete detailed representation of ONE booking: its workshop pass,
+/// what it is, where it stands, and what the customer can legitimately do
+/// with it.
 ///
-/// It is a summary of the booking, not a second tracker â€” the stage-by-stage
+/// It is a summary of the booking, not a second tracker — the stage-by-stage
 /// service journey lives in the contextual Service Status page it links to.
 /// Everything shown comes from real booking/active-service/approval state.
+/// The add-to-calendar action opens the calendar the device already has via
+/// a link (no new dependency); without a parseable appointment it says so.
 class CustomerBookingDetailView extends ConsumerStatefulWidget {
   final CustomerBookingEntity booking;
 
@@ -65,6 +70,7 @@ class _CustomerBookingDetailViewState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = context.cx;
 
     final bookings =
         ref.watch(customerBookingsProvider).valueOrNull ??
@@ -94,13 +100,22 @@ class _CustomerBookingDetailViewState
 
     final primary = <Widget>[
       CustomerBookingDetailSummary(booking: booking),
+      const SizedBox(height: AppDimensions.s16),
+      OutlinedButton.icon(
+        onPressed: () => _addToCalendar(booking),
+        icon: const Icon(Icons.calendar_month_outlined, size: 18),
+        label: Text(t.bkdAddCalendar),
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size.fromHeight(AppDimensions.touchTarget),
+        ),
+      ),
       if (trackable || approvalPending) ...[
         const SizedBox(height: AppDimensions.s16),
         CustomerBookingDetailService(
           booking: booking,
           liveService: liveService,
           approvalPending: approvalPending,
-          approvalMessage: _approvalMessage(booking, approval, dash),
+          approvalMessage: _approvalMessage(context, booking, approval, dash),
           onReviewEstimate: () =>
               context.go(AppRoutes.approvalsLocation(estimateId: estimateId)),
           onTrackService: () => context.push(AppRoutes.customerServiceStatus),
@@ -124,7 +139,7 @@ class _CustomerBookingDetailViewState
       backgroundColor: theme.scaffoldBackgroundColor,
       // Phase 07.1: bespoke AppTopBar migrated to the shared workspace bar
       // (same title + back behavior; divider now drawn by the bar itself).
-      appBar: const WorkspaceAppBar(title: 'Booking Details', showBack: true),
+      appBar: WorkspaceAppBar(title: t.bkdTitle, showBack: true),
       body: AppResponsivePage(
         physics: const AlwaysScrollableScrollPhysics(),
         // Records share the wider canvas as two coherent columns; a
@@ -148,13 +163,51 @@ class _CustomerBookingDetailViewState
   }
 
   String _approvalMessage(
+    BuildContext context,
     CustomerBookingEntity booking,
     CustomerApprovalSummaryResponse? approval,
     CustomerDashboardState dash,
   ) {
     final amount = CustomerBookingRelations.estimateAmount(booking, approval);
-    if (amount == null) return 'Approval needed before work continues';
-    return 'Estimate ${dash.formatAmount(amount)} awaiting approval';
+    // Same estimate line the bookings tab shows: one product voice.
+    if (amount == null) return context.cx.bkdApprovalTitle;
+    return context.cx.bkApprovalEst(dash.formatAmount(amount));
+  }
+
+  /// Opens the device calendar with the real appointment filled in. The
+  /// calendar holds the event for one hour as a scheduling block; the
+  /// booking itself carries no duration, so none is claimed.
+  Future<void> _addToCalendar(CustomerBookingEntity booking) async {
+    final start = CustomerBookingsPresentation.parseDateTime(
+      booking.date,
+      booking.time,
+    );
+    if (start == null) {
+      _showMessage(context.cx.bkdCalendarFail);
+      return;
+    }
+    String stamp(DateTime d) =>
+        '${d.year.toString().padLeft(4, '0')}'
+        '${d.month.toString().padLeft(2, '0')}'
+        '${d.day.toString().padLeft(2, '0')}'
+        'T'
+        '${d.hour.toString().padLeft(2, '0')}'
+        '${d.minute.toString().padLeft(2, '0')}'
+        '00';
+    final service = booking.service.trim();
+    final reference = CustomerBookingsPresentation.referenceOf(booking);
+    final details = [
+      if (reference.isNotEmpty) reference,
+      if (booking.plateNumber.trim().isNotEmpty) booking.plateNumber.trim(),
+    ].join(' · ');
+    final uri = Uri.parse(
+      'https://calendar.google.com/calendar/render?action=TEMPLATE'
+      '&text=${Uri.encodeComponent(service.isEmpty ? 'Service appointment' : service)}'
+      '&dates=${stamp(start)}/${stamp(start.add(const Duration(hours: 1)))}'
+      '&details=${Uri.encodeComponent(details)}',
+    );
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && mounted) _showMessage(context.cx.bkdCalendarFail);
   }
 
   /// The active workshop job, but only when it canonically belongs to this
@@ -172,13 +225,14 @@ class _CustomerBookingDetailViewState
   }
 
   Future<void> _confirmCancel() async {
+    final t = context.cx;
     final booking = _currentBooking;
     final confirmed = await showAppConfirmationDialog(
       context,
-      title: 'Cancel booking?',
+      title: t.bkdCancelTitle,
       message: _cancelMessage(booking),
-      confirmLabel: 'Cancel booking',
-      cancelLabel: 'Keep booking',
+      confirmLabel: t.bkdCancelCta,
+      cancelLabel: t.bkdKeepCta,
       icon: Icons.cancel_outlined,
       destructive: true,
     );
@@ -187,18 +241,17 @@ class _CustomerBookingDetailViewState
   }
 
   String _cancelMessage(CustomerBookingEntity booking) {
+    final t = context.cx;
     final service = booking.service.trim();
     final schedule = CustomerBookingsPresentation.scheduleLabel(
       booking.date,
       booking.time,
     );
-    final subject = service.isEmpty ? 'this appointment' : service;
+    final subject = service.isEmpty ? t.bkdServiceLabel : service;
     if (schedule.isEmpty) {
-      return 'This will cancel your appointment for $subject. '
-          'This cannot be undone.';
+      return '$subject. ${t.bkdCancelBody}';
     }
-    return 'This will cancel your appointment for $subject on $schedule. '
-        'This cannot be undone.';
+    return '$subject · $schedule. ${t.bkdCancelBody}';
   }
 
   Future<void> _cancelBooking(CustomerBookingEntity booking) async {
@@ -209,7 +262,7 @@ class _CustomerBookingDetailViewState
       // A booking without a usable id cannot be cancelled; report it the same
       // way as a failed request rather than sending a bogus id to the API.
       _showMessage(
-        "We couldn't cancel this booking. Please try again.",
+        context.cx.bkdCancelFail,
         onRetry: () => _cancelBooking(booking),
       );
       return;
@@ -233,10 +286,10 @@ class _CustomerBookingDetailViewState
 
     if (cancelled) {
       ref.invalidate(customerBookingsProvider);
-      _showMessage('Booking cancelled.');
+      _showMessage(context.cx.bkdCancelled);
     } else {
       _showMessage(
-        "We couldn't cancel this booking. Please try again.",
+        context.cx.bkdCancelFail,
         onRetry: () => _cancelBooking(booking),
       );
     }
@@ -250,7 +303,10 @@ class _CustomerBookingDetailViewState
         content: Text(message),
         action: onRetry == null
             ? null
-            : SnackBarAction(label: 'Retry', onPressed: onRetry),
+            : SnackBarAction(
+                label: context.cx.bkdRetry,
+                onPressed: onRetry,
+              ),
       ),
     );
   }
@@ -271,6 +327,7 @@ class _CancelBookingAction extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = context.cx;
 
     return Row(
       children: [
@@ -286,23 +343,12 @@ class _CancelBookingAction extends StatelessWidget {
                   ),
                 )
               : const Icon(Icons.cancel_outlined, size: 18),
-          label: Text(cancelling ? 'Cancelling\u2026' : 'Cancel booking'),
+          label: Text(cancelling ? t.bkdCancelling : t.bkdCancelCta),
           style: TextButton.styleFrom(
             foregroundColor: colors.error,
             disabledForegroundColor: colors.onSurfaceVariant,
           ),
         ),
-        if (cancelling) ...[
-          const SizedBox(width: AppDimensions.s8),
-          Expanded(
-            child: Text(
-              'Cancelling your booking\u2026',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant,
-              ),
-            ),
-          ),
-        ],
       ],
     );
   }

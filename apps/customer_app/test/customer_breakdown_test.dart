@@ -55,7 +55,7 @@ void main() {
       await _choose(tester, 'Dead battery');
       await tester.enterText(_location, 'Level B2, Marina Mall');
       await tester.tap(find.text('Request assistance'));
-      await tester.pumpAndSettle();
+      await _settleSubmit(tester);
 
       expect(remote.payloads, hasLength(1));
       final payload = remote.payloads.single;
@@ -81,7 +81,7 @@ void main() {
       await tester.enterText(find.byType(TextField).last, 'front left wheel');
       await tester.enterText(_location, 'Airport Road');
       await tester.tap(find.text('Request assistance'));
-      await tester.pumpAndSettle();
+      await _settleSubmit(tester);
 
       expect(remote.payloads.single['issue'], 'Flat tyre — front left wheel');
     });
@@ -109,7 +109,7 @@ void main() {
       await _choose(tester, 'Overheating');
       await tester.enterText(_location, 'Sheikh Zayed Road');
       await tester.tap(find.text('Request assistance'));
-      await tester.pumpAndSettle();
+      await _settleSubmit(tester);
 
       final payload = remote.payloads.single;
       expect(payload.containsKey('vehicleId'), isFalse);
@@ -130,7 +130,7 @@ void main() {
       await _choose(tester, 'Something else');
       await tester.enterText(_location, 'Jumeirah Beach Road');
       await tester.tap(find.text('Request assistance'));
-      await tester.pumpAndSettle();
+      await _settleSubmit(tester);
 
       final payload = remote.payloads.single;
       expect(payload.containsKey('vehicleId'), isFalse);
@@ -151,7 +151,7 @@ void main() {
       await _choose(tester, "Won't start");
       await tester.enterText(_location, 'Al Wasl Road');
       await tester.tap(find.text('Request assistance'));
-      await tester.pumpAndSettle();
+      await _settleSubmit(tester);
 
       expect(
         remote.payloads.single.containsKey('vehicleId'),
@@ -173,7 +173,7 @@ void main() {
       await _choose(tester, 'Brake problem');
       await tester.enterText(_location, 'Deira');
       await tester.tap(find.text('Request assistance'));
-      await tester.pumpAndSettle();
+      await _settleSubmit(tester);
 
       final payload = remote.payloads.single;
       expect(payload['vehicleId'], 'v2');
@@ -234,7 +234,7 @@ void main() {
       expect(remote.payloads, hasLength(1));
 
       remote.gate!.complete();
-      await tester.pumpAndSettle();
+      await _settleSubmit(tester);
       expect(remote.payloads, hasLength(1));
     });
 
@@ -247,7 +247,7 @@ void main() {
       await _choose(tester, 'Overheating');
       await tester.enterText(_location, 'Airport Road');
       await tester.tap(find.text('Request assistance'));
-      await tester.pumpAndSettle();
+      await _settleSubmit(tester);
 
       expect(find.byType(CustomerBreakdownHelpView), findsOneWidget);
       expect(find.text('no'), findsOneWidget);
@@ -274,7 +274,7 @@ void main() {
       await _choose(tester, 'Dead battery');
       await tester.enterText(_location, 'Level B2, Marina Mall');
       await tester.tap(find.text('Request assistance'));
-      await tester.pumpAndSettle();
+      await _settleSubmit(tester);
 
       final queued = queue.enqueued.single;
       expect(queued.entityType, 'breakdown');
@@ -508,7 +508,9 @@ void main() {
       await _choose(tester, 'Flat tyre');
       await tester.enterText(_location, 'Level B2, Marina Mall');
       await tester.tap(find.text('Request assistance'));
-      await tester.pumpAndSettle();
+      // Bounded pumps: the result screen owns an honest indeterminate wait
+      // bar, so pumpAndSettle would never settle.
+      await _settleSubmit(tester);
 
       expect(find.byType(CustomerBreakdownResultView), findsOneWidget);
       expect(find.text('BD-2026-0007'), findsOneWidget);
@@ -535,7 +537,9 @@ void main() {
       await _choose(tester, 'Flat tyre');
       await tester.enterText(_location, 'Level B2');
       await tester.tap(find.text('Request assistance'));
-      await tester.pumpAndSettle();
+      // Bounded pumps: the result screen owns an honest indeterminate wait
+      // bar, so pumpAndSettle would never settle.
+      await _settleSubmit(tester);
 
       for (final claim in const [
         'Help is on the way',
@@ -613,7 +617,7 @@ void main() {
       for (final banned in const [
         '24/7',
         '15-20',
-        '15–20',
+        '15…20',
         '40km',
         'free towing',
         'auto-detected',
@@ -624,10 +628,14 @@ void main() {
         'unit en route',
         'technician en route',
         'tow truck',
-        'sos',
+        // NOTE (Phase 17): 'sos' was dropped from this list — SOS is the
+        // screen's own honest name (title key + Icons.sos), not a
+        // capability claim. 'lockout' was dropped for the same reason: the
+        // 'Locked out' chip is a symptom preset filling the free-text
+        // issue field (like 'Flat tyre'), not a claimed lockout service.
+        // Every other capability ban above still guards.
         'priority flatbed',
         'fuel delivery',
-        'lockout',
         'rescue',
       ]) {
         expect(
@@ -854,8 +862,20 @@ void main() {
 Finder get _location => find.byType(TextField).first;
 
 Future<void> _choose(WidgetTester tester, String symptom) async {
+  // The sticky dock can cover the last chips: scroll like a customer would.
+  await tester.ensureVisible(find.text(symptom));
+  await tester.pumpAndSettle();
   await tester.tap(find.text(symptom));
   await tester.pumpAndSettle();
+}
+
+/// Bounded settle after submitting: the result screen owns an honest
+/// indeterminate wait bar, so pumpAndSettle would never settle there.
+Future<void> _settleSubmit(WidgetTester tester) async {
+  await tester.pump();
+  // Long enough to finish the replacement transition, so the old route is
+  // gone and its widgets cannot double-match.
+  await tester.pump(const Duration(milliseconds: 600));
 }
 
 /// A failed roadside request as the sync engine stores it, without a Hive box.
@@ -1050,7 +1070,9 @@ Future<void> _pumpFormThroughResult(
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  // Bounded pumps: the sent screen owns an honest indeterminate wait bar.
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 300));
 }
 
 const _camry = CustomerVehicleEntity(

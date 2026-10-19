@@ -2,14 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_plate_chip.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_surface_panel.dart';
 
 /// Active workshop job — the primary tracking surface.
 ///
 /// Shows only real fields: the canonical "in service" state, the current
-/// workshop stage (humanised), real progress when the backend provides it, and
-/// a real expected completion when one exists.
+/// workshop stage (humanised), real progress when the backend provides it, a
+/// real expected completion when one exists — otherwise an honest
+/// indeterminate wait, never an invented time — and the technician when the
+/// workshop names one. There is no bay field on the record, so none is shown.
 class CustomerStatusLivePanel extends StatelessWidget {
   final CustomerServiceEntity service;
   final VoidCallback? onViewBooking;
@@ -25,12 +29,12 @@ class CustomerStatusLivePanel extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final t = context.cx;
     final progress = service.progressPercent.clamp(0, 100);
     final stage = CustomerServiceTracking.humanize(service.currentStage);
-    final vehicle = CustomerServiceTracking.vehicleLine(
-      service.vehicleName,
-      service.plateNumber,
-    );
+    final plate = service.plateNumber.trim();
+    final vehicle = service.vehicleName.trim();
+    final technician = service.technicianName.trim();
     final eta = service.estCompletion.trim();
 
     return CustomerSurfacePanel(
@@ -39,19 +43,22 @@ class CustomerStatusLivePanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: StatusPill(
-              label: 'IN SERVICE',
-              showDot: true,
-              bg: colors.primary.withValues(alpha: 0.14),
-              fg: colors.primary,
-            ),
+          Row(
+            children: [
+              StatusPill(
+                label: t.stLiveBadge,
+                showDot: true,
+                bg: colors.primary.withValues(alpha: 0.14),
+                fg: colors.primary,
+              ),
+              const Spacer(),
+              if (plate.isNotEmpty) CustomerPlateChip(plate: plate),
+            ],
           ),
           const SizedBox(height: AppDimensions.s14),
           Text(
             service.service.trim().isEmpty
-                ? 'Service in progress'
+                ? t.stServiceFallback
                 : service.service.trim(),
             style: textTheme.titleLarge?.copyWith(
               color: colors.onSurface,
@@ -71,7 +78,7 @@ class CustomerStatusLivePanel extends StatelessWidget {
           ],
           const SizedBox(height: AppDimensions.s16),
           Text(
-            'Current stage',
+            t.stCurrentStage,
             style: textTheme.labelSmall?.copyWith(
               color: colors.onSurfaceVariant,
               fontWeight: FontWeight.w700,
@@ -79,7 +86,7 @@ class CustomerStatusLivePanel extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.s4),
           Text(
-            stage.isEmpty ? 'Service in progress' : stage,
+            stage.isEmpty ? t.stServiceFallback : stage,
             style: textTheme.titleMedium?.copyWith(
               color: colors.onSurface,
               fontWeight: FontWeight.w800,
@@ -89,7 +96,7 @@ class CustomerStatusLivePanel extends StatelessWidget {
             const SizedBox(height: AppDimensions.s16),
             Semantics(
               excludeSemantics: true,
-              label: 'Service progress, $progress percent',
+              label: t.stProgressLabel(progress),
               child: Row(
                 children: [
                   Expanded(
@@ -119,8 +126,8 @@ class CustomerStatusLivePanel extends StatelessWidget {
               ),
             ),
           ],
-          if (eta.isNotEmpty) ...[
-            const SizedBox(height: AppDimensions.s12),
+          const SizedBox(height: AppDimensions.s12),
+          if (eta.isNotEmpty)
             Row(
               children: [
                 Icon(
@@ -131,9 +138,41 @@ class CustomerStatusLivePanel extends StatelessWidget {
                 const SizedBox(width: AppDimensions.s6),
                 Expanded(
                   child: Text(
-                    'Estimated completion \u00b7 $eta',
+                    t.stEstCompletion(eta),
                     style: textTheme.bodySmall?.copyWith(
                       color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            _WaitLine(title: t.stWaitingTitle, body: t.stWaitingBody),
+          if (technician.isNotEmpty) ...[
+            const SizedBox(height: AppDimensions.s12),
+            Row(
+              children: [
+                Icon(
+                  Icons.person_outline_rounded,
+                  size: AppDimensions.iconSm,
+                  color: colors.onSurfaceVariant,
+                ),
+                const SizedBox(width: AppDimensions.s6),
+                Text(
+                  t.stTechnician,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(width: AppDimensions.s6),
+                Expanded(
+                  child: Text(
+                    technician,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colors.onSurface,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -144,11 +183,62 @@ class CustomerStatusLivePanel extends StatelessWidget {
             const SizedBox(height: AppDimensions.s18),
             FilledButton(
               onPressed: onViewBooking,
-              child: const Text('View booking'),
+              child: Text(t.stViewBooking),
             ),
           ],
         ],
       ),
+    );
+  }
+}
+
+/// Honest indeterminate wait: confirmation comes from the bay, so no arrival
+/// time is promised. The bar is indeterminate — it marks waiting, never
+/// progress.
+class _WaitLine extends StatelessWidget {
+  final String title;
+  final String body;
+
+  const _WaitLine({required this.title, required this.body});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.hourglass_top_rounded,
+              size: AppDimensions.iconSm,
+              color: colors.primary,
+            ),
+            const SizedBox(width: AppDimensions.s6),
+            Expanded(
+              child: Text(
+                title,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.s8),
+        Semantics(
+          label: body,
+          child: const LinearProgressIndicator(),
+        ),
+        const SizedBox(height: AppDimensions.s4),
+        Text(
+          body,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: colors.onSurfaceVariant,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -172,11 +262,10 @@ class CustomerStatusUpcomingPanel extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final t = context.cx;
     final tone = CustomerServiceTracking.bookingTone(colors, booking.status);
-    final vehicle = CustomerServiceTracking.vehicleLine(
-      booking.vehicleName,
-      booking.plateNumber,
-    );
+    final plate = booking.plateNumber.trim();
+    final vehicle = booking.vehicleName.trim();
     final appointment = [
       if (booking.date.trim().isNotEmpty) booking.date.trim(),
       if (booking.time.trim().isNotEmpty) booking.time.trim(),
@@ -199,15 +288,18 @@ class CustomerStatusUpcomingPanel extends StatelessWidget {
               const Spacer(),
               if (booking.jobCardRef.trim().isNotEmpty)
                 Flexible(
-                  child: Text(
-                    booking.jobCardRef.trim(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.end,
-                    style: textTheme.labelSmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                      fontFamily: AppFontFamilies.mono,
-                      fontWeight: FontWeight.w600,
+                  child: Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      booking.jobCardRef.trim(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end,
+                      style: textTheme.labelSmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                        fontFamily: AppFontFamilies.mono,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
@@ -216,7 +308,7 @@ class CustomerStatusUpcomingPanel extends StatelessWidget {
           const SizedBox(height: AppDimensions.s14),
           Text(
             booking.service.trim().isEmpty
-                ? 'Workshop booking'
+                ? t.stWorkshopBooking
                 : booking.service.trim(),
             style: textTheme.titleLarge?.copyWith(
               color: colors.onSurface,
@@ -224,14 +316,26 @@ class CustomerStatusUpcomingPanel extends StatelessWidget {
               letterSpacing: -0.3,
             ),
           ),
-          if (vehicle.isNotEmpty) ...[
-            const SizedBox(height: AppDimensions.s4),
-            Text(
-              vehicle,
-              style: textTheme.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
-              ),
+          if (plate.isNotEmpty || vehicle.isNotEmpty) ...[
+            const SizedBox(height: AppDimensions.s8),
+            Row(
+              children: [
+                if (plate.isNotEmpty) CustomerPlateChip(plate: plate),
+                if (plate.isNotEmpty && vehicle.isNotEmpty)
+                  const SizedBox(width: AppDimensions.s8),
+                if (vehicle.isNotEmpty)
+                  Expanded(
+                    child: Text(
+                      vehicle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ],
           const SizedBox(height: AppDimensions.s16),
@@ -244,11 +348,14 @@ class CustomerStatusUpcomingPanel extends StatelessWidget {
               ),
               const SizedBox(width: AppDimensions.s10),
               Expanded(
-                child: Text(
-                  appointment.isEmpty ? 'Appointment scheduled' : appointment,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: colors.onSurface,
-                    fontWeight: FontWeight.w700,
+                child: Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Text(
+                    appointment.isEmpty ? t.stApptScheduled : appointment,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colors.onSurface,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
@@ -256,8 +363,7 @@ class CustomerStatusUpcomingPanel extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.s12),
           Text(
-            'Your service is booked. Workshop updates will appear here once '
-            'your vehicle is checked in.',
+            t.stBookedNote,
             style: textTheme.bodySmall?.copyWith(
               color: colors.onSurfaceVariant,
               height: 1.45,
@@ -266,7 +372,7 @@ class CustomerStatusUpcomingPanel extends StatelessWidget {
           const SizedBox(height: AppDimensions.s18),
           FilledButton(
             onPressed: onViewBooking,
-            child: const Text('View booking'),
+            child: Text(t.stViewBooking),
           ),
         ],
       ),
@@ -296,6 +402,7 @@ class CustomerStatusIdlePanel extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final t = context.cx;
 
     return CustomerSurfacePanel(
       accent: colors.onSurfaceVariant,
@@ -326,7 +433,7 @@ class CustomerStatusIdlePanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Nothing to track right now',
+                      t.stIdleTitle,
                       style: textTheme.titleSmall?.copyWith(
                         color: colors.onSurface,
                         fontWeight: FontWeight.w800,
@@ -334,11 +441,7 @@ class CustomerStatusIdlePanel extends StatelessWidget {
                     ),
                     const SizedBox(height: AppDimensions.s4),
                     Text(
-                      hasVehicles
-                          ? 'Your vehicle is not currently booked or in the '
-                                'workshop.'
-                          : 'Add your vehicle to book service and follow its '
-                                'progress here.',
+                      hasVehicles ? t.stIdleWithVehicles : t.stIdleNoVehicles,
                       style: textTheme.bodySmall?.copyWith(
                         color: colors.onSurfaceVariant,
                         height: 1.4,
@@ -354,18 +457,18 @@ class CustomerStatusIdlePanel extends StatelessWidget {
             FilledButton.icon(
               onPressed: onBookService,
               icon: const Icon(Icons.calendar_month_rounded, size: 18),
-              label: const Text('Book service'),
+              label: Text(t.stBookService),
             ),
             if (showBookingsLink)
               TextButton(
                 onPressed: onViewBookings,
-                child: const Text('View bookings'),
+                child: Text(t.stViewBookings),
               ),
           ] else
             FilledButton.icon(
               onPressed: onAddVehicle,
               icon: const Icon(Icons.add_rounded, size: 18),
-              label: const Text('Add your vehicle'),
+              label: Text(t.stAddVehicle),
             ),
         ],
       ),

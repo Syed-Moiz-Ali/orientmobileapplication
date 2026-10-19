@@ -7,11 +7,13 @@ import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_bookings_presentation.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_plate_chip.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_surface_panel.dart';
 
-/// The end of the booking flow: what was requested, and what to do next.
+/// The end of the booking flow: reservation warmth, the real reference and
+/// the next steps — then one Done that returns to the garage.
 ///
 /// It shows only what the workshop actually returned — the booking reference
 /// and creation result — plus the selections the customer just made. When the
@@ -43,6 +45,7 @@ class CustomerBookingSuccessView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = context.cx;
 
     // The new booking is only offered as a detail link once the refreshed feed
     // really contains it, so Booking Details is never opened with invented data.
@@ -56,6 +59,7 @@ class CustomerBookingSuccessView extends ConsumerWidget {
       colors,
       BookingStatus.pending,
     );
+    final accent = queuedOffline ? colors.error : colors.tertiary;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -66,58 +70,45 @@ class CustomerBookingSuccessView extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: AppDimensions.s20),
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: colors.tertiary.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.check_rounded,
-                      color: colors.tertiary,
-                      size: 22,
-                    ),
+              const SizedBox(height: AppDimensions.s32),
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  queuedOffline
+                      ? Icons.cloud_off_rounded
+                      : Icons.check_rounded,
+                  color: accent,
+                  size: 36,
+                ),
+              ),
+              const SizedBox(height: AppDimensions.s16),
+              Semantics(
+                header: true,
+                child: Text(
+                  queuedOffline ? t.bksSaved : t.bksRequested,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
                   ),
-                  const SizedBox(width: AppDimensions.s12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Semantics(
-                          header: true,
-                          child: Text(
-                            queuedOffline
-                                ? 'Booking saved'
-                                : 'Booking requested',
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              color: colors.onSurface,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.3,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: AppDimensions.r2),
-                        Text(
-                          queuedOffline
-                              ? 'It will reach the workshop when you are back online.'
-                              : 'The workshop will confirm your appointment.',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colors.onSurfaceVariant,
-                            height: 1.4,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
+              ),
+              const SizedBox(height: AppDimensions.s4),
+              Text(
+                queuedOffline ? t.bksSavedSub : t.bksRequestedSub,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: AppDimensions.s20),
 
-              // ── The booking record ────────────────────────────────────────
+              // ── The booking record ────────────────────────────────────
               DecoratedBox(
                 decoration: BoxDecoration(
                   color: colors.surface,
@@ -129,7 +120,7 @@ class CustomerBookingSuccessView extends ConsumerWidget {
                   children: [
                     if (bookingRef.isNotEmpty) ...[
                       _RecordRow(
-                        label: 'Booking reference',
+                        label: t.bksRefLabel,
                         value: bookingRef,
                         mono: true,
                         emphasize: true,
@@ -139,32 +130,34 @@ class CustomerBookingSuccessView extends ConsumerWidget {
                     // A booking that only exists on this device has not reached
                     // the workshop, so it must not display a server status.
                     _RecordRow(
-                      label: 'Status',
+                      label: t.bksStatusLabel,
                       value: '',
                       pillTone: queuedOffline
                           ? colors.onSurfaceVariant
                           : pendingTone,
                       pillLabel: queuedOffline
-                          ? 'Not sent yet'
+                          ? t.bksNotSent
                           : AppStatusLabels.booking('pending'),
                     ),
                     Divider(height: 1, color: colors.outlineVariant),
                     _RecordRow(
-                      label: 'Service',
-                      value: service.trim().isEmpty ? 'Service' : service,
+                      label: t.bksServiceLabel,
+                      value: service.trim().isEmpty
+                          ? t.bksServiceLabel
+                          : service,
                     ),
                     Divider(height: 1, color: colors.outlineVariant),
                     _VehicleRow(vehicle: vehicle, plate: plate),
                     if (schedule.isNotEmpty) ...[
                       Divider(height: 1, color: colors.outlineVariant),
-                      _RecordRow(label: 'Appointment', value: schedule),
+                      _RecordRow(label: t.bksApptLabel, value: schedule),
                     ],
                   ],
                 ),
               ),
               const SizedBox(height: AppDimensions.s16),
 
-              // ── Honest state note ─────────────────────────────────────────
+              // ── Honest state note ─────────────────────────────────────
               CustomerSurfacePanel(
                 accent: queuedOffline ? colors.error : colors.primary,
                 child: Row(
@@ -179,58 +172,65 @@ class CustomerBookingSuccessView extends ConsumerWidget {
                     ),
                     const SizedBox(width: AppDimensions.s10),
                     Expanded(
-                      child: Text(
-                        queuedOffline
-                            ? 'This booking is stored on this device. It will be '
-                                  'sent to the workshop automatically when the '
-                                  'connection is back.'
-                            : 'Your appointment is not confirmed yet. You will '
-                                  'find it in your bookings, and the workshop '
-                                  'will confirm the slot.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colors.onSurface,
-                          height: 1.45,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            queuedOffline
+                                ? t.bksQueuedTitle
+                                : t.bksPendingTitle,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: AppDimensions.s4),
+                          Text(
+                            queuedOffline ? t.bksQueuedBody : t.bksPendingBody,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colors.onSurface,
+                              height: 1.45,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(height: AppDimensions.s16),
+
+              // ── What happens next ─────────────────────────────────────
+              SectionHeader(title: t.bksNextTitle),
+              const SizedBox(height: AppDimensions.s8),
+              _NextStep(index: '1', text: t.bksNextOne),
+              _NextStep(index: '2', text: t.bksNextTwo),
+              _NextStep(index: '3', text: t.bksNextThree),
               const SizedBox(height: AppDimensions.s24),
 
+              FilledButton.icon(
+                onPressed: () => context.go(AppRoutes.customerDashboard),
+                icon: const Icon(Icons.check_rounded, size: 18),
+                label: Text(t.bksDone),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52),
+                ),
+              ),
+              const SizedBox(height: AppDimensions.s8),
               if (created != null)
-                FilledButton.icon(
+                TextButton.icon(
                   onPressed: () => context.push(
                     AppRoutes.customerBookingDetail,
                     extra: created,
                   ),
                   icon: const Icon(Icons.calendar_month_rounded, size: 18),
-                  label: const Text('View booking'),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(
-                      AppDimensions.touchTarget,
-                    ),
-                  ),
+                  label: Text(t.bksViewBooking),
                 )
               else
-                FilledButton.icon(
+                TextButton.icon(
                   onPressed: () => context.go(AppRoutes.bookingsLocation),
                   icon: const Icon(Icons.calendar_month_rounded, size: 18),
-                  label: const Text('View bookings'),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(
-                      AppDimensions.touchTarget,
-                    ),
-                  ),
+                  label: Text(t.bksViewBookings),
                 ),
-              const SizedBox(height: AppDimensions.s8),
-              OutlinedButton(
-                onPressed: () => context.go(AppRoutes.customerDashboard),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(AppDimensions.touchTarget),
-                ),
-                child: const Text('Back to Home'),
-              ),
               const SizedBox(height: AppDimensions.s32),
             ],
           ),
@@ -251,6 +251,55 @@ class CustomerBookingSuccessView extends ConsumerWidget {
       }
     }
     return null;
+  }
+}
+
+class _NextStep extends StatelessWidget {
+  final String index;
+  final String text;
+
+  const _NextStep({required this.index, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppDimensions.s4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: colors.primary.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              index,
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: colors.primary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppDimensions.s12),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: AppDimensions.s4),
+              child: Text(
+                text,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -275,49 +324,41 @@ class _RecordRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.s14,
-        vertical: AppDimensions.s14,
-      ),
-      child: Row(
+      padding: const EdgeInsets.all(AppDimensions.s16),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 92,
-            child: Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
+          Text(
+            label.toUpperCase(),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: colors.onSurfaceVariant,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s4),
+          if (pillLabel != null && pillTone != null)
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: StatusPill(
+                label: pillLabel!.toUpperCase(),
+                showDot: true,
+                bg: pillTone!.withValues(alpha: 0.12),
+                fg: pillTone!,
               ),
-            ),
-          ),
-          const SizedBox(width: AppDimensions.s8),
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    value,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: emphasize ? colors.primary : colors.onSurface,
-                      fontFamily: mono ? AppFontFamilies.mono : null,
-                      fontWeight: emphasize ? FontWeight.w800 : FontWeight.w700,
-                    ),
+            )
+          else
+            Text(
+              value,
+              style: (mono
+                      ? AppTextStyles.mono(color: colors.onSurface)
+                      : theme.textTheme.bodyLarge!)
+                  .copyWith(
+                    fontWeight: emphasize
+                        ? FontWeight.w800
+                        : FontWeight.w600,
                   ),
-                ),
-                if (pillTone != null && pillLabel != null)
-                  StatusPill(
-                    label: pillLabel!.toUpperCase(),
-                    showDot: true,
-                    bg: pillTone!.withValues(alpha: 0.12),
-                    fg: pillTone!,
-                  ),
-              ],
             ),
-          ),
         ],
       ),
     );
@@ -334,50 +375,35 @@ class _VehicleRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = context.cx;
     final name = vehicle.trim();
-
     if (name.isEmpty && plate.trim().isEmpty) {
       return const SizedBox.shrink();
     }
-
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.s14,
-        vertical: AppDimensions.s14,
-      ),
-      child: Row(
+      padding: const EdgeInsets.all(AppDimensions.s16),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 92,
-            child: Text(
-              'Vehicle',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant,
+          Text(
+            t.bksVehicleLabel.toUpperCase(),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: colors.onSurfaceVariant,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s4),
+          if (name.isNotEmpty)
+            Text(
+              name,
+              style: theme.textTheme.bodyLarge?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
-          ),
-          const SizedBox(width: AppDimensions.s8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (name.isNotEmpty)
-                  Text(
-                    name,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colors.onSurface,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                if (plate.trim().isNotEmpty) ...[
-                  const SizedBox(height: AppDimensions.s6),
-                  CustomerPlateChip(plate: plate.trim()),
-                ],
-              ],
-            ),
-          ),
+          if (plate.trim().isNotEmpty) ...[
+            const SizedBox(height: AppDimensions.s8),
+            CustomerPlateChip(plate: plate.trim()),
+          ],
         ],
       ),
     );

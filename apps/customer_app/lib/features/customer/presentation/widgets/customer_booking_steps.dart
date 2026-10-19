@@ -3,14 +3,15 @@ import 'package:shared_core/shared_core.dart';
 
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_bookings_presentation.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_notice_panel.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_plate_chip.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_surface_panel.dart';
 
-/// Step 1 — which registered vehicle is being booked.
+/// Step 1: which registered vehicle the workshop will receive.
 ///
-/// Real garage records only: name, plate and the genuine secondary details the
-/// vehicle itself carries. No photography, no invented specifications.
+/// Same contract as before (garage list + quick-add that returns the saved
+/// vehicle), recomposed as selectable art rows with radio semantics instead
+/// of plain list tiles.
 class CustomerBookingVehicleStep extends StatelessWidget {
   final List<CustomerVehicleEntity> vehicles;
   final bool loading;
@@ -29,95 +30,51 @@ class CustomerBookingVehicleStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
+    final t = context.cx;
     if (loading && vehicles.isEmpty) {
-      return const CustomerSurfacePanel(
-        accent: Colors.transparent,
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: AppDimensions.s24),
-          child: Center(child: CircularProgressIndicator()),
-        ),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
-
     if (vehicles.isEmpty) {
-      return CustomerSurfacePanel(
-        accent: colors.onSurfaceVariant,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'No vehicle yet',
-              style: theme.textTheme.titleSmall?.copyWith(
-                color: colors.onSurface,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: AppDimensions.s4),
-            Text(
-              'A booking needs a registered vehicle so the workshop knows what '
-              'to service.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant,
-                height: 1.45,
-              ),
-            ),
-            const SizedBox(height: AppDimensions.s16),
-            FilledButton.icon(
-              onPressed: onAddVehicle,
-              icon: const Icon(Icons.add_rounded, size: 18),
-              label: const Text('Add your vehicle'),
-            ),
-          ],
-        ),
+      return _EmptyBlock(
+        icon: Icons.directions_car_outlined,
+        title: t.wizGarageEmptyTitle,
+        body: t.wizGarageEmptyBody,
+        actionLabel: t.wizAddVehicle,
+        onAction: onAddVehicle,
       );
     }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-            border: Border.all(color: colors.outlineVariant),
+        for (var i = 0; i < vehicles.length; i++) ...[
+          _VehicleCard(
+            vehicle: vehicles[i],
+            selected: selected?.id == vehicles[i].id,
+            onTap: () => onSelect(vehicles[i]),
           ),
-          child: Column(
-            children: [
-              for (var index = 0; index < vehicles.length; index++) ...[
-                _VehicleRow(
-                  vehicle: vehicles[index],
-                  selected: selected?.id == vehicles[index].id,
-                  onTap: () => onSelect(vehicles[index]),
-                ),
-                if (index < vehicles.length - 1)
-                  Divider(height: 1, color: colors.outlineVariant),
-              ],
-            ],
+          if (i < vehicles.length - 1)
+            const SizedBox(height: AppDimensions.s12),
+        ],
+        const SizedBox(height: AppDimensions.s12),
+        OutlinedButton.icon(
+          onPressed: onAddVehicle,
+          icon: const Icon(Icons.add_rounded),
+          label: Text(t.wizAddVehicle),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(AppDimensions.touchTarget),
           ),
         ),
-        if (selected != null) ...[
-          const SizedBox(height: AppDimensions.s12),
-          Text(
-            'Bookings are created for the selected vehicle.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colors.onSurfaceVariant,
-            ),
-          ),
-        ],
       ],
     );
   }
 }
 
-class _VehicleRow extends StatelessWidget {
+class _VehicleCard extends StatelessWidget {
   final CustomerVehicleEntity vehicle;
   final bool selected;
   final VoidCallback onTap;
 
-  const _VehicleRow({
+  const _VehicleCard({
     required this.vehicle,
     required this.selected,
     required this.onTap,
@@ -127,112 +84,94 @@ class _VehicleRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    // Genuine vehicle details only — whatever the garage record actually holds.
-    final specs = <String>[
-      if (vehicle.year > 0) '${vehicle.year}',
+    final specs = [
+      if (vehicle.year > 0) vehicle.year.toString(),
       if (vehicle.color.trim().isNotEmpty) vehicle.color.trim(),
       if (vehicle.mileage.trim().isNotEmpty) vehicle.mileage.trim(),
     ];
-    final name = vehicle.displayName.trim();
-    final plate = vehicle.plateNumber.trim();
-
-    return Semantics(
-      button: true,
-      selected: selected,
-      excludeSemantics: true,
-      label: [
-        name.isEmpty ? 'Vehicle' : name,
-        if (plate.isNotEmpty) plate,
-        if (specs.isNotEmpty) specs.join(', '),
-        if (selected) 'Selected',
-      ].join(', '),
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            color: selected ? colors.primary.withValues(alpha: 0.05) : null,
-            border: Border(
-              left: BorderSide(
-                width: 3,
-                color: selected ? colors.primary : Colors.transparent,
-              ),
+    final name = vehicle.displayName.trim().isEmpty
+        ? 'Your vehicle'
+        : vehicle.displayName;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+      child: Container(
+        padding: const EdgeInsets.all(AppDimensions.s12),
+        decoration: BoxDecoration(
+          color: selected
+              ? colors.primary.withValues(alpha: 0.08)
+              : colors.surface,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+          border: Border.all(
+            color: selected ? colors.primary : colors.outlineVariant,
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            const SizedBox(
+              width: 72,
+              height: 45,
+              child: VehicleSilhouetteArt(),
             ),
-          ),
-          padding: const EdgeInsets.fromLTRB(
-            AppDimensions.s12,
-            AppDimensions.s14,
-            AppDimensions.s14,
-            AppDimensions.s14,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+            const SizedBox(width: AppDimensions.s12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  if (vehicle.plateNumber.trim().isNotEmpty) ...[
+                    const SizedBox(height: AppDimensions.s4),
+                    CustomerPlateChip(plate: vehicle.plateNumber.trim()),
+                  ],
+                  if (specs.isNotEmpty) ...[
+                    const SizedBox(height: AppDimensions.s4),
                     Text(
-                      name.isEmpty ? 'Your vehicle' : name,
-                      maxLines: 2,
+                      specs.join(' · '),
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: colors.onSurface,
-                        fontWeight: FontWeight.w700,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
                       ),
                     ),
-                    if (plate.isNotEmpty || specs.isNotEmpty) ...[
-                      const SizedBox(height: AppDimensions.s6),
-                      Row(
-                        children: [
-                          if (plate.isNotEmpty) CustomerPlateChip(plate: plate),
-                          if (plate.isNotEmpty && specs.isNotEmpty)
-                            const SizedBox(width: AppDimensions.s8),
-                          if (specs.isNotEmpty)
-                            Expanded(
-                              child: Text(
-                                specs.join(' \u00b7 '),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: colors.onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
                   ],
-                ),
+                ],
               ),
-              const SizedBox(width: AppDimensions.s8),
-              // Selection is signalled by the tick, the tint and the left rule,
-              // so colour is never the only indicator.
-              Icon(
+            ),
+            const SizedBox(width: AppDimensions.s8),
+            Semantics(
+              selected: selected,
+              child: Icon(
                 selected
-                    ? Icons.check_circle_rounded
+                    ? Icons.radio_button_checked_rounded
                     : Icons.radio_button_unchecked_rounded,
-                size: 22,
-                color: selected ? colors.primary : colors.outline,
+                color: selected ? colors.primary : colors.onSurfaceVariant,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-/// Step 2 — which real service is being requested.
+/// Step 2: multi-select service packages with upfront AED prices.
 ///
-/// The catalogue comes from the workshop's own `service_types` records; price
-/// and duration are shown exactly as the backend states them, and omitted when
-/// the backend does not state them.
+/// The catalogue rows keep their exact `price · duration` contract; tapping
+/// toggles membership in [selectedIds]. Totals are composed by the caller.
 class CustomerBookingServiceStep extends StatelessWidget {
   final List<ServiceTypeResponse> services;
   final bool loading;
   final String error;
-  final String? selectedId;
-  final ValueChanged<ServiceTypeResponse> onSelect;
+  final Set<String> selectedIds;
+  final ValueChanged<ServiceTypeResponse> onToggle;
   final VoidCallback onRetry;
 
   const CustomerBookingServiceStep({
@@ -240,83 +179,63 @@ class CustomerBookingServiceStep extends StatelessWidget {
     required this.services,
     required this.loading,
     required this.error,
-    required this.selectedId,
-    required this.onSelect,
+    required this.selectedIds,
+    required this.onToggle,
     required this.onRetry,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
+    final t = context.cx;
     if (loading) {
-      // Phase 07.1: bespoke _StepSkeleton migrated to AppSkeleton.
-      return const Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      return Column(
         children: [
-          AppSkeleton.card(height: 56),
-          SizedBox(height: AppDimensions.s8),
-          AppSkeleton.card(height: 56),
-          SizedBox(height: AppDimensions.s8),
-          AppSkeleton.card(height: 56),
-          SizedBox(height: AppDimensions.s8),
-          AppSkeleton.card(height: 56),
+          for (var i = 0; i < 3; i++) ...[
+            AppSkeleton.card(height: 76),
+            const SizedBox(height: AppDimensions.s12),
+          ],
         ],
       );
     }
-
     if (error.isNotEmpty) {
       return CustomerNoticePanel(
         message: error,
-        actionLabel: 'Retry services',
+        actionLabel: t.wizRetryServices,
         onAction: onRetry,
       );
     }
-
     if (services.isEmpty) {
-      return CustomerSurfacePanel(
-        accent: colors.onSurfaceVariant,
-        child: Text(
-          'No services are available to book right now. Please try again '
-          'shortly.',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: colors.onSurfaceVariant,
-            height: 1.45,
-          ),
-        ),
+      return _EmptyBlock(
+        icon: Icons.build_outlined,
+        title: t.wizNoServicesTitle,
+        body: t.wizNoServicesBody,
+        actionLabel: t.wizRetryServices,
+        onAction: onRetry,
       );
     }
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-        border: Border.all(color: colors.outlineVariant),
-      ),
-      child: Column(
-        children: [
-          for (var index = 0; index < services.length; index++) ...[
-            _ServiceRow(
-              service: services[index],
-              selected: selectedId == services[index].id,
-              onTap: () => onSelect(services[index]),
-            ),
-            if (index < services.length - 1)
-              Divider(height: 1, color: colors.outlineVariant),
-          ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < services.length; i++) ...[
+          _ServiceCard(
+            service: services[i],
+            selected: selectedIds.contains(services[i].id),
+            onTap: () => onToggle(services[i]),
+          ),
+          if (i < services.length - 1)
+            const SizedBox(height: AppDimensions.s12),
         ],
-      ),
+      ],
     );
   }
 }
 
-class _ServiceRow extends StatelessWidget {
+class _ServiceCard extends StatelessWidget {
   final ServiceTypeResponse service;
   final bool selected;
   final VoidCallback onTap;
 
-  const _ServiceRow({
+  const _ServiceCard({
     required this.service,
     required this.selected,
     required this.onTap,
@@ -328,90 +247,87 @@ class _ServiceRow extends StatelessWidget {
     final colors = theme.colorScheme;
     final price = service.price.trim();
     final duration = service.duration.trim();
-    final description = [
-      price,
-      duration,
-    ].where((v) => v.isNotEmpty).join(' \u00b7 ');
-
-    return Semantics(
-      button: true,
-      selected: selected,
-      excludeSemantics: true,
-      label: [
-        service.name.trim().isEmpty ? 'Service' : service.name.trim(),
-        if (description.isNotEmpty) description,
-        if (selected) 'Selected',
-      ].join(', '),
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            color: selected ? colors.primary.withValues(alpha: 0.05) : null,
-            border: Border(
-              left: BorderSide(
-                width: 3,
-                color: selected ? colors.primary : Colors.transparent,
+    final meta = [price, duration].where((s) => s.isNotEmpty).join(' · ');
+    final name = service.name.trim().isEmpty ? 'Service' : service.name;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+      child: Container(
+        padding: const EdgeInsets.all(AppDimensions.s12),
+        decoration: BoxDecoration(
+          color: selected
+              ? colors.primary.withValues(alpha: 0.08)
+              : colors.surface,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+          border: Border.all(
+            color: selected ? colors.primary : colors.outlineVariant,
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: colors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+              ),
+              child: Icon(
+                Icons.build_rounded,
+                color: colors.primary,
               ),
             ),
-          ),
-          padding: const EdgeInsets.fromLTRB(
-            AppDimensions.s12,
-            AppDimensions.s14,
-            AppDimensions.s14,
-            AppDimensions.s14,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      service.name.trim().isEmpty
-                          ? 'Service'
-                          : service.name.trim(),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: colors.onSurface,
-                        fontWeight: FontWeight.w700,
+            const SizedBox(width: AppDimensions.s12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  if (meta.isNotEmpty) ...[
+                    const SizedBox(height: AppDimensions.s4),
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Text(
+                        meta,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.mono(
+                          color: colors.onSurfaceVariant,
+                        ).copyWith(fontWeight: FontWeight.w600),
                       ),
                     ),
-                    if (description.isNotEmpty) ...[
-                      const SizedBox(height: AppDimensions.s4),
-                      Text(
-                        description,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colors.onSurfaceVariant,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
                   ],
-                ),
+                ],
               ),
-              const SizedBox(width: AppDimensions.s8),
-              Icon(
+            ),
+            const SizedBox(width: AppDimensions.s8),
+            Semantics(
+              selected: selected,
+              child: Icon(
                 selected
                     ? Icons.check_circle_rounded
-                    : Icons.radio_button_unchecked_rounded,
-                size: 22,
-                color: selected ? colors.primary : colors.outline,
+                    : Icons.add_circle_outline_rounded,
+                color: selected ? colors.primary : colors.onSurfaceVariant,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-/// Step 3 — a real appointment slot.
-///
-/// Dates come first, then the workshop's genuine availability for the chosen
-/// date. Every state the customer can hit is explicit: loading, available,
-/// nothing left, and a failure that keeps the chosen date.
+/// Step 3: a real day from the diary, then that day's real slots grouped
+/// into morning / afternoon. Nothing renders that the workshop did not
+/// publish; an empty day says so plainly.
 class CustomerBookingScheduleStep extends StatelessWidget {
   final List<DateTime> dates;
   final DateTime? selectedDate;
@@ -436,108 +352,145 @@ class CustomerBookingScheduleStep extends StatelessWidget {
     required this.onRetrySlots,
   });
 
+  static bool _sameDay(DateTime a, DateTime? b) =>
+      b != null && a.year == b.year && a.month == b.month && a.day == b.day;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.cx;
+    final morning = <String>[];
+    final afternoon = <String>[];
+    for (final slot in slots) {
+      final minutes = CustomerBookingsPresentation.minutesOfDay(slot);
+      if (minutes != null && minutes >= 12 * 60) {
+        afternoon.add(slot);
+      } else {
+        morning.add(slot);
+      }
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          t.wizChooseDate,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: AppDimensions.s8),
+        SizedBox(
+          // Grows with text scale so the three-line chip never overflows.
+          height: MediaQuery.textScalerOf(context).scale(76),
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: dates.length,
+            separatorBuilder: (_, _) =>
+                const SizedBox(width: AppDimensions.s8),
+            itemBuilder: (context, index) => _DateChip(
+              date: dates[index],
+              selected: _sameDay(dates[index], selectedDate),
+              onTap: () => onSelectDate(dates[index]),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppDimensions.s16),
+        if (selectedDate == null)
+          _HintLine(text: t.wizNoDateBody)
+        else if (loadingSlots)
+          Column(
+            children: [
+              AppSkeleton.card(height: 44),
+              const SizedBox(height: AppDimensions.s8),
+              AppSkeleton.card(height: 44),
+            ],
+          )
+        else if (slotsError.isNotEmpty)
+          CustomerNoticePanel(
+            message: slotsError,
+            actionLabel: t.wizRetryTimes,
+            onAction: onRetrySlots,
+          )
+        else if (slots.isEmpty)
+          _EmptyBlock(
+            icon: Icons.event_busy_outlined,
+            title: t.wizNoTimesTitle,
+            body: t.wizNoTimesBody,
+            actionLabel: null,
+            onAction: null,
+          )
+        else ...[
+          Text(
+            '${t.wizTimesFor} · ${CustomerBookingsPresentation.dateLabel(CustomerBookingsPresentation.isoDate(selectedDate!))}',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          if (morning.isNotEmpty) ...[
+            const SizedBox(height: AppDimensions.s8),
+            _SlotGroup(
+              label: t.wizMorning,
+              slots: morning,
+              selectedSlot: selectedSlot,
+              onSelectSlot: onSelectSlot,
+            ),
+          ],
+          if (afternoon.isNotEmpty) ...[
+            const SizedBox(height: AppDimensions.s12),
+            _SlotGroup(
+              label: t.wizAfternoon,
+              slots: afternoon,
+              selectedSlot: selectedSlot,
+              onSelectSlot: onSelectSlot,
+            ),
+          ],
+        ],
+      ],
+    );
+  }
+}
+
+class _SlotGroup extends StatelessWidget {
+  final String label;
+  final List<String> slots;
+  final String? selectedSlot;
+  final ValueChanged<String> onSelectSlot;
+
+  const _SlotGroup({
+    required this.label,
+    required this.slots,
+    required this.selectedSlot,
+    required this.onSelectSlot,
+  });
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return CustomerSurfacePanel(
-      accent: colors.primary,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Choose a date',
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: colors.onSurfaceVariant,
-              fontWeight: FontWeight.w700,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w800,
           ),
-          const SizedBox(height: AppDimensions.s10),
-          SizedBox(
-            // Grows with the text scale so the date stack never has to squeeze.
-            height: MediaQuery.textScalerOf(context).scale(72),
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: dates.length,
-              separatorBuilder: (_, __) =>
-                  const SizedBox(width: AppDimensions.s8),
-              itemBuilder: (context, index) {
-                final date = dates[index];
-                return _DateChip(
-                  date: date,
-                  selected: _sameDay(date, selectedDate),
-                  onTap: () => onSelectDate(date),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: AppDimensions.s16),
-          Divider(height: 1, color: colors.outlineVariant),
-          const SizedBox(height: AppDimensions.s14),
-          Text(
-            selectedDate == null
-                ? 'Available times'
-                : 'Available times \u00b7 '
-                      '${CustomerBookingsPresentation.dateLabel(CustomerBookingsPresentation.isoDate(selectedDate!))}',
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: colors.onSurfaceVariant,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: AppDimensions.s10),
-          if (selectedDate == null)
-            Text(
-              'Choose a date to see the times the workshop has free.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant,
-                height: 1.45,
+        ),
+        const SizedBox(height: AppDimensions.s8),
+        Wrap(
+          spacing: AppDimensions.s8,
+          runSpacing: AppDimensions.s8,
+          children: [
+            for (final slot in slots)
+              _SlotChip(
+                slot: slot,
+                selected: slot == selectedSlot,
+                onTap: () => onSelectSlot(slot),
               ),
-            )
-          else if (loadingSlots)
-            // Phase 07.1: bespoke _StepSkeleton migrated to AppSkeleton.
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                AppSkeleton.card(height: 56),
-                SizedBox(height: AppDimensions.s8),
-                AppSkeleton.card(height: 56),
-              ],
-            )
-          else if (slotsError.isNotEmpty)
-            CustomerNoticePanel(
-              message: slotsError,
-              actionLabel: 'Retry times',
-              onAction: onRetrySlots,
-            )
-          else if (slots.isEmpty)
-            Text(
-              'No times available on this date. Choose another date.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant,
-                height: 1.45,
-              ),
-            )
-          else
-            Wrap(
-              spacing: AppDimensions.s8,
-              runSpacing: AppDimensions.s8,
-              children: [
-                for (final slot in slots)
-                  _SlotChip(
-                    slot: slot,
-                    selected: slot == selectedSlot,
-                    onTap: () => onSelectSlot(slot),
-                  ),
-              ],
-            ),
-        ],
-      ),
+          ],
+        ),
+      ],
     );
   }
-
-  static bool _sameDay(DateTime a, DateTime? b) =>
-      b != null && a.year == b.year && a.month == b.month && a.day == b.day;
 }
 
 class _DateChip extends StatelessWidget {
@@ -545,73 +498,59 @@ class _DateChip extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
+  static const _weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  static const _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
   const _DateChip({
     required this.date,
     required this.selected,
     required this.onTap,
   });
 
-  static const _weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  static const _months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final label =
-        '${_weekdays[date.weekday - 1]} ${date.day} ${_months[date.month - 1]}';
-
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: label,
-      excludeSemantics: true,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
-        child: Container(
-          width: 62,
-          decoration: BoxDecoration(
-            color: selected ? colors.primary : colors.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
-            border: Border.all(
-              color: selected ? colors.primary : colors.outlineVariant,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+      child: Container(
+        width: 60,
+        padding: const EdgeInsets.symmetric(vertical: AppDimensions.s8),
+        decoration: BoxDecoration(
+          color: selected ? colors.primary : colors.surface,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          border: Border.all(
+            color: selected ? colors.primary : colors.outlineVariant,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              _weekdays[date.weekday - 1],
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: selected ? colors.onPrimary : colors.onSurfaceVariant,
+                fontWeight: FontWeight.w800,
+              ),
             ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Day and month only: the full date (with its weekday) is stated
-              // above the times, and two lines stay readable at any text scale.
-              Text(
-                '${date.day}',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: selected ? colors.onPrimary : colors.onSurface,
-                  fontWeight: FontWeight.w800,
-                ),
+            Text(
+              '${date.day}',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: selected ? colors.onPrimary : colors.onSurface,
+                fontWeight: FontWeight.w800,
               ),
-              Text(
-                _months[date.month - 1],
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: selected ? colors.onPrimary : colors.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
-                ),
+            ),
+            Text(
+              _months[date.month - 1],
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: selected ? colors.onPrimary : colors.onSurfaceVariant,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -633,41 +572,28 @@ class _SlotChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final label = CustomerBookingsPresentation.timeLabel(slot);
-
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: label,
-      excludeSemantics: true,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-        child: Container(
-          // Compact pill that still keeps a 48px touch target.
-          constraints: const BoxConstraints(
-            minWidth: 84,
-            minHeight: AppDimensions.touchTarget,
-            maxHeight: AppDimensions.touchTarget,
-            maxWidth: 120,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.s16,
+          vertical: AppDimensions.s12,
+        ),
+        decoration: BoxDecoration(
+          color: selected ? colors.primary : colors.surface,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+          border: Border.all(
+            color: selected ? colors.primary : colors.outlineVariant,
           ),
-          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s14),
-          decoration: BoxDecoration(
-            color: selected ? colors.primary : colors.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-            border: Border.all(
-              color: selected ? colors.primary : colors.outlineVariant,
-            ),
-          ),
-          child: Align(
-            alignment: Alignment.center,
-            child: Text(
-              label,
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: selected ? colors.onPrimary : colors.onSurface,
-                fontWeight: FontWeight.w700,
-              ),
-              textAlign: TextAlign.center,
+        ),
+        child: Directionality(
+          textDirection: TextDirection.ltr,
+          child: Text(
+            CustomerBookingsPresentation.timeLabel(slot),
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: selected ? colors.onPrimary : colors.onSurface,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ),
@@ -676,208 +602,243 @@ class _SlotChip extends StatelessWidget {
   }
 }
 
-/// Step 4 — exactly what is about to be submitted.
-class CustomerBookingReviewStep extends StatelessWidget {
-  final CustomerVehicleEntity? vehicle;
-  final ServiceTypeResponse? service;
-  final DateTime? date;
-  final String? time;
-  final TextEditingController notes;
-  final ValueChanged<int> onChangeStep;
+/// Step 4: how the car reaches the workshop, plus the workshop note.
+///
+/// Self drop-off needs nothing more. Valet reveals the pick-up address,
+/// which is required while valet is chosen; the choice travels inside the
+/// existing free-text notes field (no new payload keys — the backend
+/// rejects unknown keys).
+class CustomerBookingDropoffStep extends StatelessWidget {
+  final bool valet;
+  final ValueChanged<bool> onValetChanged;
+  final TextEditingController addressCtrl;
+  final TextEditingController notesCtrl;
 
-  const CustomerBookingReviewStep({
+  const CustomerBookingDropoffStep({
     super.key,
-    required this.vehicle,
-    required this.service,
-    required this.date,
-    required this.time,
-    required this.notes,
-    required this.onChangeStep,
+    required this.valet,
+    required this.onValetChanged,
+    required this.addressCtrl,
+    required this.notesCtrl,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.cx;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _DropoffCard(
+          icon: Icons.storefront_outlined,
+          title: t.wizSelfTitle,
+          body: t.wizSelfBody,
+          selected: !valet,
+          onTap: () => onValetChanged(false),
+        ),
+        const SizedBox(height: AppDimensions.s12),
+        _DropoffCard(
+          icon: Icons.delivery_dining_outlined,
+          title: t.wizValetTitle,
+          body: t.wizValetBody,
+          selected: valet,
+          onTap: () => onValetChanged(true),
+        ),
+        if (valet) ...[
+          const SizedBox(height: AppDimensions.s12),
+          TextField(
+            controller: addressCtrl,
+            textInputAction: TextInputAction.done,
+            minLines: 1,
+            maxLines: 3,
+            decoration: InputDecoration(
+              labelText: t.wizAddressLabel,
+              hintText: t.wizAddressHint,
+              prefixIcon: const Icon(Icons.location_on_outlined),
+            ),
+          ),
+        ],
+        const SizedBox(height: AppDimensions.s16),
+        TextField(
+          controller: notesCtrl,
+          maxLines: 3,
+          textInputAction: TextInputAction.newline,
+          decoration: InputDecoration(
+            labelText: t.wizNotesLabel,
+            hintText: t.wizNotesHint,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DropoffCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String body;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _DropoffCard({
+    required this.icon,
+    required this.title,
+    required this.body,
+    required this.selected,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final schedule = date == null
-        ? ''
-        : CustomerBookingsPresentation.scheduleLabel(
-            CustomerBookingsPresentation.isoDate(date!),
-            time ?? '',
-          );
-    final specs = <String>[
-      if (vehicle != null && vehicle!.year > 0) '${vehicle!.year}',
-      if (vehicle != null && vehicle!.color.trim().isNotEmpty)
-        vehicle!.color.trim(),
-      if (vehicle != null && vehicle!.mileage.trim().isNotEmpty)
-        vehicle!.mileage.trim(),
-    ];
-    final price = service?.price.trim() ?? '';
-    final duration = service?.duration.trim() ?? '';
-    final serviceMeta = [
-      price,
-      duration,
-    ].where((value) => value.isNotEmpty).join(' \u00b7 ');
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+      child: Container(
+        padding: const EdgeInsets.all(AppDimensions.s16),
+        decoration: BoxDecoration(
+          color: selected
+              ? colors.primary.withValues(alpha: 0.08)
+              : colors.surface,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+          border: Border.all(
+            color: selected ? colors.primary : colors.outlineVariant,
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: colors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+              ),
+              child: Icon(icon, color: colors.primary),
+            ),
+            const SizedBox(width: AppDimensions.s12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: AppDimensions.s4),
+                  Text(
+                    body,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppDimensions.s8),
+            Semantics(
+              selected: selected,
+              child: Icon(
+                selected
+                    ? Icons.radio_button_checked_rounded
+                    : Icons.radio_button_unchecked_rounded,
+                color: selected ? colors.primary : colors.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-    return DecoratedBox(
+class _EmptyBlock extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String body;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  const _EmptyBlock({
+    required this.icon,
+    required this.title,
+    required this.body,
+    required this.actionLabel,
+    required this.onAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.s20),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         border: Border.all(color: colors.outlineVariant),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _ReviewSection(
-            title: 'Your vehicle',
-            onChange: () => onChangeStep(0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  vehicle?.displayName.trim().isNotEmpty == true
-                      ? vehicle!.displayName.trim()
-                      : 'Not selected',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: colors.onSurface,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                if (vehicle != null &&
-                    vehicle!.plateNumber.trim().isNotEmpty) ...[
-                  const SizedBox(height: AppDimensions.s6),
-                  CustomerPlateChip(plate: vehicle!.plateNumber.trim()),
-                ],
-                if (specs.isNotEmpty) ...[
-                  const SizedBox(height: AppDimensions.s6),
-                  Text(
-                    specs.join(' \u00b7 '),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ],
+          Icon(icon, size: 40, color: colors.onSurfaceVariant),
+          const SizedBox(height: AppDimensions.s12),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
             ),
           ),
-          Divider(height: 1, color: colors.outlineVariant),
-          _ReviewSection(
-            title: 'Service',
-            onChange: () => onChangeStep(1),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  service?.name.trim().isNotEmpty == true
-                      ? service!.name.trim()
-                      : 'Not selected',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: colors.onSurface,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                if (serviceMeta.isNotEmpty) ...[
-                  const SizedBox(height: AppDimensions.s4),
-                  Text(
-                    serviceMeta,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ],
+          const SizedBox(height: AppDimensions.s4),
+          Text(
+            body,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colors.onSurfaceVariant,
             ),
           ),
-          Divider(height: 1, color: colors.outlineVariant),
-          _ReviewSection(
-            title: 'Appointment',
-            onChange: () => onChangeStep(2),
-            child: Text(
-              schedule.isEmpty ? 'Not selected' : schedule,
-              style: theme.textTheme.titleSmall?.copyWith(
-                color: colors.onSurface,
-                fontWeight: FontWeight.w700,
-              ),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: AppDimensions.s12),
+            FilledButton.icon(
+              onPressed: onAction,
+              icon: const Icon(Icons.add_rounded),
+              label: Text(actionLabel!),
             ),
-          ),
-          Divider(height: 1, color: colors.outlineVariant),
-          Padding(
-            padding: const EdgeInsets.all(AppDimensions.s14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Notes for the workshop',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: AppDimensions.s8),
-                TextField(
-                  controller: notes,
-                  maxLines: 3,
-                  textInputAction: TextInputAction.newline,
-                  decoration: const InputDecoration(
-                    hintText: 'Optional — e.g. noise when braking',
-                  ),
-                ),
-              ],
-            ),
-          ),
+          ],
         ],
       ),
     );
   }
 }
 
-class _ReviewSection extends StatelessWidget {
-  final String title;
-  final Widget child;
-  final VoidCallback onChange;
+class _HintLine extends StatelessWidget {
+  final String text;
 
-  const _ReviewSection({
-    required this.title,
-    required this.child,
-    required this.onChange,
-  });
+  const _HintLine({required this.text});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppDimensions.s14,
-        AppDimensions.s12,
-        AppDimensions.s8,
-        AppDimensions.s12,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title.toUpperCase(),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.6,
-                  ),
-                ),
-                const SizedBox(height: AppDimensions.s6),
-                child,
-              ],
+    return Row(
+      children: [
+        Icon(
+          Icons.info_outline_rounded,
+          size: 18,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+        const SizedBox(width: AppDimensions.s8),
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-          TextButton(onPressed: onChange, child: const Text('Change')),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

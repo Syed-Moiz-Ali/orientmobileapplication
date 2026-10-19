@@ -2,9 +2,11 @@ import 'package:customer_app/core/local/vehicle_identity_store.dart';
 import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 import 'package:customer_app/features/customer/presentation/support/failed_breakdown_sync.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_notice_panel.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_plate_chip.dart';
+import 'package:customer_app/l10n/gen/customer_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -12,14 +14,15 @@ import 'package:shared_auth/shared_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_core/shared_core.dart';
 
-/// Roadside assistance: one request to the workshop.
+/// Roadside assistance as an emergency HUD: what broke, where the car is,
+/// which car — with the hotline and the send action always in reach.
 ///
 /// The backend contract is deliberately small — an issue, an optional vehicle,
 /// and a free-text location — and it stores a `pending` request that a
 /// supervisor later assigns to an advisor. Nothing here claims more than that:
-/// no dispatch, no ETA, no towing, no automatic location. The screen is a
-/// short form with the send action always in reach, because a customer using it
-/// is standing next to a broken-down car.
+/// no dispatch, no live arrival time, no towing, no automatic location. The
+/// customer using this screen is standing next to a broken-down car, so
+/// targets are large, contrast is high and validation is inline.
 class CustomerBreakdownHelpView extends ConsumerStatefulWidget {
   const CustomerBreakdownHelpView({super.key});
 
@@ -30,20 +33,6 @@ class CustomerBreakdownHelpView extends ConsumerStatefulWidget {
 
 class _CustomerBreakdownHelpViewState
     extends ConsumerState<CustomerBreakdownHelpView> {
-  /// Symptoms only. The backend stores this text as the request's issue and
-  /// promises no specific service, so nothing here names a service that may not
-  /// exist.
-  static const List<String> _symptoms = [
-    'Flat tyre',
-    "Won't start",
-    'Dead battery',
-    'Overheating',
-    'Brake problem',
-    'Warning light',
-    'Accident damage',
-    'Something else',
-  ];
-
   final _locationCtrl = TextEditingController();
   final _detailCtrl = TextEditingController();
   String? _symptom;
@@ -69,6 +58,21 @@ class _CustomerBreakdownHelpViewState
 
   List<CustomerVehicleEntity> get _vehicles =>
       ref.watch(customerDashboardProvider).vehicles;
+
+  /// Symptom presets with emergency iconography. They fill the single text
+  /// field the contract has; the backend stores the text as the issue and
+  /// promises no specific service, so nothing here names one.
+  List<(String, IconData)> _symptoms(CustomerLocalizations t) => [
+    (t.sosTyre, Icons.tire_repair),
+    (t.sosNoStart, Icons.key_off_rounded),
+    (t.sosBattery, Icons.battery_alert_rounded),
+    (t.sosOverheat, Icons.thermostat_rounded),
+    (t.sosBrake, Icons.stop_circle_outlined),
+    (t.sosWarning, Icons.warning_amber_rounded),
+    (t.sosAccident, Icons.car_crash_rounded),
+    (t.sosLockout, Icons.lock_rounded),
+    (t.sosOther, Icons.more_horiz_rounded),
+  ];
 
   /// The single text field the contract has, filled from the symptom chip
   /// plus anything the customer adds, so no typed detail is thrown away.
@@ -103,14 +107,15 @@ class _CustomerBreakdownHelpViewState
   Future<void> _submit() async {
     if (_sending) return;
 
+    final t = context.cx;
     final issue = _issueText;
     if (issue.isEmpty) {
-      _notice("Tell us what's wrong so the workshop can help.");
+      _notice(t.sosIssueRequired);
       return;
     }
     final location = _locationCtrl.text.trim();
     if (location.isEmpty) {
-      _notice('Add where the vehicle is so the workshop can find you.');
+      _notice(t.sosLocationRequired);
       return;
     }
 
@@ -135,10 +140,7 @@ class _CustomerBreakdownHelpViewState
       if (e.message.toLowerCase().contains('receive data')) {
         // The workshop may already hold this request; queueing it would risk
         // sending a second one, so the customer is asked to retry instead.
-        _notice(
-          "We couldn't confirm whether the workshop received this request. "
-          'Check your connection and try again.',
-        );
+        _notice(t.sosTimeout);
         return;
       }
       if (!await _queue(payload)) {
@@ -152,11 +154,7 @@ class _CustomerBreakdownHelpViewState
       await ref.read(authNotifierProvider.notifier).logout();
     } catch (e) {
       if (!mounted) return;
-      _notice(
-        e is AppException
-            ? e.message
-            : "We couldn't send your request. Please try again.",
-      );
+      _notice(e is AppException ? e.message : t.sosSendFail);
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -190,7 +188,7 @@ class _CustomerBreakdownHelpViewState
           .read(loggerProvider)
           .e('Failed to queue breakdown request', error: e, stackTrace: st);
       if (mounted) {
-        _notice("We couldn't save this request on your device.");
+        _notice(context.cx.sosQueueFail);
       }
       return false;
     }
@@ -204,25 +202,20 @@ class _CustomerBreakdownHelpViewState
     final cleared = await ref.read(failedBreakdownSyncProvider).retry();
     if (!mounted) return;
     setState(() => _retrying = false);
-    _notice(
-      cleared
-          ? 'Your saved request was sent to the workshop.'
-          : "We still couldn't send your request. The workshop has not received "
-                'it.',
-    );
+    final t = context.cx;
+    _notice(cleared ? t.sosRetryDone : t.sosRetryFail);
   }
 
   /// Discards a saved request that cannot be delivered.
   Future<void> _confirmRemoveFailedRequest() async {
     if (_retrying || _removing) return;
+    final t = context.cx;
     final confirmed = await showAppConfirmationDialog(
       context,
-      title: 'Remove saved request?',
-      message:
-          'This removes the copy stored on this device. The workshop has not '
-          'received it.',
-      confirmLabel: 'Remove request',
-      cancelLabel: 'Keep request',
+      title: t.sosRemoveTitle,
+      message: t.sosRemoveBody,
+      confirmLabel: t.sosRemove,
+      cancelLabel: t.sosKeep,
       icon: Icons.delete_outline_rounded,
       destructive: true,
     );
@@ -231,7 +224,7 @@ class _CustomerBreakdownHelpViewState
     await ref.read(failedBreakdownSyncProvider).remove();
     if (!mounted) return;
     setState(() => _removing = false);
-    _notice('Saved request removed.');
+    _notice(context.cx.sosRemoved);
   }
 
   void _showResult({
@@ -255,13 +248,14 @@ class _CustomerBreakdownHelpViewState
   Future<void> _callWorkshop() async {
     final uri = Uri(scheme: 'tel', path: '800674368');
     final opened = await launchUrl(uri);
-    if (!opened && mounted) _notice('Unable to open the phone dialer.');
+    if (!opened && mounted) _notice(context.cx.sosDialFail);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = context.cx;
     final vehicles = _vehicles;
     final failedRequests = ref
         .watch(failedBreakdownSyncProvider)
@@ -269,10 +263,7 @@ class _CustomerBreakdownHelpViewState
 
     return Scaffold(
       // Phase 07.1: bespoke AppTopBar migrated to the shared workspace bar.
-      appBar: const WorkspaceAppBar(
-        title: 'Roadside assistance',
-        showBack: true,
-      ),
+      appBar: WorkspaceAppBar(title: t.sosTitle, showBack: true),
       bottomNavigationBar: _Dock(
         sending: _sending,
         onCall: _callWorkshop,
@@ -299,17 +290,10 @@ class _CustomerBreakdownHelpViewState
                       const SizedBox(height: AppDimensions.s16),
                     ],
                     const SizedBox(height: AppDimensions.s12),
-                    Text(
-                      'Tell the workshop which vehicle needs help, where it '
-                      "is, and what's wrong.",
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colors.onSurfaceVariant,
-                        height: 1.45,
-                      ),
-                    ),
+                    _EmergencyBanner(onCall: _callWorkshop),
                     const SizedBox(height: AppDimensions.s20),
                     _Section(
-                      title: 'Which vehicle needs help?',
+                      title: t.sosVehicleTitle,
                       child: _VehicleField(
                         vehicles: vehicles,
                         selected: _vehicle,
@@ -321,23 +305,24 @@ class _CustomerBreakdownHelpViewState
                     ),
                     const SizedBox(height: AppDimensions.s16),
                     _Section(
-                      title: 'Where are you?',
+                      title: t.sosLocationTitle,
                       child: TextField(
                         controller: _locationCtrl,
                         maxLines: 2,
                         minLines: 1,
                         textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(
-                          hintText: 'Enter your current location or landmark',
-                          helperText:
-                              'Type an address, exit or nearby landmark.',
-                          prefixIcon: Icon(Icons.location_on_outlined),
+                        decoration: InputDecoration(
+                          hintText: t.sosLocationHint,
+                          helperText: t.sosLocationHelp,
+                          prefixIcon: const Icon(
+                            Icons.location_on_outlined,
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(height: AppDimensions.s16),
                     _Section(
-                      title: "What's wrong?",
+                      title: t.sosIssueTitle,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -345,18 +330,20 @@ class _CustomerBreakdownHelpViewState
                             spacing: AppDimensions.s8,
                             runSpacing: AppDimensions.s8,
                             children: [
-                              for (final symptom in _symptoms)
+                              for (final (label, icon)
+                                  in _symptoms(t))
                                 ChoiceChip(
-                                  label: Text(symptom),
-                                  selected: _symptom == symptom,
+                                  label: Text(label),
+                                  avatar: Icon(icon, size: 18),
+                                  selected: _symptom == label,
                                   onSelected: (selected) => setState(
-                                    () => _symptom = selected ? symptom : null,
+                                    () => _symptom = selected ? label : null,
                                   ),
                                   // The app's chip theme labels in primary, which
                                   // would be invisible on the primary fill.
                                   labelStyle: theme.textTheme.labelLarge
                                       ?.copyWith(
-                                        color: _symptom == symptom
+                                        color: _symptom == label
                                             ? colors.onPrimary
                                             : colors.primary,
                                         fontWeight: FontWeight.w700,
@@ -370,10 +357,9 @@ class _CustomerBreakdownHelpViewState
                             maxLines: 3,
                             minLines: 2,
                             textInputAction: TextInputAction.done,
-                            decoration: const InputDecoration(
-                              labelText: 'Anything else? (optional)',
-                              hintText:
-                                  'e.g. Parked in the basement, hard to see',
+                            decoration: InputDecoration(
+                              labelText: t.sosDetailLabel,
+                              hintText: t.sosDetailHint2,
                             ),
                           ),
                         ],
@@ -381,8 +367,8 @@ class _CustomerBreakdownHelpViewState
                     ),
                     if (_sending) ...[
                       const SizedBox(height: AppDimensions.s16),
-                      const CustomerNoticePanel(
-                        message: 'Sending your request…',
+                      CustomerNoticePanel(
+                        message: t.sosSendingNote,
                         icon: Icons.cloud_upload_outlined,
                         destructive: false,
                       ),
@@ -394,6 +380,85 @@ class _CustomerBreakdownHelpViewState
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// High-contrast emergency band: the situation, the subtitle and the
+/// LTR-locked hotline. The number dials the same workshop line as the dock.
+class _EmergencyBanner extends StatelessWidget {
+  final VoidCallback onCall;
+
+  const _EmergencyBanner({required this.onCall});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final t = context.cx;
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.s16),
+      decoration: BoxDecoration(
+        color: colors.error.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        border: Border.all(color: colors.error.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: colors.error,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.sos,
+              color: colors.onError,
+            ),
+          ),
+          const SizedBox(width: AppDimensions.s12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  t.sosSub,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.s4),
+                InkWell(
+                  onTap: onCall,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        t.sosHotlineLabel,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: colors.error,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Text(
+                          '800 674 368',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -424,6 +489,7 @@ class _FailedRequestRecovery extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = context.cx;
     final plural = requests.length > 1;
 
     final payload = requests.first.payload;
@@ -436,11 +502,7 @@ class _FailedRequestRecovery extends StatelessWidget {
     return Semantics(
       container: true,
       liveRegion: true,
-      label: plural
-          ? "We couldn't send your saved roadside requests. The workshop has "
-                'not received them.'
-          : "We couldn't send your saved roadside request. The workshop has "
-                'not received it.',
+      label: plural ? t.sosRecoveryMany : t.sosRecoveryOne,
       child: Container(
         padding: const EdgeInsets.all(AppDimensions.s14),
         decoration: BoxDecoration(
@@ -465,9 +527,7 @@ class _FailedRequestRecovery extends StatelessWidget {
                 const SizedBox(width: AppDimensions.s8),
                 Expanded(
                   child: Text(
-                    plural
-                        ? "We couldn't send your roadside requests"
-                        : "We couldn't send your roadside request",
+                    plural ? t.sosRecoveryMany : t.sosRecoveryOne,
                     style: theme.textTheme.titleSmall?.copyWith(
                       color: colors.onSurface,
                       fontWeight: FontWeight.w800,
@@ -478,13 +538,7 @@ class _FailedRequestRecovery extends StatelessWidget {
             ),
             const SizedBox(height: AppDimensions.s6),
             Text(
-              plural
-                  ? 'They are saved on this device, but the workshop has not '
-                        'received them. Try again, or call the workshop if you '
-                        'need help now.'
-                  : "It's saved on this device, but the workshop has not "
-                        'received it. Try sending it again, or call the '
-                        'workshop if you need help now.',
+              plural ? t.sosRecoveryBodyMany : t.sosRecoveryBodyOne,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colors.onSurface,
                 height: 1.45,
@@ -496,7 +550,7 @@ class _FailedRequestRecovery extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 2),
                   child: Text(
-                    '${requests.length} saved requests',
+                    t.sosSavedCount(requests.length),
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: colors.onSurfaceVariant,
                       fontWeight: FontWeight.w700,
@@ -522,12 +576,12 @@ class _FailedRequestRecovery extends StatelessWidget {
                   style: FilledButton.styleFrom(
                     minimumSize: const Size(0, AppDimensions.touchTarget),
                   ),
-                  child: Text(retrying ? 'Retrying…' : 'Retry sending'),
+                  child: Text(retrying ? t.sosRetrying : t.sosRetry),
                 ),
                 OutlinedButton.icon(
                   onPressed: _busy ? null : onRemove,
                   icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                  label: const Text('Remove request'),
+                  label: Text(t.sosRemove),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: colors.error,
                     minimumSize: const Size(0, AppDimensions.touchTarget),
@@ -593,6 +647,7 @@ class _VehicleField extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final t = context.cx;
 
     if (vehicles.isEmpty) {
       return DecoratedBox(
@@ -607,7 +662,7 @@ class _VehicleField extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'No vehicles registered yet',
+                t.sosNoVehicles,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: colors.onSurface,
                   fontWeight: FontWeight.w700,
@@ -615,8 +670,7 @@ class _VehicleField extends StatelessWidget {
               ),
               const SizedBox(height: AppDimensions.s4),
               Text(
-                'You can still send a request. Adding the vehicle helps the '
-                'workshop keep your history in one place.',
+                t.sosNoVehiclesBody,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: colors.onSurfaceVariant,
                   height: 1.4,
@@ -628,7 +682,7 @@ class _VehicleField extends StatelessWidget {
                 child: TextButton.icon(
                   onPressed: onAddVehicle,
                   icon: const Icon(Icons.add_rounded, size: 18),
-                  label: const Text('Add vehicle'),
+                  label: Text(t.sosAddVehicle),
                 ),
               ),
             ],
@@ -740,6 +794,7 @@ class _Dock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final t = context.cx;
 
     return SafeArea(
       top: false,
@@ -761,7 +816,7 @@ class _Dock extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: sending ? null : onCall,
               icon: const Icon(Icons.phone_outlined, size: 18),
-              label: const Text('Call'),
+              label: Text(t.sosCallWorkshop),
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(96, AppDimensions.touchTarget),
               ),
@@ -774,7 +829,7 @@ class _Dock extends StatelessWidget {
                   minimumSize: const Size.fromHeight(AppDimensions.touchTarget),
                 ),
                 child: Text(
-                  sending ? 'Sending request…' : 'Request assistance',
+                  sending ? t.sosSending : t.sosSend,
                 ),
               ),
             ),

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
 
 import 'package:customer_app/core/router/app_router.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_service_status_tab.dart';
 
 /// Contextual Customer Service Status.
@@ -24,7 +25,7 @@ class CustomerServiceStatusPage extends StatelessWidget {
       // Phase 07.1: bespoke AppTopBar migrated to the shared workspace bar
       // (same title + deep-link-safe back behavior).
       appBar: WorkspaceAppBar(
-        title: 'Service status',
+        title: context.cx.stTitle,
         showBack: true,
         onBack: () {
           // Reached from the workspace → return to it. Reached directly
