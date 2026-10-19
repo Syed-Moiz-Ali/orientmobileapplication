@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
@@ -7,26 +8,30 @@ import 'package:customer_app/core/router/app_router.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_destination.dart';
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_home_garage_summary.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_garage_carousel.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_header.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_quick_actions.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_service_summary.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_status_notices.dart';
 
-/// Customer Home — answers four questions in the first viewport:
-/// what is happening with my vehicle, do I need to act, how do I book, and
-/// what do I own.
+/// Customer Home — an Airbnb-grade garage feed answering four questions in
+/// the first viewport: who am I, which car needs me, what is happening with
+/// it, and how do I book.
 ///
-/// Everything on this screen is backed by real state. There is deliberately no
-/// promotional content, no stock photography and only one Book service entry
-/// point. Home stays a summary; the contextual Service Status page carries the
-/// tracking detail.
+/// Everything on this screen is backed by real state: the hero carousel
+/// shows registered vehicles with illustrative silhouette art (the API
+/// carries no photography) and each card's real booking-derived context —
+/// never a health score (no provenance), never a favorite (no contract),
+/// never a promotion (no endpoint). There is exactly one Book service
+/// emphasis; Home stays a feed while Service Status carries tracking detail.
 class CustomerHomeTab extends ConsumerWidget {
   const CustomerHomeTab({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = context.cx;
     final state = ref.watch(customerDashboardProvider);
     final notifier = ref.read(customerDashboardProvider.notifier);
     final bookings =
@@ -127,69 +132,41 @@ class CustomerHomeTab extends ConsumerWidget {
         vehicles.isEmpty && bookings.isEmpty && activeService == null;
     final hasAttention = approvals.isNotEmpty || state.unpaidInvoices > 0;
 
-    final primary = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (hasAttention) ...[
-          CustomerAttentionPanel(
-            approvals: approvals,
-            unpaidInvoices: state.unpaidInvoices,
-            formatAmount: state.formatAmount,
-            // Approvals is contextual: each decision opens its own estimate,
-            // and the approvals page is where invoices live.
-            onReviewEstimate: (estimateId) => context.push(
-              AppRoutes.approvalsLocation(estimateId: estimateId),
-            ),
-            onViewInvoices: () => context.push(AppRoutes.approvalsLocation()),
-          ),
-          const SizedBox(height: AppDimensions.s20),
-        ],
-        CustomerHomeServiceSummary(
-          activeService: activeService,
-          activeBooking: activeBooking,
-          vehicleCount: vehicles.length,
-          // Service Status is contextual: it is a pushed page, not a tab.
-          onTrackService: () => context.push(AppRoutes.customerServiceStatus),
-          onViewBooking: () {
-            final booking = activeBooking;
-            if (booking != null) {
-              context.push(AppRoutes.customerBookingDetail, extra: booking);
-            }
-          },
-          onAddVehicle: () => context.push(AppRoutes.customerAddVehicle),
-        ),
-      ],
+    void bookVehicle(CustomerVehicleEntity vehicle) => context.push(
+          AppRoutes.customerBookServiceLocation(vehicleId: vehicle.id),
+        );
+
+    final wide = context.adaptive.pick(
+      compact: false,
+      medium: false,
+      expanded: true,
+      large: true,
     );
 
-    final secondary = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        CustomerHomeQuickActions(
-          hasVehicles: vehicles.isNotEmpty,
-          onBookService: () => context.push(AppRoutes.customerBookService),
-          onMyVehicles: () =>
-              notifier.selectDestination(CustomerDestination.vehicles),
-          onBreakdownHelp: () => context.push(AppRoutes.customerBreakdownHelp),
-        ),
-        if (vehicles.isNotEmpty) ...[
-          const SizedBox(height: AppDimensions.s24),
-          CustomerHomeGarageSummary(
-            vehicles: vehicles,
-            onManageVehicles: () =>
-                notifier.selectDestination(CustomerDestination.vehicles),
-          ),
-        ],
-        if (recentActivity.isNotEmpty) ...[
-          const SizedBox(height: AppDimensions.s24),
-          _RecentActivitySection(
-            bookings: recentActivity,
-            onViewAll: () =>
-                notifier.selectDestination(CustomerDestination.bookings),
-            onTap: (booking) =>
-                context.push(AppRoutes.customerBookingDetail, extra: booking),
-          ),
-        ],
-      ],
+    final journey = CustomerHomeServiceSummary(
+      activeService: activeService,
+      activeBooking: activeBooking,
+      vehicleCount: vehicles.length,
+      // Service Status is contextual: it is a pushed page, not a tab.
+      onTrackService: () => context.push(AppRoutes.customerServiceStatus),
+      onViewBooking: () {
+        final booking = activeBooking;
+        if (booking != null) {
+          context.push(
+            AppRoutes.customerBookingDetail,
+            extra: booking,
+          );
+        }
+      },
+      onAddVehicle: () => context.push(AppRoutes.customerAddVehicle),
+    );
+    final actions = CustomerHomeQuickActions(
+      hasVehicles: vehicles.isNotEmpty,
+      onBookService: () => context.push(AppRoutes.customerBookService),
+      onBreakdownHelp: () => context.push(AppRoutes.customerBreakdownHelp),
+      onInvoices: () => context.push(AppRoutes.approvalsLocation()),
+      onHistory: () =>
+          notifier.selectDestination(CustomerDestination.bookings),
     );
 
     return RefreshIndicator(
@@ -208,20 +185,75 @@ class CustomerHomeTab extends ConsumerWidget {
             CustomerHomeHeader(
               firstName: state.profile?.firstName ?? '',
               isNewCustomer: isNewCustomer,
-              unreadCount: state.unreadCount,
-              onNotifications: () =>
-                  context.push(AppRoutes.customerNotifications),
             ),
             const SizedBox(height: AppDimensions.s20),
-            AppSplitView(
-              // Tablets get a balanced split; wider desktops give the service
-              // summary the extra room it needs.
-              primaryFlex: context.adaptive.isMedium ? 1 : 3,
-              secondaryFlex: context.adaptive.isMedium ? 1 : 2,
-              spacing: AppDimensions.s24,
-              primary: primary,
-              secondary: secondary,
-            ),
+            if (hasAttention) ...[
+              CustomerAttentionPanel(
+                approvals: approvals,
+                unpaidInvoices: state.unpaidInvoices,
+                formatAmount: state.formatAmount,
+                // Approvals is contextual: each decision opens its own estimate,
+                // and the approvals page is where invoices live.
+                onReviewEstimate: (estimateId) => context.push(
+                  AppRoutes.approvalsLocation(estimateId: estimateId),
+                ),
+                onViewInvoices: () =>
+                    context.push(AppRoutes.approvalsLocation()),
+              ),
+              const SizedBox(height: AppDimensions.s20),
+            ],
+            if (vehicles.isNotEmpty) ...[
+              SectionHeader(
+                title: vehicles.length == 1
+                    ? t.garTitleOne
+                    : t.garTitleMany,
+                action: t.garManage,
+                onAction: () => notifier.selectDestination(
+                  CustomerDestination.vehicles,
+                ),
+              ),
+              const SizedBox(height: AppDimensions.s12),
+              CustomerGarageCarousel(
+                vehicles: vehicles,
+                bookings: bookings,
+                liveService: activeService,
+                onBookVehicle: bookVehicle,
+                onOpenBooking: (booking) => context.push(
+                  AppRoutes.customerBookingDetail,
+                  extra: booking,
+                ),
+                onTrackService: () =>
+                    context.push(AppRoutes.customerServiceStatus),
+              ),
+              const SizedBox(height: AppDimensions.s28),
+            ],
+            if (wide)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: journey),
+                  const SizedBox(width: AppDimensions.s24),
+                  Expanded(child: actions),
+                ],
+              )
+            else ...[
+              journey,
+              const SizedBox(height: AppDimensions.s28),
+              actions,
+            ],
+            if (recentActivity.isNotEmpty) ...[
+              const SizedBox(height: AppDimensions.s28),
+              _RecentActivitySection(
+                bookings: recentActivity,
+                onViewAll: () => notifier.selectDestination(
+                  CustomerDestination.bookings,
+                ),
+                onTap: (booking) => context.push(
+                  AppRoutes.customerBookingDetail,
+                  extra: booking,
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -258,20 +290,22 @@ class _RecentActivitySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.cx;
     final colors = Theme.of(context).colorScheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SectionHeader(
-          title: 'Recent activity',
-          action: 'All bookings',
+          title: t.garRecentTitle,
+          action: t.garRecentAll,
           onAction: onViewAll,
         ),
         DecoratedBox(
           decoration: BoxDecoration(
             color: colors.surface,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+            borderRadius:
+                BorderRadius.circular(AppDimensions.radiusPanel),
             border: Border.all(color: colors.outlineVariant),
           ),
           child: Column(
@@ -310,7 +344,8 @@ class _ActivityRow extends StatelessWidget {
       if (vehicle.isNotEmpty) vehicle,
       if (date.isNotEmpty) date,
     ].join(' \u00b7 ');
-    final title = service.isEmpty ? 'Workshop visit' : service;
+    final title =
+        service.isEmpty ? context.cx.bkServiceAppt : service;
     final tone = CustomerServiceTracking.bookingTone(colors, booking.status);
 
     return Semantics(
@@ -318,7 +353,10 @@ class _ActivityRow extends StatelessWidget {
       excludeSemantics: true,
       label: [title, if (meta.isNotEmpty) meta, booking.statusLabel].join(', '),
       child: InkWell(
-        onTap: onTap,
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
         child: Padding(
           padding: const EdgeInsets.all(AppDimensions.s14),
           child: Row(
@@ -391,3 +429,5 @@ class _ActivityRow extends StatelessWidget {
     );
   }
 }
+
+

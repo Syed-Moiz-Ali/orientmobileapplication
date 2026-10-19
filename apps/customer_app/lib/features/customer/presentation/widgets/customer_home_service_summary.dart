@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_surface_panel.dart';
 
@@ -65,6 +66,7 @@ class _LiveServicePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.cx;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
@@ -83,7 +85,7 @@ class _LiveServicePanel extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: StatusPill(
-              label: 'IN SERVICE',
+              label: t.jsInService,
               showDot: true,
               bg: colors.primary.withValues(alpha: 0.14),
               fg: colors.primary,
@@ -92,7 +94,7 @@ class _LiveServicePanel extends StatelessWidget {
           const SizedBox(height: AppDimensions.s14),
           Text(
             svc.service.trim().isEmpty
-                ? 'Service in progress'
+                ? t.jsInProgress
                 : svc.service.trim(),
             style: textTheme.titleMedium?.copyWith(
               color: colors.onSurface,
@@ -123,7 +125,7 @@ class _LiveServicePanel extends StatelessWidget {
                 const SizedBox(width: AppDimensions.s6),
                 Expanded(
                   child: Text(
-                    'Current stage \u00b7 ${svc.currentStage.trim()}',
+                    t.jsStage(svc.currentStage.trim()),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: textTheme.labelMedium?.copyWith(
@@ -175,7 +177,7 @@ class _LiveServicePanel extends StatelessWidget {
                 const SizedBox(width: AppDimensions.s6),
                 Expanded(
                   child: Text(
-                    'Estimated completion \u00b7 ${svc.estCompletion.trim()}',
+                    t.jsEta(svc.estCompletion.trim()),
                     style: textTheme.bodySmall?.copyWith(
                       color: colors.onSurfaceVariant,
                     ),
@@ -188,7 +190,7 @@ class _LiveServicePanel extends StatelessWidget {
           FilledButton.icon(
             onPressed: onTrackService,
             icon: const Icon(Icons.track_changes_rounded, size: 18),
-            label: const Text('Track service'),
+            label: Text(t.garJourneyTrack),
           ),
         ],
       ),
@@ -207,6 +209,7 @@ class _ActiveBookingPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.cx;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
@@ -255,7 +258,7 @@ class _ActiveBookingPanel extends StatelessWidget {
           const SizedBox(height: AppDimensions.s14),
           Text(
             booking.service.trim().isEmpty
-                ? 'Workshop booking'
+                ? t.jsWorkshopBooking
                 : booking.service.trim(),
             style: textTheme.titleMedium?.copyWith(
               color: colors.onSurface,
@@ -298,7 +301,7 @@ class _ActiveBookingPanel extends StatelessWidget {
           const SizedBox(height: AppDimensions.s18),
           FilledButton(
             onPressed: onViewBooking,
-            child: const Text('View booking'),
+            child: Text(t.garJourneyView),
           ),
         ],
       ),
@@ -313,6 +316,7 @@ class _WelcomePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.cx;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
@@ -343,7 +347,7 @@ class _WelcomePanel extends StatelessWidget {
               const SizedBox(width: AppDimensions.s12),
               Expanded(
                 child: Text(
-                  'Your garage is empty',
+                  t.garHeroEmpty,
                   style: textTheme.titleMedium?.copyWith(
                     color: colors.onSurface,
                     fontWeight: FontWeight.w800,
@@ -354,8 +358,7 @@ class _WelcomePanel extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.s12),
           Text(
-            'Add your vehicle to book service, follow repair progress, and keep '
-            'every update in one place.',
+            t.garHeroEmptyBody,
             style: textTheme.bodySmall?.copyWith(
               color: colors.onSurfaceVariant,
               height: 1.45,
@@ -365,7 +368,7 @@ class _WelcomePanel extends StatelessWidget {
           FilledButton.icon(
             onPressed: onAddVehicle,
             icon: const Icon(Icons.add_rounded, size: 18),
-            label: const Text('Add your vehicle'),
+            label: Text(t.garHeroAdd),
           ),
         ],
       ),
@@ -380,6 +383,7 @@ class _IdlePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.cx;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
@@ -407,7 +411,7 @@ class _IdlePanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'No active service',
+                  t.jsNoService,
                   style: textTheme.titleSmall?.copyWith(
                     color: colors.onSurface,
                     fontWeight: FontWeight.w800,
@@ -415,9 +419,7 @@ class _IdlePanel extends StatelessWidget {
                 ),
                 const SizedBox(height: AppDimensions.s4),
                 Text(
-                  vehicleCount == 1
-                      ? 'Your vehicle is not in the workshop right now.'
-                      : 'Your vehicles are not in the workshop right now.',
+                  vehicleCount == 1 ? t.jsIdleOne : t.jsIdleMany,
                   style: textTheme.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
                     height: 1.4,

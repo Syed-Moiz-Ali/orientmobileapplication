@@ -44,6 +44,8 @@ export 'src/widgets/app_skeleton.dart';
 export 'src/widgets/app_table.dart';
 export 'src/widgets/data/live_service_telemetry_ribbon.dart';
 export 'src/widgets/data/telemetry_metric_pod.dart';
+export 'src/widgets/data/airbnb_image_card.dart';
+export 'src/widgets/data/trust_pill.dart';
 export 'src/widgets/data/sparkline_chart.dart';
 export 'src/widgets/data/spatial_damage_hud.dart';
 export 'src/widgets/app_list_surface.dart';

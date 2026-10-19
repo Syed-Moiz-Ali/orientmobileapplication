@@ -15,6 +15,7 @@ import 'package:customer_app/features/customer/presentation/widgets/customer_hom
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_service_summary.dart';
 // Phase 07.1: skeleton import removed (AppSkeleton via shared_core).
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_tab.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_scaffold.dart';
 
 void main() {
   setUpAll(_loadFonts);
@@ -211,13 +212,48 @@ void main() {
     testWidgets('exposes unread notification state and opens the inbox', (
       tester,
     ) async {
-      await _pumpHome(
-        tester,
-        state: _state(
-          profile: _profile,
-          notifications: const [_unreadNotification, _readNotification],
+      // Phase 16 recomposition: the bell lives once in the shell bar (the
+      // tab keeps the greeting), so this pumps the scaffold.
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(390, 844);
+      addTearDown(tester.view.reset);
+      final router = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, __) => const CustomerScaffold(),
+          ),
+          GoRoute(
+            path: AppRoutes.customerNotifications,
+            builder: (_, __) => const Scaffold(body: Text('NOTIFICATIONS')),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            customerDashboardProvider.overrideWith(
+              () => _FakeDashboardNotifier(
+                _state(
+                  profile: _profile,
+                  notifications: const [
+                    _unreadNotification,
+                    _readNotification,
+                  ],
+                ),
+              ),
+            ),
+            customerBookingsProvider.overrideWith((ref) async => const []),
+            customerApprovalsProvider.overrideWith((ref) async => const []),
+          ],
+          child: MaterialApp.router(
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light(BrandConfig.orient),
+            routerConfig: router,
+          ),
         ),
       );
+      await tester.pumpAndSettle();
 
       expect(
         find.byWidgetPredicate(
