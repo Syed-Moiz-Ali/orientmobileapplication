@@ -12,8 +12,11 @@ import 'package:shared_core/src/widgets/app_error_state.dart';
 import 'package:shared_core/src/widgets/app_dropdown.dart';
 import 'package:shared_core/src/widgets/app_info_tooltip.dart';
 import 'package:shared_core/src/widgets/app_list_tile.dart';
+import 'package:shared_core/src/widgets/app_loader.dart';
+import 'package:shared_core/src/widgets/app_network_image.dart';
 import 'package:shared_core/src/widgets/app_progress_bar.dart';
 import 'package:shared_core/src/widgets/app_section.dart';
+import 'package:shared_core/src/widgets/app_shimmer_skeleton.dart';
 import 'package:shared_core/src/widgets/app_settings_tile.dart';
 import 'package:shared_core/src/widgets/app_stat_tile.dart';
 import 'package:shared_core/src/widgets/app_status_chip.dart';
@@ -51,6 +54,8 @@ class DesignSystemGalleryScreen extends StatelessWidget {
           IdentityGallerySection(),
           GallerySectionTitle('Feedback (1d-i)'),
           FeedbackGallerySection(),
+          GallerySectionTitle('Loading (1d-ii)'),
+          LoadingGallerySection(),
         ],
       ),
     );
@@ -831,6 +836,93 @@ class _IdentityGallerySectionState extends State<IdentityGallerySection> {
               const AppInfoTooltip(
                 message: 'The bot is waiting for a clear signal before '
                     'acting. Nothing is wrong with your settings.',
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 1d-ii loading section: blocking loader, skeleton shapes mirroring the
+/// card/tile layout, and network images (placeholder + error fallback).
+///
+/// Capture note: the shimmer rows animate (1200 ms loop); the capture harness
+/// pumps to a fixed t=900 ms frame (300 ms + 600 ms) so goldens are
+/// deterministic. The remote URLs
+/// below have no network in `flutter_test`, so captures deterministically
+/// show the error fallback; on a real device they load the photos.
+class LoadingGallerySection extends StatelessWidget {
+  const LoadingGallerySection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    Widget row(String label, Widget child) => Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                '\u2066$label\u2069',
+                textAlign: TextAlign.start,
+                style: textTheme.labelMedium,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              child,
+            ],
+          ),
+        );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        row(
+          'Blocking loader (28 px accent spinner, short actions only)',
+          const AppLoader(label: 'Saving changes'),
+        ),
+        row(
+          'Skeleton bar + card (same radii as the card they stand in for)',
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AppShimmerSkeleton(),
+              SizedBox(height: AppSpacing.md),
+              AppShimmerSkeleton.card(height: 96),
+            ],
+          ),
+        ),
+        row(
+          'Text block + list rows (mirror the tile layout)',
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AppShimmerSkeleton.textBlock(),
+              SizedBox(height: AppSpacing.lg),
+              AppShimmerSkeleton.listRows(rows: 3),
+            ],
+          ),
+        ),
+        row(
+          'Network image (shimmer holds the size; error fallback in captures)',
+          const AppNetworkImage(
+            imageUrl: 'https://example.com/cover.jpg',
+            height: 160,
+            semanticLabel: 'Service cover photo',
+          ),
+        ),
+        row(
+          'Network image radii (circle avatar falls back the same way)',
+          const Row(
+            children: [
+              AppNetworkImage(
+                imageUrl: 'https://example.com/avatar.jpg',
+                width: 64,
+                height: 64,
+                radius: AppRadius.pill,
+                semanticLabel: 'Advisor photo',
               ),
             ],
           ),

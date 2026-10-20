@@ -180,9 +180,9 @@ e1, height 40, labelLarge. Scrollable pill row variant for many options (timefra
 **AppErrorState**: same layout with error icon, friendly message (what happened + what to do), "Try
 again" button; never show raw exceptions (log them instead).
 **AppSkeleton / AppShimmer**: mimic the final layout (same radii, heights, gaps); no spinners for
-content areas.
+content areas. Interim name `AppShimmerSkeleton` (legacy `app_skeleton.dart` owns `AppSkeleton` in phase 1); rename path: `AppShimmerSkeleton` → `AppSkeleton` in one codemod once the legacy skeleton has zero usages. `AppShimmer` (shimmer-package wrapper), `AppLoader` and `AppNetworkImage` below verified free — no rename.
 **AppLoader**: centered 28px accent spinner, only for blocking short actions.
-**AppNetworkImage**: radius param, shimmer placeholder, graceful error placeholder, cached.
+**AppNetworkImage**: radius param, shimmer placeholder, graceful error placeholder.
 **AppBanner**: full-width inline notice (info/warning/error/success) with icon, text, optional action,
 used for offline / delayed data / maintenance.
 **AppDataRow / AppKeyValue**: label left (textSecondary) value right (textPrimary, tabular), 12 gap.
