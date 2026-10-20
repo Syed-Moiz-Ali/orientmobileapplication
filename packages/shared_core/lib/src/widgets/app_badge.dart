@@ -56,7 +56,9 @@ class AppBadge extends StatelessWidget {
         ),
         decoration: BoxDecoration(color: fill, borderRadius: BorderRadius.circular(AppRadius.pill)),
         child: Text(
-          display,
+          // Bidi-isolated (U+2066…U+2069) so "99+" keeps its reading
+          // order in RTL (else the "+" flips to "+99").
+          '\u2066$display\u2069',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           // Capped pill: ellipsis keeps "99+" inside at 1.3x; the pill

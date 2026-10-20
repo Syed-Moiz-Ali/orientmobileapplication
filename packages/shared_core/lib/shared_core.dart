@@ -99,6 +99,8 @@ export 'src/widgets/app_list_tile.dart';
 export 'src/widgets/app_settings_tile.dart';
 export 'src/widgets/app_divider.dart';
 export 'src/widgets/app_data_row.dart';
+export 'src/widgets/app_data_table.dart';
+export 'src/widgets/app_data_table_header.dart';
 export 'src/widgets/app_avatar.dart';
 export 'src/widgets/app_badge.dart';
 export 'src/widgets/app_chip.dart';

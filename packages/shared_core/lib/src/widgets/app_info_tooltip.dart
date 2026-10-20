@@ -109,7 +109,9 @@ class _AppInfoTooltipState extends State<AppInfoTooltip> {
           label: widget.message,
           child: ExcludeSemantics(
             child: Text(
-              widget.message,
+              // Bidi-isolated (U+2066…U+2069) so edge punctuation
+              // (e.g. the trailing period) never migrates in RTL.
+              '\u2066${widget.message}\u2069',
               style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(color: scheme.onSurface),
             ),
           ),

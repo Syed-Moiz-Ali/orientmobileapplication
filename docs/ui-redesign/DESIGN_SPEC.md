@@ -127,6 +127,7 @@ rename needed. File note: `AppBottomSheet` lives in
 `app_modal_sheet.dart` because the legacy `showAppModalSheet` helper owns
 `app_bottom_sheet.dart` in phase 1; move the class into `app_bottom_sheet.dart`
 in one codemod once the legacy helper is migrated.
+Phase-1f naming check: `AppDataTable` (+ `AppDataTableHeader`; spec `AppTable`; legacy `AppTable` in `app_table.dart` owns that name — no class rename; the polish-phase codemod renames once legacy usages hit zero).
 
 **AppPillButton** (spec name `AppButton`; renamed — the legacy `AppButton`
 factory owns that name and is off-limits; rename this class to `AppButton`

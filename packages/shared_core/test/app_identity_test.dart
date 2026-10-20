@@ -207,7 +207,7 @@ void main() {
   group('AppBadge', () {
     testWidgets('caps at 99+ and keeps a 20 px minimum', (tester) async {
       await _pump(tester, const AppBadge(count: 120));
-      expect(find.text('99+'), findsOneWidget);
+      expect(find.text('\u206699+\u2069'), findsOneWidget);
       final size = tester.getSize(find.byType(AppBadge));
       expect(size.height, greaterThanOrEqualTo(20));
       expect(size.width, greaterThanOrEqualTo(20));
@@ -221,7 +221,7 @@ void main() {
         rtl: true,
         scale: 1.3,
       );
-      expect(find.text('7'), findsOneWidget);
+      expect(find.text('\u20667\u2069'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
@@ -231,7 +231,21 @@ void main() {
         const AppBadge(count: 120),
         scale: 1.3,
       );
-      expect(find.text('99+'), findsOneWidget);
+      expect(find.text('\u206699+\u2069'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('capped count is bidi-isolated in RTL 1.3x', (tester) async {
+      await _pump(
+        tester,
+        const AppBadge(count: 120),
+        rtl: true,
+        scale: 1.3,
+      );
+      // Isolated payload preserves "99+" reading order in RTL
+      // (unisolated it would flip to "+99").
+      expect(find.text('\u206699+\u2069'), findsOneWidget);
+      expect(find.text('99+'), findsNothing);
       expect(tester.takeException(), isNull);
     });
   });
@@ -331,13 +345,13 @@ void main() {
         tester,
         const AppInfoTooltip(message: 'Plain language reason.'),
       );
-      expect(find.text('Plain language reason.'), findsNothing);
+      expect(find.text('\u2066Plain language reason.\u2069'), findsNothing);
       await tester.tap(find.byType(AppInfoTooltip));
       await tester.pump();
-      expect(find.text('Plain language reason.'), findsOneWidget);
+      expect(find.text('\u2066Plain language reason.\u2069'), findsOneWidget);
       await tester.tapAt(const Offset(10, 10));
       await tester.pump();
-      expect(find.text('Plain language reason.'), findsNothing);
+      expect(find.text('\u2066Plain language reason.\u2069'), findsNothing);
       expect(tester.takeException(), isNull);
     });
 
@@ -360,13 +374,13 @@ void main() {
       expect(semantics.label, 'Why this status');
       await tester.tap(find.byType(AppInfoTooltip));
       await tester.pump();
-      expect(find.text('Why text.'), findsOneWidget);
+      expect(find.text('\u2066Why text.\u2069'), findsOneWidget);
       // While open, the transparent modal barrier sits above the icon (same
       // as a dialog scrim), so the re-tap lands on the barrier and dismisses
       // through onDismiss — the net effect is still a toggle.
       await tester.tap(find.byType(AppInfoTooltip), warnIfMissed: false);
       await tester.pump();
-      expect(find.text('Why text.'), findsNothing);
+      expect(find.text('\u2066Why text.\u2069'), findsNothing);
       expect(tester.takeException(), isNull);
     });
 
@@ -382,7 +396,27 @@ void main() {
       expect(target.height, greaterThanOrEqualTo(48));
       await tester.tap(find.byType(AppInfoTooltip));
       await tester.pump();
-      expect(find.text('Long reason that wraps at scale.'), findsOneWidget);
+      expect(
+          find.text('\u2066Long reason that wraps at scale.\u2069'),
+          findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('popover message is bidi-isolated, RTL 1.3x no overflow',
+        (tester) async {
+      await _pump(
+        tester,
+        const AppInfoTooltip(message: 'Plain language reason.'),
+        rtl: true,
+        scale: 1.3,
+      );
+      await tester.tap(find.byType(AppInfoTooltip));
+      await tester.pump();
+      // Exact isolated text renders; the trailing period stays attached
+      // in RTL instead of migrating.
+      expect(find.text('\u2066Plain language reason.\u2069'),
+          findsOneWidget);
+      expect(find.text('Plain language reason.'), findsNothing);
       expect(tester.takeException(), isNull);
     });
   });

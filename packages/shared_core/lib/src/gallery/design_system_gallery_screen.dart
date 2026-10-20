@@ -11,6 +11,8 @@ import 'package:shared_core/src/widgets/app_scaffold.dart';
 import 'package:shared_core/src/widgets/app_segmented_control.dart';
 import 'package:shared_core/src/widgets/app_chip.dart';
 import 'package:shared_core/src/widgets/app_data_row.dart';
+import 'package:shared_core/src/widgets/app_data_table.dart';
+import 'package:shared_core/src/widgets/app_data_table_header.dart';
 import 'package:shared_core/src/widgets/app_dialog.dart';
 import 'package:shared_core/src/widgets/app_divider.dart';
 import 'package:shared_core/src/widgets/app_empty_state.dart';
@@ -68,6 +70,8 @@ class DesignSystemGalleryScreen extends StatelessWidget {
           FrameGallerySection(),
           GallerySectionTitle('Overlays (1e-ii)'),
           OverlaysGallerySection(),
+          GallerySectionTitle('Tables (1f)'),
+          TableGallerySection(),
         ],
       ),
     );
@@ -1324,6 +1328,120 @@ class OverlaysGallerySection extends StatelessWidget {
                 kind: AppSnackBarKind.error,
               ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Tables (1f): the wide variant renders at a fixed 720 px tablet surface
+/// inside a horizontal scroll view (the gallery phone is 390 px — the scroll
+/// is the documented demonstration choice, not a product pattern), while the
+/// compact variant below stacks [AppSurfaceCard]s at the natural width.
+/// Deterministic: initial order is fixed Amount-ascending.
+class TableGallerySection extends StatefulWidget {
+  const TableGallerySection({super.key});
+
+  @override
+  State<TableGallerySection> createState() => _TableGallerySectionState();
+}
+
+class _TableGallerySectionState extends State<TableGallerySection> {
+  static const _columns = [
+    AppDataColumn(label: 'Invoice'),
+    AppDataColumn(label: 'Service'),
+    AppDataColumn(label: 'Amount', numeric: true, sortable: true),
+  ];
+  static const _data = [
+    ['INV-1038', 'Brake pads', 'AED 1,240.00'],
+    ['INV-1039', 'Battery', 'AED 620.00'],
+    ['INV-1041', 'Oil change', 'AED 240.00'],
+    ['INV-1044', 'Inspection', 'AED 180.00'],
+  ];
+  static const _keys = [1240.0, 620.0, 240.0, 180.0];
+
+  // Fixed Amount-ascending initial order (deterministic capture).
+  var _order = [3, 2, 1, 0];
+  int? _sortIndex = 2;
+  var _ascending = true;
+
+  void _onSort(int index) {
+    setState(() {
+      if (_sortIndex == index) {
+        _ascending = !_ascending;
+      } else {
+        _sortIndex = index;
+        _ascending = true;
+      }
+      _order = [..._order]
+        ..sort(
+          (a, b) => _ascending
+              ? _keys[a].compareTo(_keys[b])
+              : _keys[b].compareTo(_keys[a]),
+        );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    Widget row(String label, Widget child) => Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                '\u2066$label\u2069',
+                textAlign: TextAlign.start,
+                style: textTheme.labelMedium,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              child,
+            ],
+          ),
+        );
+
+    final rows = [for (final i in _order) _data[i]];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        row(
+          'Wide table, sortable Amount (tablet surface in scroll view)',
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: 720,
+              child: AppDataTable(
+                columns: _columns,
+                rows: rows,
+                sortColumnIndex: _sortIndex,
+                sortAscending: _ascending,
+                onSort: _onSort,
+              ),
+            ),
+          ),
+        ),
+        row(
+          'Compact: the same rows stack as cards (< 600 surface)',
+          // Fixed narrow surface so BOTH variants are visible in one
+          // capture: on a real phone this is simply the full width. The
+          // Align loosens the row()'s stretch (tight) constraint so the
+          // maxWidth actually applies.
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: AppDataTable(
+                columns: _columns,
+                rows: rows,
+                sortColumnIndex: _sortIndex,
+                sortAscending: _ascending,
+                onSort: _onSort,
+              ),
+            ),
           ),
         ),
       ],

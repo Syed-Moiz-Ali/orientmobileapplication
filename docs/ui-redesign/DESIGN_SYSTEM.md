@@ -131,6 +131,37 @@ swatch test and this doc.
 - Phase-1d-i naming check: `AppStatTile`, `AppProgressBar`, `AppEmptyState`, `AppErrorState`, `AppBanner` — all spec names verified free in `packages/` (no collisions), no rename path.
 - Phase-1d-ii naming check: `AppShimmer`, `AppLoader`, `AppNetworkImage` verified free — no rename. `AppShimmerSkeleton` (spec `AppSkeleton`; legacy `app_skeleton.dart` owns it). Rename path: `AppShimmerSkeleton` → `AppSkeleton` in one codemod in the polish phase once the legacy skeleton is removed.
 - Phase-1e-ii naming check: `AppBottomSheet`, `AppDialog`, `AppSnackBar`, `AppToast` verified free as classes — no class rename. File note: `AppBottomSheet` lives in `app_modal_sheet.dart` (legacy `showAppModalSheet` owns `app_bottom_sheet.dart` in phase 1). Rename path: move the class into `app_bottom_sheet.dart` in one codemod once the legacy helper is migrated.
+- Phase-1f naming check: `AppDataTable` (+ `AppDataTableHeader`; spec `AppTable`; legacy `AppTable` in `app_table.dart` owns it). Rename path: `AppDataTable` → `AppTable` in one codemod in the polish phase once the legacy table is removed. Compact rows reuse `AppSurfaceCard` (no parallel card styling); breakpoint reads the incoming surface width via `AppResponsive.specFor(constraints)` (< 600 → cards).
+
+## 8b. Component catalog (phase-1f; final names — spec name in parens where renamed)
+
+| Widget | Spec | One-line usage |
+|---|---|---|
+| `AppPillButton` | `AppButton` | pill CTA, 52/44/36, loading/disabled/RTL-safe |
+| `AppIconButton` / `AppTextButton` | — | 48 dp icon hit area / ghost text action |
+| `AppInputField` | `AppTextField` | 52 field, label/helper/error + live region, forceLtr |
+| `AppSearchBar` | — | pill search with clear button |
+| `AppDropdown` | — | token sheet, searchable, 48 dp rows |
+| `AppCheckTile` / `AppSwitchTile` / `AppRadioTile` | — | whole-row 48 dp selection tiles |
+| `AppSurfaceCard` (+ Header) | `AppCard` | card surface, border-XOR-shadow; header/trailing/chevron |
+| `AppSection` | — | titleMedium heading + See-all + 12 gap |
+| `AppListTile` / `AppSettingsTile` | — | 56 rows in one card, inset dividers |
+| `AppDivider` | — | hairline, incl. 72 px inset |
+| `AppDataRow` | — | label/value, tabular LTR-locked value |
+| `AppAvatar` / `AppBadge` | — | 24–56 initials/image avatar / 99+ count pill |
+| `AppChip` / `AppStatusChip` | — | filter chip (check cue) / dot + label tone chip |
+| `AppInfoTooltip` | — | tap popover, radius-12 e2, RTL placement |
+| `AppStatTile` / `AppProgressBar` | — | tabular value + delta / 8 px threshold bar |
+| `AppEmptyState` / `AppErrorState` | — | centered 64 px icon state + action |
+| `AppBanner` | — | inline info/warning/error/success notice |
+| `AppShimmer` / `AppShimmerSkeleton` | `AppSkeleton` | 1200 ms shimmer / layout-mirroring skeleton |
+| `AppLoader` / `AppNetworkImage` | — | 28 px accent spinner / radius + placeholder image |
+| `AppScaffold` / `AppAppBar` | — | padded SafeArea shell + sticky bar / 56 bar, large variant |
+| `AppBottomNav` / `AppNavRail` | (`AppNavigationRail`) | ≤5-item bottom nav / medium+ rail |
+| `AppSegmentedControl` / `AppPillTabs` | — | sunken-track segmented / scrollable pill row |
+| `AppBottomSheet` / `AppDialog` | — | radius-28 sheet + pinned action / radius-20 dialog + destructive |
+| `AppSnackBar` / `AppToast` | — | floating 4 s notice + action / centered non-blocking toast |
+| `AppDataTable` (+ Header) | `AppTable` | ≥600 surface table (sunken sticky header, sort) / cards below |
 
 - New pill button is `AppPillButton` (spec name `AppButton`; renamed because
   the legacy `AppButton` factory in `primary_button.dart` owns that name and

@@ -238,8 +238,9 @@ void main() {
           onTap: (i) => index = i,
         ),
       );
-      expect(find.text('Home'), findsOneWidget);
-      expect(find.text('3'), findsOneWidget);
+        expect(find.text('Home'), findsOneWidget);
+        // Badge count is bidi-isolated so digits never migrate in RTL.
+        expect(find.text('\u20663\u2069'), findsOneWidget);
       await tester.tap(find.text('Wallet'));
       expect(index, 3);
       // Selected state is exposed to screen readers.
