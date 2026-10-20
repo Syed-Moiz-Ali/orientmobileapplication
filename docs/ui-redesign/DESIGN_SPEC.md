@@ -121,6 +121,12 @@ const constructor where possible, doc comment with usage example, works at text 
 Phase-1d-i naming check: `AppStatTile`, `AppProgressBar`, `AppEmptyState`,
 `AppErrorState`, `AppBanner` are all free in `packages/` — built under their
 spec names, no rename path needed.
+Phase-1e-ii naming check: `AppBottomSheet`, `AppDialog`, `AppSnackBar`,
+`AppToast` are all free as *classes* in `packages/` (no collisions), no class
+rename needed. File note: `AppBottomSheet` lives in
+`app_modal_sheet.dart` because the legacy `showAppModalSheet` helper owns
+`app_bottom_sheet.dart` in phase 1; move the class into `app_bottom_sheet.dart`
+in one codemod once the legacy helper is migrated.
 
 **AppPillButton** (spec name `AppButton`; renamed — the legacy `AppButton`
 factory owns that name and is off-limits; rename this class to `AppButton`

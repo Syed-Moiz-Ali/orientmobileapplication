@@ -11,6 +11,7 @@ import 'package:shared_core/src/widgets/app_scaffold.dart';
 import 'package:shared_core/src/widgets/app_segmented_control.dart';
 import 'package:shared_core/src/widgets/app_chip.dart';
 import 'package:shared_core/src/widgets/app_data_row.dart';
+import 'package:shared_core/src/widgets/app_dialog.dart';
 import 'package:shared_core/src/widgets/app_divider.dart';
 import 'package:shared_core/src/widgets/app_empty_state.dart';
 import 'package:shared_core/src/widgets/app_error_state.dart';
@@ -18,11 +19,13 @@ import 'package:shared_core/src/widgets/app_dropdown.dart';
 import 'package:shared_core/src/widgets/app_info_tooltip.dart';
 import 'package:shared_core/src/widgets/app_list_tile.dart';
 import 'package:shared_core/src/widgets/app_loader.dart';
+import 'package:shared_core/src/widgets/app_modal_sheet.dart';
 import 'package:shared_core/src/widgets/app_network_image.dart';
 import 'package:shared_core/src/widgets/app_progress_bar.dart';
 import 'package:shared_core/src/widgets/app_section.dart';
 import 'package:shared_core/src/widgets/app_shimmer_skeleton.dart';
 import 'package:shared_core/src/widgets/app_settings_tile.dart';
+import 'package:shared_core/src/widgets/app_snack_bar.dart';
 import 'package:shared_core/src/widgets/app_stat_tile.dart';
 import 'package:shared_core/src/widgets/app_status_chip.dart';
 import 'package:shared_core/src/widgets/app_surface_card.dart';
@@ -63,6 +66,8 @@ class DesignSystemGalleryScreen extends StatelessWidget {
           LoadingGallerySection(),
           GallerySectionTitle('Frame & navigation (1e-i)'),
           FrameGallerySection(),
+          GallerySectionTitle('Overlays (1e-ii)'),
+          OverlaysGallerySection(),
         ],
       ),
     );
@@ -1154,6 +1159,171 @@ class _FrameGallerySectionState extends State<FrameGallerySection> {
             ],
             selected: _filter,
             onChanged: (v) => setState(() => _filter = v),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 1e-ii overlays section: sheet trigger + static sheet chrome, dialog
+/// variants, snackbar/toast variants. Triggers open the real routes so the
+/// capture test can tap through every overlay (open, settle, dismiss).
+class OverlaysGallerySection extends StatelessWidget {
+  const OverlaysGallerySection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    Widget row(String label, Widget child) => Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                '\u2066$label\u2069',
+                textAlign: TextAlign.start,
+                style: textTheme.labelMedium,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              child,
+            ],
+          ),
+        );
+
+    Widget trigger(
+      String label,
+      void Function(BuildContext) open,
+    ) =>
+        Builder(
+          builder: (ctx) => AppPillButton.secondary(
+            label: label,
+            onPressed: () => open(ctx),
+            isExpanded: false,
+          ),
+        );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        row(
+          'Bottom sheet (trigger opens the real route)',
+          trigger('Open sheet', (ctx) {
+            showAppBottomSheet<void>(
+              ctx,
+              title: 'Filter bookings',
+              primaryLabel: 'Apply filters',
+              onPrimary: () {},
+              child: Text(
+                '\u2066Two filter rows live here. The pinned action stays '
+                'put while this body scrolls.\u2069',
+                style: textTheme.bodyMedium,
+              ),
+            );
+          }),
+        ),
+        row(
+          'Sheet chrome, static (radius 28, handle, pinned action)',
+          AppBottomSheet(
+            title: 'Filter bookings',
+            primaryLabel: 'Apply filters',
+            onPrimary: () {},
+            child: Text(
+              '\u2066Static demo of the open sheet: drag handle, title, '
+              'body and the pinned primary action.\u2069',
+              style: textTheme.bodyMedium,
+            ),
+          ),
+        ),
+        row(
+          'Dialog (standard)',
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              trigger('Open dialog', (ctx) {
+                showAppDialog<void>(
+                  ctx,
+                  title: 'Discard changes?',
+                  message: 'Unsent edits will be lost.',
+                  secondaryLabel: 'Keep editing',
+                  primaryLabel: 'Discard',
+                );
+              }),
+              const SizedBox(height: AppSpacing.md),
+              AppDialog(
+                title: 'Discard changes?',
+                message: 'Unsent edits will be lost.',
+                secondaryLabel: 'Keep editing',
+                onSecondary: () {},
+                primaryLabel: 'Discard',
+                onPrimary: () {},
+              ),
+            ],
+          ),
+        ),
+        row(
+          'Dialog (destructive names the object)',
+          AppDialog.destructive(
+            title: "Delete 'Invoice #123'?",
+            message: 'This cannot be undone.',
+            secondaryLabel: 'Cancel',
+            onSecondary: () {},
+            primaryLabel: 'Delete',
+            onPrimary: () {},
+          ),
+        ),
+        row(
+          'Snackbars (with / without action)',
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              trigger('Show snackbar', (ctx) {
+                AppSnackBar.show(
+                  ctx,
+                  message: 'Booking saved.',
+                  kind: AppSnackBarKind.success,
+                  actionLabel: 'Undo',
+                  onAction: () {},
+                );
+              }),
+              const SizedBox(height: AppSpacing.md),
+              AppSnackBar(
+                message: 'Booking saved.',
+                kind: AppSnackBarKind.success,
+                actionLabel: 'Undo',
+                onAction: () {},
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              const AppSnackBar(
+                message: 'Syncing in the background…',
+              ),
+            ],
+          ),
+        ),
+        row(
+          'Toasts (success / error, centered, non-blocking)',
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              trigger('Show toast', (ctx) {
+                AppToast.show(
+                  ctx,
+                  message: 'Synced just now.',
+                  kind: AppSnackBarKind.success,
+                );
+              }),
+              const SizedBox(height: AppSpacing.md),
+              const AppToast(
+                message: 'Synced just now.',
+                kind: AppSnackBarKind.success,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              const AppToast(
+                message: 'Payment failed. Try again.',
+                kind: AppSnackBarKind.error,
+              ),
+            ],
           ),
         ),
       ],

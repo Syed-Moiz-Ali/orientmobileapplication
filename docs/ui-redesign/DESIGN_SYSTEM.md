@@ -130,6 +130,7 @@ swatch test and this doc.
 - `AppSurfaceCard` (spec `AppCard`; legacy `app_card.dart` owns it). Rename path: `AppSurfaceCard` → `AppCard` in one codemod in the polish phase once the legacy card is removed.
 - Phase-1d-i naming check: `AppStatTile`, `AppProgressBar`, `AppEmptyState`, `AppErrorState`, `AppBanner` — all spec names verified free in `packages/` (no collisions), no rename path.
 - Phase-1d-ii naming check: `AppShimmer`, `AppLoader`, `AppNetworkImage` verified free — no rename. `AppShimmerSkeleton` (spec `AppSkeleton`; legacy `app_skeleton.dart` owns it). Rename path: `AppShimmerSkeleton` → `AppSkeleton` in one codemod in the polish phase once the legacy skeleton is removed.
+- Phase-1e-ii naming check: `AppBottomSheet`, `AppDialog`, `AppSnackBar`, `AppToast` verified free as classes — no class rename. File note: `AppBottomSheet` lives in `app_modal_sheet.dart` (legacy `showAppModalSheet` owns `app_bottom_sheet.dart` in phase 1). Rename path: move the class into `app_bottom_sheet.dart` in one codemod once the legacy helper is migrated.
 
 - New pill button is `AppPillButton` (spec name `AppButton`; renamed because
   the legacy `AppButton` factory in `primary_button.dart` owns that name and
