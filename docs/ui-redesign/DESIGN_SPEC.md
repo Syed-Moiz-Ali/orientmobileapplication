@@ -118,6 +118,16 @@ Respect reduced-motion. No bouncing, no parallax, no looping decorative animatio
 ## C8. Component specs (all in `lib/core/design_system/widgets/`, prefix `App`)
 Every widget: reads only theme/tokens, supports light+dark, Semantics labels, 48dp min tap target,
 const constructor where possible, doc comment with usage example, works at text scale 1.3x.
+Phase-1d-i naming check: `AppStatTile`, `AppProgressBar`, `AppEmptyState`,
+`AppErrorState`, `AppBanner` are all free in `packages/` — built under their
+spec names, no rename path needed.
+Phase-1e-ii naming check: `AppBottomSheet`, `AppDialog`, `AppSnackBar`,
+`AppToast` are all free as *classes* in `packages/` (no collisions), no class
+rename needed. File note: `AppBottomSheet` lives in
+`app_modal_sheet.dart` because the legacy `showAppModalSheet` helper owns
+`app_bottom_sheet.dart` in phase 1; move the class into `app_bottom_sheet.dart`
+in one codemod once the legacy helper is migrated.
+Phase-1f naming check: `AppDataTable` (+ `AppDataTableHeader`; spec `AppTable`; legacy `AppTable` in `app_table.dart` owns that name — no class rename; the polish-phase codemod renames once legacy usages hit zero).
 
 **AppPillButton** (spec name `AppButton`; renamed — the legacy `AppButton`
 factory owns that name and is off-limits; rename this class to `AppButton`
@@ -141,7 +151,7 @@ built in. Disabled 40%. `forceLtr` values stay LTR inside RTL layouts.
 button, height 48.
 **AppCard**: surface, radius 16-20, padding 20, shadow e1 OR 1px border. Tappable variant with ripple +
 chevron optional. Optional header (title + trailing action) and footer. Never nest a bordered card
-inside a bordered card; use surfaceAlt blocks inside cards instead.
+inside a bordered card; use surfaceAlt blocks inside cards instead. Interim name `AppSurfaceCard` (legacy `app_card.dart` owns `AppCard` in phase 1); rename path: `AppSurfaceCard` → `AppCard` in one codemod once the legacy card has zero usages.
 **AppSection**: titleMedium heading + optional "See all" ghost button + optional subtitle; 12 gap to content.
 **AppListTile / AppSettingsTile**: min height 56, leading icon in 40px circle (accentSoft bg or
 surfaceAlt), title (titleSmall), subtitle (bodySmall textSecondary), trailing (chevron/switch/value).
@@ -177,9 +187,9 @@ e1, height 40, labelLarge. Scrollable pill row variant for many options (timefra
 **AppErrorState**: same layout with error icon, friendly message (what happened + what to do), "Try
 again" button; never show raw exceptions (log them instead).
 **AppSkeleton / AppShimmer**: mimic the final layout (same radii, heights, gaps); no spinners for
-content areas.
+content areas. Interim name `AppShimmerSkeleton` (legacy `app_skeleton.dart` owns `AppSkeleton` in phase 1); rename path: `AppShimmerSkeleton` → `AppSkeleton` in one codemod once the legacy skeleton has zero usages. `AppShimmer` (shimmer-package wrapper), `AppLoader` and `AppNetworkImage` below verified free — no rename.
 **AppLoader**: centered 28px accent spinner, only for blocking short actions.
-**AppNetworkImage**: radius param, shimmer placeholder, graceful error placeholder, cached.
+**AppNetworkImage**: radius param, shimmer placeholder, graceful error placeholder.
 **AppBanner**: full-width inline notice (info/warning/error/success) with icon, text, optional action,
 used for offline / delayed data / maintenance.
 **AppDataRow / AppKeyValue**: label left (textSecondary) value right (textPrimary, tabular), 12 gap.

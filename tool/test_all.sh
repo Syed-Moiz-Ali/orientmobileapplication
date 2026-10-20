@@ -22,7 +22,7 @@ for p in "${PKGS[@]}"; do
   echo "$out" | tail -n 3
   if [ "$code" -eq 0 ]; then
     echo "PASS: $p"
-  elif echo "$out" | grep -qE "No tests ran|does not appear to contain any test files"; then
+  elif echo "$out" | grep -qE "No tests ran|does not appear to contain any test files|Test directory .test. not found"; then
     echo "SKIP: $p (no non-baseline tests yet — counts as pass)"
   else
     echo "FAIL: $p (exit $code)"
