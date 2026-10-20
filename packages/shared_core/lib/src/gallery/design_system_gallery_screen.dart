@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/src/theme/app_radius.dart';
 import 'package:shared_core/src/theme/app_spacing.dart';
+import 'package:shared_core/src/widgets/app_avatar.dart';
+import 'package:shared_core/src/widgets/app_badge.dart';
+import 'package:shared_core/src/widgets/app_chip.dart';
 import 'package:shared_core/src/widgets/app_data_row.dart';
 import 'package:shared_core/src/widgets/app_divider.dart';
 import 'package:shared_core/src/widgets/app_dropdown.dart';
+import 'package:shared_core/src/widgets/app_info_tooltip.dart';
 import 'package:shared_core/src/widgets/app_list_tile.dart';
 import 'package:shared_core/src/widgets/app_section.dart';
 import 'package:shared_core/src/widgets/app_settings_tile.dart';
+import 'package:shared_core/src/widgets/app_status_chip.dart';
 import 'package:shared_core/src/widgets/app_surface_card.dart';
 import 'package:shared_core/src/widgets/app_icon_button.dart';
 import 'package:shared_core/src/widgets/app_input_field.dart';
@@ -37,6 +42,8 @@ class DesignSystemGalleryScreen extends StatelessWidget {
           InputsGallerySection(),
           GallerySectionTitle('Surfaces (1c-i)'),
           SurfacesGallerySection(),
+          GallerySectionTitle('Identity (1c-ii)'),
+          IdentityGallerySection(),
         ],
       ),
     );
@@ -489,6 +496,141 @@ class _SurfacesGallerySectionState extends State<SurfacesGallerySection> {
                 ),
               ],
             ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 1c-ii identity section: avatars, badges, filter chips, status chips,
+/// info tooltips. The success/info row places the two closest soft fills
+/// side by side on purpose (see the identity tests for the measured colour
+/// difference and the dot + label judgement).
+class IdentityGallerySection extends StatefulWidget {
+  const IdentityGallerySection({super.key});
+
+  @override
+  State<IdentityGallerySection> createState() => _IdentityGallerySectionState();
+}
+
+class _IdentityGallerySectionState extends State<IdentityGallerySection> {
+  bool _openOnly = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final arabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    Widget row(String label, Widget child) => Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                label,
+                textAlign: TextAlign.start,
+                style: textTheme.labelMedium,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              child,
+            ],
+          ),
+        );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        row(
+          'Avatars (initials, 24 / 32 / 40 / 56)',
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              const AppAvatar(
+                  name: 'Layla Haddad', size: AppAvatarSize.extraSmall),
+              const AppAvatar(name: 'Layla Haddad', size: AppAvatarSize.small),
+              const AppAvatar(name: 'Layla Haddad'),
+              const AppAvatar(name: 'Layla Haddad', size: AppAvatarSize.large),
+              if (arabic)
+                const AppAvatar(name: 'ليلى حداد')
+              else
+                const AppAvatar(name: 'Omar Farouk'),
+              AppAvatar(name: 'Tappable advisor', onTap: () {}),
+            ],
+          ),
+        ),
+        row(
+          'Badges (accent 3, error 7, capped 99+)',
+          Wrap(
+            spacing: AppSpacing.lg,
+            runSpacing: AppSpacing.sm,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: const [
+              AppBadge(count: 3),
+              AppBadge(count: 7, kind: AppBadgeKind.error),
+              AppBadge(count: 120),
+            ],
+          ),
+        ),
+        row(
+          'Filter chips (selected carries a check, not just color)',
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              AppChip(
+                label: 'Open',
+                selected: _openOnly,
+                onSelected: (v) => setState(() => _openOnly = v),
+              ),
+              AppChip(label: 'Delayed', onSelected: (_) {}),
+              const AppChip(label: 'Disabled'),
+            ],
+          ),
+        ),
+        row(
+          'Status chips (dot + human label, all six kinds)',
+          const Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              AppStatusChip(label: 'Active', kind: AppStatusKind.success),
+              AppStatusChip(label: 'Delayed', kind: AppStatusKind.warning),
+              AppStatusChip(label: 'Failed', kind: AppStatusKind.error),
+              AppStatusChip(label: 'Syncing', kind: AppStatusKind.info),
+              AppStatusChip(label: 'Idle', kind: AppStatusKind.neutral),
+              AppStatusChip(label: 'Featured', kind: AppStatusKind.accent),
+            ],
+          ),
+        ),
+        row(
+          'Closest pair side by side (success-soft vs info-soft)',
+          const Row(
+            children: [
+              AppStatusChip(label: 'Active', kind: AppStatusKind.success),
+              SizedBox(width: AppSpacing.sm),
+              AppStatusChip(label: 'Syncing', kind: AppStatusKind.info),
+            ],
+          ),
+        ),
+        row(
+          'Info tooltip (tap the icon; 48 dp target, 16 px glyph)',
+          Row(
+            children: [
+              Flexible(
+                child: Text(
+                  'Watching the market',
+                  style: textTheme.bodyMedium,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              const AppInfoTooltip(
+                message: 'The bot is waiting for a clear signal before '
+                    'acting. Nothing is wrong with your settings.',
+              ),
+            ],
           ),
         ),
       ],
