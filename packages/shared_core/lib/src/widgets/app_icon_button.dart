@@ -74,57 +74,64 @@ class _AppIconButtonState extends State<AppIconButton> {
         ? tokens.accentSoft
         : tokens.accentSoft.withValues(alpha: 0.5);
 
-    return Semantics(
-      button: true,
-      enabled: enabled,
-      label: widget.tooltip,
-      child: Focus(
-        onFocusChange: (focused) => setState(() => _focused = focused),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapDown: (_) {
-            if (enabled) setState(() => _pressed = true);
-          },
-          onTapUp: (_) {
-            if (_pressed) setState(() => _pressed = false);
-            if (enabled) widget.onPressed!();
-          },
-          onTapCancel: () {
-            if (_pressed) setState(() => _pressed = false);
-          },
-          child: AnimatedScale(
-            scale: _pressed && enabled && !reducedMotion ? 0.98 : 1.0,
-            duration: reducedMotion ? Duration.zero : AppDurations.fast,
-            curve: AppDurations.enter,
-            child: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: _pressed && enabled ? pressedBg : bg,
-                shape: BoxShape.circle,
-                border: widget.bordered
-                    ? Border.all(
-                        color: _focused
-                            ? scheme.primary
-                            : scheme.outlineVariant,
-                        width: _focused ? 2 : 1,
-                      )
-                    : (_focused
-                        ? Border.all(color: scheme.primary, width: 2)
-                        : null),
-              ),
-              alignment: Alignment.center,
-                      child: DirectionalIcon(
-                        widget.icon,
-                        size: 20,
-                        color: iconColor,
-                        mirrorInRtl: widget.mirrorInRtl ??
-                    DirectionalIcon.isDirectional(widget.icon),
-              ),
+    Widget button = Focus(
+      onFocusChange: (focused) => setState(() => _focused = focused),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (_) {
+          if (enabled) setState(() => _pressed = true);
+        },
+        onTapUp: (_) {
+          if (_pressed) setState(() => _pressed = false);
+          if (enabled) widget.onPressed!();
+        },
+        onTapCancel: () {
+          if (_pressed) setState(() => _pressed = false);
+        },
+        child: AnimatedScale(
+          scale: _pressed && enabled && !reducedMotion ? 0.98 : 1.0,
+          duration: reducedMotion ? Duration.zero : AppDurations.fast,
+          curve: AppDurations.enter,
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: _pressed && enabled ? pressedBg : bg,
+              shape: BoxShape.circle,
+              border: widget.bordered
+                  ? Border.all(
+                      color:
+                          _focused ? scheme.primary : scheme.outlineVariant,
+                      width: _focused ? 2 : 1,
+                    )
+                  : (_focused
+                      ? Border.all(color: scheme.primary, width: 2)
+                      : null),
+            ),
+            alignment: Alignment.center,
+            child: DirectionalIcon(
+              widget.icon,
+              size: 20,
+              color: iconColor,
+              mirrorInRtl: widget.mirrorInRtl ??
+                  DirectionalIcon.isDirectional(widget.icon),
             ),
           ),
         ),
       ),
+    );
+
+    // Long-press tooltip for sighted users + Semantics label for screen
+    // readers (mirrors stock IconButton, which feeds both).
+    final tooltip = widget.tooltip;
+    if (tooltip != null) {
+      button = Tooltip(message: tooltip, child: button);
+    }
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: widget.tooltip,
+      child: button,
     );
   }
 }

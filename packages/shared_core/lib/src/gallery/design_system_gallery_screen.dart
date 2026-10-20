@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/src/theme/app_spacing.dart';
+import 'package:shared_core/src/widgets/app_dropdown.dart';
 import 'package:shared_core/src/widgets/app_icon_button.dart';
+import 'package:shared_core/src/widgets/app_input_field.dart';
 import 'package:shared_core/src/widgets/app_pill_button.dart';
+import 'package:shared_core/src/widgets/app_search_bar.dart';
+import 'package:shared_core/src/widgets/app_selection_tiles.dart';
 import 'package:shared_core/src/widgets/app_text_button.dart';
 
 /// Debug-only design-system gallery (phase 1, grows per part).
@@ -22,6 +26,8 @@ class DesignSystemGalleryScreen extends StatelessWidget {
         children: const [
           GallerySectionTitle('Buttons (1a)'),
           ButtonsGallerySection(),
+          GallerySectionTitle('Inputs (1b)'),
+          InputsGallerySection(),
         ],
       ),
     );
@@ -38,12 +44,18 @@ class GallerySectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Text(
-        text,
-        style: Theme.of(context)
-            .textTheme
-            .titleMedium
-            ?.copyWith(fontWeight: FontWeight.w700),
+      // Full-width + start-aligned: identical layout logic in LTR and RTL
+      // (right edge in RTL, left edge in LTR), never clipped by the column.
+      child: SizedBox(
+        width: double.infinity,
+        child: Text(
+          text,
+          textAlign: TextAlign.start,
+          style: Theme.of(context)
+              .textTheme
+              .titleMedium
+              ?.copyWith(fontWeight: FontWeight.w700),
+        ),
       ),
     );
   }
@@ -56,12 +68,18 @@ class ButtonsGallerySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Labels are full-width + start-aligned so LTR and RTL use the same
+    // layout logic (right edge in RTL); Wrap content follows suit.
     Widget row(String label, List<Widget> children) => Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.md),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(label, style: Theme.of(context).textTheme.labelMedium),
+              Text(
+                label,
+                textAlign: TextAlign.start,
+                style: Theme.of(context).textTheme.labelMedium,
+              ),
               const SizedBox(height: AppSpacing.xs),
               Wrap(spacing: AppSpacing.sm, runSpacing: AppSpacing.sm, children: children),
             ],
@@ -172,6 +190,111 @@ class ButtonsGallerySection extends StatelessWidget {
           AppTextButton(label: 'Try again', onPressed: () {}),
           const AppTextButton(label: 'Disabled', onPressed: null),
         ]),
+      ],
+    );
+  }
+}
+
+/// 1b inputs section: text field variants, search bars, dropdowns, tiles.
+///
+/// Includes the Arabic-label + LTR-email `forceLtr` demo: the label follows
+/// the locale while the value stays left-aligned LTR (see AppInputField).
+class InputsGallerySection extends StatefulWidget {
+  const InputsGallerySection({super.key});
+
+  @override
+  State<InputsGallerySection> createState() => _InputsGallerySectionState();
+}
+
+class _InputsGallerySectionState extends State<InputsGallerySection> {
+  final TextEditingController _searchController =
+      TextEditingController(text: 'booking');
+  String? _branch = 'Deira';
+  bool _notify = true;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const AppInputField(
+          label: 'Email',
+          hint: 'name@company.com',
+          helper: 'Work email only',
+          keyboardType: TextInputType.emailAddress,
+          forceLtr: true,
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        const AppInputField(
+          label: 'البريد الإلكتروني',
+          hint: 'name@company.com',
+          keyboardType: TextInputType.emailAddress,
+          forceLtr: true,
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        const AppInputField(
+          label: 'Password',
+          obscureText: true,
+          passwordToggle: true,
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        const AppInputField(
+          label: 'Phone',
+          hint: 'Enter a valid phone number',
+          error: 'Enter at least 8 digits',
+          keyboardType: TextInputType.phone,
+          forceLtr: true,
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        const AppInputField(
+          label: 'Disabled field',
+          hint: 'Cannot edit',
+          enabled: false,
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        const AppInputField(
+          label: 'Notes (multiline)',
+          hint: 'Add details',
+          maxLines: 3,
+          showCounter: true,
+          maxLength: 280,
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        AppSearchBar(hint: 'Search bookings', onChanged: (_) {}),
+        const SizedBox(height: AppSpacing.lg),
+        AppSearchBar(controller: _searchController, onChanged: (_) {}),
+        const SizedBox(height: AppSpacing.lg),
+        AppDropdown<String>(
+          label: 'Branch',
+          options: const ['Deira', 'Sharjah', 'Ajman'],
+          value: _branch,
+          onChanged: (v) => setState(() => _branch = v),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        AppCheckTile(
+          title: 'Email notifications',
+          subtitle: 'Booking updates and receipts',
+          value: _notify,
+          onChanged: (v) => setState(() => _notify = v),
+        ),
+        AppSwitchTile(
+          title: 'Dark mode',
+          value: false,
+          onChanged: (_) {},
+        ),
+        AppRadioTile<String>(
+          title: 'Deira branch',
+          value: 'deira',
+          groupValue: 'deira',
+          onChanged: (_) {},
+        ),
+        const AppCheckTile(title: 'Disabled option', value: false, onChanged: null),
       ],
     );
   }

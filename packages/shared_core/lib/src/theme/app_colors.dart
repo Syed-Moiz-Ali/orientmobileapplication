@@ -43,6 +43,17 @@ class AppColors {
   static const Color navySurfaceRaised = Color(0xFF1E293B);
 
   // ---------------------------------------------------------------------------
+  // Input boundary (phase-1b, additive): a resting field border that reaches
+  // WCAG 3:1 against BOTH the page canvas and card surfaces, because the
+  // default hairlines do not (borderDefault vs canvas = 1.19:1). Focus keeps
+  // the 1.5 px accent border (5.29:1), errors the 1.5 px error border
+  // (4.67:1). New AppInputField-family widgets use this; existing widgets
+  // keep their borders (untouched).
+  // ---------------------------------------------------------------------------
+  /// AA-proof resting input border (3.79 vs canvas, 3.92 vs surface).
+  static const Color inputBorder = Color(0xFF75819A);
+
+  // ---------------------------------------------------------------------------
   // Inks & Typography
   // ---------------------------------------------------------------------------
   /// Primary text ink: deep slate navy for high-contrast titles.
@@ -330,6 +341,10 @@ class AppDarkColors {
   static const Color borderSubtle = Color(0xFF1A202E);
   static const Color borderDefault = Color(0xFF262C3D);
   static const Color borderStrong = Color(0xFF384259);
+
+  /// AA-proof resting input border, dark (3.63 vs canvas, 3.39 vs surface).
+  /// See the light [AppColors.inputBorder] note for why this exists.
+  static const Color inputBorder = Color(0xFF5B6B82);
 
   // Primary / selection
   static const Color primary = Color(0xFF3B82F6);

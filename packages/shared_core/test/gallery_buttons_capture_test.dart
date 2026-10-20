@@ -68,6 +68,9 @@ Future<void> _capture(
 
   await tester.pumpWidget(
     MaterialApp(
+      // No debug banner in goldens: in RTL it paints over the top-right,
+      // where start-aligned section titles legitimately sit.
+      debugShowCheckedModeBanner: false,
       theme: AppTheme.light(brand),
       darkTheme: AppTheme.dark(brand),
       themeMode: dark ? ThemeMode.dark : ThemeMode.light,

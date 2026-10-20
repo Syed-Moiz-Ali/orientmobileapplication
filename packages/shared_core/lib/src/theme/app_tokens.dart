@@ -21,6 +21,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
   final Color infoSoft;
   final Color infoBorder;
   final Color infoInk;
+  final Color inputBorder;
   final Color overlay;
   final Color skeletonBase;
   final Color skeletonHighlight;
@@ -35,6 +36,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     required this.infoSoft,
     required this.infoBorder,
     required this.infoInk,
+    required this.inputBorder,
     required this.overlay,
     required this.skeletonBase,
     required this.skeletonHighlight,
@@ -50,6 +52,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     infoSoft: AppColors.infoTealSoft,
     infoBorder: AppColors.infoTealBorder,
     infoInk: AppColors.infoTealInk,
+    inputBorder: AppColors.inputBorder,
     overlay: Color(0x66000000),
     skeletonBase: AppColors.skeletonBase,
     skeletonHighlight: AppColors.skeletonHighlight,
@@ -65,6 +68,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     infoSoft: AppDarkColors.infoTealSoft,
     infoBorder: AppDarkColors.infoTealBorder,
     infoInk: AppDarkColors.infoTealInk,
+    inputBorder: AppDarkColors.inputBorder,
     overlay: Color(0x99000000),
     skeletonBase: AppDarkColors.skeletonBase,
     skeletonHighlight: AppDarkColors.skeletonHighlight,
@@ -85,6 +89,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     Color? infoSoft,
     Color? infoBorder,
     Color? infoInk,
+    Color? inputBorder,
     Color? overlay,
     Color? skeletonBase,
     Color? skeletonHighlight,
@@ -99,6 +104,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
       infoSoft: infoSoft ?? this.infoSoft,
       infoBorder: infoBorder ?? this.infoBorder,
       infoInk: infoInk ?? this.infoInk,
+      inputBorder: inputBorder ?? this.inputBorder,
       overlay: overlay ?? this.overlay,
       skeletonBase: skeletonBase ?? this.skeletonBase,
       skeletonHighlight: skeletonHighlight ?? this.skeletonHighlight,
@@ -119,6 +125,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
       infoSoft: lerpColor(infoSoft, other.infoSoft),
       infoBorder: lerpColor(infoBorder, other.infoBorder),
       infoInk: lerpColor(infoInk, other.infoInk),
+      inputBorder: lerpColor(inputBorder, other.inputBorder),
       overlay: lerpColor(overlay, other.overlay),
       skeletonBase: lerpColor(skeletonBase, other.skeletonBase),
       skeletonHighlight:

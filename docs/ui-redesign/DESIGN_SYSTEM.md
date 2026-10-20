@@ -104,7 +104,11 @@ swatch test and this doc.
 ## 7. Context + formatters
 
 - `context.text` (TextTheme), `context.tokens` (AppTokens), `context.gutter`
-  (20/24/32 by breakpoint), `context.screenWidth`. No `isCompact` here (see §1).
+  (20/24/32 by breakpoint), `context.screenWidth`. No `isCompact` /
+  `isMedium` / `isExpanded` here — a 0b draft defining them broke every app
+  (extension collision); the existing `AppResponsive`
+  (`src/layout/app_responsive.dart`, windowClass-based) owns those names.
+  Module phases must use `AppResponsive`, never expect them on context.
 - `AppFormatters` existing APIs unchanged. Added: `signedGroup`,
   `signedPercent`, `decimal(decimals:)`, `compactMoneyAED`. Numeral policy
   (frozen): Latin digits 0–9 + ',' grouping in EVERY locale, including ar —
@@ -113,7 +117,27 @@ swatch test and this doc.
   `test/app_formatters_test.dart` (en + ar, digits/grouping/currency/date/
   relative time + new methods).
 
-## 8. Remaining debt / watch list
+## 8. Widget naming (phase-1a, extended 1b)
+
+- **Rule: never collide with an existing widget.** Check `src/widgets/`
+  for the spec name first. If taken, build alongside under a distinct
+  spec-style name and record the rename path here; module phases adopt the
+  new widget, and the polish phase renames it to the spec name in one
+  codemod once the legacy widget has zero usages.
+- `AppPillButton` (spec `AppButton`; legacy factory owns it).
+- `AppInputField` (spec `AppTextField`; legacy owns it). `AppSearchBar` and
+  `AppDropdown` verified free — no rename needed.
+
+- New pill button is `AppPillButton` (spec name `AppButton`; renamed because
+  the legacy `AppButton` factory in `primary_button.dart` owns that name and
+  is off-limits in phase 1). Rename path: once the legacy factory is removed
+  in the polish phase, rename `AppPillButton` → `AppButton` in one codemod.
+- Same collision rule for later parts: if a spec C8 name already exists in
+  `src/widgets/` (`app_text_field.dart`, `app_search_field.dart`,
+  `app_dropdown_button.dart`, `app_card.dart` …), build alongside under a
+  distinct name and record it here — never modify the existing widget.
+
+## 9. Remaining debt / watch list
 
 - Success base + white (#10B981) = 2.54:1 — pre-existing, fails AA for
   filled buttons; never pair them (use ink-on-soft). Not changed in 0b.

@@ -119,18 +119,26 @@ Respect reduced-motion. No bouncing, no parallax, no looping decorative animatio
 Every widget: reads only theme/tokens, supports light+dark, Semantics labels, 48dp min tap target,
 const constructor where possible, doc comment with usage example, works at text scale 1.3x.
 
-**AppButton**: variants primary (accent fill, textOnAccent), secondary (surface, borderStrong 1px,
+**AppPillButton** (spec name `AppButton`; renamed — the legacy `AppButton`
+factory owns that name and is off-limits; rename this class to `AppButton`
+once the legacy factory is removed): variants primary (accent fill,
+textOnAccent), secondary (surface, borderStrong 1px,
 textPrimary), ghost/text (no fill, accent text), destructive (error fill or error outline).
 Height 52 (large, default for full-width CTAs) / 44 (medium) / 36 (small). Pill radius. labelLarge.
 Min width 88. States: pressed (accentPressed + scale .98), disabled (40% opacity), loading (replace label
 with 20px spinner, keep width). Optional leading icon 18. Full-width option. One primary button per
 screen section.
 **AppIconButton**: 44x44 hit area, 20 icon, circle, optional border/fill variant.
-**AppTextField**: fill surfaceAlt (or surface + borderStrong border), radius 12, height 52, padding h16.
-Label above field (labelMedium, textSecondary), helper/error below (bodySmall; error = error color
-+ icon). Focus: 1.5px accent border. Error: 1.5px error border. Prefix/suffix icons 20. Password
-toggle built in. Disabled 40%.
-**AppSearchBar**: AppTextField variant, pill radius, search icon, clear button, height 48.
+**AppInputField** (spec name `AppTextField`; renamed — the legacy
+`AppTextField` owns that name and is off-limits; same rename path as
+`AppPillButton`): fill surfaceAlt, 1px `inputBorder` resting boundary
+(AA 3:1 vs page + card), radius 12, height 52 (min 48 hit area), padding h16.
+Label above field (labelMedium, textSecondary), helper/error below (bodySmall;
+error = error color + icon, announced via live region). Focus: 1.5px accent
+border. Error: 1.5px error border. Prefix/suffix icons 20. Password toggle
+built in. Disabled 40%. `forceLtr` values stay LTR inside RTL layouts.
+**AppSearchBar**: AppInputField variant, pill radius, search icon, clear
+button, height 48.
 **AppCard**: surface, radius 16-20, padding 20, shadow e1 OR 1px border. Tappable variant with ripple +
 chevron optional. Optional header (title + trailing action) and footer. Never nest a bordered card
 inside a bordered card; use surfaceAlt blocks inside cards instead.
@@ -165,7 +173,7 @@ e1, height 40, labelLarge. Scrollable pill row variant for many options (timefra
 **AppSnackBar / AppToast**: floating, radius 12, surface inverse (textPrimary bg), icon + message,
 4s, optional action; success/error variants use icon + soft tint, not full saturated fills.
 **AppEmptyState**: 64px circle (accentSoft or surfaceAlt) with 28px icon, titleMedium, bodyMedium muted
-(max 2 lines), optional AppButton. Centered, max width 320.
+(max 2 lines), optional AppPillButton. Centered, max width 320.
 **AppErrorState**: same layout with error icon, friendly message (what happened + what to do), "Try
 again" button; never show raw exceptions (log them instead).
 **AppSkeleton / AppShimmer**: mimic the final layout (same radii, heights, gaps); no spinners for
@@ -267,8 +275,11 @@ lib/core/design_system/
                  app_typography.dart, app_durations.dart, breakpoints.dart
   theme/         app_theme.dart (light + dark ThemeData + AppTokens ThemeExtension),
                  theme_controller.dart (use the project's existing state management)
-  extensions/    context_extensions.dart -> context.colors, context.text, context.spacing,
-                 context.radius, context.isCompact/isMedium/isExpanded
+  extensions/    context_extensions.dart -> context.text, context.tokens,
+                   context.gutter, context.screenWidth (context.colors and
+                   context.semanticColors live in app_theme_context.dart;
+                   isCompact/isMedium/isExpanded are NOT on context — use
+                   AppResponsive in src/layout/app_responsive.dart)
   widgets/       one file per App* widget + widgets.dart barrel
   utils/         formatters.dart (currency, number, percent, compact, date, relative time)
   gallery/       design_system_gallery_screen.dart (kDebugMode only)

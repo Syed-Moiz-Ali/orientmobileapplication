@@ -24,13 +24,13 @@ C13 (tokens only, const, <150-line files). Light default, refined dark.
 ## 5. Parts (ONE part per session, commit between parts)
 
 - **1a — Gallery shell + capture harness + buttons + successStrong token.**
-  Widgets: AppButton, AppIconButton, AppTextButton. Plus: gallery shell
+  Widgets: AppPillButton, AppIconButton, AppTextButton. Plus: gallery shell
   (section nav, light/dark toggle hooks for capture), gallery capture test
   harness (FontLoader fonts + MaterialIcons, shadows on, tagged baseline,
   light+dark × 1.0/1.3 × LTR/RTL), and the `successStrong` token (AA-proof
   filled success — white on #10B981 is 2.54:1, fails; add light+dark darker
   greens verified ≥4.5:1, additive consts only).
-- **1b — Inputs.** AppTextField, AppSearchBar, AppDropdown,
+- **1b — Inputs.** AppInputField, AppSearchBar, AppDropdown (spec names AppTextField/AppSearchBar/AppDropdownButton; AppInputField renamed for the legacy collision — AppSearchBar/AppDropdown verified free),
   checkbox/switch/radio tiles (AppCheckTile/AppSwitchTile/AppRadioTile or
   one file if small — max ~6 widgets, split further if it overflows).
 - **1c — Surfaces & display.** AppCard, AppSection, AppListTile,

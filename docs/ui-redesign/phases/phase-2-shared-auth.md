@@ -11,16 +11,16 @@ In scope: `packages/shared_auth/lib/src/presentation/pages/login_view.dart`, `fo
 Do NOT touch: `data/datasources/*`, `domain/*`, `network/auth_interceptor`, `providers/auth_state/login_provider` logic, per-app `app_router.dart` redirects, ARB structure.
 
 ## 4. Design principles
-C9 auth anatomy (logo ≤30% height, headlineLarge + bodyLarge, CTA full-width 52, secondary link, max-width 420–560); C8 AppButton/TextField/Banner/SnackBar; C10 (loading skeleton, error friendly + Try again, disabled 40%, success snackbar); C11 (no "Submit/OK", no raw exceptions).
+C9 auth anatomy (logo ≤30% height, headlineLarge + bodyLarge, CTA full-width 52, secondary link, max-width 420–560); C8 AppPillButton/TextField/Banner/SnackBar; C10 (loading skeleton, error friendly + Try again, disabled 40%, success snackbar); C11 (no "Submit/OK", no raw exceptions).
 
 ## 5. Step-by-step tasks
-1. Wrap views in AppScaffold + max-width constraint; replace fields with AppTextField (label above, helper/error below, password toggle) and buttons with AppButton primary 52.
+1. Wrap views in AppScaffold + max-width constraint; replace fields with AppInputField (label above, helper/error below, password toggle) and buttons with AppPillButton primary 52.
 2. Map `auth_error_mapper` outputs to friendly copy + AppBanner/AppErrorState; loading → AppLoader inline in button (keep width); startup → skeleton not spinner.
 3. Fix hardcoded fallbacks ('Orient Staff App' etc.) via existing ARB keys (no new l10n infra yet).
 4. Verify in all 4 routers (`staff/owner/customer/crm` `/login`, `/forgot-password`, `/supervisor-login` uses same surface) light+dark.
 
 ## 6. Screen-by-screen plan
-- login_view: current problems — cramped, technical errors, mixed buttons. New: context header → single form card → primary CTA sticky bottom → secondary "Forgot password" link. App* swaps: AuthPrimaryButton→AppButton, raw TextField→AppTextField.
+- login_view: current problems — cramped, technical errors, mixed buttons. New: context header → single form card → primary CTA sticky bottom → secondary "Forgot password" link. App* swaps: AuthPrimaryButton→AppPillButton, raw TextField→AppInputField.
 - forgot_password_view: same anatomy; success → snackbar + navigate (no dead-end).
 - auth_loading_view: skeleton.
 - All: C10 states required.
