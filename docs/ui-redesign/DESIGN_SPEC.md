@@ -141,7 +141,7 @@ built in. Disabled 40%. `forceLtr` values stay LTR inside RTL layouts.
 button, height 48.
 **AppCard**: surface, radius 16-20, padding 20, shadow e1 OR 1px border. Tappable variant with ripple +
 chevron optional. Optional header (title + trailing action) and footer. Never nest a bordered card
-inside a bordered card; use surfaceAlt blocks inside cards instead.
+inside a bordered card; use surfaceAlt blocks inside cards instead. Interim name `AppSurfaceCard` (legacy `app_card.dart` owns `AppCard` in phase 1); rename path: `AppSurfaceCard` → `AppCard` in one codemod once the legacy card has zero usages.
 **AppSection**: titleMedium heading + optional "See all" ghost button + optional subtitle; 12 gap to content.
 **AppListTile / AppSettingsTile**: min height 56, leading icon in 40px circle (accentSoft bg or
 surfaceAlt), title (titleSmall), subtitle (bodySmall textSecondary), trailing (chevron/switch/value).

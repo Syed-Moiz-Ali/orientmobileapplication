@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:shared_core/src/theme/app_radius.dart';
 import 'package:shared_core/src/theme/app_spacing.dart';
+import 'package:shared_core/src/widgets/app_data_row.dart';
+import 'package:shared_core/src/widgets/app_divider.dart';
 import 'package:shared_core/src/widgets/app_dropdown.dart';
+import 'package:shared_core/src/widgets/app_list_tile.dart';
+import 'package:shared_core/src/widgets/app_section.dart';
+import 'package:shared_core/src/widgets/app_settings_tile.dart';
+import 'package:shared_core/src/widgets/app_surface_card.dart';
 import 'package:shared_core/src/widgets/app_icon_button.dart';
 import 'package:shared_core/src/widgets/app_input_field.dart';
 import 'package:shared_core/src/widgets/app_pill_button.dart';
@@ -28,6 +35,8 @@ class DesignSystemGalleryScreen extends StatelessWidget {
           ButtonsGallerySection(),
           GallerySectionTitle('Inputs (1b)'),
           InputsGallerySection(),
+          GallerySectionTitle('Surfaces (1c-i)'),
+          SurfacesGallerySection(),
         ],
       ),
     );
@@ -295,6 +304,193 @@ class _InputsGallerySectionState extends State<InputsGallerySection> {
           onChanged: (_) {},
         ),
         const AppCheckTile(title: 'Disabled option', value: false, onChanged: null),
+      ],
+    );
+  }
+}
+
+/// 1c-i surfaces section: cards, sections, list/settings tiles, dividers,
+/// data rows. Grouped tiles sit inside one card with 72 px inset dividers;
+/// the nesting demo shows the allowed pattern (surfaceAlt block in a card,
+/// never a bordered card in a bordered card).
+class SurfacesGallerySection extends StatefulWidget {
+  const SurfacesGallerySection({super.key});
+
+  @override
+  State<SurfacesGallerySection> createState() => _SurfacesGallerySectionState();
+}
+
+class _SurfacesGallerySectionState extends State<SurfacesGallerySection> {
+  bool _notify = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    // The ar locale loads the Plex Arabic family (see capture harness); the
+    // en locale loads Jakarta only, so the Arabic-script demo row renders
+    // ONLY here — LTR captures would otherwise ship tofu boxes.
+    final arabic = Localizations.localeOf(context).languageCode == 'ar';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppSection(
+          title: 'Section heading',
+          subtitle: 'titleMedium + 12 px gap to content',
+          seeAllLabel: 'See all',
+          onSeeAll: () {},
+          child: AppSurfaceCard(
+            headerTitle: 'Bordered card (default)',
+            child: Text(
+              'Surface, radius 16, 1 px border, padding 20.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        AppSurfaceCard(
+          outlined: false,
+          headerTitle: 'Elevated card',
+          child: Text(
+            'Shadow e1, no border (light). Dark always uses a border.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        AppSurfaceCard(
+          headerTitle: 'Tappable card',
+          onTap: () {},
+          showChevron: true,
+          semanticLabel: 'Open booking details',
+          child: Text(
+            'Whole card >= 48 dp, ripple + chevron (mirrors in RTL).',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        AppSurfaceCard(
+          headerTitle: 'Nesting rule demo',
+          footer: Text(
+            'Footer block sits below the body.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            decoration: BoxDecoration(
+              color: scheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Text(
+              'Allowed: a surfaceAlt block inside a card. '
+              'Never a bordered card inside a bordered card.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        AppSection(
+          title: 'Grouped tiles',
+          subtitle: 'One card, 72 px inset dividers',
+          seeAllLabel: 'See all',
+          onSeeAll: () {},
+          child: AppSurfaceCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppListTile(
+                  leadingIcon: Icons.build_outlined,
+                  title: 'Oil change',
+                  subtitle: 'Due in 2 weeks',
+                  valueText: 'AED 240',
+                  onTap: () {},
+                ),
+                const AppDivider.inset(),
+                AppListTile(
+                  leadingIcon: Icons.notifications_outlined,
+                  accentLeading: true,
+                  title: 'Reminder sent',
+                  subtitle: 'Yesterday at 18:04',
+                  onTap: () {},
+                ),
+                const AppDivider.inset(),
+                const AppListTile(
+                  leadingIcon: Icons.receipt_long_outlined,
+                  title: 'Static row',
+                  subtitle: 'No tap target, no chevron',
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        AppSection(
+          title: 'Settings tiles',
+          child: AppSurfaceCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppSettingsTile.switchTile(
+                  leadingIcon: Icons.notifications_outlined,
+                  title: 'Push notifications',
+                  subtitle: 'Booking updates and receipts',
+                  value: _notify,
+                  onChanged: (v) => setState(() => _notify = v),
+                ),
+                const AppDivider.inset(),
+                const AppSettingsTile.switchTile(
+                  leadingIcon: Icons.dark_mode_outlined,
+                  title: 'Dark mode',
+                  subtitle: 'Disabled variant',
+                  value: false,
+                  onChanged: null,
+                ),
+                const AppDivider.inset(),
+                AppSettingsTile(
+                  leadingIcon: Icons.language_rounded,
+                  title: 'Language',
+                  subtitle: 'Value + chevron variant',
+                  valueText: 'English',
+                  onTap: () {},
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        const AppDivider(),
+        const SizedBox(height: AppSpacing.md),
+        Text('Dividers: full-bleed hairline above, inset below',
+            style: Theme.of(context).textTheme.bodySmall),
+        const SizedBox(height: AppSpacing.md),
+        const AppDivider.inset(),
+        const SizedBox(height: AppSpacing.xl),
+        AppSection(
+          title: 'Data rows',
+          child: AppSurfaceCard(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const AppDataRow(
+                    label: 'Invoice total', value: 'AED 1,240.00'),
+                const SizedBox(height: AppSpacing.md),
+                const AppDataRow(label: 'Status', value: 'Active'),
+                const SizedBox(height: AppSpacing.md),
+                if (arabic)
+                  const AppDataRow(
+                      label: 'الحالة', value: 'AED 1,240.00')
+                else
+                  const AppDataRow(label: 'Reference', value: 'INV-2041'),
+                const SizedBox(height: AppSpacing.md),
+                const AppDataRow(
+                  label: 'A very long label that keeps wrapping instead of '
+                      'clipping at large text scales',
+                  value: '+AED 240.00',
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
