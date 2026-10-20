@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/src/theme/app_radius.dart';
 import 'package:shared_core/src/theme/app_spacing.dart';
+import 'package:shared_core/src/widgets/app_app_bar.dart';
 import 'package:shared_core/src/widgets/app_avatar.dart';
 import 'package:shared_core/src/widgets/app_badge.dart';
 import 'package:shared_core/src/widgets/app_banner.dart';
+import 'package:shared_core/src/widgets/app_bottom_nav.dart';
+import 'package:shared_core/src/widgets/app_nav_rail.dart';
+import 'package:shared_core/src/widgets/app_scaffold.dart';
+import 'package:shared_core/src/widgets/app_segmented_control.dart';
 import 'package:shared_core/src/widgets/app_chip.dart';
 import 'package:shared_core/src/widgets/app_data_row.dart';
 import 'package:shared_core/src/widgets/app_divider.dart';
@@ -56,6 +61,8 @@ class DesignSystemGalleryScreen extends StatelessWidget {
           FeedbackGallerySection(),
           GallerySectionTitle('Loading (1d-ii)'),
           LoadingGallerySection(),
+          GallerySectionTitle('Frame & navigation (1e-i)'),
+          FrameGallerySection(),
         ],
       ),
     );
@@ -925,6 +932,228 @@ class LoadingGallerySection extends StatelessWidget {
                 semanticLabel: 'Advisor photo',
               ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 1e-i frame & navigation section: scaffold frame (sticky action +
+/// pull-to-refresh), standard + large app bars, bottom nav (5 items, badge),
+/// rail variant at a fixed gallery height, segmented controls + pill tabs.
+class FrameGallerySection extends StatefulWidget {
+  const FrameGallerySection({super.key});
+
+  @override
+  State<FrameGallerySection> createState() => _FrameGallerySectionState();
+}
+
+class _FrameGallerySectionState extends State<FrameGallerySection> {
+  int _navIndex = 0;
+  String _range = 'Week';
+  String _longRange = 'Last 30 days';
+  String _filter = 'Open';
+
+  static const _navItems = [
+    AppBottomNavItem(label: 'Home', icon: Icons.home_outlined),
+    AppBottomNavItem(
+        label: 'Bookings', icon: Icons.calendar_month_outlined, badgeCount: 3),
+    AppBottomNavItem(label: 'Activity', icon: Icons.timeline_outlined),
+    AppBottomNavItem(label: 'Wallet', icon: Icons.wallet_outlined),
+    AppBottomNavItem(label: 'More', icon: Icons.more_horiz_rounded),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    Widget row(String label, Widget child) => Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                '\u2066$label\u2069',
+                textAlign: TextAlign.start,
+                style: textTheme.labelMedium,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              child,
+            ],
+          ),
+        );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        row(
+          'Scaffold frame (sticky action + pull-to-refresh wrapper)',
+          SizedBox(
+            height: 340,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              child: AppScaffold(
+                appBar: AppAppBar(
+                  title: 'Bookings',
+                  showBack: true,
+                  showDivider: true,
+                  onBack: () {},
+                ),
+                onRefresh: () async {},
+                stickyActionLabel: 'Save changes',
+                onStickyAction: () {},
+                stickySecondaryLabel: 'Discard',
+                onStickySecondary: () {},
+                body: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Today', style: textTheme.titleMedium),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      // Bidi-isolated so edge punctuation never flips in
+                      // RTL paragraphs (same rule as the section labels).
+                      '\u2066Pull down to refresh. The primary action stays '
+                      'pinned above the safe area.\u2069',
+                      style: textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        row(
+          'App bar (56, left title, centered, back + actions)',
+          Column(
+            children: [
+              AppAppBar(
+                title: 'Bookings',
+                showBack: true,
+                onBack: () {},
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              AppAppBar(
+                title: 'Activity',
+                centerTitle: true,
+                actions: [
+                  AppIconButton(
+                    icon: Icons.notifications_outlined,
+                    onPressed: () {},
+                    tooltip: 'Notifications',
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        row(
+          'Large collapsing title (32 -> 20, pinned)',
+          SizedBox(
+            height: 280,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              child: CustomScrollView(
+                slivers: [
+                  AppAppBar.large(
+                    title: 'Activity',
+                    showBack: true,
+                    onBack: () {},
+                  ),
+                  SliverList(
+                    delegate: SliverChildListDelegate([
+                      for (var i = 0; i < 6; i++)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.lg,
+                            vertical: AppSpacing.sm,
+                          ),
+                          child: Text(
+                            '\u2066Row ${i + 1}: scroll to collapse the '
+                            'title.\u2069',
+                            style: textTheme.bodyMedium,
+                          ),
+                        ),
+                    ]),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        row(
+          'Bottom nav (5 items, badge, unselected rest)',
+          AppBottomNav(
+            items: _navItems,
+            currentIndex: _navIndex,
+            onTap: (i) => setState(() => _navIndex = i),
+          ),
+        ),
+        row(
+          'Rail variant (medium/expanded, fixed height in gallery)',
+          SizedBox(
+            height: 420,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              child: Row(
+                children: [
+                  AppNavRail(
+                    items: _navItems,
+                    currentIndex: _navIndex,
+                    onTap: (i) => setState(() => _navIndex = i),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        '\u2066Content beside the rail.\u2069',
+                        style: textTheme.bodyMedium,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        row(
+          'Segmented control (few options)',
+          AppSegmentedControl<String>(
+            options: const [
+              AppSegmentedOption(value: 'Day', label: 'Day'),
+              AppSegmentedOption(value: 'Week', label: 'Week'),
+              AppSegmentedOption(value: 'Month', label: 'Month'),
+            ],
+            selected: _range,
+            onChanged: (v) => setState(() => _range = v),
+          ),
+        ),
+        row(
+          'Segmented control (many options, scrollable)',
+          AppSegmentedControl<String>.scrollable(
+            options: const [
+              AppSegmentedOption(value: 'Today', label: 'Today'),
+              AppSegmentedOption(value: '7D', label: 'Last 7 days'),
+              AppSegmentedOption(value: '30D', label: 'Last 30 days'),
+              AppSegmentedOption(value: '90D', label: 'Last 90 days'),
+              AppSegmentedOption(value: 'YTD', label: 'Year to date'),
+              AppSegmentedOption(value: 'All', label: 'All time'),
+            ],
+            selected: _longRange,
+            onChanged: (v) => setState(() => _longRange = v),
+          ),
+        ),
+        row(
+          'Pill tabs (scrollable row)',
+          AppPillTabs<String>(
+            options: const [
+              AppSegmentedOption(value: 'All', label: 'All'),
+              AppSegmentedOption(value: 'Open', label: 'Open'),
+              AppSegmentedOption(value: 'Delayed', label: 'Delayed'),
+              AppSegmentedOption(value: 'Done', label: 'Done'),
+              AppSegmentedOption(value: 'Cancelled', label: 'Cancelled'),
+            ],
+            selected: _filter,
+            onChanged: (v) => setState(() => _filter = v),
           ),
         ),
       ],
