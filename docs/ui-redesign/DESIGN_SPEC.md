@@ -255,7 +255,7 @@ consistent back behavior; transitions per C7; no nested app bars; modals are she
 - Error: AppErrorState with plain explanation + "Try again"; partial failures use AppBanner so
   the rest of the screen stays usable.
 - Offline/stale: AppBanner (warning) + keep showing last data with "Updated Xm ago".
-- Success: AppSnackBar with icon, auto-dismiss 4s.
+- Success: AppSnackBar with icon, auto-dismiss 4s. Exception: terminal security flows (e.g. password-reset confirmation) use a dedicated confirmation screen instead — a snackbar plus an immediate redirect would erase the proof of completion.
 - Disabled: 40% opacity + explanation when not obvious.
 - Refresh: pull-to-refresh where the data can change.
 

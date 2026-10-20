@@ -13,11 +13,12 @@ Do NOT touch: `data/datasources/*`, `domain/*`, `network/auth_interceptor`, `pro
 ## 4. Design principles
 C9 auth anatomy (logo ≤30% height, headlineLarge + bodyLarge, CTA full-width 52, secondary link, max-width 420–560); C8 AppPillButton/TextField/Banner/SnackBar; C10 (loading skeleton, error friendly + Try again, disabled 40%, success snackbar); C11 (no "Submit/OK", no raw exceptions).
 
-## 5. Step-by-step tasks
-1. Wrap views in AppScaffold + max-width constraint; replace fields with AppInputField (label above, helper/error below, password toggle) and buttons with AppPillButton primary 52.
-2. Map `auth_error_mapper` outputs to friendly copy + AppBanner/AppErrorState; loading → AppLoader inline in button (keep width); startup → skeleton not spinner.
-3. Fix hardcoded fallbacks ('Orient Staff App' etc.) via existing ARB keys (no new l10n infra yet).
-4. Verify in all 4 routers (`staff/owner/customer/crm` `/login`, `/forgot-password`, `/supervisor-login` uses same surface) light+dark.
+## 5. Step-by-step tasks (REDESIGN MANDATE, PROGRESS rule 13, governs all parts)
+Execute in four parts on `ui/phase-2-auth` with tags `ui-phase-2b/c/d-done`:
+- 2a docs (this file + `phase-2-auth-notes.md` + mandate + DESIGN_SPEC C10 exception). No code.
+- 2b SAFETY NET: characterization tests in `packages/shared_auth/test/` against the CURRENT screens with fake providers (validation, field vs form errors, loading disables submit, resend 30s, OTP expired vs invalid, forgot stages, register mode, supervisor login). Green BEFORE the redesign, kept green after.
+- 2c REDESIGN (main work): full C9 recomposition of LoginView, ForgotPasswordView (all 3 stages), OTP step, register mode, SupervisorLoginView, AuthLoadingView + every state. Replace legacy auth widgets with App* (extend App* additively + tests where parity requires it; remove legacy at zero usages, record in WIDGET_MIGRATION_MAP.md). Pinput token-styled (third-party concession, reason in notes). Brand hooks per app, primary never leaves #215FE6.
+- 2d EVALUATE + FIX: before/after capture matrix + fresh-reviewer judgement (C8/C9/C14 + "redesign clearly visible?") + fix loop to zero fails. Baselines: old → `baseline/before/`, new → `baseline/after-phase-2/`, side-by-side per app. Report in `evaluation/phase-2-auth.md`.
 
 ## 6. Screen-by-screen plan
 - login_view: current problems — cramped, technical errors, mixed buttons. New: context header → single form card → primary CTA sticky bottom → secondary "Forgot password" link. App* swaps: AuthPrimaryButton→AppPillButton, raw TextField→AppInputField.
@@ -37,7 +38,7 @@ Rewrite per C11; keep brand/role terms; create first entries for `COPY_QUESTIONS
 - [ ] UI-only diff; `flutter analyze` clean; 4 apps boot to login
 
 ## 10. Definition of done
-Tick PROGRESS.md (M2 row), session log, commit message (e.g. `ui(auth): redesign login + forgot-password on design system`).
+Tick PROGRESS.md (M2 row), session log, `evaluation/phase-2-auth.md` zero-fail, baselines in `before/` + `after-phase-2/` with side-by-sides, commit message, tags `ui-phase-2b/c/d-done`.
 
 ## 11. Ask me first
 Role-specific login copy (advisor vs customer wording?), registration link visibility in customer (`allowRegistration:true`), brand logo asset approval.
