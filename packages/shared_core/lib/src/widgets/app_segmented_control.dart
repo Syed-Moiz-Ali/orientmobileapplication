@@ -10,7 +10,12 @@ class AppSegmentedOption<T> {
   final T value;
   final String label;
 
-  const AppSegmentedOption({required this.value, required this.label});
+  /// Optional leading glyph rendered at 18 px beside the label.
+  /// Non-directional by default (auth method icons); pass a directional icon
+  /// only when mirroring is wanted.
+  final IconData? icon;
+
+  const AppSegmentedOption({required this.value, required this.label, this.icon});
 }
 
 /// Spec-C8 segmented control (phase-1e-i).
@@ -121,18 +126,33 @@ class AppSegmentedControl<T> extends StatelessWidget {
                       ? Border.all(color: scheme.outline)
                       : null,
                 ),
-                child: Text(
-                  option.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        // Unselected ink sits directly on the sunken track:
-                        // onSurface keeps >= 4.5 in both modes (see doc).
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (option.icon != null) ...[
+                      Icon(
+                        option.icon,
+                        size: 18,
                         color: scheme.onSurface,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.w400,
                       ),
+                      const SizedBox(width: AppSpacing.sm),
+                    ],
+                    Flexible(
+                      child: Text(
+                        option.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              // Unselected ink sits directly on the sunken track:
+                              // onSurface keeps >= 4.5 in both modes (see doc).
+                              color: scheme.onSurface,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
+                            ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

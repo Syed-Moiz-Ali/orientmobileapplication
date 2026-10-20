@@ -109,8 +109,8 @@ void main() {
       // Nothing lands inline on the fields (the en password hint shares its
       // copy with the error string, so pin this on field state, not text).
       final inlineErrors = tester
-          .widgetList<AuthTextField>(find.byType(AuthTextField))
-          .where((f) => f.errorText != null);
+          .widgetList<AppInputField>(find.byType(AppInputField))
+          .where((f) => f.error != null);
       expect(inlineErrors, isEmpty);
       expect(tester.takeException(), isNull);
     });

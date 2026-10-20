@@ -6,7 +6,6 @@
 // mapping, and the success CTA.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 
 import 'test_helpers.dart';
@@ -140,8 +139,8 @@ void main() {
       await reachResetStep(tester);
 
       expect(find.text(t.loginActionResendIn(30)), findsOneWidget);
-      final resend = tester.widget<AuthLinkButton>(
-        find.widgetWithText(AuthLinkButton, t.loginActionResendIn(30)),
+      final resend = tester.widget<AppTextButton>(
+        find.widgetWithText(AppTextButton, t.loginActionResendIn(30)),
       );
       expect(resend.onPressed, isNull);
       expect(tester.takeException(), isNull);

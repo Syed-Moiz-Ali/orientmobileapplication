@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_auth/shared_auth.dart';
+import 'package:shared_core/shared_core.dart';
 
 import 'test_helpers.dart';
 
@@ -33,8 +34,8 @@ void main() {
       expect(find.text(t.loginActionResendCode), findsNothing);
 
       // Disabled while cooling down.
-      final resend = tester.widget<AuthLinkButton>(
-        find.widgetWithText(AuthLinkButton, t.loginActionResendIn(30)),
+      final resend = tester.widget<AppTextButton>(
+        find.widgetWithText(AppTextButton, t.loginActionResendIn(30)),
       );
       expect(resend.onPressed, isNull);
 

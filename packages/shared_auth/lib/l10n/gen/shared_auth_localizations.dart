@@ -688,6 +688,54 @@ abstract class SharedAuthLocalizations {
   /// In en, this message translates to:
   /// **'Enter {digits} digits for {code}'**
   String loginPhoneFormatHint(int digits, String code);
+
+  /// Fallback title of the supervisor sign-in screen (staff copy missing)
+  ///
+  /// In en, this message translates to:
+  /// **'Supervisor access'**
+  String get supervisorLoginTitle;
+
+  /// Fallback supporting text of the supervisor sign-in screen
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to manage bookings, assignments, QC, and workshop operations.'**
+  String get supervisorLoginSubtitle;
+
+  /// Fallback app identity name shown on the supervisor auth shell
+  ///
+  /// In en, this message translates to:
+  /// **'Orient Supervisor Console'**
+  String get supervisorAppName;
+
+  /// Fallback app purpose shown on the supervisor auth shell
+  ///
+  /// In en, this message translates to:
+  /// **'Review incoming bookings, assign advisors and technicians, monitor jobs, and complete quality checks.'**
+  String get supervisorAppPurpose;
+
+  /// Fallback intended users shown on the supervisor auth shell
+  ///
+  /// In en, this message translates to:
+  /// **'For workshop supervisors'**
+  String get supervisorIntendedUsers;
+
+  /// Fallback label of the supervisor username field
+  ///
+  /// In en, this message translates to:
+  /// **'Username or email'**
+  String get supervisorUsernameLabel;
+
+  /// Fallback hint of the supervisor username field
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your username or email'**
+  String get supervisorUsernameHint;
+
+  /// Fallback validation when supervisor credentials are empty
+  ///
+  /// In en, this message translates to:
+  /// **'Enter username and password'**
+  String get supervisorEnterCredentials;
 }
 
 class _SharedAuthLocalizationsDelegate

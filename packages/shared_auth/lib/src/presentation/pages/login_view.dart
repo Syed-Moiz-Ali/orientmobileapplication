@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_auth/src/localization/shared_auth_l10n.dart';
 import 'package:shared_auth/src/presentation/providers/auth_state.dart';
 import 'package:shared_auth/src/presentation/providers/login_provider.dart';
-import 'package:shared_auth/src/presentation/widgets/auth_button.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_error_mapper.dart';
-import 'package:shared_auth/src/presentation/widgets/auth_field.dart';
+import 'package:shared_auth/src/presentation/widgets/auth_otp_field.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_password_strength.dart';
+import 'package:shared_auth/src/presentation/widgets/auth_resend_action.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_surface.dart';
 import 'package:shared_auth/src/presentation/widgets/phone_country.dart';
 import 'package:shared_core/shared_core.dart';
@@ -368,16 +368,29 @@ class _LoginViewState extends ConsumerState<LoginView> {
       subtitle: subtitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (!registering) ...[
-            _MethodSwitcher(
-              mode: _mode,
-              passwordLabel: t.authMethodPassword,
-              codeLabel: t.authMethodCode,
-              onChanged: (mode) => _changeMode(mode, notifier),
-            ),
-            const SizedBox(height: AppDimensions.s20),
-          ],
+          children: [
+            if (!registering) ...[
+              // C9 method switch: the shared sunken-track segmented control
+              // (surface chip + selected Semantics) replaces the bespoke
+              // sliding-thumb switcher from before.
+              AppSegmentedControl<_SignInMode>(
+                options: [
+                  AppSegmentedOption(
+                    value: _SignInMode.password,
+                    label: t.authMethodPassword,
+                    icon: Icons.lock_outline_rounded,
+                  ),
+                  AppSegmentedOption(
+                    value: _SignInMode.code,
+                    label: t.authMethodCode,
+                    icon: Icons.sms_outlined,
+                  ),
+                ],
+                selected: _mode,
+                onChanged: (mode) => _changeMode(mode, notifier),
+              ),
+              const SizedBox(height: AppDimensions.s20),
+            ],
           AnimatedSwitcher(
             duration: AppMotion.resolve(context, AppMotion.standard),
             switchInCurve: AppMotion.enter,
@@ -486,140 +499,6 @@ class _LoginViewState extends ConsumerState<LoginView> {
   }
 }
 
-/// Two-option segmented control for the password / one-time-code sign-in
-/// methods. Preserves the exact [AuthMethod] transitions owned by
-/// [LoginNotifier]; it only chooses which method the form presents.
-class _MethodSwitcher extends StatelessWidget {
-  final _SignInMode mode;
-  final String passwordLabel;
-  final String codeLabel;
-  final ValueChanged<_SignInMode> onChanged;
-
-  const _MethodSwitcher({
-    required this.mode,
-    required this.passwordLabel,
-    required this.codeLabel,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final passwordSelected = mode == _SignInMode.password;
-
-    return Semantics(
-      container: true,
-      child: Container(
-        padding: const EdgeInsets.all(AppDimensions.s4),
-        decoration: BoxDecoration(
-          color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
-          border: Border.all(color: colors.outlineVariant),
-        ),
-        // One sliding cobalt thumb (AnimatedAlign, RTL-safe): the active
-        // method owns the color, the idle one recedes. Labels sit above
-        // transparently and keep their own selected semantics for
-        // assistive technology.
-        child: Stack(
-          children: [
-            AnimatedAlign(
-              duration: AppMotion.resolve(context, AppMotion.fast),
-              curve: AppMotion.enter,
-              alignment: passwordSelected ? AlignmentDirectional.centerStart : AlignmentDirectional.centerEnd,
-              child: FractionallySizedBox(
-                widthFactor: 0.5,
-                child: Container(
-                  constraints: const BoxConstraints(minHeight: 48),
-                  decoration: BoxDecoration(
-                    color: colors.primary,
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colors.primary.withValues(alpha: 0.35),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Row(
-              children: [
-                _tab(
-                  context,
-                  icon: Icons.lock_outline_rounded,
-                  label: passwordLabel,
-                  selected: passwordSelected,
-                  onTap: () => onChanged(_SignInMode.password),
-                ),
-                _tab(
-                  context,
-                  icon: Icons.sms_outlined,
-                  label: codeLabel,
-                  selected: !passwordSelected,
-                  onTap: () => onChanged(_SignInMode.code),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _tab(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return Expanded(
-      child: Semantics(
-        button: true,
-        selected: selected,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-            hoverColor: colors.primary.withValues(alpha: 0.08),
-            child: Container(
-              constraints: const BoxConstraints(minHeight: 48),
-              alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s8, vertical: AppDimensions.s10),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(icon, size: AppDimensions.iconSm, color: selected ? colors.onPrimary : colors.onSurfaceVariant),
-                  const SizedBox(width: AppDimensions.s6),
-                  Flexible(
-                    child: Text(
-                      label,
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: selected ? colors.onPrimary : colors.onSurfaceVariant,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// Identifier row: searchable country prefix + the email/mobile field.
 ///
 /// The prefix shows only for phone-like entry (LTR-locked dial code with
@@ -627,6 +506,9 @@ class _MethodSwitcher extends StatelessWidget {
 /// notifier country code stays in sync through [onCountryChanged].
 /// Phone-like entry additionally shows the per-country digit hint
 /// (`loginPhoneFormatHint`) so the expected format is visible before submit.
+/// Both branches render [AppInputField] (label above, 52 CTA rhythm, live
+/// error region); the identifier value + caret stay LTR-locked via
+/// `forceLtr` so mixed Arabic/Latin entry stays legible in RTL layouts.
 class _IdentifierRow extends StatelessWidget {
   final TextEditingController controller;
   final LoginState state;
@@ -659,24 +541,26 @@ class _IdentifierRow extends StatelessWidget {
       builder: (context, value, _) {
         final phoneLike = !_looksLikeEmail(value.text.trim());
         if (!phoneLike) {
-          return AuthTextField(
-            controller: controller,
+          return AppInputField(
             label: t.loginFieldIdentifier,
             hint: t.loginFieldIdentifierHint,
-            icon: Icons.alternate_email_rounded,
+            controller: controller,
+            prefixIcon: Icons.alternate_email_rounded,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             autofillHints: const [AutofillHints.username],
-            textDirection: TextDirection.ltr,
+            forceLtr: true,
             enabled: enabled,
-            errorText: errorText,
+            error: errorText,
             focusNode: focusNode,
             onChanged: onChanged,
             onSubmitted: onSubmitted,
           );
         }
         final theme = Theme.of(context);
-        final labelStyle = theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700, height: 1.3);
+        // Blank run in the field's own label style + the field's own label
+        // gap, so the prefix stays aligned with the input at any text scale.
+        final labelStyle = theme.textTheme.labelMedium;
         final country = phoneCountryFor(state.countryCode);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -685,30 +569,27 @@ class _IdentifierRow extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Mirrors the field's own label row (same style + gap) with a
-                // blank run so the 48px prefix stays aligned with the input at
-                // any text scale — no pixel guesses.
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text('\u00A0', style: labelStyle),
-                    const SizedBox(height: AppDimensions.s8),
+                    const SizedBox(height: AppSpacing.labelValueGap),
                     AuthCountryCodeButton(value: state.countryCode, enabled: enabled, onChanged: onCountryChanged),
                   ],
                 ),
                 const SizedBox(width: AppDimensions.s8),
                 Expanded(
-              child: AuthTextField(
-                controller: controller,
+              child: AppInputField(
                 label: t.loginFieldIdentifier,
                 hint: t.loginFieldIdentifierHint,
-                icon: Icons.alternate_email_rounded,
+                controller: controller,
+                prefixIcon: Icons.alternate_email_rounded,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
                 autofillHints: const [AutofillHints.username],
-                textDirection: TextDirection.ltr,
+                forceLtr: true,
                 enabled: enabled,
-                errorText: errorText,
+                error: errorText,
                 focusNode: focusNode,
                 onChanged: onChanged,
                 onSubmitted: onSubmitted,
@@ -783,16 +664,19 @@ class _SignInPasswordForm extends StatelessWidget {
             onCountryChanged: onCountryChanged,
           ),
           const SizedBox(height: AppDimensions.s16),
-          AuthTextField(
-            controller: passwordCtrl,
+          AppInputField(
             label: t.loginFieldPassword,
             hint: t.loginFieldPasswordHint,
-            icon: Icons.lock_outline_rounded,
+            controller: passwordCtrl,
+            prefixIcon: Icons.lock_outline_rounded,
             obscureText: true,
+            passwordToggle: true,
+            showPasswordTooltip: t.authShowPassword,
+            hidePasswordTooltip: t.authHidePassword,
             textInputAction: TextInputAction.done,
             autofillHints: const [AutofillHints.password],
             enabled: !busy,
-            errorText: passwordError,
+            error: passwordError,
             focusNode: passwordFocus,
             onChanged: onPasswordChanged,
             onSubmitted: (_) => onSubmit(),
@@ -801,11 +685,11 @@ class _SignInPasswordForm extends StatelessWidget {
             const SizedBox(height: AppDimensions.s4),
             Align(
               alignment: AlignmentDirectional.centerEnd,
-              child: AuthLinkButton(label: t.loginActionForgotPassword, onPressed: busy ? null : onForgotPassword),
+              child: AppTextButton(label: t.loginActionForgotPassword, onPressed: busy ? null : onForgotPassword),
             ),
           ],
           const SizedBox(height: AppDimensions.s24),
-          AuthPrimaryButton(
+          AppPillButton.primary(
             label: t.loginActionContinue,
             busyLabel: t.authActionSigningIn,
             icon: Icons.arrow_forward_rounded,
@@ -815,7 +699,7 @@ class _SignInPasswordForm extends StatelessWidget {
           if (allowRegistration) ...[
             const SizedBox(height: AppDimensions.s12),
             Center(
-              child: AuthLinkButton(label: t.loginNewCustomer, onPressed: busy ? null : notifier.toggleRegister),
+              child: AppTextButton(label: t.loginNewCustomer, onPressed: busy ? null : notifier.toggleRegister),
             ),
           ],
         ],
@@ -872,17 +756,17 @@ class _RegisterForm extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AuthTextField(
-            controller: nameCtrl,
+          AppInputField(
             label: t.loginFieldFullName,
             hint: t.loginFieldFullNameHint,
-            icon: Icons.person_outline_rounded,
+            controller: nameCtrl,
+            prefixIcon: Icons.person_outline_rounded,
             keyboardType: TextInputType.name,
             textInputAction: TextInputAction.next,
             textCapitalization: TextCapitalization.words,
             autofillHints: const [AutofillHints.name],
             enabled: !busy,
-            errorText: nameError,
+            error: nameError,
             focusNode: nameFocus,
             onChanged: onNameChanged,
           ),
@@ -897,16 +781,19 @@ class _RegisterForm extends StatelessWidget {
             onCountryChanged: onCountryChanged,
           ),
           const SizedBox(height: AppDimensions.s16),
-          AuthTextField(
-            controller: passwordCtrl,
+          AppInputField(
             label: t.loginFieldCreatePassword,
             hint: t.loginFieldCreatePasswordHint,
-            icon: Icons.lock_outline_rounded,
+            controller: passwordCtrl,
+            prefixIcon: Icons.lock_outline_rounded,
             obscureText: true,
+            passwordToggle: true,
+            showPasswordTooltip: t.authShowPassword,
+            hidePasswordTooltip: t.authHidePassword,
             textInputAction: TextInputAction.done,
             autofillHints: const [AutofillHints.newPassword],
             enabled: !busy,
-            errorText: passwordError,
+            error: passwordError,
             focusNode: passwordFocus,
             belowField: AuthPasswordStrength(password: state.password),
             labelTrailing: Text(
@@ -920,7 +807,7 @@ class _RegisterForm extends StatelessWidget {
             onSubmitted: (_) => onSubmit(),
           ),
           const SizedBox(height: AppDimensions.s24),
-          AuthPrimaryButton(
+          AppPillButton.primary(
             label: t.loginActionCreateAccount,
             busyLabel: t.authActionCreating,
             icon: Icons.arrow_forward_rounded,
@@ -929,7 +816,7 @@ class _RegisterForm extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.s8),
           Center(
-            child: AuthLinkButton(label: t.loginAlreadyHaveAccount, onPressed: busy ? null : notifier.toggleRegister),
+            child: AppTextButton(label: t.loginAlreadyHaveAccount, onPressed: busy ? null : notifier.toggleRegister),
           ),
         ],
       ),
@@ -982,7 +869,7 @@ class _CodeForm extends StatelessWidget {
               onSubmitted: (_) => onVerifyCode(),
             ),
             const SizedBox(height: AppDimensions.s24),
-            AuthPrimaryButton(
+            AppPillButton.primary(
               label: t.loginActionVerifyCode,
               busyLabel: t.authActionVerifying,
               icon: Icons.verified_rounded,
@@ -996,7 +883,7 @@ class _CodeForm extends StatelessWidget {
               spacing: AppDimensions.s8,
               runSpacing: AppDimensions.s4,
               children: [
-                AuthLinkButton(label: t.loginActionChangeIdentifier, onPressed: busy ? null : notifier.reset),
+                AppTextButton(label: t.loginActionChangeIdentifier, onPressed: busy ? null : notifier.reset),
                 AuthResendAction(cooldownSeconds: state.resendCooldown, busy: busy, onResend: onSendCode),
               ],
             ),
@@ -1020,7 +907,7 @@ class _CodeForm extends StatelessWidget {
             onSubmitted: (_) => onSendCode(),
           ),
           const SizedBox(height: AppDimensions.s24),
-          AuthPrimaryButton(
+          AppPillButton.primary(
             label: t.loginActionSendCode,
             busyLabel: t.authActionSending,
             icon: Icons.arrow_forward_rounded,

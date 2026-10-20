@@ -214,5 +214,22 @@
   "@loginPhoneFormatHint": {
     "description": "Per-country phone format hint under phone-like identifier fields",
     "placeholders": { "digits": { "type": "int" }, "code": { "type": "String" } }
-  }
+  },
+
+  "supervisorLoginTitle": "Supervisor access",
+  "@supervisorLoginTitle": { "description": "Fallback title of the supervisor sign-in screen (staff copy missing)" },
+  "supervisorLoginSubtitle": "Sign in to manage bookings, assignments, QC, and workshop operations.",
+  "@supervisorLoginSubtitle": { "description": "Fallback supporting text of the supervisor sign-in screen" },
+  "supervisorAppName": "Orient Supervisor Console",
+  "@supervisorAppName": { "description": "Fallback app identity name shown on the supervisor auth shell" },
+  "supervisorAppPurpose": "Review incoming bookings, assign advisors and technicians, monitor jobs, and complete quality checks.",
+  "@supervisorAppPurpose": { "description": "Fallback app purpose shown on the supervisor auth shell" },
+  "supervisorIntendedUsers": "For workshop supervisors",
+  "@supervisorIntendedUsers": { "description": "Fallback intended users shown on the supervisor auth shell" },
+  "supervisorUsernameLabel": "Username or email",
+  "@supervisorUsernameLabel": { "description": "Fallback label of the supervisor username field" },
+  "supervisorUsernameHint": "Enter your username or email",
+  "@supervisorUsernameHint": { "description": "Fallback hint of the supervisor username field" },
+  "supervisorEnterCredentials": "Enter username and password",
+  "@supervisorEnterCredentials": { "description": "Fallback validation when supervisor credentials are empty" }
 }

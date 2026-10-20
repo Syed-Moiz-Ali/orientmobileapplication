@@ -63,6 +63,13 @@ class AppPillButton extends StatefulWidget {
   final bool isExpanded;
 
   final bool isLoading;
+
+  /// Optional label shown while [isLoading] is true (e.g. "Signing in…").
+  /// The rest label stays laid out invisibly behind the busy row so the
+  /// button width never shifts; the busy label itself announces the state
+  /// change. When null the rest label is kept with an overlaid spinner.
+  final String? busyLabel;
+
   final _AppPillVariant _variant;
 
   const AppPillButton.primary({
@@ -74,6 +81,7 @@ class AppPillButton extends StatefulWidget {
     this.mirrorIcon,
     this.isExpanded = true,
     this.isLoading = false,
+    this.busyLabel,
   }) : _variant = _AppPillVariant.primary;
 
   const AppPillButton.secondary({
@@ -85,6 +93,7 @@ class AppPillButton extends StatefulWidget {
     this.mirrorIcon,
     this.isExpanded = true,
     this.isLoading = false,
+    this.busyLabel,
   }) : _variant = _AppPillVariant.secondary;
 
   const AppPillButton.ghost({
@@ -96,6 +105,7 @@ class AppPillButton extends StatefulWidget {
     this.mirrorIcon,
     this.isExpanded = false,
     this.isLoading = false,
+    this.busyLabel,
   }) : _variant = _AppPillVariant.ghost;
 
   const AppPillButton.destructive({
@@ -107,6 +117,7 @@ class AppPillButton extends StatefulWidget {
     this.mirrorIcon,
     this.isExpanded = true,
     this.isLoading = false,
+    this.busyLabel,
   }) : _variant = _AppPillVariant.destructive;
 
   const AppPillButton.success({
@@ -118,6 +129,7 @@ class AppPillButton extends StatefulWidget {
     this.mirrorIcon,
     this.isExpanded = true,
     this.isLoading = false,
+    this.busyLabel,
   }) : _variant = _AppPillVariant.success;
 
   @override
@@ -205,18 +217,43 @@ class _AppPillButtonState extends State<AppPillButton> {
       ],
     );
 
+    final displayLabel =
+        widget.isLoading ? (widget.busyLabel ?? widget.label) : widget.label;
     if (widget.isLoading) {
+      // Width preservation: the rest label stays laid out invisibly so the
+      // pill never shifts; the busy row (spinner + busy label when set)
+      // paints on top. The busy label ellipsizes instead of overflowing.
       content = Stack(
         alignment: Alignment.center,
         children: [
-          Opacity(opacity: 0, child: content),
-          SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2.2,
-              valueColor: AlwaysStoppedAnimation<Color>(effectiveFg),
-            ),
+          // Hidden from assistive tech: only the busy row + the outer
+          // "<busy>, loading" label announce, never the retired rest label.
+          ExcludeSemantics(child: Opacity(opacity: 0, child: content)),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.2,
+                  valueColor: AlwaysStoppedAnimation<Color>(effectiveFg),
+                ),
+              ),
+              if (widget.busyLabel != null) ...[
+                const SizedBox(width: AppSpacing.sm),
+                Flexible(
+                  child: Text(
+                    displayLabel,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: labelStyle,
+                  ),
+                ),
+              ],
+            ],
           ),
         ],
       );
@@ -268,7 +305,7 @@ class _AppPillButtonState extends State<AppPillButton> {
     return Semantics(
       button: true,
       enabled: _interactive,
-      label: widget.isLoading ? '${widget.label}, loading' : widget.label,
+      label: widget.isLoading ? '$displayLabel, loading' : widget.label,
       child: Focus(
         onFocusChange: (focused) => setState(() => _focused = focused),
         child: GestureDetector(

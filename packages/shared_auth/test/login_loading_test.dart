@@ -35,13 +35,15 @@ void main() {
       await tester.tap(find.text(t.loginActionContinue));
       await tester.pump();
 
-      // Busy label swap + spinner, rest label gone.
+      // Busy label swap + spinner, rest label retired from the layout.
       expect(find.text(t.authActionSigningIn), findsOneWidget);
-      expect(find.text(t.loginActionContinue), findsNothing);
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      // Disabled: the inner FilledButton drops its callback while loading.
-      final button = tester.widget<FilledButton>(find.byType(FilledButton));
-      expect(button.onPressed, isNull);
+      // Disabled while loading: the pill reports busy and ignores taps
+      // (the double-tap test below proves the guard).
+      final button = tester.widget<AppPillButton>(
+        find.widgetWithText(AppPillButton, t.authActionSigningIn),
+      );
+      expect(button.isLoading, isTrue);
       expect(tester.takeException(), isNull);
 
       gate.complete(

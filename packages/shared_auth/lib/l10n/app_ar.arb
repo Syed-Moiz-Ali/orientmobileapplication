@@ -104,5 +104,14 @@
   "errorOtpExpired": "انتهت صلاحية هذا الرمز. اطلب رمزاً جديداً وحاول مجدداً.",
   "errorOtpInvalid": "هذا الرمز غير صحيح. تحقق من الأرقام الستة وحاول مجدداً.",
   "errorServerRetryRef": "حدث خطأ من جهتنا. حاول مجدداً — وإذا استمر، تواصل مع دعم الورشة (مرجع 500).",
-  "loginPhoneFormatHint": "أدخل {digits} أرقام لـ {code}"
+  "loginPhoneFormatHint": "أدخل {digits} أرقام لـ {code}",
+
+  "supervisorLoginTitle": "دخول المشرف",
+  "supervisorLoginSubtitle": "سجّل الدخول لإدارة الحجوزات والإسناد وفحوص الجودة وعمليات الورشة.",
+  "supervisorAppName": "منصة أورينت — المشرف",
+  "supervisorAppPurpose": "راجع الحجوزات الواردة وأسند المهام للمستشارين والفنيين وتابع الأعمال وأكمل فحوص الجودة.",
+  "supervisorIntendedUsers": "لمشرفي الورشة",
+  "supervisorUsernameLabel": "اسم المستخدم أو البريد الإلكتروني",
+  "supervisorUsernameHint": "أدخل اسم المستخدم أو البريد الإلكتروني",
+  "supervisorEnterCredentials": "أدخل اسم المستخدم وكلمة المرور"
 }

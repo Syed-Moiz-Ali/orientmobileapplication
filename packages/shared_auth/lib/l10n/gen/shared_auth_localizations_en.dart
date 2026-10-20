@@ -333,4 +333,30 @@ class SharedAuthLocalizationsEn extends SharedAuthLocalizations {
   String loginPhoneFormatHint(int digits, String code) {
     return 'Enter $digits digits for $code';
   }
+
+  @override
+  String get supervisorLoginTitle => 'Supervisor access';
+
+  @override
+  String get supervisorLoginSubtitle =>
+      'Sign in to manage bookings, assignments, QC, and workshop operations.';
+
+  @override
+  String get supervisorAppName => 'Orient Supervisor Console';
+
+  @override
+  String get supervisorAppPurpose =>
+      'Review incoming bookings, assign advisors and technicians, monitor jobs, and complete quality checks.';
+
+  @override
+  String get supervisorIntendedUsers => 'For workshop supervisors';
+
+  @override
+  String get supervisorUsernameLabel => 'Username or email';
+
+  @override
+  String get supervisorUsernameHint => 'Enter your username or email';
+
+  @override
+  String get supervisorEnterCredentials => 'Enter username and password';
 }

@@ -5,7 +5,7 @@
 // create-password, and empty name in register mode.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_auth/shared_auth.dart';
+import 'package:shared_core/shared_core.dart';
 
 import 'test_helpers.dart';
 
@@ -76,9 +76,9 @@ void main() {
       // pin the error on the password field itself, not just the text.
       expect(find.text(t.validationEnterPassword), findsWidgets);
       final passwordField = tester
-          .widgetList<AuthTextField>(find.byType(AuthTextField))
+          .widgetList<AppInputField>(find.byType(AppInputField))
           .firstWhere((f) => f.label == t.loginFieldPassword);
-      expect(passwordField.errorText, t.validationEnterPassword);
+      expect(passwordField.error, t.validationEnterPassword);
       expect(repo.loginCalls, 0);
       expect(tester.takeException(), isNull);
     });
@@ -145,7 +145,7 @@ void main() {
       final t = arAuthL10n();
       await pumpLoginView(tester, locale: const Locale('ar'));
 
-      await tester.tap(find.byType(AuthPrimaryButton));
+      await tester.tap(find.text(t.loginActionContinue));
       await tester.pump();
 
       expect(find.text(t.validationEnterIdentifier), findsOneWidget);

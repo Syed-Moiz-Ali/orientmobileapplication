@@ -80,6 +80,22 @@ once the legacy widget hits zero usages.
 | `Drawer` (6: crm_drawer + adaptive nav) | crm + shells | NONE in phase 1 | `NavigationDrawer` migration is a module-phase item |
 | `Stepper` (12: staff 7) + `TabBar` (2 core) + custom pill rows | forms, supervisor/team filters | `AppSegmentedControl`/`AppPillTabs` + `AppProgressBar` step headers | vertical Stepper flows stay caller-side |
 
+## Auth controls (phase-2c — shared_auth + supervisor login)
+
+| Legacy (auth-local) | Homes (call sites) | App* replacement | Notes |
+|---|---|---|---|
+| `AuthTextField` | login (6), forgot (3), supervisor (2) | `AppInputField` (+ `belowField`, `labelTrailing`, localized toggle tooltips, `textCapitalization` extensions) | DELETED (`auth_field.dart` → `auth_otp_field.dart`). LTR force, autofill, focus order, keyboard actions preserved via pass-through |
+| `AuthPrimaryButton` (+ `AuthButton` alias) | login (4), forgot (3), supervisor (1), `AuthSessionExpiredView` (1) | `AppPillButton.primary` (+ `busyLabel` extension) | DELETED (`auth_button.dart` removed). Busy label-swap + disabled treatment preserved via `busyLabel` |
+| `AuthLinkButton` | login (3), forgot (2), supervisor (1), recovery progress (1) | `AppTextButton` | DELETED. 48dp target, icon support kept where used |
+| `AuthNotice` / `AuthNoticeSlot` | supervisor (1) | `AppBanner` (error kind + retry action) | DELETED (`auth_notice.dart` removed). Form-level failures stay snackbar+retry in shared views (reviewer-judged fit) |
+| `_MethodSwitcher` (private) | login (1) | `AppSegmentedControl` (+ `icon` on `AppSegmentedOption`) | DELETED (inline `AppSegmentedControl`, icons preserved via extension) |
+| `AuthResendAction` | login (1), forgot (1) | token-rebuilt on `AppTextButton` (same class name) | KEPT as auth-scoped composite: no App* countdown control exists; internals now pure tokens + `AppTextButton`, Row→Wrap (fixes a 320px transient overflow) |
+| `AuthCountryCodeButton` | login (1, phone-like entry) | none (token-refresh in place) | KEPT: domain-specific dial-code picker on tokens + `AppSelectionSheet`; no App* equivalent. Aligned to the input border ramp |
+| `AuthPasswordStrength` | login register (1), forgot reset (1) | none (restyled, feeds `AppInputField.belowField`) | KEPT as auth-scoped scoring UI; concept retained per plan |
+| `AuthOtpField` (Pinput) | login code (1), forgot reset (1) | none — third-party concession | KEPT: full token-styling pass (resting = `inputBorder` token, 1.5px focus/error, AA pairs asserted). LTR lock, autofocus, digitsOnly, completion untouched |
+| `SecurityBadge` | `AuthShell` footer (all auth screens) | none | KEPT: app-aware legal composite, token-only |
+| `AuthShell` / `AuthSurface` internals | login, forgot, supervisor | none (layout authority) | KEPT per plan (already C9) |
+
 ## Rename paths to spec names (polish phase, one codemod each at zero usages)
 
 | Interim (built) | Spec name | Blocked by |

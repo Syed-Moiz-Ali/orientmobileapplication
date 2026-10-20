@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_auth/src/localization/shared_auth_l10n.dart';
 import 'package:shared_auth/src/presentation/providers/auth_providers.dart';
-import 'package:shared_auth/src/presentation/widgets/auth_button.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_error_mapper.dart';
-import 'package:shared_auth/src/presentation/widgets/auth_field.dart';
+import 'package:shared_auth/src/presentation/widgets/auth_otp_field.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_password_strength.dart';
+import 'package:shared_auth/src/presentation/widgets/auth_resend_action.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_surface.dart';
 import 'package:shared_core/shared_core.dart';
 
@@ -394,7 +394,7 @@ class _RecoveryProgress extends StatelessWidget {
       children: [
         Align(
           alignment: AlignmentDirectional.centerStart,
-          child: AuthLinkButton(
+          child: AppTextButton(
             label: t.forgotSignIn,
             icon: Icons.arrow_back_rounded,
             onPressed: onBackToLogin,
@@ -457,17 +457,17 @@ class _IdentifierStep extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  AuthTextField(
-                    controller: controller,
+                  AppInputField(
                     label: t.loginFieldIdentifier,
                     hint: t.loginFieldIdentifierHint,
-                    icon: Icons.alternate_email_rounded,
+                    controller: controller,
+                    prefixIcon: Icons.alternate_email_rounded,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.done,
                     autofillHints: const [AutofillHints.username],
-                    textDirection: TextDirection.ltr,
+                    forceLtr: true,
                     enabled: !isLoading,
-                    errorText: error,
+                    error: error,
                     focusNode: focusNode,
                     onChanged: (_) => onChanged(),
                     onSubmitted: (_) => onSubmit(),
@@ -488,7 +488,7 @@ class _IdentifierStep extends StatelessWidget {
             },
           ),
           const SizedBox(height: AppDimensions.s24),
-          AuthPrimaryButton(
+          AppPillButton.primary(
             label: t.forgotActionSendRecoveryCode,
             busyLabel: t.authActionSending,
             icon: Icons.arrow_forward_rounded,
@@ -555,23 +555,26 @@ class _ResetStep extends StatelessWidget {
             enabled: !isLoading,
           ),
           const SizedBox(height: AppDimensions.s20),
-          AuthTextField(
-            controller: passwordCtrl,
+          AppInputField(
             label: t.forgotFieldNewPassword,
             hint: t.forgotFieldNewPasswordHint,
-            icon: Icons.lock_outline_rounded,
+            controller: passwordCtrl,
+            prefixIcon: Icons.lock_outline_rounded,
             obscureText: true,
+            passwordToggle: true,
+            showPasswordTooltip: t.authShowPassword,
+            hidePasswordTooltip: t.authHidePassword,
             textInputAction: TextInputAction.done,
             autofillHints: const [AutofillHints.newPassword],
             enabled: !isLoading,
-            errorText: passwordError,
+            error: passwordError,
             focusNode: passwordFocus,
             belowField: AuthPasswordStrength(password: password),
             onChanged: onPasswordChanged,
             onSubmitted: (_) => onSubmit(),
           ),
           const SizedBox(height: AppDimensions.s24),
-          AuthPrimaryButton(
+          AppPillButton.primary(
             label: t.forgotActionUpdatePassword,
             busyLabel: t.authActionUpdating,
             icon: Icons.check_rounded,
@@ -585,7 +588,7 @@ class _ResetStep extends StatelessWidget {
             spacing: AppDimensions.s8,
             runSpacing: AppDimensions.s4,
             children: [
-              AuthLinkButton(
+              AppTextButton(
                 label: t.loginActionChangeIdentifier,
                 onPressed: isLoading ? null : onEditIdentifier,
               ),
@@ -602,6 +605,13 @@ class _ResetStep extends StatelessWidget {
   }
 }
 
+/// Terminal confirmation of the recovery flow (kept per the phase-2a
+/// decision + DESIGN_SPEC C10 exception: a snackbar plus an immediate
+/// redirect would erase the proof of completion).
+///
+/// Redesigned (phase-2c): a warm layered emblem — soft success halo, solid
+/// success disc, white check — announced once as a live region under the
+/// shell's done title/subtitle, then the single full-width return CTA.
 class _RecoverySuccess extends StatelessWidget {
   final VoidCallback onBackToLogin;
 
@@ -610,29 +620,64 @@ class _RecoverySuccess extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = SharedAuthL10n.of(context);
-    final success = context.semanticColors.success.base;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final semantic = context.semanticColors;
+    final dark = theme.brightness == Brightness.dark;
+    // Same AA-verified pair as AppPillButton.success: deep success disc with
+    // the theme on-primary check (5.02 light / 10.24 dark), halo in the
+    // semantic success soft.
+    final disc = dark ? AppDarkColors.successStrong : AppColors.successStrong;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Center(
-          child: Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: success.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
+    return Semantics(
+      liveRegion: true,
+      label: t.forgotDoneTitle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(
+              width: AppDimensions.s64 + AppDimensions.s16,
+              height: AppDimensions.s64 + AppDimensions.s16,
+              decoration: BoxDecoration(
+                color: semantic.success.subtle,
+                shape: BoxShape.circle,
+                border: Border.all(color: semantic.success.border),
+              ),
+              child: Center(
+                child: Container(
+                  width: AppDimensions.s48,
+                  height: AppDimensions.s48,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: disc,
+                  ),
+                  child: Icon(
+                    Icons.check_rounded,
+                    size: AppDimensions.iconXl,
+                    color: colors.onPrimary,
+                  ),
+                ),
+              ),
             ),
-            child: Icon(Icons.check_rounded, size: 32, color: success),
           ),
-        ),
-        const SizedBox(height: AppDimensions.s24),
-        AuthPrimaryButton(
-          label: t.forgotBackToSignIn,
-          icon: Icons.login_rounded,
-          onPressed: onBackToLogin,
-        ),
-      ],
+          const SizedBox(height: AppDimensions.s12),
+          Text(
+            t.forgotDoneSubtitle,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s24),
+          AppPillButton.primary(
+            label: t.forgotBackToSignIn,
+            icon: Icons.login_rounded,
+            onPressed: onBackToLogin,
+          ),
+        ],
+      ),
     );
   }
 }

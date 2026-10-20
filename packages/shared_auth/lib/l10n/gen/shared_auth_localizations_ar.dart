@@ -333,4 +333,30 @@ class SharedAuthLocalizationsAr extends SharedAuthLocalizations {
   String loginPhoneFormatHint(int digits, String code) {
     return 'أدخل $digits أرقام لـ $code';
   }
+
+  @override
+  String get supervisorLoginTitle => 'دخول المشرف';
+
+  @override
+  String get supervisorLoginSubtitle =>
+      'سجّل الدخول لإدارة الحجوزات والإسناد وفحوص الجودة وعمليات الورشة.';
+
+  @override
+  String get supervisorAppName => 'منصة أورينت — المشرف';
+
+  @override
+  String get supervisorAppPurpose =>
+      'راجع الحجوزات الواردة وأسند المهام للمستشارين والفنيين وتابع الأعمال وأكمل فحوص الجودة.';
+
+  @override
+  String get supervisorIntendedUsers => 'لمشرفي الورشة';
+
+  @override
+  String get supervisorUsernameLabel => 'اسم المستخدم أو البريد الإلكتروني';
+
+  @override
+  String get supervisorUsernameHint => 'أدخل اسم المستخدم أو البريد الإلكتروني';
+
+  @override
+  String get supervisorEnterCredentials => 'أدخل اسم المستخدم وكلمة المرور';
 }
