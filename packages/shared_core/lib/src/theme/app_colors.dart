@@ -118,9 +118,53 @@ class AppColors {
   static const Color dangerBorder = Color(0xFFFECACA);
 
   /// Ice Blue / Cyan: telemetry chips, stage indicators, scheduled operations.
+  ///
+  /// NOTE (phase-0b): role-picker icons, CRM channel colors and the chart
+  /// series intentionally keep these ice-blue values. The *semantic* info
+  /// family ([AppSemanticColors.info]) now resolves to the teal-cyan family
+  /// below — see DESIGN_SYSTEM.md "info teal" before reusing these directly.
   static const Color info = Color(0xFF0284C7);
   static const Color infoSubtle = Color(0xFFE0F2FE);
   static const Color infoBorder = Color(0xFFBAE6FD);
+
+  // ---------------------------------------------------------------------------
+  // Accent family (phase-0b, additive): the #215FE6 brand with explicit
+  // pressed / soft / ink roles. White on accent = 5.46:1, white on pressed =
+  // 8.72:1, pressed-ink on soft = 7.3:1 (all WCAG AA, see swatch report).
+  // ---------------------------------------------------------------------------
+  /// Pressed state of the brand accent (buttons, active nav).
+  static const Color accentPressed = Color(0xFF1E40AF);
+
+  /// Tinted accent background (chips, selected rows, icon tiles).
+  static const Color accentSoft = Color(0xFFE3ECFD);
+
+  /// Legible ink on [accentSoft] (and pressed-state label ink).
+  static const Color accentInk = Color(0xFF1E40AF);
+
+  /// Ink for text sitting directly on [accentPressed] (white, 8.72:1).
+  /// Dark filled buttons keep dark ink on the bright base but MUST flip to
+  /// this ink in the pressed state (button themes adopt it in module phases;
+  /// until then dark-pressed ships the pre-existing 3.81:1 pair — see
+  /// DESIGN_SYSTEM.md "pressed ink").
+  static const Color accentPressedInk = Color(0xFFFFFFFF);
+
+  // ---------------------------------------------------------------------------
+  // Info teal-cyan family (phase-0b, additive): the new semantic-info
+  // resolution. Kept visually distinct from accent (#215FE6 cobalt) and
+  /// success (#10B981 emerald) — see the token swatch evaluation.
+  // White on base = 5.36:1, base on canvas = 5.18:1, ink on soft = 6.45:1.
+  // ---------------------------------------------------------------------------
+  /// Teal-cyan base for info dots, icons and strong fills (was ice blue).
+  static const Color infoTeal = Color(0xFF0E7490);
+
+  /// Pale teal container fill for info chips and banners.
+  static const Color infoTealSoft = Color(0xFFE6F4F7);
+
+  /// Hairline ring for teal containers.
+  static const Color infoTealBorder = Color(0xFF9FD0D9);
+
+  /// Legible ink on [infoTealSoft] (and teal body text on canvas).
+  static const Color infoTealInk = Color(0xFF155E75);
 
   // ---------------------------------------------------------------------------
   // Dark Navy High-Emphasis Tokens
@@ -299,6 +343,37 @@ class AppDarkColors {
   static const Color info = Color(0xFF38BDF8);
   static const Color infoSubtle = Color(0xFF0C4A6E);
   static const Color infoBorder = Color(0xFF075985);
+
+  // ---------------------------------------------------------------------------
+  // Dark accent + info-teal families (phase-0b, additive). Dark tokens are
+  // DEFINED here but NOT wired into staff/owner/CRM (light-first; customer
+  // dark must not regress). Dark base #45B7C7 on dark ink #090B10 = 8.3:1,
+  // dark teal ink on dark soft = 8.63:1.
+  // ---------------------------------------------------------------------------
+  /// Dark pressed state of the brand accent.
+  static const Color accentPressed = Color(0xFF2563EB);
+
+  /// Dark tinted accent background.
+  static const Color accentSoft = Color(0xFF1E2A4A);
+
+  /// Legible ink on dark [accentSoft].
+  static const Color accentInk = Color(0xFFD5DEFF);
+
+  /// Ink for text on dark [accentPressed] (white, 5.07:1 — dark ink on the
+  /// pressed fill is only 3.81:1, so pressed state flips ink; see light note).
+  static const Color accentPressedInk = Color(0xFFFFFFFF);
+
+  /// Dark teal-cyan base (lighter variant of the light teal for dark canvas).
+  static const Color infoTeal = Color(0xFF45B7C7);
+
+  /// Dark teal container fill.
+  static const Color infoTealSoft = Color(0xFF0C3238);
+
+  /// Dark teal hairline ring.
+  static const Color infoTealBorder = Color(0xFF1E5A64);
+
+  /// Legible ink on dark [infoTealSoft].
+  static const Color infoTealInk = Color(0xFF8FD9E3);
 
   /// Feedback / rating star.
   static const Color ratingStar = Color(0xFFFBBF24);

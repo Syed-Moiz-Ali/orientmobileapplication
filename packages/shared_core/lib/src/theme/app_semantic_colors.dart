@@ -234,11 +234,15 @@ class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
       border: AppColors.dangerBorder,
       ink: Color(0xFFB91C1C),
     ),
+    // Phase-0b repoint (ONE hunk): semantic info resolves to the teal-cyan
+    // family. REVERT: restore base/subtle/border/ink to AppColors.info /
+    // infoSubtle / infoBorder / Color(0xFF1D4ED8). Direct AppColors.info users
+    // (role icons, CRM cyan, chart series) intentionally keep ice blue.
     info: AppStatusColors(
-      base: AppColors.info,
-      subtle: AppColors.infoSubtle,
-      border: AppColors.infoBorder,
-      ink: Color(0xFF1D4ED8),
+      base: AppColors.infoTeal,
+      subtle: AppColors.infoTealSoft,
+      border: AppColors.infoTealBorder,
+      ink: AppColors.infoTealInk,
     ),
     skeletonBase: AppColors.skeletonBase,
     skeletonHighlight: AppColors.skeletonHighlight,
@@ -289,11 +293,13 @@ class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
       border: AppDarkColors.dangerBorder,
       ink: AppDarkColors.danger,
     ),
+    // Phase-0b repoint (ONE hunk, dark): REVERT by restoring base/subtle/
+    // border/ink to AppDarkColors.info / infoSubtle / infoBorder / info.
     info: AppStatusColors(
-      base: AppDarkColors.info,
-      subtle: AppDarkColors.infoSubtle,
-      border: AppDarkColors.infoBorder,
-      ink: AppDarkColors.info,
+      base: AppDarkColors.infoTeal,
+      subtle: AppDarkColors.infoTealSoft,
+      border: AppDarkColors.infoTealBorder,
+      ink: AppDarkColors.infoTealInk,
     ),
     skeletonBase: AppDarkColors.skeletonBase,
     skeletonHighlight: AppDarkColors.skeletonHighlight,

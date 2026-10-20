@@ -143,6 +143,38 @@ class AppFormatters {
         : fixed;
   }
 
+  // ---------------------------------------------------------------------------
+  // Phase-0b additions (additive; existing APIs unchanged). All new methods
+  // follow the frozen Latin-digit policy: digits 0-9 and ',' grouping in
+  // every locale; Arabic changes month names and currency placement only.
+  // ---------------------------------------------------------------------------
+
+  /// Signed grouped quantity for deltas: `+12,450` / `-3` / `+0`.
+  /// Pair with a success/error color or an up/down icon — never color alone.
+  String signedGroup(num value) =>
+      '${value < 0 ? '-' : '+'}${group(value.abs())}';
+
+  /// Signed percent for deltas: `+12.4%` / `-3%`.
+  String signedPercent(double fraction, {int decimals = 1}) {
+    final magnitude = percent(fraction.abs(), decimals: decimals);
+    return '${fraction < 0 ? '-' : '+'}$magnitude';
+  }
+
+  /// Fixed-decimal grouped number: `12,450.50` (decimals=2).
+  String decimal(num value, {int decimals = 2}) {
+    final negative = value < 0;
+    final fixed = value.abs().toStringAsFixed(decimals);
+    final parts = fixed.split('.');
+    final grouped = group(num.parse(parts.first));
+    final text = decimals > 0 ? '$grouped.${parts[1]}' : grouped;
+    return negative ? '-$text' : text;
+  }
+
+  /// Compact money: `AED 1.2M` (EN) / `1.2M د.إ` (AR).
+  String compactMoneyAED(num value) => isArabic
+      ? '${compactCount(value)} د.إ'
+      : 'AED ${compactCount(value)}';
+
   /// Locale-aware relative time (display only).
   String relativeTime(DateTime then, {DateTime? now}) {
     final reference = now ?? DateTime.now();

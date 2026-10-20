@@ -17,10 +17,13 @@ PKGS=(
 fail=0
 for p in "${PKGS[@]}"; do
   echo "===== $p ====="
-  (cd "$ROOT/$p" && flutter test --exclude-tags baseline)
+  out=$(cd "$ROOT/$p" && flutter test --exclude-tags baseline 2>&1)
   code=$?
+  echo "$out" | tail -n 3
   if [ "$code" -eq 0 ]; then
     echo "PASS: $p"
+  elif echo "$out" | grep -qE "No tests ran|does not appear to contain any test files"; then
+    echo "SKIP: $p (no non-baseline tests yet — counts as pass)"
   else
     echo "FAIL: $p (exit $code)"
     fail=1

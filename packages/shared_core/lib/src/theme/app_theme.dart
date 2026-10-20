@@ -6,6 +6,7 @@ import 'package:shared_core/src/theme/app_dimensions.dart';
 import 'package:shared_core/src/theme/app_interaction_states.dart';
 import 'package:shared_core/src/theme/app_semantic_colors.dart';
 import 'package:shared_core/src/theme/app_text_styles.dart';
+import 'package:shared_core/src/theme/app_tokens.dart';
 
 abstract final class AppTheme {
   AppTheme._();
@@ -153,11 +154,16 @@ abstract final class AppTheme {
     final disabledFill = semanticColors.disabledFill;
     final disabledInk = semanticColors.disabledInk;
 
+    // Phase-0b (additive): AppTokens rides alongside the semantic palette.
+    // Component themes below are UNCHANGED (zero geometry edits in 0b).
+    final tokens = colorScheme.brightness == Brightness.dark
+        ? AppTokens.dark
+        : AppTokens.light;
     return ThemeData(
       useMaterial3: true,
       brightness: colorScheme.brightness,
       colorScheme: colorScheme,
-      extensions: <ThemeExtension<dynamic>>[semanticColors, density],
+      extensions: <ThemeExtension<dynamic>>[semanticColors, density, tokens],
       // Set the family at ThemeData level so every Material component,
       // overlay, route, dialog and unstyled Text inherits the same typeface.
       fontFamily: arabic ? AppFontFamilies.arabic : AppFontFamilies.app,

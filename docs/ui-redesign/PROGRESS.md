@@ -4,15 +4,11 @@
 
 ## Next session starts here
 
-- **Phase:** phase-0b-tokens (Parts 0a + 0a-2 safety net are DONE and committed)
-- **Before starting:** read DESIGN_SPEC.md, this file and phases/phase-0-foundation.md; confirm the 5 baselines in `docs/ui-redesign/baseline/` are on disk
-- **Files in scope:** `packages/shared_core/src/theme/` (+ `src/localization/formatters` if touched) — additive only, no renames/deletes, zero component-theme geometry edits; `docs/ui-redesign/DESIGN_SYSTEM.md` (new)
-- **Must do at the end:**
-  1. Add a token swatch capture (tagged baseline, light + dark) rendering every new token: accent, accentPressed, accentSoft, lighter dark accent, info family (chip, banner, soft, border, ink), semantic success/warning/error next to info, plus text-on-accent and text-on-soft samples with measured AA ratios printed in the image. View the images and judge: info must not be confusable with success or accent.
-  2. The 5 login baselines must still match; list any difference.
-  3. Verify with `tool/analyze_all.sh`.
-- **Token decisions (locked):** accent `#215FE6` family + accentPressed/accentSoft + lighter dark accent; `info` moves to teal-cyan from `#0E7490` (derive soft/border/ink + lighter dark variant); AA ratios reported for text-on-accent, accent-on-surface, every soft tint (adjust until pass); dark tokens defined but NOT wired for staff/owner/CRM.
-- **Open questions:** none blocking (tnum verified present; tabular fallback OK)
+- **Phase:** phase-1-shared-widgets (phase-0 foundation DONE and committed)
+- **Before starting:** read DESIGN_SPEC.md, this file and phases/phase-1-shared-widgets.md; confirm the 7 baselines in `docs/ui-redesign/baseline/` are on disk
+- **Files in scope:** `packages/shared_core/lib/src/widgets/` (App* suite + gallery, debug only)
+- **Must do at the end:** gallery light+dark, forbidden-pattern grep clean in scope, `tool/analyze_all.sh` + `tool/test_all.sh` green, customer dark re-checked vs baseline, PROGRESS + next-session note
+- **Open questions:** icon set (stay Material — lucide_icons rejected); `cached_network_image` vs hand-rolled (ask before adding)
 
 ## Working rules (follow every session)
 
@@ -31,10 +27,10 @@
 
 ## Phase checklist
 
-- [ ] `phases/phase-0-foundation.md`
+- [x] `phases/phase-0-foundation.md`
   - [x] Part 0a safety net (baselines + guard test + font check, no theme changes)
   - [x] Part 0a-2 (real icons in harness via SDK MaterialIcons FontLoader, tool/*.sh scripts)
-  - [ ] Part 0b tokens (additive only, DESIGN_SYSTEM.md, swatch capture + baseline re-diff)
+  - [x] Part 0b tokens (additive only, DESIGN_SYSTEM.md, swatch capture + baseline re-diff)
 - [ ] `phases/phase-1-shared-widgets.md`
 - [ ] `phases/phase-2-shared-auth.md`
 - [ ] `phases/phase-3-staff-advisor-core.md` (split, confirm the real grouping from actual screens before starting)
@@ -92,6 +88,7 @@
 - **Packages:** approved: `shimmer`. Not approved: `alchemist` (use our own golden harness), `lucide_icons` (stay with the current icon set). `cached_network_image`: ask before adding. Script fonts (Noto Devanagari etc.) only if the l10n quiz requires them. Reuse existing fl_chart / svg.
 - **Golden platform + threshold:** pending phase-13 (use one consistent platform; tolerant comparator <= 0.5% if needed).
 - **Phase-0a findings (2026-10-20):** referenced `theme_primary_guard_test.dart` never existed (comments only) — added `packages/shared_core/test/theme_primary_guard_test.dart`, green. `tnum` IS in Jakarta Variable GSUB (fontTools) and runtime widths are equal (15.3px all digits); Plex Arabic fallback resolves. Hive file I/O hangs under the testWidgets FakeAsync clock (proven by probe) → all async backend/font setup lives in `setUpAll`, auth-restore pumps run inside `tester.runAsync` + real 1s delay + transition pumps. Icons render as tofu in harness (MaterialIcons not FontLoader-loaded — deterministic on this machine; phase-15 real-device pass covers true icons). connectivity_plus uses method `check` (v7 platform interface) as well as `checkConnectivity` — both mocked offline. `melos run analyze` / `melos exec` are broken in this env (no scripts in root pubspec / 0 packages discovered — pre-existing); 0a used per-package `flutter analyze --no-pub`, all 7 green.
+- **Phase-0b findings (2026-10-20):** semantic `info` repointed to teal (#0E7490 family; single hunk in `AppSemanticColors`, revert = restore 6 light + 6 dark lines). Inventory: 19 semantic-info sites (all "in progress"/notice semantics — teal appropriate); owner/CRM app code has zero. Direct blue kept per user answers (role icons, CRM cyan, chart series, `IC.purple` dead alias). Hardcoded blue literals in app code: 0 (only `PdfColors.blue900` in PDF gen). No `@Deprecated` added: nothing is truthfully superseded — deprecating used symbols would spam false warnings; documented in DESIGN_SYSTEM.md instead. ar numeral system: **Western digits 0-9 by frozen product decision** (ar changes month names/currency placement only). Dark pressed: dark ink on #2563EB is 3.81:1 (pre-existing); new `accentPressedInk` (white: 5.17 dark / 8.72 light) added, button themes adopt the flip in module phases. Success-white 2.54:1 is pre-existing debt, unchanged. A first `context_extensions.dart` draft broke every app (`isCompact/isExpanded` collide with `app_responsive.dart`) — removed, collision-free members only (`text/tokens/gutter/screenWidth`).
 - **Golden risk subjects:** inspection canvas (`real_damage_canvas.dart`) and vehicle SVG map need fixed fake data and deterministic rendering.
 - **Languages / RTL / fallback / translation source:** pending l10n quiz (phase-10). Existing: en + ar in all 4 apps and core/auth.
 
@@ -110,3 +107,4 @@
 | 2026-10-20 | decisions | Resolved accent, font, dark scope, l10n merge approach, package approvals. Added working rules and phase 3 split. No .dart touched. | See Risks | Start phase-0 (baseline screenshots first) |
 | 2026-10-20 | phase-0a | Safety net done: 5 baselines (`customer_light/dark`, `staff/owner/crm_light`, real fonts+shadows, login screens verified by eye), primary guard test (3/3 green), font tnum check (GSUB + runtime, green). melos.yaml test scripts now `--exclude-tags baseline`. No app/theme code changed. | Tofu icons in harness (documented); melos scripts broken in env (used per-package analyze) | Commit 0a, then start phase-0b (tokens) |
 | 2026-10-20 | phase-0a2 | Icons fixed: MaterialIcons FontLoader from SDK path in all 4 harnesses (all pubspecs have `uses-material-design`; zero Cupertino/custom fonts in captured screens); all 5 baselines re-captured, viewed (real icons), compare re-runs byte-identical. Added `tool/analyze_all.sh` + `tool/test_all.sh` (Git Bash runnable); rules now mandate the scripts over melos. No app/theme code changed. | Baseline PNGs replaced with icon versions (expected diff vs 0a: icons only) | Commit 0a-2, then start phase-0b (tokens + swatch capture) |
+| 2026-10-20 | phase-0b | Tokens done, all additive: accent + teal families (light+dark), AppTokens/spacing/radius/shadows/durations/breakpoints/context extensions wired (AppTokens in ThemeData), semantic info repointed (single hunk, revert noted), DESIGN_SYSTEM.md written. Formatters additive + 14 en/ar tests incl. Latin-digit policy proof. Swatches light+dark viewed: info≠accent clearly; light info-vs-success fills are near-neighbors, inks+pairing rule carry it. All 5 logins byte-identical (zero diff). `tool/analyze_all.sh` ALL GREEN, `tool/test_all.sh` green (19 shared_core tests + skips). No app code changed. | No @Deprecated (nothing superseded — documented); dark-pressed ink flip deferred to button themes; success-white 2.54 pre-existing | Commit 0b, then start phase-1 (shared widgets) |
