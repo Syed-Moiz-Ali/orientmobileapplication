@@ -118,6 +118,9 @@ Respect reduced-motion. No bouncing, no parallax, no looping decorative animatio
 ## C8. Component specs (all in `lib/core/design_system/widgets/`, prefix `App`)
 Every widget: reads only theme/tokens, supports light+dark, Semantics labels, 48dp min tap target,
 const constructor where possible, doc comment with usage example, works at text scale 1.3x.
+Phase-1d-i naming check: `AppStatTile`, `AppProgressBar`, `AppEmptyState`,
+`AppErrorState`, `AppBanner` are all free in `packages/` — built under their
+spec names, no rename path needed.
 
 **AppPillButton** (spec name `AppButton`; renamed — the legacy `AppButton`
 factory owns that name and is off-limits; rename this class to `AppButton`

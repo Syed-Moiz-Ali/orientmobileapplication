@@ -128,6 +128,7 @@ swatch test and this doc.
 - `AppInputField` (spec `AppTextField`; legacy owns it). `AppSearchBar` and
   `AppDropdown` verified free — no rename needed.
 - `AppSurfaceCard` (spec `AppCard`; legacy `app_card.dart` owns it). Rename path: `AppSurfaceCard` → `AppCard` in one codemod in the polish phase once the legacy card is removed.
+- Phase-1d-i naming check: `AppStatTile`, `AppProgressBar`, `AppEmptyState`, `AppErrorState`, `AppBanner` — all spec names verified free in `packages/` (no collisions), no rename path.
 
 - New pill button is `AppPillButton` (spec name `AppButton`; renamed because
   the legacy `AppButton` factory in `primary_button.dart` owns that name and

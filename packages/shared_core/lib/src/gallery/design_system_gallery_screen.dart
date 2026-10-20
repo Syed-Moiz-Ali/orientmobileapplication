@@ -3,14 +3,19 @@ import 'package:shared_core/src/theme/app_radius.dart';
 import 'package:shared_core/src/theme/app_spacing.dart';
 import 'package:shared_core/src/widgets/app_avatar.dart';
 import 'package:shared_core/src/widgets/app_badge.dart';
+import 'package:shared_core/src/widgets/app_banner.dart';
 import 'package:shared_core/src/widgets/app_chip.dart';
 import 'package:shared_core/src/widgets/app_data_row.dart';
 import 'package:shared_core/src/widgets/app_divider.dart';
+import 'package:shared_core/src/widgets/app_empty_state.dart';
+import 'package:shared_core/src/widgets/app_error_state.dart';
 import 'package:shared_core/src/widgets/app_dropdown.dart';
 import 'package:shared_core/src/widgets/app_info_tooltip.dart';
 import 'package:shared_core/src/widgets/app_list_tile.dart';
+import 'package:shared_core/src/widgets/app_progress_bar.dart';
 import 'package:shared_core/src/widgets/app_section.dart';
 import 'package:shared_core/src/widgets/app_settings_tile.dart';
+import 'package:shared_core/src/widgets/app_stat_tile.dart';
 import 'package:shared_core/src/widgets/app_status_chip.dart';
 import 'package:shared_core/src/widgets/app_surface_card.dart';
 import 'package:shared_core/src/widgets/app_icon_button.dart';
@@ -44,6 +49,8 @@ class DesignSystemGalleryScreen extends StatelessWidget {
           SurfacesGallerySection(),
           GallerySectionTitle('Identity (1c-ii)'),
           IdentityGallerySection(),
+          GallerySectionTitle('Feedback (1d-i)'),
+          FeedbackGallerySection(),
         ],
       ),
     );
@@ -503,6 +510,201 @@ class _SurfacesGallerySectionState extends State<SurfacesGallerySection> {
   }
 }
 
+/// 1d-i feedback section: stat tiles (singles, delta rows, 2-col grid),
+/// progress bars across the auto-tone thresholds, empty + error states, and
+/// all four banner variants (one with an action, one dismissible).
+class FeedbackGallerySection extends StatefulWidget {
+  const FeedbackGallerySection({super.key});
+
+  @override
+  State<FeedbackGallerySection> createState() => _FeedbackGallerySectionState();
+}
+
+class _FeedbackGallerySectionState extends State<FeedbackGallerySection> {
+  bool _showSyncBanner = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    Widget row(String label, Widget child) => Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                '\u2066$label\u2069',
+                textAlign: TextAlign.start,
+                style: textTheme.labelMedium,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              child,
+            ],
+          ),
+        );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        row(
+          'Stat tiles (label + tabular value + caption)',
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppStatTile(
+                label: 'Total revenue',
+                value: 'AED 12,450',
+                caption: 'This month',
+              ),
+              SizedBox(height: AppSpacing.md),
+              AppStatTile(
+                label: 'Active jobs',
+                value: '24',
+                large: true,
+              ),
+            ],
+          ),
+        ),
+        row(
+          'Delta rows (arrow + sign + semantic ink, never color alone)',
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppStatTile(
+                label: 'Completion rate',
+                value: '86%',
+                deltaText: '+4 pts vs last week',
+                deltaUp: true,
+              ),
+              SizedBox(height: AppSpacing.md),
+              AppStatTile(
+                label: 'Overdue jobs',
+                value: '7',
+                deltaText: '+2 vs yesterday',
+                deltaUp: false,
+              ),
+              SizedBox(height: AppSpacing.md),
+              AppStatTile(
+                label: 'Pending review',
+                value: '3',
+                deltaText: 'No change',
+              ),
+            ],
+          ),
+        ),
+        row(
+          '2-column stat grid (12 px gap)',
+          const Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: AppStatTile(
+                  label: 'Open',
+                  value: '18',
+                  deltaText: '+3 today',
+                  deltaUp: true,
+                ),
+              ),
+              SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: AppStatTile(
+                  label: 'Delayed',
+                  value: '5',
+                  deltaText: '-1 today',
+                  deltaUp: false,
+                ),
+              ),
+            ],
+          ),
+        ),
+        row(
+          'Progress bars (auto tone: accent / success / warning / error)',
+          const Column(
+            children: [
+              AppProgressBar(
+                value: 0.15,
+                label: '15% of 90% limit',
+              ),
+              SizedBox(height: AppSpacing.md),
+              AppProgressBar(
+                value: 0.62,
+                label: '62% of 90% limit',
+              ),
+              SizedBox(height: AppSpacing.md),
+              AppProgressBar(
+                value: 0.82,
+                label: '82% of 90% limit',
+              ),
+              SizedBox(height: AppSpacing.md),
+              AppProgressBar(
+                value: 0.95,
+                label: '95% of 90% limit',
+              ),
+            ],
+          ),
+        ),
+        row(
+          'Empty state (64 px circle, title, 2-line message, action)',
+          AppEmptyState(
+            icon: Icons.inbox_outlined,
+            title: 'No bookings yet',
+            message: 'New bookings will appear here once customers book.',
+            actionLabel: 'New booking',
+            onAction: () {},
+          ),
+        ),
+        row(
+          'Error state (friendly message + Try again, live region)',
+          AppErrorState(
+            title: 'Could not load bookings',
+            message: 'Check your connection and try again.',
+            onRetry: () {},
+          ),
+        ),
+        row(
+          'Banners (info / warning / error / success)',
+          Column(
+            children: [
+              AppBanner(
+                kind: AppBannerKind.info,
+                message: 'Sync is up to date. Last checked 2 min ago.',
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              AppBanner(
+                kind: AppBannerKind.warning,
+                message: 'Data is delayed. Showing the last update.',
+                actionLabel: 'Retry',
+                onAction: () {},
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              AppBanner(
+                kind: AppBannerKind.error,
+                message: 'Upload failed. Your changes are saved on this device.',
+                actionLabel: 'Try again',
+                onAction: () {},
+                onDismiss: () {},
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              const AppBanner(
+                kind: AppBannerKind.success,
+                message: 'All changes synced.',
+              ),
+            ],
+          ),
+        ),
+        if (_showSyncBanner)
+          row(
+            'Dismissible banner (tap × to hide)',
+            AppBanner(
+              kind: AppBannerKind.info,
+              message: 'You are offline. Changes will sync when you reconnect.',
+              onDismiss: () => setState(() => _showSyncBanner = false),
+            ),
+          ),
+      ],
+    );
+  }
+}
 /// 1c-ii identity section: avatars, badges, filter chips, status chips,
 /// info tooltips. The success/info row places the two closest soft fills
 /// side by side on purpose (see the identity tests for the measured colour
