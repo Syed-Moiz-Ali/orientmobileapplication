@@ -167,6 +167,22 @@ class AppColors {
   static const Color infoTealInk = Color(0xFF155E75);
 
   // ---------------------------------------------------------------------------
+  // Strong success (phase-1a, additive): an AA-proof filled-success green.
+  // White on plain success (#10B981) is only 2.54:1, so filled success
+  // buttons/chips MUST use this darker cut. Stays in the emerald family
+  // (near #10B981) and clear of the teal info hue — see swatch report.
+  // White on base = 5.02:1, ink (#166534) on soft = 5.92:1.
+  // ---------------------------------------------------------------------------
+  /// AA-proof filled-success base (darker emerald, near #10B981).
+  static const Color successStrong = Color(0xFF15803D);
+
+  /// Pale container for success-strong chips and banners.
+  static const Color successStrongSoft = Color(0xFFD7F0E0);
+
+  /// Legible ink on [successStrongSoft] (reuses the deep success ink).
+  static const Color successStrongInk = Color(0xFF166534);
+
+  // ---------------------------------------------------------------------------
   // Dark Navy High-Emphasis Tokens
   // ---------------------------------------------------------------------------
   /// Signature Orient deep slate navy tone for high-emphasis surfaces.
@@ -374,6 +390,19 @@ class AppDarkColors {
 
   /// Legible ink on dark [infoTealSoft].
   static const Color infoTealInk = Color(0xFF8FD9E3);
+
+  // ---------------------------------------------------------------------------
+  // Dark strong success (phase-1a, additive). Dark ink on base = 10.24:1,
+  // light-emerald ink on dark soft = 5.06:1.
+  // ---------------------------------------------------------------------------
+  /// Dark AA-proof filled-success base.
+  static const Color successStrong = Color(0xFF34D399);
+
+  /// Dark success-strong container fill.
+  static const Color successStrongSoft = Color(0xFF064E3B);
+
+  /// Legible ink on dark [successStrongSoft].
+  static const Color successStrongInk = Color(0xFF34D399);
 
   /// Feedback / rating star.
   static const Color ratingStar = Color(0xFFFBBF24);

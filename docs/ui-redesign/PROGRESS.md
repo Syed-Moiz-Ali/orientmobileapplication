@@ -4,11 +4,11 @@
 
 ## Next session starts here
 
-- **Phase:** phase-1-shared-widgets (phase-0 foundation DONE and committed)
-- **Before starting:** read DESIGN_SPEC.md, this file and phases/phase-1-shared-widgets.md; confirm the 7 baselines in `docs/ui-redesign/baseline/` are on disk
-- **Files in scope:** `packages/shared_core/lib/src/widgets/` (App* suite + gallery, debug only)
-- **Must do at the end:** gallery light+dark, forbidden-pattern grep clean in scope, `tool/analyze_all.sh` + `tool/test_all.sh` green, customer dark re-checked vs baseline, PROGRESS + next-session note
-- **Open questions:** icon set (stay Material — lucide_icons rejected); `cached_network_image` vs hand-rolled (ask before adding)
+- **Phase:** phase-1b (inputs: AppTextField, AppSearchBar, AppDropdown, checkbox/switch/radio tiles)
+- **Before starting:** read DESIGN_SPEC.md, this file and phases/phase-1-shared-widgets.md; confirm the 7 baselines + 8 gallery PNGs in `docs/ui-redesign/baseline/` are on disk
+- **Files in scope (NEW only):** `packages/shared_core/lib/src/widgets/app_text_field.dart` (check existing first — `app_text_field.dart` already exists, build alongside without modifying), `app_search_bar.dart` (check existing `app_search_field.dart`), `app_dropdown.dart` (check `app_dropdown_button.dart`), new check/switch/radio tiles; gallery inputs section + captures; unit tests per widget
+- **Must do at the end:** inputs gallery captured (light+dark × 1.0/1.3 × LTR+RTL), images viewed + judged with filenames, widget state tests green, 5 login baselines still match (diffs listed), `tool/analyze_all.sh` + `tool/test_all.sh` green, PROGRESS + next-session note (phase-1c surfaces)
+- **Open questions:** none (shimmer/image-cache questions belong to 1d — ask then)
 
 ## Working rules (follow every session)
 
@@ -31,7 +31,13 @@
   - [x] Part 0a safety net (baselines + guard test + font check, no theme changes)
   - [x] Part 0a-2 (real icons in harness via SDK MaterialIcons FontLoader, tool/*.sh scripts)
   - [x] Part 0b tokens (additive only, DESIGN_SYSTEM.md, swatch capture + baseline re-diff)
-- [ ] `phases/phase-1-shared-widgets.md`
+- [ ] `phases/phase-1-shared-widgets.md` (one part per session, commit between)
+  - [x] 1a: gallery shell + capture harness + AppPillButton/AppIconButton/AppTextButton + successStrong token
+  - [ ] 1b: AppTextField, AppSearchBar, AppDropdown, checkbox/switch/radio tiles
+  - [ ] 1c: AppCard, AppSection, AppListTile, AppSettingsTile, AppDivider, AppAvatar, AppBadge, AppChip, AppStatusChip, AppInfoTooltip, AppDataRow
+  - [ ] 1d: AppStatTile, AppProgressBar, AppEmptyState, AppErrorState, AppBanner, AppSkeleton/AppShimmer, AppLoader, AppNetworkImage (ask before shimmer/image-cache pubspec changes)
+  - [ ] 1e: AppScaffold, AppAppBar, AppBottomNav, AppSegmentedControl/AppPillTabs, AppBottomSheet, AppDialog, AppSnackBar/AppToast
+  - [ ] 1f: AppTable (responsive) + FULL gallery matrix pass + evaluation report
 - [ ] `phases/phase-2-shared-auth.md`
 - [ ] `phases/phase-3-staff-advisor-core.md` (split, confirm the real grouping from actual screens before starting)
   - [ ] 3a: home + jobs list
@@ -108,3 +114,4 @@
 | 2026-10-20 | phase-0a | Safety net done: 5 baselines (`customer_light/dark`, `staff/owner/crm_light`, real fonts+shadows, login screens verified by eye), primary guard test (3/3 green), font tnum check (GSUB + runtime, green). melos.yaml test scripts now `--exclude-tags baseline`. No app/theme code changed. | Tofu icons in harness (documented); melos scripts broken in env (used per-package analyze) | Commit 0a, then start phase-0b (tokens) |
 | 2026-10-20 | phase-0a2 | Icons fixed: MaterialIcons FontLoader from SDK path in all 4 harnesses (all pubspecs have `uses-material-design`; zero Cupertino/custom fonts in captured screens); all 5 baselines re-captured, viewed (real icons), compare re-runs byte-identical. Added `tool/analyze_all.sh` + `tool/test_all.sh` (Git Bash runnable); rules now mandate the scripts over melos. No app/theme code changed. | Baseline PNGs replaced with icon versions (expected diff vs 0a: icons only) | Commit 0a-2, then start phase-0b (tokens + swatch capture) |
 | 2026-10-20 | phase-0b | Tokens done, all additive: accent + teal families (light+dark), AppTokens/spacing/radius/shadows/durations/breakpoints/context extensions wired (AppTokens in ThemeData), semantic info repointed (single hunk, revert noted), DESIGN_SYSTEM.md written. Formatters additive + 14 en/ar tests incl. Latin-digit policy proof. Swatches light+dark viewed: info≠accent clearly; light info-vs-success fills are near-neighbors, inks+pairing rule carry it. All 5 logins byte-identical (zero diff). `tool/analyze_all.sh` ALL GREEN, `tool/test_all.sh` green (19 shared_core tests + skips). No app code changed. | No @Deprecated (nothing superseded — documented); dark-pressed ink flip deferred to button themes; success-white 2.54 pre-existing | Commit 0b, then start phase-1 (shared widgets) |
+| 2026-10-20 | phase-1a | Buttons done: `AppPillButton` (52/44/36 pill, 48dp hit via transparent padding, press scale .98/150ms + pressed color, reduced-motion aware, loading width-preserved w/ label-color spinner + busy semantics + ignored taps, disabled 40% + no response, RTL auto-mirror, 1.3x-safe) + `AppIconButton` (48x48) + `AppTextButton`; `successStrong` #15803D/#34D399 (5.02/10.24). 11 unit tests (sizes, hit areas, AA pairs, loading/disabled/RTL/1.3x). Gallery shell + `example/gallery_main.dart` (`flutter run -t example/gallery_main.dart`) + 8 captures viewed (light/dark × 1.0/1.3 × LTR/RTL): judged — RTL flip verified by test (icon mirrors + start-side), no overflow. All 5 logins byte-identical (zero diff). Scripts ALL GREEN. Naming: `AppPillButton` (legacy `AppButton` factory owns the name; rename path recorded). | Existing PrimaryButton has trailingIcon + arbitrary colors + haptics (not carried over — spec); StatusPill custom bg/fg escape hatch (1c business) | Commit 1a, then start phase-1b (inputs) |
