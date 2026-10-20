@@ -4,10 +4,10 @@
 
 ## Next session starts here
 
-- **Phase:** phase-1c (surfaces & display: AppCard, AppSection, AppListTile, AppSettingsTile, AppDivider, AppAvatar, AppBadge, AppChip, AppStatusChip, AppInfoTooltip, AppDataRow — check each name against existing `app_card.dart`, `app_top_bar.dart`, `workspace_app_bar.dart` etc. first; distinct names only, same rename rule)
-- **Before starting:** read DESIGN_SPEC.md, this file and phases/phase-1-shared-widgets.md; confirm the 7 baselines + 16 gallery PNGs in `docs/ui-redesign/baseline/` are on disk
-- **Files in scope (NEW only):** `packages/shared_core/lib/src/widgets/` additions + `gallery/design_system_gallery_screen.dart` inputs→surfaces section + capture test + unit tests per widget
-- **Must do at the end:** surfaces gallery captured (light+dark × 1.0/1.3 × LTR+RTL), images viewed + judged with filenames, widget state tests green, 5 login baselines still match (diffs listed), `tool/analyze_all.sh` + `tool/test_all.sh` green, PROGRESS + next-session note (phase-1d feedback)
+- **Phase:** phase-1c-i (AppCard, AppSection, AppListTile, AppSettingsTile, AppDivider, AppDataRow)
+- **Before starting:** read DESIGN_SPEC.md, this file and phases/phase-1-shared-widgets.md (§5 1c-i spec + §8 standing orders); confirm the 7 baselines + 16 gallery PNGs in `docs/ui-redesign/baseline/` are on disk
+- **Files in scope (NEW only):** `packages/shared_core/lib/src/widgets/app_card.dart` etc. — FIRST verify each name is free (legacy `app_card.dart`, `app_top_bar.dart`, `workspace_app_bar.dart` exist; distinct names only, same rename rule) + gallery surfaces section + capture test + unit tests per widget
+- **Must do at the end:** surfaces gallery captured (light+dark × 1.0/1.3 × LTR+RTL with locale ar, banner off), images viewed + judged with filenames, widget state tests green, 5 login baselines still match (diffs listed), `tool/analyze_all.sh` + `tool/test_all.sh` green, PROGRESS + next-session note (phase-1c-ii: avatar/badge/chip/status-chip/tooltip)
 - **Open questions:** none
 
 ## Working rules (follow every session)
@@ -34,6 +34,13 @@
 - [ ] `phases/phase-1-shared-widgets.md` (one part per session, commit between)
   - [x] 1a: gallery shell + capture harness + AppPillButton/AppIconButton/AppTextButton + successStrong token
   - [x] 1b: AppInputField, AppSearchBar, AppDropdown, checkbox/switch/radio tiles (AppTextField name owned by legacy — see naming rule)
+  - [ ] 1c-i: AppCard, AppSection, AppListTile, AppSettingsTile, AppDivider, AppDataRow
+  - [ ] 1c-ii: AppAvatar, AppBadge, AppChip, AppStatusChip, AppInfoTooltip
+  - [ ] 1d-i: AppStatTile, AppProgressBar, AppEmptyState, AppErrorState, AppBanner
+  - [ ] 1d-ii: AppSkeleton/AppShimmer, AppLoader, AppNetworkImage (ask before shimmer pubspec / image-cache)
+  - [ ] 1e-i: AppScaffold, AppAppBar, AppBottomNav (+NavigationRail), AppSegmentedControl/AppPillTabs
+  - [ ] 1e-ii: AppBottomSheet, AppDialog, AppSnackBar/AppToast
+  - [ ] 1f: AppTable (responsive) + FULL gallery evaluation + WIDGET_MIGRATION_MAP.md
   - [ ] 1c: AppCard, AppSection, AppListTile, AppSettingsTile, AppDivider, AppAvatar, AppBadge, AppChip, AppStatusChip, AppInfoTooltip, AppDataRow
   - [ ] 1d: AppStatTile, AppProgressBar, AppEmptyState, AppErrorState, AppBanner, AppSkeleton/AppShimmer, AppLoader, AppNetworkImage (ask before shimmer/image-cache pubspec changes)
   - [ ] 1e: AppScaffold, AppAppBar, AppBottomNav, AppSegmentedControl/AppPillTabs, AppBottomSheet, AppDialog, AppSnackBar/AppToast
@@ -99,6 +106,7 @@
 - **Localization:** merge into existing en + ar ARBs (per app + core/auth). Do NOT rename existing keys (up to 2510 in staff). New keys use `<module>_<screen>_<element>`. Keep per-app gen-l10n with shared core/auth ARBs as the common base (no single giant ARB). Quiz skips en/ar and asks only about additional languages, fallback, switcher behavior, regional formats, backend text, platforms and fonts. RTL goldens are mandatory.
 - **Packages:** approved: `shimmer`. Not approved: `alchemist` (use our own golden harness), `lucide_icons` (stay with the current icon set). `cached_network_image`: ask before adding. Script fonts (Noto Devanagari etc.) only if the l10n quiz requires them. Reuse existing fl_chart / svg.
 - **Golden platform + threshold:** pending phase-13 (use one consistent platform; tolerant comparator <= 0.5% if needed).
+- **RTL golden harness rule (MANDATORY for phases 13/14, learned in 1b):** Arabic captures must set `locale: ar` + global Material/Widgets/Cupertino delegates + pass the locale into `AppTheme.light/dark(brand, locale:)` — otherwise Arabic text renders as tofu (default test delegates + default theme are English-only) and `TextField` throws `No MaterialLocalizations found`. Keep `debugShowCheckedModeBanner: false` in capture harnesses (the banner overlaps top-edge content in RTL). Backend/font setup stays in `setUpAll` (Hive file I/O hangs under the FakeAsync clock).
 - **Phase-0a findings (2026-10-20):** referenced `theme_primary_guard_test.dart` never existed (comments only) — added `packages/shared_core/test/theme_primary_guard_test.dart`, green. `tnum` IS in Jakarta Variable GSUB (fontTools) and runtime widths are equal (15.3px all digits); Plex Arabic fallback resolves. Hive file I/O hangs under the testWidgets FakeAsync clock (proven by probe) → all async backend/font setup lives in `setUpAll`, auth-restore pumps run inside `tester.runAsync` + real 1s delay + transition pumps. Icons render as tofu in harness (MaterialIcons not FontLoader-loaded — deterministic on this machine; phase-15 real-device pass covers true icons). connectivity_plus uses method `check` (v7 platform interface) as well as `checkConnectivity` — both mocked offline. `melos run analyze` / `melos exec` are broken in this env (no scripts in root pubspec / 0 packages discovered — pre-existing); 0a used per-package `flutter analyze --no-pub`, all 7 green.
 - **Phase-0b findings (2026-10-20):** semantic `info` repointed to teal (#0E7490 family; single hunk in `AppSemanticColors`, revert = restore 6 light + 6 dark lines). Inventory: 19 semantic-info sites (all "in progress"/notice semantics — teal appropriate); owner/CRM app code has zero. Direct blue kept per user answers (role icons, CRM cyan, chart series, `IC.purple` dead alias). Hardcoded blue literals in app code: 0 (only `PdfColors.blue900` in PDF gen). No `@Deprecated` added: nothing is truthfully superseded — deprecating used symbols would spam false warnings; documented in DESIGN_SYSTEM.md instead. ar numeral system: **Western digits 0-9 by frozen product decision** (ar changes month names/currency placement only). Dark pressed: dark ink on #2563EB is 3.81:1 (pre-existing); new `accentPressedInk` (white: 5.17 dark / 8.72 light) added, button themes adopt the flip in module phases. Success-white 2.54:1 is pre-existing debt, unchanged. A first `context_extensions.dart` draft broke every app (`isCompact/isExpanded` collide with `app_responsive.dart`) — removed, collision-free members only (`text/tokens/gutter/screenWidth`).
 - **Golden risk subjects:** inspection canvas (`real_damage_canvas.dart`) and vehicle SVG map need fixed fake data and deterministic rendering.
