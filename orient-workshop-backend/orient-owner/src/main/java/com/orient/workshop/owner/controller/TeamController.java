@@ -71,8 +71,9 @@ public class TeamController {
         if (!VALID_ROLES.contains(role)) {
             throw new BadRequestException("Invalid role: " + role + ". Allowed: " + VALID_ROLES);
         }
-        if (staffMapper.findAnyByEmpId(req.getEmpId().trim()).isPresent()) {
-            throw new BadRequestException("empId already exists: " + req.getEmpId());
+        String normalizedEmpId = req.getEmpId().trim().toUpperCase();
+        if (staffMapper.findAnyByEmpId(normalizedEmpId).isPresent()) {
+            throw new BadRequestException("empId already exists: " + normalizedEmpId);
         }
 
         if (req.getPhone() == null || req.getPhone().isBlank()) {
@@ -111,7 +112,7 @@ public class TeamController {
         userMapper.insert(linkedUser);
 
         Staff staff = Staff.builder()
-                .empId(req.getEmpId().trim())
+                .empId(normalizedEmpId)
                 .userId(linkedUser.getId())
                 .name(req.getName().trim())
                 .role(role)

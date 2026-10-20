@@ -207,17 +207,37 @@ class _TeamViewState extends ConsumerState<TeamView> {
     );
   }
 
-  void _showAddStaffSheet(
+  Future<void> _showAddStaffSheet(
     BuildContext context,
     TeamNotifier notifier,
     List<BranchOption> branches,
-  ) {
+  ) async {
     HapticFeedback.selectionClick();
-    showAppModalSheet<void>(
+    final createdName = await showAppModalSheet<String>(
       context: context,
       builder: (sheetContext) => _AddMemberSheet(
         notifier: notifier,
         branches: branches,
+      ),
+    );
+    if (!context.mounted) return;
+    if (createdName == null || createdName.isEmpty) return;
+    final t = OwnerLocalizations.of(context)!;
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        icon: const Icon(Icons.verified_user_rounded, size: 38),
+        title: Text(t.ownerTmCreated),
+        content: Text(
+          '$createdName\n\n${t.ownerTmCreatedBody}',
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(t.ownerTmDone),
+          ),
+        ],
       ),
     );
   }
@@ -606,52 +626,64 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
         ..clear()
         ..addAll(errors);
     });
-    if (errors.values.any((e) => e != null)) return;
-    setState(() => _busy = true);
-    final branchName = widget.branches
-        .where((b) => b.id == _branchId)
-        .map((b) => b.name)
-        .firstOrNull;
-    final error = await widget.notifier.addMember({
-      'name': _name.text.trim(),
-      'empId': _empId.text.trim().toUpperCase(),
-      'role': _role,
-      'phone': _phone.text.trim(),
-      'email': _email.text.trim().toLowerCase(),
-      'password': _password.text,
-      if (_branchId != null) 'branchId': int.parse(_branchId!),
-      'branch': branchName ?? '',
-      'shift': _shift.text.trim(),
-      'designation': _designation.text.trim(),
-      'department': _department.text.trim(),
-    });
-    if (!mounted) return;
-    setState(() => _busy = false);
-    if (error != null) {
+    if (errors.values.any((e) => e != null)) {
+      final firstError = errors.values.whereType<String>().first;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error), behavior: SnackBarBehavior.floating),
+        SnackBar(content: Text(firstError), behavior: SnackBarBehavior.floating),
       );
       return;
     }
-    Navigator.pop(context);
-    if (!mounted) return;
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        icon: const Icon(Icons.verified_user_rounded, size: 38),
-        title: Text(t.ownerTmCreated),
-        content: Text(
-          '${_name.text.trim()}\n\n${t.ownerTmCreatedBody}',
-          textAlign: TextAlign.center,
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(t.ownerTmDone),
+    setState(() => _busy = true);
+    try {
+      final branchId = _branchId == null ? null : int.tryParse(_branchId!);
+      if (_branchId != null && branchId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(t.ownerReqRequired),
+            behavior: SnackBarBehavior.floating,
           ),
-        ],
-      ),
-    );
+        );
+        return;
+      }
+      final branchName = widget.branches
+          .where((b) => b.id == _branchId)
+          .map((b) => b.name)
+          .firstOrNull;
+      final error = await widget.notifier.addMember({
+        'name': _name.text.trim(),
+        'empId': _empId.text.trim().toUpperCase(),
+        'role': _role,
+        'phone': _phone.text.trim(),
+        'email': _email.text.trim().toLowerCase(),
+        'password': _password.text,
+        if (branchId != null) 'branchId': branchId,
+        'branch': branchName ?? '',
+        'shift': _shift.text.trim(),
+        'designation': _designation.text.trim(),
+        'department': _department.text.trim(),
+      });
+      if (!mounted) return;
+      if (error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error), behavior: SnackBarBehavior.floating),
+        );
+        return;
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(t.ownerReqRequired),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+    if (!mounted) return;
+    final createdName = _name.text.trim();
+    Navigator.pop(context, createdName);
   }
 
   @override
@@ -771,7 +803,11 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
               ),
               const SizedBox(height: AppDimensions.s12),
               AppDropdownButton(
-                value: _branchId ?? '',
+                value: widget.branches
+                        .where((b) => b.id == _branchId)
+                        .map((b) => b.name)
+                        .firstOrNull ??
+                    '',
                 items: [
                   for (final b in widget.branches) b.name,
                 ],

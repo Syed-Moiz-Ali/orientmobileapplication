@@ -131,10 +131,15 @@ class TeamNotifier extends Notifier<TeamState> {
       ref
           .read(loggerProvider)
           .e('Failed to add staff', error: e, stackTrace: st);
-      final message = e is ValidationException
-          ? e.message
-          : 'Could not add staff';
-      return message;
+      if (e is ValidationException) return e.message;
+      if (e is UnauthorizedException) {
+        return 'Session expired (401). Please re-login to manage the team.';
+      }
+      if (e is NetworkException) {
+        return 'No connection. Check your network and try again.';
+      }
+      if (e is UnknownException) return 'Server error. Please try again.';
+      return 'Could not add staff';
     }
   }
 
