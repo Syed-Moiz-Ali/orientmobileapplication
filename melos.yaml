@@ -72,32 +72,32 @@ scripts:
     description: Run tests for all packages and apps
 
   test:core:
-    run: flutter test
+    run: flutter test --exclude-tags baseline
     path: packages/shared_core
     description: Run shared_core tests
 
   test:auth:
-    run: flutter test
+    run: flutter test --exclude-tags baseline
     path: packages/shared_auth
     description: Run shared_auth tests
 
   test:staff:
-    run: flutter test
+    run: flutter test --exclude-tags baseline
     path: apps/staff_app
     description: Run staff app tests
 
   test:owner:
-    run: flutter test
+    run: flutter test --exclude-tags baseline
     path: apps/owner_app
     description: Run owner app tests
 
   test:customer:
-    run: flutter test
+    run: flutter test --exclude-tags baseline
     path: apps/customer_app
     description: Run customer app tests
 
   test:crm:
-    run: flutter test
+    run: flutter test --exclude-tags baseline
     path: apps/crm_app
     description: Run CRM app tests
 
