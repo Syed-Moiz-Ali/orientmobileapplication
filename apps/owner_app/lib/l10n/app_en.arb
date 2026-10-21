@@ -71,6 +71,13 @@
   "@ownerHeroEmpty": { "description": "Hero empty state" },
   "ownerHeroEmptyHint": "Pull to refresh when you are back online.",
   "@ownerHeroEmptyHint": { "description": "Hero empty hint" },
+  "ownerHomeLoadError": "Could not load the latest figures",
+  "@ownerHomeLoadError": { "description": "Home error title (message carries the detail)" },
+  "ownerHomeApprovalsBanner": "{value} waiting for owner review",
+  "@ownerHomeApprovalsBanner": {
+    "description": "Blocker banner: approvals WIP need triage (value verbatim)",
+    "placeholders": { "value": { "type": "String" } }
+  },
   "ownerChartSalesProfit": "Sales & profit",
   "@ownerChartSalesProfit": { "description": "Curve card title" },
   "ownerChartSales": "Sales",
@@ -95,6 +102,8 @@
   "@ownerRegisterTotal": { "description": "Register column" },
   "ownerRegisterEmpty": "No register rows.",
   "@ownerRegisterEmpty": { "description": "Register empty state" },
+  "ownerRegisterEmptyHint": "New jobs will appear here when they are booked.",
+  "@ownerRegisterEmptyHint": { "description": "Register empty hint" },
   "ownerActionsTitle": "Quick actions",
   "@ownerActionsTitle": { "description": "Actions section title" },
   "ownerActionJobCards": "Job cards",

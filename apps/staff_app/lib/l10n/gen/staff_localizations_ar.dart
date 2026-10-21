@@ -3151,6 +3151,13 @@ class StaffLocalizationsAr extends StaffLocalizations {
   String get svFloorNoMatch => 'لا منصات مطابقة لهذه التصفية';
 
   @override
+  String get svFloorNoMatchHint =>
+      'جرّب مرشحًا مختلفًا، أو امسحه لرؤية كل المنصات.';
+
+  @override
+  String get svFloorHeroSentence => 'وجّه مهمة العمل التالية إلى منصة متاحة.';
+
+  @override
   String get svFloorErrorTitle => 'الأرضية غير متاحة';
 
   @override

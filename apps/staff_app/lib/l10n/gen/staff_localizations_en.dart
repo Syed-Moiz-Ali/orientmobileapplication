@@ -3172,6 +3172,13 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String get svFloorNoMatch => 'No bays match this filter';
 
   @override
+  String get svFloorNoMatchHint =>
+      'Try a different filter, or clear it to see every bay.';
+
+  @override
+  String get svFloorHeroSentence => 'Dispatch the next job into a free bay.';
+
+  @override
   String get svFloorErrorTitle => 'Floor unavailable';
 
   @override

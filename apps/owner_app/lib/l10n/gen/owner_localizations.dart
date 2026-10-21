@@ -284,6 +284,18 @@ abstract class OwnerLocalizations {
   /// **'Pull to refresh when you are back online.'**
   String get ownerHeroEmptyHint;
 
+  /// Home error title (message carries the detail)
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load the latest figures'**
+  String get ownerHomeLoadError;
+
+  /// Blocker banner: approvals WIP need triage (value verbatim)
+  ///
+  /// In en, this message translates to:
+  /// **'{value} waiting for owner review'**
+  String ownerHomeApprovalsBanner(String value);
+
   /// Curve card title
   ///
   /// In en, this message translates to:
@@ -355,6 +367,12 @@ abstract class OwnerLocalizations {
   /// In en, this message translates to:
   /// **'No register rows.'**
   String get ownerRegisterEmpty;
+
+  /// Register empty hint
+  ///
+  /// In en, this message translates to:
+  /// **'New jobs will appear here when they are booked.'**
+  String get ownerRegisterEmptyHint;
 
   /// Actions section title
   ///

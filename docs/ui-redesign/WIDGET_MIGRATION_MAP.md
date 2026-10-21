@@ -219,3 +219,88 @@ route / logic / ARB-structure change; no new keys):
 
 New guard coverage: `packages/shared_core/test/app_hard_reject_guards_test.dart`
 (borderless cards, no-uppercase, >= 48dp targets, badge-glyph disjoint).
+
+## Phase 5 supervisor-home recomposition (branch `ui/dashboards-2`)
+
+Floor tab (`supervisor_dashboard_tab.dart`) recomposed presentation-only onto
+1P pattern widgets; new `supervisor_floor_search.dart` (floor-data search
+sheet). Legacy usages below drop to zero on the floor tab (verified by grep;
+the shared classes themselves are kept — still used by the supervisor
+queue/review/jobs/staff/schedule tabs):
+
+| Deleted legacy widget | Homes before | Replaced by | Notes |
+|---|---|---|---|
+| bespoke `_FloorMasthead` (`SectionHeader` floor title + subtitle) | floor tab (1) | `AppPageHeader` (title `svFloorTitle` + subtitle `svFloorSubtitle`, trailing search `AppIconButton` per U1) | Same title/copy; occupancy sentence kept verbatim; no eyebrow (C3 no-ALL-CAPS) |
+| bespoke hero (none — masthead only) | floor tab (1) | ONE `AppMediaCard` (active-bay count + `svFloorHeroSentence` + `Bays` unit chip) + ONE `AppPillButton.primary` Dispatch (`svAssignTitle`, existing assign entry) | New key `svFloorHeroSentence` only for the sentence; count is the bare number (`0` never `-`) |
+| `AppInfoPanel.danger` floor error | floor tab (1) | `AppErrorState` (`svFloorErrorTitle`/`svFloorError` + `commonRetry` label kept) + same `refreshDashboard` retry | Same copy/retry; offline gets `AppBanner` (shared `offlineBannerMessage`) + stale board |
+| `AppSkeleton` floor skeleton | floor tab (1) | `AppShimmerSkeleton` mirroring header + hero + grid + rail | Same loading contract (`isDashboardLoading && isEmpty`) |
+| `AppCard.standard` no-match card + `EmptyState.noMatch` | floor tab (1) | `AppEmptyState` (`svFloorNoMatch` + new `svFloorNoMatchHint` + shared `Clear`) | Same predicate/clear contract |
+| `AppCard.standard` rail cards + `PrimaryButton`/`SecondaryButton` CTAs | floor tab (3 cards) | `AppSurfaceCard` (header + count trailing + rows + `AppPillButton.secondary` CTAs, verbatim labels/routes) | Row mapping verbatim; selected-bay card keeps code/title/subtitle + dispatch |
+| (no search affordance) | floor tab (0) | `SupervisorFloorSearchSheet`: `showAppModalSheet` + `AppSearchField` over derived bays, result tap = tile contract | Permitted "search over floor data"; no new routes/logic |
+
+Kept verbatim (shared tile grammar — `supervisor_components.dart` untouched):
+`_BayTile` (state dot + LTR `B-01` + tech-initials slot + title/ref/meta +
+selection ring), `_BayLegend`, `_RailRow`, `_TechSlot`, `buildSupervisorBays`
+derivation, `SupervisorBayState` filter predicate, selection state,
+pull-to-refresh, bottom nav, scaffold. Floor tab now contributes zero
+`SectionHeader`/`AppCard`/`AppInfoPanel`/`AppSkeleton`/legacy-button call
+sites on its own surfaces.
+
+## Phase 5 technician-home recomposition (branch `ui/dashboards-2`)
+
+Today tab (`technician_today_view.dart`) recomposed presentation-only onto
+1P pattern widgets; new `technician_today_search.dart` (loaded-jobs search
+sheet). Legacy usages below drop to zero on the Today tab (verified by grep;
+the shared classes themselves are kept — still used by the Jobs /
+productivity / detail / sheet surfaces):
+
+| Deleted legacy widget | Homes before | Replaced by | Notes |
+|---|---|---|---|
+| bespoke `_ShiftStrip` + `_ShiftSlimStrip` (punch/summary strips) | today tab (2) | Header subtitle (shift + attendance, real state) | No invented data; punch actions stay on attendance surfaces; providers/routes untouched |
+| `SectionHeader` titles + ALL-CAPS eyebrows (`CURRENT WORK`/`UP NEXT`/`NEXT TASK`/`IN PROGRESS`) | today tab (2) | `_TodayHeader` Row (title `techNavToday` + subtitle, same-row end-side `AppIconButton` search per U1) + `AppSection` (`techTodayQueue` + `View all`) + `Tasks` heading | Plain Row, not `AppPageHeader` (compact stacks actions below subtitle — supervisor round-2 lesson) |
+| bespoke `_TaskFocusCard` (`AppCard.standard` + `PrimaryButton`/`SecondaryButton` + `AppLinearProgress`) | today tab (1) | `_TodayHero` (`AppSurfaceCard(outlined: false)` borderless-light + `AppPillButton.primary`/`secondary` + labelless `AppProgressBar` + plain progress text) | ONE filled CTA; job ref line added (hero identity); view-level resume prefers held over pending (provider state machine untouched) |
+| bespoke `_QuickAction` tiles (bordered, 1-line labels) | today tab (3) | `_TodayQuickTile` (borderless-light + e1 shadow, 72 min-height, ≤2-line wrap labels) | 1-tap each preserved; icons/labels/destinations verbatim |
+| bespoke `_BlockerNotice` (error-tinted container) | today tab (1) | `AppBanner(error)` (`techTodayJobOnHold` + `techTodayDelayedHint`) | Same copy/condition (delayed status) |
+| bespoke `_ConnectionNotice` (errorContainer + tap) | today tab (1) | `AppBanner(warning)` (`dashboardError` verbatim + `Retry` action) + stale board | Same message/contract; stale jobs kept |
+| `EmptyState.error` first-load error | today tab (1) | `AppErrorState` (`techTodayLoadError` + `techTodayErrorHint` + `techTodayRetry`) | Same copy/retry |
+| `EmptyState` no-jobs / no-active / queue-clear | today tab (3) | `AppEmptyState` (same keys; `Refresh` / `Open my jobs` actions kept; queue-clear action-less) | Same copy/destinations |
+| `AppSkeleton` today skeleton | today tab (1) | `AppShimmerSkeleton` mirroring header + hero + tiles + queue rows | Same loading contract (`isLoading && isEmpty`) |
+| `technicianStatusPill` (ALL-CAPS label) on this tab | today tab (1) | `AppStatusChip` (sentence-case `TechJobStatus.label`) | Shared component kept (Jobs/detail sheets still use it); this tab drops the uppercase |
+| (no search affordance) | today tab (0) | `TechnicianTodaySearchSheet`: `showAppModalSheet` + `AppSearchField` over loaded jobs, result tap = dossier contract | Permitted "full-screen search over technician jobs"; no new routes/logic |
+
+Kept verbatim (shared tile grammar — `technician_components.dart`
+untouched): `TechnicianJobSummary` (queue + search rows, emphasised first
+row, hairline dividers), `TechnicianStopwatch`, `TechnicianPlateChip`,
+`_activeJob` / `_urgentFirst` derivation, `take(5)` queue window, View-all
+visibility + `selectTab(1)` destination, progress math, pull-to-refresh,
+freshness footer, haptics. Zero new ARB keys (all copy reused).
+
+## Phase 7 owner-home recomposition (branch `ui/dashboards-2`)
+
+Owner home (`owner_dashboard_page.dart` + palette source
+`dashboard_body.dart` → shared `owner_search.dart`) recomposed
+presentation-only onto App* pattern widgets; providers/routes/sync/
+refresh/period logic, `_findKpi` / `_trendOf` derivation, filter
+predicates, bottom nav + rail, pull-to-refresh, haptics and keys
+untouched. Legacy usages below drop to zero on the home surface
+(verified by grep; the shared classes themselves are kept — still used
+by the approvals/register/chart/tab surfaces):
+
+| Deleted legacy widget | Homes before | Replaced by | Notes |
+|---|---|---|---|
+| bespoke `_CockpitHeader` chrome (analytics trailing `Container` + `StatusPill` live/active/today pills) | home (1 header + 3 pills) | `AppPageHeader` (ops title + branch subtitle + end-side `AppIconButton` search opening the existing palette, U1) + `AppStatusChip` pills (accent/info/success, verbatim labels) | Same titles/subtitle/pill copy; search opens the shared `owner_search.dart` palette (same 9 destinations, no new route); header takes `kpis` as params so pills populate (fixes the const+`ref.read` freeze, providers untouched) |
+| `TelemetryMetricPod` hero + micro-pods | home (1 hero + 3 pods) | `AppKpiCard.wide` hero + `AppKpiCard` 2-col grid (LTR-locked figures, verbatim labels/values/deltas, `semanticState` from the adapter) | ONE delta line each (trend badge only); missing families omitted, never zero-filled; overline casing unchanged (both uppercase non-Arabic) |
+| conditional blockers (none — silent) | home (0) | `AppBanner(warning)` approvals-WIP only (`ownerHomeApprovalsBanner`, value verbatim, `View all` drills to read-only triage) | Overdue-AR banner STOPPED (AR not in dashboard payload — new fetch would be logic); no decision buttons (no endpoint) |
+| bespoke `_CurveCard` chrome + compact swipeable `PageView` | home (2 curves) | Same shared atoms (`AppCard.standard` + `SectionHeader` + `SparklineChart` + first/last month rule); curves stack on compact | No `AppChartCard` in shared_core — composition, not invention; timeframe pills STOPPED (period does not drive trends; pills would be fake) |
+| `AppTable` compact duality (`compactBuilder` record rows) | home (1 register) | `AppTable` on medium+ (same columns/cells/routes/empty copy); `AppListGroup` of value rows on compact (LTR-locked `Open: X · Total: Y`, chevron, Show-all past 5 rows, `ownerRegisterAll` → same `jobCards` route) | View-all trailing kept, shown only when rows exist; empty → `AppEmptyState` (`ownerRegisterEmpty` + `ownerHeroEmptyHint`) |
+| bespoke quick-action record rows (12-row single column) | home (12) | Top-4 equal tiles (72px min-height, 4-across / 2×2 compact, wrap-safe) + inline Show-all `AppListGroup` for the remaining 8 (preview subtitle, expand-only) | All 12 destinations survive with identical routes/tabs (10 pushes + `selectTab(1/2)`); order preserved |
+| `AppSkeleton.page` loading | home (1) | `AppShimmerSkeleton` layout-mirroring (header lines + hero card + pod row + chart card + 3 rows) | Same loading contract (`isLoading && !hasAnyData`) |
+| legacy `ErrorView` | home (1) | `AppErrorState` (`ownerHomeLoadError` + server message verbatim + shared `commonRetry`) | Same message/retry; stale data kept; offline owned by the shell pill (no new banner) |
+| shell-local palette destination list (`_Destination`) | shell (1) | shared `openOwnerSearch` (`owner_search.dart`), used by shell trigger + header search | Ids/labels/hints/icons/run targets verbatim; no new routes |
+
+Kept verbatim: `_findKpi` / `_trendOf` (byte-identical, display-only),
+all 12 action defs (icons/labels/hints/routes/tabs in order),
+`AppSplitView` medium layout + wide 5/4/3 flexes, `RefreshIndicator` +
+`AppResponsivePage`, dashboard shell (app bar, bottom nav/rail, search
+shortcuts). Two new ARB keys (`ownerHomeApprovalsBanner`,
+`ownerHomeLoadError`, en+ar, gen-l10n from the package dir).

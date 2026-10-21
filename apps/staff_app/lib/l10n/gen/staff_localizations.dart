@@ -5978,6 +5978,18 @@ abstract class StaffLocalizations {
   /// **'No bays match this filter'**
   String get svFloorNoMatch;
 
+  /// Floor no-match helper under the title
+  ///
+  /// In en, this message translates to:
+  /// **'Try a different filter, or clear it to see every bay.'**
+  String get svFloorNoMatchHint;
+
+  /// Floor hero supporting sentence under the occupancy
+  ///
+  /// In en, this message translates to:
+  /// **'Dispatch the next job into a free bay.'**
+  String get svFloorHeroSentence;
+
   /// Floor error title
   ///
   /// In en, this message translates to:

@@ -109,6 +109,14 @@ class OwnerLocalizationsAr extends OwnerLocalizations {
   String get ownerHeroEmptyHint => 'اسحب للتحديث عند عودة الاتصال.';
 
   @override
+  String get ownerHomeLoadError => 'تعذّر تحميل أحدث الأرقام';
+
+  @override
+  String ownerHomeApprovalsBanner(String value) {
+    return '$value بانتظار مراجعة المالك';
+  }
+
+  @override
   String get ownerChartSalesProfit => 'المبيعات والأرباح';
 
   @override
@@ -143,6 +151,9 @@ class OwnerLocalizationsAr extends OwnerLocalizations {
 
   @override
   String get ownerRegisterEmpty => 'لا صفوف في السجل.';
+
+  @override
+  String get ownerRegisterEmptyHint => 'ستظهر المهام الجديدة هنا عند حجزها.';
 
   @override
   String get ownerActionsTitle => 'إجراءات سريعة';
