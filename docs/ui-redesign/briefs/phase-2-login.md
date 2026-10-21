@@ -1,77 +1,87 @@
-# UX Brief — phase-2 login (first family under the mandate; STOPPED for go)
+# UX Brief — phase-2 login (SUPERSEDING DECISION 2026-10-20: password login is ONE screen; code/register keep steps)
+
+## Scoped rule — step flows vs tap count (auth decision, also in C17)
+Step flows are for ONE-TIME or genuinely complex tasks. Frequent tasks stay on a single screen. A step
+flow may exceed the previous tap count for a one-time task, and then typed values must survive Back and
+a progress bar must show position.
 
 ## User goal
-A returning or new user opens any of the 4 apps and gets inside with the least possible friction,
-understanding at every step what is asked and why. One task per screen; never a form of everything.
+A returning or new user opens any of the 4 apps and gets inside with the least possible friction.
+Password login (the frequent task) takes ONE tap from launch. One task per screen.
 
 ## Single primary action
-Per step, exactly one: Step 1 "Continue", Step 2 auto-verifies the code (fallback "Verify" CTA),
-Password "Log in", Register steps "Continue" / final "Create account".
+Password screen: Continue = the existing login call. Code flow: Verify. Register final: Create account.
+
+## Top 3 tasks with tap counts (BEFORE = old single screen, AFTER = this brief)
+1. Log in with password — before 1 tap → after 1 tap (identifier + password + Continue on one screen). No increase.
+2. Log in with code — before 3 (switcher + Send + Verify) → after 2 (alt row + Verify). Decreased.
+3. Reset forgotten password — before 2 (Send + Update) → after 2. No increase.
+Register (one-time, documented exemption): 1 → 3 steps with persistent values + step X of 3 progress.
 
 ## What is REMOVED or moved
-- REMOVED: `_MethodSwitcher` segmented password/code toggle (replaced by step progression).
-- REMOVED: big brand lockup + app-context block from the form column (kept small on Step 1; full
-  identity panel only on expanded split; per-app `appName/purpose/notice` props preserved and shown
-  as the muted trust line + split panel).
-- REMOVED: resend cooldown ring + detached countdown row (replaced by "Resend code" link + "in Ns" text).
-- MOVED: "Use password instead" and "Forgot password?" become quiet secondary links (password is a
-  secondary path per C16); registration becomes its own step flow behind "New here? Create account".
+- REMOVED: `_MethodSwitcher` segmented toggle (gone already); code is an alt row, not a mode.
+- REMOVED: resend cooldown ring (replaced by "Resend code" link + "in Ns" text).
+- REMOVED: big brand lockup + app-context block from the form column (small lockup on password screen;
+  full identity panel only on expanded split; per-app props preserved as muted trust line + split panel).
 - KEPT (logic-owned): all LoginNotifier modes, setters, OTP send/verify, register(), resend cooldown,
-  error mapping, navigation callbacks.
+  error mapping, navigation callbacks, autofill hints, focus order, keyboard actions.
 
-## Flow broken into steps (UI state only — maps onto existing notifier calls, no logic change)
-1. **Step 1 "Log in or sign up"**: identifier field (dual phone/email, country prefix, LTR-locked) →
-   Continue. Digits → send code → Step 2. (Email identifiers route the same; code-first for all.)
-2. **Step 2 "Confirm your number"**: 6-digit Pinput (token-styled), masked destination line,
-   "Resend code in Ns" → "Resend code" link, back arrow → Step 1. Auto-verify on complete.
-3. **Password path** ("Use password instead" from Step 1 or 2): "Welcome back" + identifier recap,
-   password field (toggle), Continue → `loginWithPassword`; "Forgot password?" → recovery flow.
-4. **Register (customer only)**: R1 "What's your name?" → R2 "How should we contact you?" (identifier) →
-   R3 "Create a password" (strength meter) → "Create account" → existing `register()`.
-5. **Recovery**: existing 3 stages recomposed as steps in `AppStepScaffold` (progress = existing 2-step
-   indicator); code + new password collected together (backend single-call constraint); warm terminal
-   confirmation (C10 exception) → single "Back to sign in" CTA.
-6. **Supervisor**: 2 steps (identifier → password) collecting into the existing `login()` call.
-7. **Splash**: navy signature, tokens + Semantics polish only.
+## Flow (UI state only — maps onto existing notifier calls, no logic change)
+1. **Password screen (all 4 apps, DEFAULT)**: big headline + identifier field + password field (toggle) +
+   "Forgot password?" link + sticky full-width Continue → EXISTING login call (no new API timing).
+   `AutofillGroup` with username + password hints so password managers work; focus identifier → password;
+   keyboard action on password submits. Alt row "Send me a code instead" ONLY where code login already
+   exists → code flow. Continue makes the same call as before, when as before.
+2. **Code flow (2 steps, kept)**: Step 1 identifier? NO — entry is the alt row (identifier already typed
+   on the password screen carries over); "Confirm your number": 6-digit Pinput, masked destination,
+   resend link + countdown, back arrow. Auto-verify on complete.
+3. **Register (customer only, 3 steps, documented one-time exemption)**: R1 name → R2 contact → R3
+   password + strength → "Create account" → existing `register()`; values survive Back; progress X of 3.
+4. **Recovery**: existing 3 stages recomposed as steps; code + new password together (backend single-call
+   constraint); warm terminal confirmation (C10 exception) → single "Back to sign in" CTA.
+5. **Supervisor**: ONE screen, same pattern as password (identifier + password + Continue → existing
+   `login()`; forgot link preserved).
+6. **Splash**: navy signature, tokens + Semantics polish only.
 
-Logic-boundary check: every transition above calls an existing notifier method with already-available
-state (setEmail/setPhone/setPassword/setName/send*/verify*/loginWithPassword/register/reset). No new
-logic needed. If build discovers otherwise, STOP and ask (per C16 rule).
+Logic-boundary check: every submit above calls an existing notifier method with already-available
+state. Step-1-without-API-call is gone (no such step anymore). No new logic needed. If build discovers
+otherwise, STOP and ask.
 
 ## Airbnb pattern used
-C16 auth step flow: `AppStepScaffold` (thin progress, back arrow, headlineLarge question, supporting
-line, input, sticky full-width CTA), `AppOrDivider` + `AppAltAuthRow` on Step 1 for alternative paths
-(password, register), muted trust/security line under CTAs, `AppStickyActionBar` where recap + CTA
-coexist. No boxes-in-boxes; one CTA per step.
+C16 auth screen (not a step flow for password): brand lockup, headlineLarge + subtitle, App* inputs,
+full-width 52 CTA, secondary text links, muted trust line, 480 max, keyboard-safe. Steps only where
+the brief says: code confirm, register R1-R3.
 
-## ASCII wireframe (Step 1, 360px)
+## ASCII wireframe at 360x800 (password screen — first actionable item above the fold)
 ```
 +----------------------------------+
-| —— progress (step 1 of 2)        |
-| <                                |
+| [lockup]              [search n/a]|
 |                                  |
-| Log in or sign up                |
-| Enter your number to continue.   |
+| Welcome back                     |
+| Log in to continue.              |
 |                                  |
+| Phone or email                   |
 | [ +971 | 5_ ___ ____ ]  (input)  |
+| Password                         |
+| [ ••••••••          ]  (toggle)  |
+|            Forgot password?      |
 |                                  |
-| [        Continue        ] (CTA)  |
+| [          Continue     ] (CTA)   |
 |                                  |
 | ——————— or ———————               |
-| [📱] Use password instead   (row)|
-| [👤] New here? Create account(row)|
+| [💬] Send me a code instead (row)|
 |                                  |
-| 🔒 We keep your number private.  |
+| 🔒 We keep your account private. |
 +----------------------------------+
-Step 2 swaps input → [ _ _ _ _ _ _ ] + "Resend code in 27s" + destination line.
+Bottom nav: none (auth screens never have one).
 ```
 
-## States (per step)
-idle, loading (CTA busy, label swap, width preserved — no spinner overlays), field error
-(icon + text, live region), form-level error (`AppBanner` above CTA where it fits, else mapped
-snackbar+retry — reviewer judges fit per state), offline/retryable, success (auto-advance; snackbar
-only for in-place confirmations like code-sent).
+## States
+idle, loading (CTA busy, label swap, width preserved), field error (icon + text, live region),
+form-level error (`AppBanner` above CTA where it fits, else mapped snackbar+retry), offline/retryable,
+success (auto-advance; snackbar only for in-place confirmations like code-sent). 1.3x + 320px + RTL +
+customer dark; staff/owner/CRM light-only.
 
 ## Copy keys needed (new ARB keys, en+ar, listed for phase 9)
-Step headlines + supporting lines + "Use password instead" + "New here? Create account" +
-"Resend code (in Ns)" + masked-destination line + trust line. All existing validation/error keys stay.
+Password screen headline/subtitle; "Send me a code instead"; existing step keys stay (code/register/
+forgot already added). All existing validation/error keys stay.
