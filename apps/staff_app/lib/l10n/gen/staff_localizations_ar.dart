@@ -232,6 +232,27 @@ class StaffLocalizationsAr extends StaffLocalizations {
   }
 
   @override
+  String advisorHeroDueTitle(int count) {
+    return '$count عمليات فحص مستحقة اليوم';
+  }
+
+  @override
+  String get advisorHeroSentence => 'راجع المهام العاجلة أولاً.';
+
+  @override
+  String get advisorHeroViewJobs => 'عرض المهام';
+
+  @override
+  String get advisorHeroCaughtUp => 'لا مهام عاجلة — ستظهر المهام الجديدة هنا.';
+
+  @override
+  String get advisorHomeEmptyTitle => 'لا توجد مهام مسندة بعد';
+
+  @override
+  String get advisorHomeEmptyBody =>
+      'ستظهر بطاقات العمل الجديدة هنا. أنشئ واحدة للبدء.';
+
+  @override
   String get advisorActionApprovalsTitle => 'الموافقات';
 
   @override

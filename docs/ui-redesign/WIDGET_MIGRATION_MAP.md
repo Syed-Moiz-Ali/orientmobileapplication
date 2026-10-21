@@ -107,3 +107,27 @@ widgets. Deleted legacy home widgets below at zero remaining usages
 | `CustomerSurfacePanel` | — (not deleted) | — | KEPT: used by approvals, bookings, breakdown, vehicles, status panels, booking-success |
 | legacy `SectionHeader` on Home garage/recent | home garage + recent (2) | `AppCarousel` header / `AppSection` + `AppListGroup` | Shared `SectionHeader` class itself kept (used elsewhere); Home no longer references it |
 | legacy `EmptyState`/`ErrorView` on Home loading/error | home (2) | `AppShimmerSkeleton` / `AppEmptyState` / `AppErrorState` | Home now contributes zero `AppSkeleton`-legacy call sites (loading skeleton migrated) |
+
+## Phase 3 advisor-home recomposition (branch `ui/phase-6-customer`)
+
+Home (`advisor_home_view.dart`) recomposed presentation-only onto 1P pattern
+widgets. Deleted legacy home widgets below at zero remaining usages
+(verified by repo grep; no other app/package referenced them):
+
+| Deleted legacy widget | Homes before | Replaced by | Notes |
+|---|---|---|---|
+| `_GreetingHeader` (+ `_HeaderBadge`) | advisor home only (1) | `AppPageHeader` (date eyebrow + greeting + branch·shift, trailing: header search + `OfflineStatusPill` + bell/`AppBadge` + `AppAvatar`) | Same identity data, pill, bell count (`notifications + approvals`), avatar, sheets, logout dialog |
+| `_SearchHero` (+ `_HeroBloom`, `_RecentChip`, `_PremiumSearchField`) + `SliverAppBar` search hero | advisor home only (1) | Pinned `SliverAppBar` bottom: pill-style `AppSearchBar` (same controller/focus/query/clear) + `AppChip` recents + scan `AppIconButton`; sheet via header search + Ctrl+K shortcut | Same query state, recents, filter predicate, scan route, sheet route; inline typing kept (an `AppSearchPill` is read-only and would have frozen the query state) |
+| `_ActionStrip` (+ `_StripTile`, `_CountBadge`) 2x2 grid | advisor home only (1) | ONE horizontal row of 3 `AppPillButton` (Scan secondary, New job primary emphasized, Approvals secondary with inline count) | Per the brief the C16 row overrides the recorded 2026-10-15 owner 2x2-grid preference — flagged, not silent; same routes, haptics kept |
+| `_SummaryStrip` (+ `_MetricCell`) slim metrics | advisor home only (1) | ONE hero `AppMediaCard` (key number `advisorHeroDueTitle` + delta sentence + See-all CTA into Jobs tab) + `AppSection` of 3 `AppStatTile` behind See all/Reports tab | Numbers derived from the same providers/list as before; zeros render as muted dash |
+| `_AssignedSection` divider rows (+ `_AssignedSkeletonRows`, `_FadeSlideIn`) | advisor home only (1) | `AppSection` + large `AppMediaCard` rows (customer + vehicle/plate/id/time sentence + ONE `AppStatusChip` + tap) with Show all → Jobs tab | Urgent-first sort UNCHANGED; `AdvisorJobCardRow` class KEPT (still used by the Jobs work list) |
+| `_DesktopPreview` bespoke side panel | advisor home only (1) | Same 2-col list + preview, preview rebuilt with `AppSurfaceCard` + `AppStatusChip` + `AppPillButton` | Same selection state, same job-detail route; empty prompt kept |
+| legacy `EmptyState`/`ErrorView`/`AppSkeleton` on Home loading/error/empty | home (3) | `AppShimmerSkeleton` / `AppEmptyState` (new `advisorHomeEmptyTitle`/`advisorHomeEmptyBody` + New job CTA) / `AppErrorState` + `AppBanner` (warning) offline | Same retry (provider invalidate), same offline-keep-last-data; KEPT: shared `EmptyState`/`ErrorView` classes (used by jobs/sheets elsewhere) |
+
+Kept verbatim (no new usages, no signature changes): `AdvisorProfileSheet`,
+`AdvisorNotificationSheet`, `AdvisorSearchSheet`, `AdvisorApprovalSheet`,
+`showLogoutDialog`, all providers/routes/sync logic/sort/filter/selection.
+Home now contributes zero `AppSkeleton`-legacy call sites on its own surfaces
+(loading + summary skeletons migrated); `StatusPill` remains the shared
+vocabulary (`advisor_status.dart` untouched) with home cards mapping the same
+taxonomy to `AppStatusChip`.

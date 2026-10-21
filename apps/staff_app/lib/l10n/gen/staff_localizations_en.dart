@@ -93,16 +93,16 @@ class StaffLocalizationsEn extends StaffLocalizations {
       'Lookup repair orders, estimates & history';
 
   @override
-  String get advisorQuickActionsEyebrow => 'Quick Actions';
+  String get advisorQuickActionsEyebrow => 'Quick actions';
 
   @override
-  String get advisorActionScanTitle => 'Scan Vehicle';
+  String get advisorActionScanTitle => 'Scan vehicle';
 
   @override
-  String get advisorActionScanSubtitle => 'VIN / Plate';
+  String get advisorActionScanSubtitle => 'VIN / plate';
 
   @override
-  String get advisorActionNewJobTitle => 'New Job Card';
+  String get advisorActionNewJobTitle => 'New job card';
 
   @override
   String get advisorActionNewJobSubtitle => 'Client intake';
@@ -120,13 +120,13 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String get advisorActionReportsSubtitle => 'Performance logs';
 
   @override
-  String get advisorWorkSummary => 'Work Summary';
+  String get advisorWorkSummary => 'Work summary';
 
   @override
   String get advisorActionAnalytics => 'Analytics';
 
   @override
-  String get advisorAssignedWorkOrders => 'Assigned Work Orders';
+  String get advisorAssignedWorkOrders => 'Assigned work orders';
 
   @override
   String advisorViewAll(int count) {
@@ -137,10 +137,10 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String get advisorNoActiveJobs => 'No active job cards assigned';
 
   @override
-  String get advisorMetricTotalOrders => 'Total Orders';
+  String get advisorMetricTotalOrders => 'Total orders';
 
   @override
-  String get advisorMetricInProgress => 'In Progress';
+  String get advisorMetricInProgress => 'In progress';
 
   @override
   String get advisorMetricDelivered => 'Delivered';
@@ -174,7 +174,7 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String get advisorFilterAll => 'All';
 
   @override
-  String get advisorFilterInProgress => 'In Progress';
+  String get advisorFilterInProgress => 'In progress';
 
   @override
   String get advisorFilterCompleted => 'Completed';
@@ -183,7 +183,7 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String get advisorFilterPending => 'Pending';
 
   @override
-  String get advisorFilterQc => 'QC Check';
+  String get advisorFilterQc => 'QC check';
 
   @override
   String get advisorFilterCancelled => 'Cancelled';
@@ -231,6 +231,28 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String advisorHomeUpdatedAt(String time) {
     return 'Updated $time';
   }
+
+  @override
+  String advisorHeroDueTitle(int count) {
+    return '$count inspections due today';
+  }
+
+  @override
+  String get advisorHeroSentence => 'Review what\'s urgent first.';
+
+  @override
+  String get advisorHeroViewJobs => 'View jobs';
+
+  @override
+  String get advisorHeroCaughtUp =>
+      'You\'re caught up — new jobs will appear here.';
+
+  @override
+  String get advisorHomeEmptyTitle => 'No jobs assigned yet';
+
+  @override
+  String get advisorHomeEmptyBody =>
+      'New job cards will appear here. Create one to get started.';
 
   @override
   String get advisorActionApprovalsTitle => 'Approvals';
@@ -1187,25 +1209,25 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String get advisorStatusPending => 'Pending';
 
   @override
-  String get advisorStatusInProgress => 'In Progress';
+  String get advisorStatusInProgress => 'In progress';
 
   @override
   String get advisorStatusCompleted => 'Completed';
 
   @override
-  String get advisorStatusWaitingParts => 'Waiting Parts';
+  String get advisorStatusWaitingParts => 'Waiting parts';
 
   @override
-  String get advisorStatusQc => 'QC Check';
+  String get advisorStatusQc => 'QC check';
 
   @override
   String get advisorStatusCancelled => 'Cancelled';
 
   @override
-  String get advisorStatusAwaitingSupervisor => 'Awaiting Supervisor';
+  String get advisorStatusAwaitingSupervisor => 'Awaiting supervisor';
 
   @override
-  String get advisorStatusVehicleReceived => 'Vehicle Received';
+  String get advisorStatusVehicleReceived => 'Vehicle received';
 
   @override
   String get advisorStatusInspected => 'Inspected';
@@ -1214,20 +1236,20 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String get advisorStatusApproved => 'Approved';
 
   @override
-  String get advisorStatusWorkAssigned => 'Work Assigned';
+  String get advisorStatusWorkAssigned => 'Work assigned';
 
   @override
   String get advisorStatusWaitingCustomerApproval =>
-      'Waiting Customer Approval';
+      'Waiting customer approval';
 
   @override
   String get advisorStatusDelivered => 'Delivered';
 
   @override
-  String get advisorStatusQcPassed => 'QC Passed';
+  String get advisorStatusQcPassed => 'QC passed';
 
   @override
-  String get advisorStatusPendingApproval => 'Pending Approval';
+  String get advisorStatusPendingApproval => 'Pending approval';
 
   @override
   String get advisorIntakeTitle => 'Create Job Card';
@@ -1895,7 +1917,7 @@ class StaffLocalizationsEn extends StaffLocalizations {
       'Select a job card to preview the details';
 
   @override
-  String get advisorActionOpenJob => 'Open Job Card';
+  String get advisorActionOpenJob => 'Open job card';
 
   @override
   String get advisorActionMore => 'More actions';
