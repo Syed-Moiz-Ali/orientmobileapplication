@@ -13,6 +13,9 @@ import 'package:shared_core/src/widgets/directional_icon.dart';
 /// a pill touch shape. Taps ignored while [isLoading] (spinner replaces the
 /// optional icon, label stays). Honors reduced motion, 1.3x-safe.
 ///
+/// Long labels wrap to a second centered line instead of truncating —
+/// primary links must never ellipsize (phase-2 F-7).
+///
 /// ```dart
 /// AppTextButton(label: 'See all', onPressed: openAll)
 /// ```
@@ -121,7 +124,8 @@ class _AppTextButtonState extends State<AppTextButton> {
                   Flexible(
                     child: Text(
                       widget.label,
-                      maxLines: 1,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style:
                           Theme.of(context).textTheme.labelLarge?.copyWith(

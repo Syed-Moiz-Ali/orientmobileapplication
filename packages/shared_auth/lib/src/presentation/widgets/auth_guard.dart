@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_auth/src/localization/shared_auth_l10n.dart';
 import 'package:shared_auth/src/presentation/providers/auth_state.dart';
-import 'package:shared_auth/src/presentation/widgets/auth_button.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_loading_view.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_models/src/user_role.dart';
@@ -140,14 +139,14 @@ class AuthSessionExpiredView extends StatelessWidget {
               color: colors.onSurfaceVariant,
             ),
           ),
-          if (onSignIn != null) ...[
-            const SizedBox(height: AppDimensions.s16),
-            AuthPrimaryButton(
-              label: t.authSessionExpiredAction,
-              icon: Icons.login_rounded,
-              onPressed: onSignIn,
-            ),
-          ],
+    if (onSignIn != null) ...[
+      const SizedBox(height: AppDimensions.s16),
+      AppPillButton.primary(
+        label: t.authSessionExpiredAction,
+        icon: Icons.login_rounded,
+        onPressed: onSignIn,
+      ),
+    ],
         ],
       ),
     );

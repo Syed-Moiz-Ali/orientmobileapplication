@@ -142,7 +142,7 @@ void main() {
 
     await expectLater(
       find.byType(MaterialApp),
-      matchesGoldenFile('../../../docs/ui-redesign/baseline/crm_light.png'),
+      matchesGoldenFile('../../../docs/ui-redesign/baseline/after-phase-2/crm_login_one_screen_idle_light_1.0_en_390x844.png'),
     );
     debugDisableShadows = true;
   });

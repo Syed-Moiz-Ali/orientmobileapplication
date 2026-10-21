@@ -2,23 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_auth/src/localization/shared_auth_l10n.dart';
 import 'package:shared_auth/src/presentation/providers/auth_providers.dart';
-import 'package:shared_auth/src/presentation/widgets/auth_button.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_error_mapper.dart';
-import 'package:shared_auth/src/presentation/widgets/auth_field.dart';
+import 'package:shared_auth/src/presentation/widgets/auth_otp_field.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_password_strength.dart';
-import 'package:shared_auth/src/presentation/widgets/auth_surface.dart';
+import 'package:shared_auth/src/presentation/widgets/auth_step_brand.dart';
+import 'package:shared_auth/src/presentation/widgets/auth_step_resend.dart';
 import 'package:shared_core/shared_core.dart';
 
 enum ForgotMethod { phone, email }
 
-/// Recovery is a single view with three intent-level stages. The backend
+/// Recovery is a single step flow with three intent-level stages. The backend
 /// issues and consumes the recovery code in one `reset-password` call, so the
 /// code and the new password are collected together rather than inventing a
 /// local "verify" gate that the API cannot honour.
 ///
-/// Composition (rebuilt): 2-step indicator (Verify account → New password) →
-/// identify → code-sent with resend timer → reset with the shared strength
-/// slot → warm success with a single CTA.
+/// Composition (C16): the same 3 stages recomposed as [AppStepScaffold] steps
+/// (thin progress + back arrow + question headline + sticky CTA); code + new
+/// password collected together (backend single-call constraint); warm terminal
+/// confirmation (C10 exception) → single "Back to sign in" CTA.
 enum _RecoveryStage { identifier, reset, done }
 
 class ForgotPasswordView extends ConsumerStatefulWidget {
@@ -62,12 +63,17 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
   String? _passwordError;
 
   bool _isLoading = false;
-  int _resendCooldown = 0;
+
+  /// Resend countdown owned as a notifier (not `setState`): the 1 Hz ticks
+  /// update [_cooldown.value] so only [ForgotResendRow]'s
+  /// [ValueListenableBuilder] rebuilds — never this whole step.
+  final ValueNotifier<int> _cooldown = ValueNotifier<int>(0);
   int _cooldownGeneration = 0;
 
   @override
   void dispose() {
     _cooldownGeneration++;
+    _cooldown.dispose();
     _identifierCtrl.dispose();
     _passwordCtrl.dispose();
     _identifierFocus.dispose();
@@ -172,13 +178,10 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
           _stage = _RecoveryStage.reset;
         });
         _startCooldown();
-        // Code-sent confirmation: success snackbar, no banner. Values in the
-        // controllers are preserved for the reset step.
-        showAppSnackBar(
-          context,
-          message: t.forgotCodeSent(_maskedDestination),
-          tone: AppSnackBarTone.success,
-        );
+        // Code-sent confirmation is an in-flow success banner at the top of
+        // the reset step (phase-2 F-4) — never a floating snackbar, so it
+        // can never overlay the resend countdown. Values in the controllers
+        // are preserved for the reset step.
       },
       failure: (error) {
         final display = mapAuthError(error, t);
@@ -242,6 +245,7 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
     result.when(
       success: (_) {
         _cooldownGeneration++;
+        _cooldown.value = 0;
         setState(() {
           _isLoading = false;
           _stage = _RecoveryStage.done;
@@ -272,15 +276,15 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
 
   void _startCooldown() {
     final generation = ++_cooldownGeneration;
-    setState(() => _resendCooldown = 30);
+    _cooldown.value = 30;
     Future.doWhile(() async {
       await Future.delayed(const Duration(seconds: 1));
       if (!mounted || generation != _cooldownGeneration) return false;
-      if (_resendCooldown <= 1) {
-        setState(() => _resendCooldown = 0);
+      if (_cooldown.value <= 1) {
+        _cooldown.value = 0;
         return false;
       }
-      setState(() => _resendCooldown--);
+      _cooldown.value = _cooldown.value - 1;
       return true;
     });
   }
@@ -299,142 +303,144 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
   @override
   Widget build(BuildContext context) {
     final t = SharedAuthL10n.of(context);
-    final (title, subtitle) = switch (_stage) {
-      _RecoveryStage.identifier => (t.forgotTitle, t.forgotSubtitle),
-      _RecoveryStage.reset => (t.forgotResetTitle, t.forgotResetSubtitle),
-      _RecoveryStage.done => (t.forgotDoneTitle, t.forgotDoneSubtitle),
+    final (title, subtitle, ctaLabel, busyLabel, step, total, onCta, onBack) =
+        switch (_stage) {
+      _RecoveryStage.identifier => (
+        t.forgotTitle,
+        t.forgotSubtitle,
+        t.forgotActionSendRecoveryCode,
+        t.authActionSending,
+        1,
+        2,
+        _sendOtp,
+        widget.onBackToLogin,
+      ),
+      _RecoveryStage.reset => (
+        t.forgotResetTitle,
+        t.forgotResetSubtitle,
+        t.forgotActionUpdatePassword,
+        t.authActionUpdating,
+        2,
+        2,
+        _resetPassword,
+        _editIdentifier,
+      ),
+      _RecoveryStage.done => (
+        t.forgotDoneTitle,
+        t.forgotDoneSubtitle,
+        t.forgotBackToSignIn,
+        null as String?,
+        2,
+        2,
+        widget.onBackToLogin,
+        null as VoidCallback?,
+      ),
     };
 
-    return AuthShell(
-      appName: widget.appName,
-      appPurpose: widget.appPurpose,
-      intendedUsers: widget.intendedUsers,
-      securityNotice: widget.securityNotice,
-      top: _stage == _RecoveryStage.done
-          ? null
-          : _RecoveryProgress(
-              step: _stage == _RecoveryStage.reset ? 2 : 1,
-              onBackToLogin: widget.onBackToLogin,
-            ),
+    final Widget content = switch (_stage) {
+      _RecoveryStage.identifier => _ForgotIdentifierContent(
+        controller: _identifierCtrl,
+        error: _identifierError,
+        isLoading: _isLoading,
+        focusNode: _identifierFocus,
+        onChanged: _onIdentifierChanged,
+        onSubmitted: _sendOtp,
+      ),
+      _RecoveryStage.reset => _ForgotResetContent(
+        passwordCtrl: _passwordCtrl,
+        password: _password,
+        sentMessage: t.forgotCodeSent(_maskedDestination),
+        codeError: _codeError,
+        passwordError: _passwordError,
+        isLoading: _isLoading,
+        cooldown: _cooldown,
+        passwordFocus: _passwordFocus,
+        onOtpChanged: (value) {
+          _dismissSnack();
+          setState(() {
+            _otp = value;
+            _codeError = null;
+          });
+        },
+        onPasswordChanged: (value) {
+          _dismissSnack();
+          setState(() {
+            _password = value;
+            _passwordError = null;
+          });
+        },
+        onSubmitted: _resetPassword,
+        onEditIdentifier: _editIdentifier,
+        onResend: _sendOtp,
+      ),
+      _RecoveryStage.done => const _RecoverySuccessContent(),
+    };
+
+    final Widget stepShell = AppStepScaffold(
+      step: step,
+      totalSteps: total,
+      backLabel: t.loginStepBack,
+      onBack: onBack,
       title: title,
       subtitle: subtitle,
-      child: AnimatedSwitcher(
-        duration: AppMotion.resolve(context, AppMotion.standard),
-        switchInCurve: AppMotion.enter,
-        switchOutCurve: AppMotion.exit,
-        layoutBuilder: (currentChild, previousChildren) => Stack(
-          alignment: Alignment.topCenter,
-          children: [
-            ...previousChildren,
-            if (currentChild != null) currentChild,
-          ],
+      ctaLabel: ctaLabel,
+      busyLabel: busyLabel,
+      onCta: onCta,
+      isLoading: _isLoading,
+      progressSemanticLabel: t.loginStepProgress(step, total),
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: content,
         ),
-        child: switch (_stage) {
-          _RecoveryStage.identifier => _IdentifierStep(
-            key: const ValueKey('identifier'),
-            controller: _identifierCtrl,
-            error: _identifierError,
-            isLoading: _isLoading,
-            focusNode: _identifierFocus,
-            onChanged: _onIdentifierChanged,
-            onSubmit: _sendOtp,
-          ),
-          _RecoveryStage.reset => _ResetStep(
-            key: const ValueKey('reset'),
-            passwordCtrl: _passwordCtrl,
-            password: _password,
-            codeError: _codeError,
-            passwordError: _passwordError,
-            isLoading: _isLoading,
-            resendCooldown: _resendCooldown,
-            passwordFocus: _passwordFocus,
-            onOtpChanged: (value) {
-              _dismissSnack();
-              setState(() {
-                _otp = value;
-                _codeError = null;
-              });
-            },
-            onPasswordChanged: (value) {
-              _dismissSnack();
-              setState(() {
-                _password = value;
-                _passwordError = null;
-              });
-            },
-            onSubmit: _resetPassword,
-            onEditIdentifier: _editIdentifier,
-            onResend: _sendOtp,
-          ),
-          _RecoveryStage.done => _RecoverySuccess(
-            key: const ValueKey('done'),
-            onBackToLogin: widget.onBackToLogin,
-          ),
-        },
       ),
     );
-  }
-}
 
-/// Step progress plus the always-available route back to sign in. Placed in the
-/// shell's `top` slot so back navigation is consistent with the system back
-/// gesture, which also leaves recovery for sign in.
-class _RecoveryProgress extends StatelessWidget {
-  final int step;
-  final VoidCallback onBackToLogin;
-
-  const _RecoveryProgress({required this.step, required this.onBackToLogin});
-
-  @override
-  Widget build(BuildContext context) {
-    final t = SharedAuthL10n.of(context);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Align(
-          alignment: AlignmentDirectional.centerStart,
-          child: AuthLinkButton(
-            label: t.forgotSignIn,
-            icon: Icons.arrow_back_rounded,
-            onPressed: onBackToLogin,
+    return AppAdaptiveBuilder(
+      builder: (context, adaptive) {
+        final split = adaptive.isExpanded || adaptive.isLarge;
+        if (!split) return stepShell;
+        return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          body: SafeArea(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  flex: 5,
+                  child: AuthStepBrandPanel(
+                    appName: widget.appName,
+                    appPurpose: widget.appPurpose,
+                    intendedUsers: widget.intendedUsers,
+                    securityNotice: widget.securityNotice,
+                  ),
+                ),
+                Expanded(flex: 6, child: stepShell),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: AppDimensions.s12),
-        AppStepProgress(
-          currentStep: step - 1,
-          steps: [
-            AppProgressStep(
-              label: t.authRecoveryStepIdentify,
-              icon: Icons.alternate_email_rounded,
-            ),
-            AppProgressStep(
-              label: t.authRecoveryStepReset,
-              icon: Icons.lock_reset_rounded,
-            ),
-          ],
-        ),
-      ],
+        );
+      },
     );
   }
 }
 
-class _IdentifierStep extends StatelessWidget {
+class _ForgotIdentifierContent extends StatelessWidget {
   final TextEditingController controller;
   final String? error;
   final bool isLoading;
   final FocusNode? focusNode;
   final VoidCallback onChanged;
-  final VoidCallback onSubmit;
+  final VoidCallback onSubmitted;
 
-  const _IdentifierStep({
-    super.key,
+  const _ForgotIdentifierContent({
     required this.controller,
     required this.error,
     required this.isLoading,
     this.focusNode,
     required this.onChanged,
-    required this.onSubmit,
+    required this.onSubmitted,
   });
 
   bool _looksLikeEmail(String value) {
@@ -457,20 +463,20 @@ class _IdentifierStep extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  AuthTextField(
-                    controller: controller,
+                  AppInputField(
                     label: t.loginFieldIdentifier,
                     hint: t.loginFieldIdentifierHint,
-                    icon: Icons.alternate_email_rounded,
+                    controller: controller,
+                    prefixIcon: Icons.alternate_email_rounded,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.done,
                     autofillHints: const [AutofillHints.username],
-                    textDirection: TextDirection.ltr,
+                    forceLtr: true,
                     enabled: !isLoading,
-                    errorText: error,
+                    error: error,
                     focusNode: focusNode,
                     onChanged: (_) => onChanged(),
-                    onSubmitted: (_) => onSubmit(),
+                    onSubmitted: (_) => onSubmitted(),
                   ),
                   // Per-country format hint for phone-like entry, mirroring
                   // the sign-in identifier row (UAE default, 9 digits).
@@ -487,14 +493,6 @@ class _IdentifierStep extends StatelessWidget {
               );
             },
           ),
-          const SizedBox(height: AppDimensions.s24),
-          AuthPrimaryButton(
-            label: t.forgotActionSendRecoveryCode,
-            busyLabel: t.authActionSending,
-            icon: Icons.arrow_forward_rounded,
-            isLoading: isLoading,
-            onPressed: onSubmit,
-          ),
           const SizedBox(height: AppDimensions.s20),
           Text(
             t.forgotContactSupport,
@@ -510,32 +508,33 @@ class _IdentifierStep extends StatelessWidget {
   }
 }
 
-class _ResetStep extends StatelessWidget {
+class _ForgotResetContent extends StatelessWidget {
   final TextEditingController passwordCtrl;
   final String password;
+  final String sentMessage;
   final String? codeError;
   final String? passwordError;
   final bool isLoading;
-  final int resendCooldown;
+  final ValueNotifier<int> cooldown;
   final FocusNode? passwordFocus;
   final ValueChanged<String> onOtpChanged;
   final ValueChanged<String> onPasswordChanged;
-  final VoidCallback onSubmit;
+  final VoidCallback onSubmitted;
   final VoidCallback onEditIdentifier;
   final VoidCallback onResend;
 
-  const _ResetStep({
-    super.key,
+  const _ForgotResetContent({
     required this.passwordCtrl,
     required this.password,
+    required this.sentMessage,
     required this.codeError,
     required this.passwordError,
     required this.isLoading,
-    required this.resendCooldown,
+    required this.cooldown,
     this.passwordFocus,
     required this.onOtpChanged,
     required this.onPasswordChanged,
-    required this.onSubmit,
+    required this.onSubmitted,
     required this.onEditIdentifier,
     required this.onResend,
   });
@@ -548,6 +547,14 @@ class _ResetStep extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // In-flow sent confirmation (F-4): pinned above the OTP field with
+          // the resend row kept below the CTA, so banner and countdown can
+          // never overlap at 360×800. The page stays scrollable.
+          AppBanner(
+            kind: AppBannerKind.success,
+            message: sentMessage,
+          ),
+          const SizedBox(height: AppDimensions.s20),
           AuthOtpField(
             label: t.forgotFieldRecoveryCode,
             onChanged: onOtpChanged,
@@ -555,42 +562,37 @@ class _ResetStep extends StatelessWidget {
             enabled: !isLoading,
           ),
           const SizedBox(height: AppDimensions.s20),
-          AuthTextField(
-            controller: passwordCtrl,
+          AppInputField(
             label: t.forgotFieldNewPassword,
             hint: t.forgotFieldNewPasswordHint,
-            icon: Icons.lock_outline_rounded,
+            controller: passwordCtrl,
+            prefixIcon: Icons.lock_outline_rounded,
             obscureText: true,
+            passwordToggle: true,
+            showPasswordTooltip: t.authShowPassword,
+            hidePasswordTooltip: t.authHidePassword,
             textInputAction: TextInputAction.done,
             autofillHints: const [AutofillHints.newPassword],
             enabled: !isLoading,
-            errorText: passwordError,
+            error: passwordError,
             focusNode: passwordFocus,
             belowField: AuthPasswordStrength(password: password),
             onChanged: onPasswordChanged,
-            onSubmitted: (_) => onSubmit(),
+            onSubmitted: (_) => onSubmitted(),
           ),
-          const SizedBox(height: AppDimensions.s24),
-          AuthPrimaryButton(
-            label: t.forgotActionUpdatePassword,
-            busyLabel: t.authActionUpdating,
-            icon: Icons.check_rounded,
-            isLoading: isLoading,
-            onPressed: onSubmit,
-          ),
-          const SizedBox(height: AppDimensions.s8),
+          const SizedBox(height: AppDimensions.s12),
           Wrap(
             alignment: WrapAlignment.center,
             crossAxisAlignment: WrapCrossAlignment.center,
             spacing: AppDimensions.s8,
             runSpacing: AppDimensions.s4,
             children: [
-              AuthLinkButton(
+              AppTextButton(
                 label: t.loginActionChangeIdentifier,
                 onPressed: isLoading ? null : onEditIdentifier,
               ),
-              AuthResendAction(
-                cooldownSeconds: resendCooldown,
+              ForgotResendRow(
+                cooldown: cooldown,
                 busy: isLoading,
                 onResend: onResend,
               ),
@@ -602,37 +604,64 @@ class _ResetStep extends StatelessWidget {
   }
 }
 
-class _RecoverySuccess extends StatelessWidget {
-  final VoidCallback onBackToLogin;
-
-  const _RecoverySuccess({super.key, required this.onBackToLogin});
+/// Terminal confirmation of the recovery flow (kept per the phase-2a
+/// decision + DESIGN_SPEC C10 exception: a snackbar plus an immediate
+/// redirect would erase the proof of completion).
+///
+/// Redesigned: a warm layered emblem — soft success halo, solid success disc,
+/// white check — announced once as a live region. The subtitle lives ONLY in
+/// the step shell (the second body copy under the emblem was deleted — a
+/// terminal screen must not repeat its own sentence). The single
+/// "Back to sign in" CTA lives in the sticky step bar.
+class _RecoverySuccessContent extends StatelessWidget {
+  const _RecoverySuccessContent();
 
   @override
   Widget build(BuildContext context) {
     final t = SharedAuthL10n.of(context);
-    final success = context.semanticColors.success.base;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final semantic = context.semanticColors;
+    final dark = theme.brightness == Brightness.dark;
+    // Same AA-verified pair as AppPillButton.success: deep success disc with
+    // the theme on-primary check (5.02 light / 10.24 dark), halo in the
+    // semantic success soft.
+    final disc = dark ? AppDarkColors.successStrong : AppColors.successStrong;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Center(
-          child: Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: success.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
+    return Semantics(
+      liveRegion: true,
+      label: t.forgotDoneTitle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(
+              width: AppDimensions.s64 + AppDimensions.s16,
+              height: AppDimensions.s64 + AppDimensions.s16,
+              decoration: BoxDecoration(
+                color: semantic.success.subtle,
+                shape: BoxShape.circle,
+                border: Border.all(color: semantic.success.border),
+              ),
+              child: Center(
+                child: Container(
+                  width: AppDimensions.s48,
+                  height: AppDimensions.s48,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: disc,
+                  ),
+                  child: Icon(
+                    Icons.check_rounded,
+                    size: AppDimensions.iconXl,
+                    color: colors.onPrimary,
+                  ),
+                ),
+              ),
             ),
-            child: Icon(Icons.check_rounded, size: 32, color: success),
           ),
-        ),
-        const SizedBox(height: AppDimensions.s24),
-        AuthPrimaryButton(
-          label: t.forgotBackToSignIn,
-          icon: Icons.login_rounded,
-          onPressed: onBackToLogin,
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

@@ -255,7 +255,7 @@ consistent back behavior; transitions per C7; no nested app bars; modals are she
 - Error: AppErrorState with plain explanation + "Try again"; partial failures use AppBanner so
   the rest of the screen stays usable.
 - Offline/stale: AppBanner (warning) + keep showing last data with "Updated Xm ago".
-- Success: AppSnackBar with icon, auto-dismiss 4s.
+- Success: AppSnackBar with icon, auto-dismiss 4s. Exception: terminal security flows (e.g. password-reset confirmation) use a dedicated confirmation screen instead — a snackbar plus an immediate redirect would erase the proof of completion.
 - Disabled: 40% opacity + explanation when not obvious.
 - Refresh: pull-to-refresh where the data can change.
 
@@ -491,3 +491,56 @@ UX
   motion (200-300ms ease-out).
 - Empty states: one icon, one sentence, one action.
 - Text hierarchy: max 3 levels per card; numbers big and tabular.
+
+## C16 hard-reject list (reviewers cap any violating screen at 10/16)
+- Cards in LIGHT theme have no borders (soft shadow or flat, separated by whitespace). Dark may use border.
+- No orphan tiles: tile rows are 3 equal columns or a horizontally scrolling row; never a 2x2 with a lone tile.
+- Exactly ONE filled accent element per section (one primary CTA). No second filled tile/chip next to it.
+- No duplicate entry points for the same thing (search icon + search field, hero + See all + tab for the
+  same list). One path per task.
+- No permanent status pills (e.g. "Synced"); show sync/connection only when abnormal, as an AppBanner.
+- Badges never cover the icon they decorate (offset outside the glyph, min clear area).
+- No ALL CAPS text anywhere; no numbers duplicated in label and badge.
+- Search = one pill at the top that opens a full search screen/sheet with recents; never an inline field in the
+  middle of the page, and never pushing content around.
+- ABOVE-THE-FOLD RULE: at 360x800 the first item of the screen's primary content (e.g. first work order) must be
+  visible above the bottom nav, in idle state.
+- Hierarchy inside cards: title = the thing the user recognizes (vehicle/customer), then status pill, then meta;
+  IDs are small meta, not titles.
+- Carousels must show a visible peek of the next card, otherwise use a list.
+
+## C17. Mandatory usability laws (any violated law caps the screen at 8/16, no exceptions)
+- U0. The user must never have to hunt, scroll or tap more than necessary. When in doubt, fewer steps.
+- U1. SEARCH: a search ICON in the header at the TOP RIGHT (next to notifications and avatar). Tapping opens a
+  full-screen search (auto-focused field, recents in normal case, scan inside, results). NEVER an inline search
+  field in the page. Same placement on every dashboard/list screen in every app.
+- U2. PRIMARY TASK FIRST: the first actionable item (e.g. first work order) is visible above the fold at 360x800
+  in the idle state with data. Anything that pushes it below the fold needs a written reason in the brief.
+- U3. TAP COUNT: every brief lists the role's top 3 tasks with taps from launch BEFORE and AFTER. No frequent
+  task may take more taps than before; the most frequent one should be <= 2.
+- U4. REACHABILITY: frequent create/scan actions are reachable without scrolling and in the lower half of the
+  screen or in a sticky bar.
+- U5. NO TRUNCATION OF PRIMARY TEXT: headline/greeting wrap to 2 lines; never "…" on a person's name or a
+  primary label; never a label cut mid-word. Horizontal rows either fit completely (3 equal columns) or scroll
+  with a clean peek where the cut item's icon AND label start are clearly visible. Prefer fitting over scrolling
+  for <= 4 items.
+- U6. CALM EMPTY STATES: when nothing needs attention, the hero collapses to a compact calm status line with no
+  filled CTA. A filled CTA exists only when it leads to something that exists.
+- U7. ONE PATH PER TASK: a list is reachable from one obvious place. No hero CTA + "See all" + tab for the same
+  list. "See all" only when more items exist than shown.
+- U8. RELEVANCE: actionable items first; historical/completed items never sit under "Assigned"/"To do". If the
+  data feed does it, do NOT filter silently: log it in LOGIC_FOLLOWUPS.md and tell me.
+- U9. CONSISTENCY: the same element sits in the same place across screens and apps (search, notifications,
+  profile, back, primary CTA).
+- U10. FEEDBACK AND FORGIVENESS: every action gives immediate feedback; destructive actions confirm or offer undo;
+  errors say what to do next.
+- U11. READABLE NUMBERS: zero shows as 0, never "-"; stats have labels, are fully visible and are shown only if they
+  help a decision.
+- U12. ONE BACKGROUND: one page background colour; no stray bands or differently coloured strips behind rows.
+- U13. NEW-EMPLOYEE TEST: every label is plain words a new employee understands in 3 seconds.
+- U14. Accessibility: tap targets >= 48dp, AA contrast, Semantics, text scale 1.3 and 320px without clipping.
+
+### Scoped rule — step flows vs tap count (auth decision, 2026-10-20)
+Step flows are for ONE-TIME or genuinely complex tasks. Frequent tasks stay on a single screen. A step
+flow may exceed the previous tap count for a one-time task, and then typed values must survive Back and
+a progress bar must show position. (Register = 3 steps under this exemption, documented in the brief.)

@@ -66,6 +66,22 @@ class AppInputField extends StatefulWidget {
   /// and error still follow the locale.
   final bool forceLtr;
 
+  /// Optional slot rendered below the control (e.g. a password-strength
+  /// meter). Presentation only; validation copy stays in [error].
+  final Widget? belowField;
+
+  /// Optional trailing widget on the label row (e.g. a "Min. 6 characters"
+  /// hint). Follows the locale direction.
+  final Widget? labelTrailing;
+
+  /// Accessible names for the password visibility toggle. Defaults keep the
+  /// previous English copy so existing users see no change; localized
+  /// screens pass their own strings.
+  final String showPasswordTooltip;
+  final String hidePasswordTooltip;
+
+  final TextCapitalization textCapitalization;
+
   const AppInputField({
     super.key,
     required this.label,
@@ -93,6 +109,11 @@ class AppInputField extends StatefulWidget {
     this.onSuffixTap,
     this.suffixTooltip,
     this.forceLtr = false,
+    this.belowField,
+    this.labelTrailing,
+    this.showPasswordTooltip = 'Show password',
+    this.hidePasswordTooltip = 'Hide password',
+    this.textCapitalization = TextCapitalization.none,
   });
 
   @override
@@ -127,7 +148,9 @@ class _AppInputFieldState extends State<AppInputField> {
         onPressed: widget.enabled
             ? () => setState(() => _obscured = !_obscured)
             : null,
-        tooltip: _obscured ? 'Show password' : 'Hide password',
+        tooltip: _obscured
+            ? widget.showPasswordTooltip
+            : widget.hidePasswordTooltip,
       );
     } else if (widget.suffixIcon != null) {
       suffix = widget.onSuffixTap == null
@@ -176,6 +199,7 @@ class _AppInputFieldState extends State<AppInputField> {
       style: theme.textTheme.bodyLarge?.copyWith(color: scheme.onSurface),
       keyboardType: widget.keyboardType,
       textInputAction: widget.textInputAction,
+      textCapitalization: widget.textCapitalization,
       autofillHints: widget.autofillHints,
       obscureText: _obscured,
       inputFormatters: widget.inputFormatters,
@@ -198,14 +222,25 @@ class _AppInputFieldState extends State<AppInputField> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            widget.label,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  widget.label,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              if (widget.labelTrailing != null) widget.labelTrailing!,
+            ],
           ),
           const SizedBox(height: AppSpacing.labelValueGap),
           field,
+          if (widget.belowField != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            widget.belowField!,
+          ],
           if (hasError)
             Padding(
               padding: const EdgeInsets.only(top: AppSpacing.xs),

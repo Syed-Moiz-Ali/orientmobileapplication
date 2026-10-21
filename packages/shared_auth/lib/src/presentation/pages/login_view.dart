@@ -3,15 +3,36 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_auth/src/localization/shared_auth_l10n.dart';
 import 'package:shared_auth/src/presentation/providers/auth_state.dart';
 import 'package:shared_auth/src/presentation/providers/login_provider.dart';
-import 'package:shared_auth/src/presentation/widgets/auth_button.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_error_mapper.dart';
-import 'package:shared_auth/src/presentation/widgets/auth_field.dart';
+import 'package:shared_auth/src/presentation/widgets/auth_otp_field.dart';
 import 'package:shared_auth/src/presentation/widgets/auth_password_strength.dart';
-import 'package:shared_auth/src/presentation/widgets/auth_surface.dart';
+import 'package:shared_auth/src/presentation/widgets/auth_step_brand.dart';
+import 'package:shared_auth/src/presentation/widgets/auth_step_resend.dart';
 import 'package:shared_auth/src/presentation/widgets/phone_country.dart';
+import 'package:shared_auth/src/presentation/widgets/security_badge.dart';
 import 'package:shared_core/shared_core.dart';
 
-enum _SignInMode { password, code }
+/// View-level steps of the sign-in flow. UI state only — every
+/// transition maps onto existing [LoginNotifier] calls; no logic change.
+///
+/// * [password] (DEFAULT, all apps, ONE screen): identifier field + password
+///   field + Continue → [LoginNotifier.loginWithPassword]. The superseding
+///   one-screen rule keeps the frequent task on a single submit: no
+///   no-API advance step exists anymore.
+/// * [code] ("Confirm your number"): token-styled Pinput, masked destination,
+///   resend link + countdown, Back. Reached by sending a code from the
+///   one-screen alt row; Verify (plus auto-verify on complete) → verify
+///   methods. Back returns to the one-screen form with values intact.
+/// * [registerName]/[registerContact]/[registerPassword] (R1/R2/R3,
+///   customer only, documented one-time exemption): one field group per step;
+///   final CTA → single [LoginNotifier.register] with all fields.
+enum _LoginStep {
+  password,
+  code,
+  registerName,
+  registerContact,
+  registerPassword,
+}
 
 /// Shared sign-in experience for all four Orient applications.
 ///
@@ -20,11 +41,14 @@ enum _SignInMode { password, code }
 /// Business logic lives in [LoginNotifier] and is never duplicated here - this
 /// widget only decides how the authentication task is presented.
 ///
-/// Composition (rebuilt, Archetype 1): brand lockup → app context → title →
-/// segmented password/code switcher → identifier/password fields with
-/// field-level errors (LTR-locked) → primary CTA with distinct busy/disabled
-/// states → secondary link → security notice. Registration is a progressive
-/// disclosure of the same column, never a separate route.
+/// Composition (C16 one-screen for password): the single password screen in
+/// [AppStepScaffold] (thin full progress, no back arrow, headlineLarge
+/// headline + supporting line, identifier + password inputs, sticky
+/// full-width CTA), `AppOrDivider` + `AppAltAuthRow` under the fields for
+/// alternative paths, muted trust line at the bottom. Password is the
+/// DEFAULT single screen for ALL apps; the code path is the secondary
+/// alternative (confirm step, reached from the alt row). Registration is its
+/// own 3-step flow behind "New here? Create account" (one-time exemption).
 class LoginView extends ConsumerStatefulWidget {
   final VoidCallback onLoginSuccess;
   final VoidCallback? onForgotPassword;
@@ -56,17 +80,12 @@ class _LoginViewState extends ConsumerState<LoginView> {
   final _identifierFocus = FocusNode();
   final _passwordFocus = FocusNode();
   final _nameFocus = FocusNode();
-  _SignInMode _mode = _SignInMode.password;
+
+  _LoginStep _step = _LoginStep.password;
 
   String? _identifierError;
   String? _passwordError;
   String? _nameError;
-
-  /// Tracks whether the one-time-code confirmation was already announced, so
-  /// the success snackbar fires exactly once per send (and again after the
-  /// next send). Form-level API failures surface as snackbars with a retry
-  /// action; field-level failures surface inline — never both, never nowhere.
-  bool _otpAnnounced = false;
 
   @override
   void dispose() {
@@ -197,13 +216,15 @@ class _LoginViewState extends ConsumerState<LoginView> {
   /// retry. Values in the controllers are preserved — nothing is cleared.
   /// [otpInline] is true only for the verify step, where code-mapped copy
   /// renders on the OTP field in build; anywhere else it falls back to the
-  /// snackbar so nothing reaches nowhere.
-  void _surfaceApiError(
+  /// snackbar so nothing reaches nowhere. Returns the mapping (null when
+  /// there was nothing to surface) so submit paths can route a field-mapped
+  /// failure back to the step that owns its field.
+  AuthErrorDisplay? _surfaceApiError(
     LoginState s, {
     required VoidCallback onRetry,
     bool otpInline = false,
   }) {
-    if (!mounted || s.error == null) return;
+    if (!mounted || s.error == null) return null;
     final display = mapAuthFailure(
       kind: s.failureKind ?? AuthFailureKind.validation,
       message: s.error!,
@@ -225,6 +246,91 @@ class _LoginViewState extends ConsumerState<LoginView> {
         _showErrorSnack(display, onRetry);
     }
     _focusFor(display.focusField, includeName: s.isRegistering);
+    return display;
+  }
+
+  // -------------------------------------------------------------------------
+  // Step transitions (view-level UI state only).
+  //
+  // R1 / R2 Continue handlers perform LOCAL validation (+ setter sync) and
+  // advance with ZERO API calls. The notifier's send/verify/login/register
+  // methods are called only from the one-screen password submit, the code
+  // step, and the final register step. The password screen itself has no
+  // advance step: Continue IS the login call.
+  // -------------------------------------------------------------------------
+
+  /// R1 Continue: local name validation only, no API call.
+  void _continueFromName() {
+    if (ref.read(loginProvider).isLoading) return;
+    if (_validateNameField()) {
+      _nameFocus.requestFocus();
+      return;
+    }
+    _dismissSnack();
+    setState(() => _step = _LoginStep.registerContact);
+  }
+
+  /// R2 Continue: local identifier validation + setter sync, no API call.
+  void _continueFromContact(LoginNotifier notifier) {
+    if (ref.read(loginProvider).isLoading) return;
+    if (_validateIdentifier()) {
+      _focusFor(AuthErrorField.identifier, includeName: true);
+      return;
+    }
+    _syncIdentifier(notifier);
+    _dismissSnack();
+    setState(() => _step = _LoginStep.registerPassword);
+  }
+
+  void _enterRegister(LoginNotifier notifier) {
+    if (ref.read(loginProvider).isLoading) return;
+    if (!ref.read(loginProvider).isRegistering) {
+      notifier.toggleRegister();
+    }
+    _dismissSnack();
+    setState(() {
+      _step = _LoginStep.registerName;
+      _identifierError = null;
+      _passwordError = null;
+      _nameError = null;
+    });
+  }
+
+  void _exitRegisterToPassword(LoginNotifier notifier) {
+    if (ref.read(loginProvider).isRegistering) {
+      notifier.toggleRegister();
+    }
+    _dismissSnack();
+    setState(() {
+      _step = _LoginStep.password;
+      _identifierError = null;
+      _passwordError = null;
+      _nameError = null;
+    });
+  }
+
+  /// View-level back: step change only (code + register steps). The
+  /// one-screen password form has no back target. Controllers + notifier
+  /// values are preserved — nothing is cleared or re-fetched.
+  void _goBack(LoginNotifier notifier) {
+    _dismissSnack();
+    setState(() {
+      switch (_step) {
+        case _LoginStep.password:
+          break;
+        case _LoginStep.code:
+          _step = _LoginStep.password;
+        case _LoginStep.registerName:
+          _exitRegisterToPassword(notifier);
+          return;
+        case _LoginStep.registerContact:
+          _step = _LoginStep.registerName;
+          _identifierError = null;
+        case _LoginStep.registerPassword:
+          _step = _LoginStep.registerContact;
+          _passwordError = null;
+      }
+    });
   }
 
   Future<void> _sendCode(LoginNotifier notifier) async {
@@ -245,7 +351,13 @@ class _LoginViewState extends ConsumerState<LoginView> {
       notifier.setPhone(value);
       await notifier.sendSmsOtp();
     }
-    _surfaceApiError(ref.read(loginProvider), onRetry: () => _sendCode(notifier));
+    if (!mounted) return;
+    final s = ref.read(loginProvider);
+    if (s.otpSent) {
+      _dismissSnack();
+      setState(() => _step = _LoginStep.code);
+    }
+    _surfaceApiError(s, onRetry: () => _sendCode(notifier));
   }
 
   /// Guarded OTP verification: blocks double-submits; code-mapped failures
@@ -258,6 +370,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
     } else {
       await notifier.verifySmsOtp();
     }
+    if (!mounted) return;
     _surfaceApiError(
       ref.read(loginProvider),
       onRetry: () => _verifyCode(notifier, email),
@@ -280,342 +393,288 @@ class _LoginViewState extends ConsumerState<LoginView> {
     } else {
       await notifier.loginWithPassword();
     }
-    _surfaceApiError(
+    if (!mounted) return;
+    final display = _surfaceApiError(
       ref.read(loginProvider),
       onRetry: () => _submitPassword(ref.read(loginProvider), notifier),
     );
+    // A field-mapped failure belongs to the step that owns its field. The
+    // one-screen password form carries both fields, so its failures stay
+    // put; only R3 routes back (identifier → R2, name → R1) — view state
+    // only, controllers + notifier values preserved.
+    if (display != null && mounted) {
+      final _LoginStep? target = switch (display.field) {
+        AuthErrorField.identifier when _step == _LoginStep.registerPassword =>
+          _LoginStep.registerContact,
+        AuthErrorField.name when _step == _LoginStep.registerPassword =>
+          _LoginStep.registerName,
+        _ => null,
+      };
+      if (target != null) {
+        final includeName = ref.read(loginProvider).isRegistering;
+        setState(() => _step = target);
+        // The target field mounts on the next frame; move focus then so the
+        // re-routed error takes keyboard + screen-reader focus like any
+        // field-mapped failure.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _focusFor(display.focusField, includeName: includeName);
+        });
+      }
+    }
   }
 
-  void _changeMode(_SignInMode mode, LoginNotifier notifier) {
-    if (_mode == mode) return;
-    setState(() {
-      _mode = mode;
-      _identifierError = null;
-      _passwordError = null;
-      _nameError = null;
-      _otpAnnounced = false;
-    });
-    _dismissSnack();
-    notifier.reset();
+  String _maskedTarget({
+    required bool isEmail,
+    required String email,
+    required String phone,
+    required String countryCode,
+  }) {
+    if (isEmail) {
+      final at = email.indexOf('@');
+      if (at <= 0) return email;
+      final local = email.substring(0, at);
+      final visible = local.length <= 2
+          ? local.substring(0, 1)
+          : local.substring(0, 2);
+      return '$visible\u2022\u2022\u2022\u2022${email.substring(at)}';
+    }
+    final digits = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.length < 5) return '$countryCode $digits';
+    return '$countryCode \u2022\u2022\u2022 \u2022\u2022\u2022 ${digits.substring(digits.length - 3)}';
   }
 
   @override
   Widget build(BuildContext context) {
     ref.listen(authNotifierProvider, _listenToAuth);
 
-    final state = ref.watch(loginProvider);
+    // Selective watches: every slice the step needs EXCEPT the resend
+    // cooldown. The countdown ticks rebuild [LoginResendRow] alone (it
+    // selects resendCooldown itself) — never this whole step.
     final notifier = ref.read(loginProvider.notifier);
+    final isLoading = ref.watch(loginProvider.select((s) => s.isLoading));
+    final error = ref.watch(loginProvider.select((s) => s.error));
+    final failureKind = ref.watch(loginProvider.select((s) => s.failureKind));
+    final method = ref.watch(loginProvider.select((s) => s.method));
+    final countryCode = ref.watch(
+      loginProvider.select((s) => s.countryCode),
+    );
+    final passwordValue = ref.watch(
+      loginProvider.select((s) => s.password),
+    );
+    final isRegistering = ref.watch(
+      loginProvider.select((s) => s.isRegistering),
+    );
     final t = SharedAuthL10n.of(context);
-    final registering = state.isRegistering;
-    final codeMode = !registering && _mode == _SignInMode.code;
-
-    final String title;
-    final String subtitle;
-    if (registering) {
-      title = t.loginRegisterTitle;
-      subtitle = t.loginRegisterSubtitle;
-    } else if (codeMode) {
-      title = t.loginSecurityCodeTitle;
-      subtitle = state.otpSent ? t.loginOtpSentSubtitle : t.loginSecurityCodeSubtitle;
-    } else {
-      title = t.loginWelcomeTitle;
-      subtitle = t.loginWelcomeSubtitle;
-    }
-
-    // One-time-code confirmation: announced once per send as a success
-    // snackbar (no banner). Post-frame because this runs inside build.
-    if (state.otpSent && !_otpAnnounced) {
-      _otpAnnounced = true;
-      final target = state.method == AuthMethod.email
-          ? state.email
-          : '${state.countryCode} ${state.phone}';
-      final sentCopy = t.loginCodeSent(target);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        showAppSnackBar(
-          context,
-          message: sentCopy,
-          tone: AppSnackBarTone.success,
-        );
-      });
-    } else if (!state.otpSent && _otpAnnounced) {
-      _otpAnnounced = false;
-    }
 
     // Mapped OTP copy: expired vs incorrect codes get distinct text on the
-    // OTP field itself (same grammar, no duplicate snackbar). Anything the
-    // mapper routes elsewhere is snackbar-surfaced at submit time.
-    final AuthErrorDisplay? otpDisplay = state.error == null
+    // OTP field itself (same grammar, no duplicate snackbar).
+    final AuthErrorDisplay? otpDisplay = error == null
         ? null
         : mapAuthFailure(
-            kind: state.failureKind ?? AuthFailureKind.validation,
-            message: state.error!,
+            kind: failureKind ?? AuthFailureKind.validation,
+            message: error,
             t: t,
           );
     final String? otpError = otpDisplay?.field == AuthErrorField.code
         ? otpDisplay!.message
         : null;
 
-    // Form-level leftovers from a backend failure that mapped to no field
-    // are snackbar-only now (shown at submit time); inline vars here only
-    // carry local validation or field-mapped API copy.
-    return AuthShell(
-      appName: widget.appName,
-      appPurpose: widget.appPurpose,
-      intendedUsers: widget.intendedUsers,
-      securityNotice: widget.securityNotice,
+    final identifierValue = _identifierCtrl.text.trim();
+
+    final (title, subtitle, ctaLabel, busyLabel, step, total, onCta, onBack) =
+        switch (_step) {
+      _LoginStep.password => (
+        t.loginTitle,
+        t.loginSubtitle,
+        t.loginActionContinue,
+        t.authActionSigningIn,
+        1,
+        1,
+        () => _submitPassword(ref.read(loginProvider), notifier),
+        null as VoidCallback?,
+      ),
+      _LoginStep.code => (
+        t.loginStepCodeTitle,
+        t.loginStepCodeSubtitle,
+        t.loginActionVerifyCode,
+        t.authActionVerifying,
+        2,
+        2,
+        () => _verifyCode(notifier, method == AuthMethod.email),
+        () => _goBack(notifier),
+      ),
+      _LoginStep.registerName => (
+        t.loginStepRegisterNameTitle,
+        t.loginStepRegisterNameSubtitle,
+        t.loginActionContinue,
+        t.authActionSending,
+        1,
+        3,
+        _continueFromName,
+        () => _goBack(notifier),
+      ),
+      _LoginStep.registerContact => (
+        t.loginStepRegisterContactTitle,
+        t.loginStepRegisterContactSubtitle,
+        t.loginActionContinue,
+        t.authActionSending,
+        2,
+        3,
+        () => _continueFromContact(notifier),
+        () => _goBack(notifier),
+      ),
+      _LoginStep.registerPassword => (
+        t.loginStepRegisterPasswordTitle,
+        t.loginStepRegisterPasswordSubtitle,
+        t.loginActionCreateAccount,
+        t.authActionCreating,
+        3,
+        3,
+        () => _submitPassword(ref.read(loginProvider), notifier),
+        () => _goBack(notifier),
+      ),
+    };
+
+    final content = switch (_step) {
+      _LoginStep.password => _PasswordScreenContent(
+        identifierCtrl: _identifierCtrl,
+        countryCode: countryCode,
+        identifierError: _identifierError,
+        passwordCtrl: _passwordCtrl,
+        passwordError: _passwordError,
+        enabled: !isLoading,
+        identifierFocus: _identifierFocus,
+        passwordFocus: _passwordFocus,
+        allowRegistration: widget.allowRegistration && isRegistering == false,
+        onForgotPassword: widget.onForgotPassword,
+        onIdentifierChanged: (v) {
+          _dismissSnack();
+          setState(() => _identifierError = null);
+          _syncIdentifier(notifier);
+        },
+        onPasswordChanged: (v) {
+          _dismissSnack();
+          notifier.setPassword(v);
+          setState(() => _passwordError = null);
+        },
+        onCountryChanged: notifier.setCountryCode,
+        onSubmitted: () =>
+            _submitPassword(ref.read(loginProvider), notifier),
+        onUseCode: () => _sendCode(notifier),
+        onCreateAccount: () => _enterRegister(notifier),
+        securityNotice: widget.securityNotice,
+      ),
+      _LoginStep.code => _CodeStepContent(
+        isEmail: method == AuthMethod.email,
+        maskedTarget: _maskedTarget(
+          isEmail: method == AuthMethod.email,
+          email: identifierValue,
+          phone: identifierValue,
+          countryCode: countryCode,
+        ),
+        otpError: otpError,
+        enabled: !isLoading,
+        busy: isLoading,
+        onOtpChanged: (v) {
+          _dismissSnack();
+          notifier.setOtp(v);
+        },
+        onOtpSubmitted: (_) =>
+            _verifyCode(notifier, method == AuthMethod.email),
+        onResend: () => _sendCode(notifier),
+        onUsePassword: () => setState(() => _step = _LoginStep.password),
+      ),
+      _LoginStep.registerName => _RegisterNameContent(
+        nameCtrl: _nameCtrl,
+        nameError: _nameError,
+        enabled: !isLoading,
+        nameFocus: _nameFocus,
+        onNameChanged: (v) {
+          _dismissSnack();
+          notifier.setName(v);
+          setState(() => _nameError = null);
+        },
+        onSubmitted: _continueFromName,
+      ),
+      _LoginStep.registerContact => _RegisterContactContent(
+        identifierCtrl: _identifierCtrl,
+        countryCode: countryCode,
+        identifierError: _identifierError,
+        enabled: !isLoading,
+        identifierFocus: _identifierFocus,
+        onIdentifierChanged: (v) {
+          _dismissSnack();
+          setState(() => _identifierError = null);
+          _syncIdentifier(notifier);
+        },
+        onCountryChanged: notifier.setCountryCode,
+        onSubmitted: () => _continueFromContact(notifier),
+      ),
+      _LoginStep.registerPassword => _RegisterPasswordContent(
+        passwordCtrl: _passwordCtrl,
+        passwordValue: passwordValue,
+        passwordError: _passwordError,
+        enabled: !isLoading,
+        passwordFocus: _passwordFocus,
+        onPasswordChanged: (v) {
+          _dismissSnack();
+          notifier.setPassword(v);
+          setState(() => _passwordError = null);
+        },
+        onSubmitted: () =>
+            _submitPassword(ref.read(loginProvider), notifier),
+      ),
+    };
+
+    // Centered 480 column for every width; the brand panel appears ONLY on
+    // split widths beside the step column.
+    final Widget stepShell = AppStepScaffold(
+      step: step,
+      totalSteps: total,
+      backLabel: t.loginStepBack,
+      onBack: onBack,
       title: title,
       subtitle: subtitle,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (!registering) ...[
-            _MethodSwitcher(
-              mode: _mode,
-              passwordLabel: t.authMethodPassword,
-              codeLabel: t.authMethodCode,
-              onChanged: (mode) => _changeMode(mode, notifier),
-            ),
-            const SizedBox(height: AppDimensions.s20),
-          ],
-          AnimatedSwitcher(
-            duration: AppMotion.resolve(context, AppMotion.standard),
-            switchInCurve: AppMotion.enter,
-            switchOutCurve: AppMotion.exit,
-            layoutBuilder: (currentChild, previousChildren) => Stack(
-              alignment: Alignment.topCenter,
-              children: [...previousChildren, if (currentChild != null) currentChild],
-            ),
-            child: registering
-                ? _RegisterForm(
-                    key: const ValueKey('register'),
-                    state: state,
-                    notifier: notifier,
-                    identifierCtrl: _identifierCtrl,
-                    passwordCtrl: _passwordCtrl,
-                    nameCtrl: _nameCtrl,
-                    identifierError: _identifierError,
-                    passwordError: _passwordError,
-                    nameError: _nameError,
-                    identifierFocus: _identifierFocus,
-                    passwordFocus: _passwordFocus,
-                    nameFocus: _nameFocus,
-                    onIdentifierChanged: (v) {
-                      _dismissSnack();
-                      setState(() {
-                        _identifierError = null;
-                      });
-                      _syncIdentifier(notifier);
-                    },
-                    onPasswordChanged: (v) {
-                      _dismissSnack();
-                      notifier.setPassword(v);
-                      setState(() {
-                        _passwordError = null;
-                      });
-                    },
-                    onNameChanged: (v) {
-                      _dismissSnack();
-                      notifier.setName(v);
-                      setState(() {
-                        _nameError = null;
-                      });
-                    },
-                    onCountryChanged: notifier.setCountryCode,
-                    onSubmit: () => _submitPassword(state, notifier),
-                  )
-                : codeMode
-                ? _CodeForm(
-                    key: const ValueKey('code'),
-                    state: state,
-                    notifier: notifier,
-                    identifierCtrl: _identifierCtrl,
-                    identifierError: _identifierError,
-                    otpError: otpError,
-                    identifierFocus: _identifierFocus,
-                    onIdentifierChanged: (_) {
-                      _dismissSnack();
-                      setState(() {
-                        _identifierError = null;
-                      });
-                    },
-                    onOtpChanged: (v) {
-                      _dismissSnack();
-                      notifier.setOtp(v);
-                    },
-                    onCountryChanged: notifier.setCountryCode,
-                    onSendCode: () => _sendCode(notifier),
-                    onVerifyCode: () => _verifyCode(
-                      notifier,
-                      state.method == AuthMethod.email,
-                    ),
-                  )
-                : _SignInPasswordForm(
-                    key: const ValueKey('password'),
-                    state: state,
-                    notifier: notifier,
-                    identifierCtrl: _identifierCtrl,
-                    passwordCtrl: _passwordCtrl,
-                    identifierError: _identifierError,
-                    passwordError: _passwordError,
-                    identifierFocus: _identifierFocus,
-                    passwordFocus: _passwordFocus,
-                    allowRegistration: widget.allowRegistration,
-                    onForgotPassword: widget.onForgotPassword,
-                    onSubmit: () => _submitPassword(state, notifier),
-                    onIdentifierChanged: (v) {
-                      _dismissSnack();
-                      setState(() {
-                        _identifierError = null;
-                      });
-                      _syncIdentifier(notifier);
-                    },
-                    onPasswordChanged: (v) {
-                      _dismissSnack();
-                      notifier.setPassword(v);
-                      setState(() {
-                        _passwordError = null;
-                      });
-                    },
-                    onCountryChanged: notifier.setCountryCode,
-                  ),
-          ),
-        ],
+      ctaLabel: ctaLabel,
+      busyLabel: busyLabel,
+      onCta: onCta,
+      isLoading: isLoading,
+      progressSemanticLabel: t.loginStepProgress(step, total),
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: content,
+        ),
       ),
     );
-  }
-}
 
-/// Two-option segmented control for the password / one-time-code sign-in
-/// methods. Preserves the exact [AuthMethod] transitions owned by
-/// [LoginNotifier]; it only chooses which method the form presents.
-class _MethodSwitcher extends StatelessWidget {
-  final _SignInMode mode;
-  final String passwordLabel;
-  final String codeLabel;
-  final ValueChanged<_SignInMode> onChanged;
-
-  const _MethodSwitcher({
-    required this.mode,
-    required this.passwordLabel,
-    required this.codeLabel,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final passwordSelected = mode == _SignInMode.password;
-
-    return Semantics(
-      container: true,
-      child: Container(
-        padding: const EdgeInsets.all(AppDimensions.s4),
-        decoration: BoxDecoration(
-          color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
-          border: Border.all(color: colors.outlineVariant),
-        ),
-        // One sliding cobalt thumb (AnimatedAlign, RTL-safe): the active
-        // method owns the color, the idle one recedes. Labels sit above
-        // transparently and keep their own selected semantics for
-        // assistive technology.
-        child: Stack(
-          children: [
-            AnimatedAlign(
-              duration: AppMotion.resolve(context, AppMotion.fast),
-              curve: AppMotion.enter,
-              alignment: passwordSelected ? AlignmentDirectional.centerStart : AlignmentDirectional.centerEnd,
-              child: FractionallySizedBox(
-                widthFactor: 0.5,
-                child: Container(
-                  constraints: const BoxConstraints(minHeight: 48),
-                  decoration: BoxDecoration(
-                    color: colors.primary,
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colors.primary.withValues(alpha: 0.35),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+    return AppAdaptiveBuilder(
+      builder: (context, adaptive) {
+        final split = adaptive.isExpanded || adaptive.isLarge;
+        if (!split) return stepShell;
+        return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          body: SafeArea(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  flex: 5,
+                  child: AuthStepBrandPanel(
+                    appName: widget.appName,
+                    appPurpose: widget.appPurpose,
+                    intendedUsers: widget.intendedUsers,
+                    securityNotice: widget.securityNotice,
                   ),
                 ),
-              ),
-            ),
-            Row(
-              children: [
-                _tab(
-                  context,
-                  icon: Icons.lock_outline_rounded,
-                  label: passwordLabel,
-                  selected: passwordSelected,
-                  onTap: () => onChanged(_SignInMode.password),
-                ),
-                _tab(
-                  context,
-                  icon: Icons.sms_outlined,
-                  label: codeLabel,
-                  selected: !passwordSelected,
-                  onTap: () => onChanged(_SignInMode.code),
-                ),
+                Expanded(flex: 6, child: stepShell),
               ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _tab(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return Expanded(
-      child: Semantics(
-        button: true,
-        selected: selected,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-            hoverColor: colors.primary.withValues(alpha: 0.08),
-            child: Container(
-              constraints: const BoxConstraints(minHeight: 48),
-              alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s8, vertical: AppDimensions.s10),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(icon, size: AppDimensions.iconSm, color: selected ? colors.onPrimary : colors.onSurfaceVariant),
-                  const SizedBox(width: AppDimensions.s6),
-                  Flexible(
-                    child: Text(
-                      label,
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: selected ? colors.onPrimary : colors.onSurfaceVariant,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -627,9 +686,12 @@ class _MethodSwitcher extends StatelessWidget {
 /// notifier country code stays in sync through [onCountryChanged].
 /// Phone-like entry additionally shows the per-country digit hint
 /// (`loginPhoneFormatHint`) so the expected format is visible before submit.
+/// Both branches render [AppInputField] (label above, 52 CTA rhythm, live
+/// error region); the identifier value + caret stay LTR-locked via
+/// `forceLtr` so mixed Arabic/Latin entry stays legible in RTL layouts.
 class _IdentifierRow extends StatelessWidget {
   final TextEditingController controller;
-  final LoginState state;
+  final String countryCode;
   final String? errorText;
   final bool enabled;
   final FocusNode? focusNode;
@@ -639,7 +701,7 @@ class _IdentifierRow extends StatelessWidget {
 
   const _IdentifierRow({
     required this.controller,
-    required this.state,
+    required this.countryCode,
     required this.errorText,
     required this.enabled,
     required this.onChanged,
@@ -659,25 +721,27 @@ class _IdentifierRow extends StatelessWidget {
       builder: (context, value, _) {
         final phoneLike = !_looksLikeEmail(value.text.trim());
         if (!phoneLike) {
-          return AuthTextField(
-            controller: controller,
+          return AppInputField(
             label: t.loginFieldIdentifier,
             hint: t.loginFieldIdentifierHint,
-            icon: Icons.alternate_email_rounded,
+            controller: controller,
+            prefixIcon: Icons.alternate_email_rounded,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             autofillHints: const [AutofillHints.username],
-            textDirection: TextDirection.ltr,
+            forceLtr: true,
             enabled: enabled,
-            errorText: errorText,
+            error: errorText,
             focusNode: focusNode,
             onChanged: onChanged,
             onSubmitted: onSubmitted,
           );
         }
         final theme = Theme.of(context);
-        final labelStyle = theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700, height: 1.3);
-        final country = phoneCountryFor(state.countryCode);
+        // Blank run in the field's own label style + the field's own label
+        // gap, so the prefix stays aligned with the input at any text scale.
+        final labelStyle = theme.textTheme.labelMedium;
+        final country = phoneCountryFor(countryCode);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -685,30 +749,27 @@ class _IdentifierRow extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Mirrors the field's own label row (same style + gap) with a
-                // blank run so the 48px prefix stays aligned with the input at
-                // any text scale — no pixel guesses.
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text('\u00A0', style: labelStyle),
-                    const SizedBox(height: AppDimensions.s8),
-                    AuthCountryCodeButton(value: state.countryCode, enabled: enabled, onChanged: onCountryChanged),
+                    const SizedBox(height: AppSpacing.labelValueGap),
+                    AuthCountryCodeButton(value: countryCode, enabled: enabled, onChanged: onCountryChanged),
                   ],
                 ),
                 const SizedBox(width: AppDimensions.s8),
                 Expanded(
-              child: AuthTextField(
-                controller: controller,
+              child: AppInputField(
                 label: t.loginFieldIdentifier,
                 hint: t.loginFieldIdentifierHint,
-                icon: Icons.alternate_email_rounded,
+                controller: controller,
+                prefixIcon: Icons.alternate_email_rounded,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
                 autofillHints: const [AutofillHints.username],
-                textDirection: TextDirection.ltr,
+                forceLtr: true,
                 enabled: enabled,
-                errorText: errorText,
+                error: errorText,
                 focusNode: focusNode,
                 onChanged: onChanged,
                 onSubmitted: onSubmitted,
@@ -730,185 +791,322 @@ class _IdentifierRow extends StatelessWidget {
   }
 }
 
-class _SignInPasswordForm extends StatelessWidget {
-  final LoginState state;
-  final LoginNotifier notifier;
+/// One-screen password content (DEFAULT for all apps): identifier field +
+/// password field (toggle) + "Forgot password?" link + sticky-CTA-adjacent
+/// alternative paths (code row, register row) + muted trust line.
+///
+/// A SINGLE [AutofillGroup] wraps both fields (username + password hints
+/// together) so password managers fill the pair. Focus order is
+/// identifier → password (`next` moves focus); the password field's `done`
+/// action submits. Continue fires the EXISTING login call with the same
+/// args/timing as the old single screen.
+class _PasswordScreenContent extends StatelessWidget {
   final TextEditingController identifierCtrl;
-  final TextEditingController passwordCtrl;
+  final String countryCode;
   final String? identifierError;
+  final TextEditingController passwordCtrl;
   final String? passwordError;
+  final bool enabled;
   final FocusNode? identifierFocus;
   final FocusNode? passwordFocus;
   final bool allowRegistration;
   final VoidCallback? onForgotPassword;
-  final VoidCallback onSubmit;
   final ValueChanged<String> onIdentifierChanged;
   final ValueChanged<String> onPasswordChanged;
   final ValueChanged<String> onCountryChanged;
+  final VoidCallback onSubmitted;
+  final VoidCallback onUseCode;
+  final VoidCallback onCreateAccount;
+  final String? securityNotice;
 
-  const _SignInPasswordForm({
-    super.key,
-    required this.state,
-    required this.notifier,
+  const _PasswordScreenContent({
     required this.identifierCtrl,
-    required this.passwordCtrl,
+    required this.countryCode,
     required this.identifierError,
+    required this.passwordCtrl,
     required this.passwordError,
-    this.identifierFocus,
-    this.passwordFocus,
+    required this.enabled,
+    required this.identifierFocus,
+    required this.passwordFocus,
     required this.allowRegistration,
     required this.onForgotPassword,
-    required this.onSubmit,
     required this.onIdentifierChanged,
     required this.onPasswordChanged,
     required this.onCountryChanged,
+    required this.onSubmitted,
+    required this.onUseCode,
+    required this.onCreateAccount,
+    required this.securityNotice,
   });
 
   @override
   Widget build(BuildContext context) {
-    final busy = state.isLoading;
     final t = SharedAuthL10n.of(context);
-
     return AutofillGroup(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _IdentifierRow(
             controller: identifierCtrl,
-            state: state,
+            countryCode: countryCode,
             errorText: identifierError,
-            enabled: !busy,
+            enabled: enabled,
             focusNode: identifierFocus,
             onChanged: onIdentifierChanged,
             onCountryChanged: onCountryChanged,
+            // Identifier keyboard action moves focus to the password field;
+            // only the password action submits.
+            onSubmitted: (_) => passwordFocus?.requestFocus(),
           ),
           const SizedBox(height: AppDimensions.s16),
-          AuthTextField(
-            controller: passwordCtrl,
+          AppInputField(
             label: t.loginFieldPassword,
             hint: t.loginFieldPasswordHint,
-            icon: Icons.lock_outline_rounded,
+            controller: passwordCtrl,
+            prefixIcon: Icons.lock_outline_rounded,
             obscureText: true,
+            passwordToggle: true,
+            showPasswordTooltip: t.authShowPassword,
+            hidePasswordTooltip: t.authHidePassword,
             textInputAction: TextInputAction.done,
             autofillHints: const [AutofillHints.password],
-            enabled: !busy,
-            errorText: passwordError,
+            enabled: enabled,
+            error: passwordError,
             focusNode: passwordFocus,
             onChanged: onPasswordChanged,
-            onSubmitted: (_) => onSubmit(),
+            onSubmitted: (_) => onSubmitted(),
           ),
           if (onForgotPassword != null) ...[
             const SizedBox(height: AppDimensions.s4),
-            Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: AuthLinkButton(label: t.loginActionForgotPassword, onPressed: busy ? null : onForgotPassword),
+            // End-aligned quiet link. A bounded Row (not UnconstrainedBox)
+            // keeps the button inside the column at 320 px / 1.3x, and the
+            // Flexible lets long translations wrap instead of overflowing.
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Flexible(
+                  child: AppTextButton(
+                    label: t.loginActionForgotPassword,
+                    onPressed: enabled ? onForgotPassword : null,
+                  ),
+                ),
+              ],
             ),
           ],
-          const SizedBox(height: AppDimensions.s24),
-          AuthPrimaryButton(
-            label: t.loginActionContinue,
-            busyLabel: t.authActionSigningIn,
-            icon: Icons.arrow_forward_rounded,
-            isLoading: state.isLoading,
-            onPressed: onSubmit,
+          const SizedBox(height: AppDimensions.s12),
+          AppOrDivider(label: t.loginStepOr),
+          const SizedBox(height: AppDimensions.s12),
+          AppAltAuthRow(
+            label: t.loginStepUseCodeInstead,
+            icon: Icons.sms_outlined,
+            onTap: enabled ? onUseCode : null,
           ),
           if (allowRegistration) ...[
-            const SizedBox(height: AppDimensions.s12),
-            Center(
-              child: AuthLinkButton(label: t.loginNewCustomer, onPressed: busy ? null : notifier.toggleRegister),
+            const SizedBox(height: AppDimensions.s8),
+            AppAltAuthRow(
+              label: t.loginStepCreateAccountRow,
+              icon: Icons.person_add_alt_rounded,
+              onTap: enabled ? onCreateAccount : null,
             ),
           ],
+          const SizedBox(height: AppDimensions.s20),
+          SecurityBadge(text: securityNotice),
         ],
       ),
     );
   }
 }
 
-class _RegisterForm extends StatelessWidget {
-  final LoginState state;
-  final LoginNotifier notifier;
-  final TextEditingController identifierCtrl;
-  final TextEditingController passwordCtrl;
-  final TextEditingController nameCtrl;
-  final String? identifierError;
-  final String? passwordError;
-  final String? nameError;
-  final FocusNode? identifierFocus;
-  final FocusNode? passwordFocus;
-  final FocusNode? nameFocus;
-  final VoidCallback onSubmit;
-  final ValueChanged<String> onIdentifierChanged;
-  final ValueChanged<String> onPasswordChanged;
-  final ValueChanged<String> onNameChanged;
-  final ValueChanged<String> onCountryChanged;
+class _CodeStepContent extends StatelessWidget {
+  final bool isEmail;
+  final String maskedTarget;
+  final String? otpError;
+  final bool enabled;
+  final bool busy;
+  final ValueChanged<String> onOtpChanged;
+  final ValueChanged<String> onOtpSubmitted;
+  final VoidCallback onResend;
+  final VoidCallback onUsePassword;
 
-  const _RegisterForm({
-    super.key,
-    required this.state,
-    required this.notifier,
-    required this.identifierCtrl,
-    required this.passwordCtrl,
+  const _CodeStepContent({
+    required this.isEmail,
+    required this.maskedTarget,
+    required this.otpError,
+    required this.enabled,
+    required this.busy,
+    required this.onOtpChanged,
+    required this.onOtpSubmitted,
+    required this.onResend,
+    required this.onUsePassword,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = SharedAuthL10n.of(context);
+    return AutofillGroup(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // In-flow sent confirmation: the masked destination line arrives as
+          // a success banner above the OTP field (never an overlay), so it
+          // can never cover the resend row below the CTA.
+          AppBanner(
+            kind: AppBannerKind.success,
+            message: t.loginStepCodeDestination(maskedTarget),
+          ),
+          const SizedBox(height: AppDimensions.s20),
+          AuthOtpField(
+            onChanged: onOtpChanged,
+            errorText: otpError,
+            enabled: enabled,
+            onSubmitted: onOtpSubmitted,
+          ),
+          const SizedBox(height: AppDimensions.s12),
+          Center(
+            child: LoginResendRow(busy: busy, onResend: onResend),
+          ),
+          const SizedBox(height: AppDimensions.s8),
+          AppAltAuthRow(
+            label: t.loginStepUsePasswordInstead,
+            icon: Icons.lock_outline_rounded,
+            onTap: enabled ? onUsePassword : null,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RegisterNameContent extends StatelessWidget {
+  final TextEditingController nameCtrl;
+  final String? nameError;
+  final bool enabled;
+  final FocusNode? nameFocus;
+  final ValueChanged<String> onNameChanged;
+  final VoidCallback onSubmitted;
+
+  const _RegisterNameContent({
     required this.nameCtrl,
-    required this.identifierError,
-    required this.passwordError,
     required this.nameError,
-    this.identifierFocus,
-    this.passwordFocus,
-    this.nameFocus,
-    required this.onSubmit,
-    required this.onIdentifierChanged,
-    required this.onPasswordChanged,
+    required this.enabled,
+    required this.nameFocus,
     required this.onNameChanged,
+    required this.onSubmitted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = SharedAuthL10n.of(context);
+    return AutofillGroup(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppInputField(
+            label: t.loginFieldFullName,
+            hint: t.loginFieldFullNameHint,
+            controller: nameCtrl,
+            prefixIcon: Icons.person_outline_rounded,
+            keyboardType: TextInputType.name,
+            textInputAction: TextInputAction.next,
+            textCapitalization: TextCapitalization.words,
+            autofillHints: const [AutofillHints.name],
+            enabled: enabled,
+            error: nameError,
+            focusNode: nameFocus,
+            onChanged: onNameChanged,
+            onSubmitted: (_) => onSubmitted(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RegisterContactContent extends StatelessWidget {
+  final TextEditingController identifierCtrl;
+  final String countryCode;
+  final String? identifierError;
+  final bool enabled;
+  final FocusNode? identifierFocus;
+  final ValueChanged<String> onIdentifierChanged;
+  final ValueChanged<String> onCountryChanged;
+  final VoidCallback onSubmitted;
+
+  const _RegisterContactContent({
+    required this.identifierCtrl,
+    required this.countryCode,
+    required this.identifierError,
+    required this.enabled,
+    required this.identifierFocus,
+    required this.onIdentifierChanged,
     required this.onCountryChanged,
+    required this.onSubmitted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AutofillGroup(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _IdentifierRow(
+            controller: identifierCtrl,
+            countryCode: countryCode,
+            errorText: identifierError,
+            enabled: enabled,
+            focusNode: identifierFocus,
+            onChanged: onIdentifierChanged,
+            onCountryChanged: onCountryChanged,
+            onSubmitted: (_) => onSubmitted(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RegisterPasswordContent extends StatelessWidget {
+  final TextEditingController passwordCtrl;
+  final String passwordValue;
+  final String? passwordError;
+  final bool enabled;
+  final FocusNode? passwordFocus;
+  final ValueChanged<String> onPasswordChanged;
+  final VoidCallback onSubmitted;
+
+  const _RegisterPasswordContent({
+    required this.passwordCtrl,
+    required this.passwordValue,
+    required this.passwordError,
+    required this.enabled,
+    required this.passwordFocus,
+    required this.onPasswordChanged,
+    required this.onSubmitted,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final busy = state.isLoading;
     final t = SharedAuthL10n.of(context);
-
     return AutofillGroup(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AuthTextField(
-            controller: nameCtrl,
-            label: t.loginFieldFullName,
-            hint: t.loginFieldFullNameHint,
-            icon: Icons.person_outline_rounded,
-            keyboardType: TextInputType.name,
-            textInputAction: TextInputAction.next,
-            textCapitalization: TextCapitalization.words,
-            autofillHints: const [AutofillHints.name],
-            enabled: !busy,
-            errorText: nameError,
-            focusNode: nameFocus,
-            onChanged: onNameChanged,
-          ),
-          const SizedBox(height: AppDimensions.s16),
-          _IdentifierRow(
-            controller: identifierCtrl,
-            state: state,
-            errorText: identifierError,
-            enabled: !busy,
-            focusNode: identifierFocus,
-            onChanged: onIdentifierChanged,
-            onCountryChanged: onCountryChanged,
-          ),
-          const SizedBox(height: AppDimensions.s16),
-          AuthTextField(
-            controller: passwordCtrl,
+          AppInputField(
             label: t.loginFieldCreatePassword,
             hint: t.loginFieldCreatePasswordHint,
-            icon: Icons.lock_outline_rounded,
+            controller: passwordCtrl,
+            prefixIcon: Icons.lock_outline_rounded,
             obscureText: true,
+            passwordToggle: true,
+            showPasswordTooltip: t.authShowPassword,
+            hidePasswordTooltip: t.authHidePassword,
             textInputAction: TextInputAction.done,
             autofillHints: const [AutofillHints.newPassword],
-            enabled: !busy,
-            errorText: passwordError,
+            enabled: enabled,
+            error: passwordError,
             focusNode: passwordFocus,
-            belowField: AuthPasswordStrength(password: state.password),
+            belowField: AuthPasswordStrength(password: passwordValue),
             labelTrailing: Text(
               t.loginMinCharacters,
               style: theme.textTheme.labelSmall?.copyWith(
@@ -917,115 +1115,7 @@ class _RegisterForm extends StatelessWidget {
               ),
             ),
             onChanged: onPasswordChanged,
-            onSubmitted: (_) => onSubmit(),
-          ),
-          const SizedBox(height: AppDimensions.s24),
-          AuthPrimaryButton(
-            label: t.loginActionCreateAccount,
-            busyLabel: t.authActionCreating,
-            icon: Icons.arrow_forward_rounded,
-            isLoading: state.isLoading,
-            onPressed: onSubmit,
-          ),
-          const SizedBox(height: AppDimensions.s8),
-          Center(
-            child: AuthLinkButton(label: t.loginAlreadyHaveAccount, onPressed: busy ? null : notifier.toggleRegister),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CodeForm extends StatelessWidget {
-  final LoginState state;
-  final LoginNotifier notifier;
-  final TextEditingController identifierCtrl;
-  final String? identifierError;
-  final String? otpError;
-  final FocusNode? identifierFocus;
-  final ValueChanged<String> onIdentifierChanged;
-  final ValueChanged<String> onOtpChanged;
-  final ValueChanged<String> onCountryChanged;
-  final VoidCallback onSendCode;
-  final VoidCallback onVerifyCode;
-
-  const _CodeForm({
-    super.key,
-    required this.state,
-    required this.notifier,
-    required this.identifierCtrl,
-    required this.identifierError,
-    required this.otpError,
-    this.identifierFocus,
-    required this.onIdentifierChanged,
-    required this.onOtpChanged,
-    required this.onCountryChanged,
-    required this.onSendCode,
-    required this.onVerifyCode,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final busy = state.isLoading;
-    final t = SharedAuthL10n.of(context);
-
-    if (state.otpSent) {
-      return AutofillGroup(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            AuthOtpField(
-              onChanged: onOtpChanged,
-              errorText: otpError,
-              enabled: !busy,
-              onSubmitted: (_) => onVerifyCode(),
-            ),
-            const SizedBox(height: AppDimensions.s24),
-            AuthPrimaryButton(
-              label: t.loginActionVerifyCode,
-              busyLabel: t.authActionVerifying,
-              icon: Icons.verified_rounded,
-              isLoading: state.isLoading,
-              onPressed: onVerifyCode,
-            ),
-            const SizedBox(height: AppDimensions.s8),
-            Wrap(
-              alignment: WrapAlignment.center,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: AppDimensions.s8,
-              runSpacing: AppDimensions.s4,
-              children: [
-                AuthLinkButton(label: t.loginActionChangeIdentifier, onPressed: busy ? null : notifier.reset),
-                AuthResendAction(cooldownSeconds: state.resendCooldown, busy: busy, onResend: onSendCode),
-              ],
-            ),
-          ],
-        ),
-      );
-    }
-
-    return AutofillGroup(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _IdentifierRow(
-            controller: identifierCtrl,
-            state: state,
-            errorText: identifierError,
-            enabled: !busy,
-            focusNode: identifierFocus,
-            onChanged: onIdentifierChanged,
-            onCountryChanged: onCountryChanged,
-            onSubmitted: (_) => onSendCode(),
-          ),
-          const SizedBox(height: AppDimensions.s24),
-          AuthPrimaryButton(
-            label: t.loginActionSendCode,
-            busyLabel: t.authActionSending,
-            icon: Icons.arrow_forward_rounded,
-            isLoading: state.isLoading,
-            onPressed: onSendCode,
+            onSubmitted: (_) => onSubmitted(),
           ),
         ],
       ),

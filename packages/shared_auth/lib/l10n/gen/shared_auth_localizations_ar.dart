@@ -162,6 +162,79 @@ class SharedAuthLocalizationsAr extends SharedAuthLocalizations {
   }
 
   @override
+  String get loginTitle => 'مرحباً بعودتك';
+
+  @override
+  String get loginSubtitle => 'سجّل الدخول للمتابعة.';
+
+  @override
+  String get loginStepIdentifierTitle => 'سجّل الدخول أو أنشئ حساباً';
+
+  @override
+  String get loginStepIdentifierSubtitle =>
+      'أدخل بريدك الإلكتروني أو رقم جوالك للمتابعة.';
+
+  @override
+  String get loginStepPasswordTitle => 'مرحباً بعودتك';
+
+  @override
+  String loginStepPasswordSubtitle(String identifier) {
+    return 'أدخل كلمة المرور الخاصة بـ $identifier.';
+  }
+
+  @override
+  String get loginStepCodeTitle => 'أكّد رقمك';
+
+  @override
+  String get loginStepCodeSubtitle =>
+      'أدخل الرمز المكوّن من 6 أرقام الذي أرسلناه إليك.';
+
+  @override
+  String loginStepCodeDestination(String target) {
+    return 'أرسلنا رمزاً إلى $target.';
+  }
+
+  @override
+  String get loginStepRegisterNameTitle => 'ما اسمك؟';
+
+  @override
+  String get loginStepRegisterNameSubtitle => 'أخبرنا كيف نخاطبك.';
+
+  @override
+  String get loginStepRegisterContactTitle => 'كيف نتواصل معك؟';
+
+  @override
+  String get loginStepRegisterContactSubtitle =>
+      'أدخل بريدك الإلكتروني أو رقم جوالك.';
+
+  @override
+  String get loginStepRegisterPasswordTitle => 'أنشئ كلمة مرورك';
+
+  @override
+  String get loginStepRegisterPasswordSubtitle =>
+      'اختر كلمة مرور من 6 أحرف على الأقل.';
+
+  @override
+  String get loginStepUseCodeInstead => 'أرسلوا لي رمزاً بدلاً من ذلك';
+
+  @override
+  String get loginStepUsePasswordInstead => 'استخدم كلمة المرور بدلاً من ذلك';
+
+  @override
+  String get loginStepCreateAccountRow => 'جديد هنا؟ أنشئ حساباً';
+
+  @override
+  String get loginStepOr => 'أو';
+
+  @override
+  String get loginStepBack => 'رجوع';
+
+  @override
+  String loginStepProgress(int step, int total) {
+    return 'الخطوة $step من $total';
+  }
+
+  @override
   String get forgotTitle => 'نسيت كلمة المرور؟';
 
   @override
@@ -333,4 +406,30 @@ class SharedAuthLocalizationsAr extends SharedAuthLocalizations {
   String loginPhoneFormatHint(int digits, String code) {
     return 'أدخل $digits أرقام لـ $code';
   }
+
+  @override
+  String get supervisorLoginTitle => 'دخول المشرف';
+
+  @override
+  String get supervisorLoginSubtitle =>
+      'سجّل الدخول لإدارة الحجوزات والإسناد وفحوص الجودة وعمليات الورشة.';
+
+  @override
+  String get supervisorAppName => 'منصة أورينت — المشرف';
+
+  @override
+  String get supervisorAppPurpose =>
+      'راجع الحجوزات الواردة وأسند المهام للمستشارين والفنيين وتابع الأعمال وأكمل فحوص الجودة.';
+
+  @override
+  String get supervisorIntendedUsers => 'لمشرفي الورشة';
+
+  @override
+  String get supervisorUsernameLabel => 'اسم المستخدم أو البريد الإلكتروني';
+
+  @override
+  String get supervisorUsernameHint => 'أدخل اسم المستخدم أو البريد الإلكتروني';
+
+  @override
+  String get supervisorEnterCredentials => 'أدخل اسم المستخدم وكلمة المرور';
 }

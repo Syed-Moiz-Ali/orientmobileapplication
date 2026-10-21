@@ -100,6 +100,57 @@
     "description": "Confirmation that a code was sent",
     "placeholders": { "target": { "type": "String" } }
   },
+  "loginTitle": "Welcome back",
+  "@loginTitle": { "description": "One-screen password login headline (superseding one-screen rule)" },
+  "loginSubtitle": "Log in to continue.",
+  "@loginSubtitle": { "description": "One-screen password login supporting line" },
+  "loginStepIdentifierTitle": "Log in or sign up",
+  "@loginStepIdentifierTitle": { "description": "Step 1 headline of the sign-in step flow" },
+  "loginStepIdentifierSubtitle": "Enter your email or mobile number to continue.",
+  "@loginStepIdentifierSubtitle": { "description": "Step 1 supporting line of the sign-in step flow" },
+  "loginStepPasswordTitle": "Welcome back",
+  "@loginStepPasswordTitle": { "description": "Password step headline of the sign-in step flow" },
+  "loginStepPasswordSubtitle": "Enter your password for {identifier}.",
+  "@loginStepPasswordSubtitle": {
+    "description": "Password step supporting line with the identifier recap",
+    "placeholders": { "identifier": { "type": "String" } }
+  },
+  "loginStepCodeTitle": "Confirm your number",
+  "@loginStepCodeTitle": { "description": "Code-confirm step headline of the sign-in step flow" },
+  "loginStepCodeSubtitle": "Enter the 6-digit code we sent you.",
+  "@loginStepCodeSubtitle": { "description": "Code-confirm step supporting line" },
+  "loginStepCodeDestination": "We sent a code to {target}.",
+  "@loginStepCodeDestination": {
+    "description": "Masked destination line on the code-confirm step",
+    "placeholders": { "target": { "type": "String" } }
+  },
+  "loginStepRegisterNameTitle": "What's your name?",
+  "@loginStepRegisterNameTitle": { "description": "Register R1 headline" },
+  "loginStepRegisterNameSubtitle": "Tell us how to address you.",
+  "@loginStepRegisterNameSubtitle": { "description": "Register R1 supporting line" },
+  "loginStepRegisterContactTitle": "How should we contact you?",
+  "@loginStepRegisterContactTitle": { "description": "Register R2 headline" },
+  "loginStepRegisterContactSubtitle": "Enter your email or mobile number.",
+  "@loginStepRegisterContactSubtitle": { "description": "Register R2 supporting line" },
+  "loginStepRegisterPasswordTitle": "Create your password",
+  "@loginStepRegisterPasswordTitle": { "description": "Register R3 headline" },
+  "loginStepRegisterPasswordSubtitle": "Choose a password with at least 6 characters.",
+  "@loginStepRegisterPasswordSubtitle": { "description": "Register R3 supporting line" },
+  "loginStepUseCodeInstead": "Send me a code instead",
+  "@loginStepUseCodeInstead": { "description": "Alt row from the password step to the code flow" },
+  "loginStepUsePasswordInstead": "Use password instead",
+  "@loginStepUsePasswordInstead": { "description": "Alt row from the code step back to the password step" },
+  "loginStepCreateAccountRow": "New here? Create account",
+  "@loginStepCreateAccountRow": { "description": "Alt row from step 1 into the register flow" },
+  "loginStepOr": "or",
+  "@loginStepOr": { "description": "Divider label between the primary CTA and alternative auth paths" },
+  "loginStepBack": "Back",
+  "@loginStepBack": { "description": "Screen-reader label for the step-flow back arrow" },
+  "loginStepProgress": "Step {step} of {total}",
+  "@loginStepProgress": {
+    "description": "Accessible progress label for the step flow",
+    "placeholders": { "step": { "type": "int" }, "total": { "type": "int" } }
+  },
 
   "forgotTitle": "Forgot your password?",
   "@forgotTitle": { "description": "Recovery identifier step title" },
@@ -214,5 +265,22 @@
   "@loginPhoneFormatHint": {
     "description": "Per-country phone format hint under phone-like identifier fields",
     "placeholders": { "digits": { "type": "int" }, "code": { "type": "String" } }
-  }
+  },
+
+  "supervisorLoginTitle": "Supervisor access",
+  "@supervisorLoginTitle": { "description": "Fallback title of the supervisor sign-in screen (staff copy missing)" },
+  "supervisorLoginSubtitle": "Sign in to manage bookings, assignments, QC, and workshop operations.",
+  "@supervisorLoginSubtitle": { "description": "Fallback supporting text of the supervisor sign-in screen" },
+  "supervisorAppName": "Orient Supervisor Console",
+  "@supervisorAppName": { "description": "Fallback app identity name shown on the supervisor auth shell" },
+  "supervisorAppPurpose": "Review incoming bookings, assign advisors and technicians, monitor jobs, and complete quality checks.",
+  "@supervisorAppPurpose": { "description": "Fallback app purpose shown on the supervisor auth shell" },
+  "supervisorIntendedUsers": "For workshop supervisors",
+  "@supervisorIntendedUsers": { "description": "Fallback intended users shown on the supervisor auth shell" },
+  "supervisorUsernameLabel": "Username or email",
+  "@supervisorUsernameLabel": { "description": "Fallback label of the supervisor username field" },
+  "supervisorUsernameHint": "Enter your username or email",
+  "@supervisorUsernameHint": { "description": "Fallback hint of the supervisor username field" },
+  "supervisorEnterCredentials": "Enter username and password",
+  "@supervisorEnterCredentials": { "description": "Fallback validation when supervisor credentials are empty" }
 }

@@ -202,7 +202,7 @@ void main() {
     await expectLater(
       find.byType(MaterialApp),
       matchesGoldenFile(
-        '../../../docs/ui-redesign/baseline/customer_light.png',
+        '../../../docs/ui-redesign/baseline/after-phase-2/customer_login_one_screen_idle_light_1.0_en_390x844.png',
       ),
     );
     _restoreShadows();
@@ -247,7 +247,7 @@ void main() {
     await expectLater(
       find.byType(MaterialApp),
       matchesGoldenFile(
-        '../../../docs/ui-redesign/baseline/customer_dark.png',
+        '../../../docs/ui-redesign/baseline/after-phase-2/customer_login_one_screen_idle_dark_1.0_en_800x600.png',
       ),
     );
     _restoreShadows();

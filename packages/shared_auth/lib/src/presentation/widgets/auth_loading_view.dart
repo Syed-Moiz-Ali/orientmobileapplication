@@ -31,19 +31,21 @@ class AuthLoadingView extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: colors.primary,
-                    borderRadius: BorderRadius.circular(
-                      AppDimensions.radiusPanel,
+                ExcludeSemantics(
+                  child: Container(
+                    width: AppDimensions.s64,
+                    height: AppDimensions.s64,
+                    decoration: BoxDecoration(
+                      color: colors.primary,
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusPanel,
+                      ),
                     ),
-                  ),
-                  child: Icon(
-                    Icons.build_rounded,
-                    color: colors.onPrimary,
-                    size: 30,
+                    child: Icon(
+                      Icons.build_rounded,
+                      color: colors.onPrimary,
+                      size: AppDimensions.iconXl,
+                    ),
                   ),
                 ),
                 const SizedBox(height: AppDimensions.s20),
@@ -67,30 +69,25 @@ class AuthLoadingView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: AppDimensions.s32),
-                // Linear progress reads as loading at a glance (the ring
-                // rendered as a static circle in stills and at small sizes).
-                // Fill is the authorized lighter-cobalt on-navy accent;
-                // reduced motion keeps the static hourglass mark.
+                // Indeterminate progress reads as loading at a glance. The
+                // shared AppLinearProgress carries the pill track + motion
+                // tokens; fill is the authorized lighter-cobalt on-navy
+                // accent. Reduced motion keeps the static hourglass mark.
                 SizedBox(
-                  width: 160,
+                  // Token-composed width (64 * 2 + 32): no raw literals.
+                  width: AppDimensions.s64 * 2 + AppDimensions.s32,
                   child: reduceMotion
                       ? Icon(
                           Icons.hourglass_top_rounded,
-                          size: 22,
+                          size: AppDimensions.iconLg,
                           color: colors.onInverseSurface,
                           semanticLabel: t.authRestoringSession,
                         )
-                      : ClipRRect(
-                          borderRadius: BorderRadius.circular(
-                            AppDimensions.rPill,
-                          ),
-                          child: LinearProgressIndicator(
-                            minHeight: 4,
-                            color: colors.inversePrimary,
-                            backgroundColor: colors.onInverseSurface.withValues(
-                              alpha: 0.16,
-                            ),
-                            semanticsLabel: t.authRestoringSession,
+                      : AppLinearProgress(
+                          value: null,
+                          color: colors.inversePrimary,
+                          trackColor: colors.onInverseSurface.withValues(
+                            alpha: 0.16,
                           ),
                         ),
                 ),

@@ -377,6 +377,132 @@ abstract class SharedAuthLocalizations {
   /// **'Code sent to {target}.'**
   String loginCodeSent(String target);
 
+  /// One-screen password login headline (superseding one-screen rule)
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back'**
+  String get loginTitle;
+
+  /// One-screen password login supporting line
+  ///
+  /// In en, this message translates to:
+  /// **'Log in to continue.'**
+  String get loginSubtitle;
+
+  /// Step 1 headline of the sign-in step flow
+  ///
+  /// In en, this message translates to:
+  /// **'Log in or sign up'**
+  String get loginStepIdentifierTitle;
+
+  /// Step 1 supporting line of the sign-in step flow
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email or mobile number to continue.'**
+  String get loginStepIdentifierSubtitle;
+
+  /// Password step headline of the sign-in step flow
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back'**
+  String get loginStepPasswordTitle;
+
+  /// Password step supporting line with the identifier recap
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your password for {identifier}.'**
+  String loginStepPasswordSubtitle(String identifier);
+
+  /// Code-confirm step headline of the sign-in step flow
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm your number'**
+  String get loginStepCodeTitle;
+
+  /// Code-confirm step supporting line
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit code we sent you.'**
+  String get loginStepCodeSubtitle;
+
+  /// Masked destination line on the code-confirm step
+  ///
+  /// In en, this message translates to:
+  /// **'We sent a code to {target}.'**
+  String loginStepCodeDestination(String target);
+
+  /// Register R1 headline
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s your name?'**
+  String get loginStepRegisterNameTitle;
+
+  /// Register R1 supporting line
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us how to address you.'**
+  String get loginStepRegisterNameSubtitle;
+
+  /// Register R2 headline
+  ///
+  /// In en, this message translates to:
+  /// **'How should we contact you?'**
+  String get loginStepRegisterContactTitle;
+
+  /// Register R2 supporting line
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email or mobile number.'**
+  String get loginStepRegisterContactSubtitle;
+
+  /// Register R3 headline
+  ///
+  /// In en, this message translates to:
+  /// **'Create your password'**
+  String get loginStepRegisterPasswordTitle;
+
+  /// Register R3 supporting line
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a password with at least 6 characters.'**
+  String get loginStepRegisterPasswordSubtitle;
+
+  /// Alt row from the password step to the code flow
+  ///
+  /// In en, this message translates to:
+  /// **'Send me a code instead'**
+  String get loginStepUseCodeInstead;
+
+  /// Alt row from the code step back to the password step
+  ///
+  /// In en, this message translates to:
+  /// **'Use password instead'**
+  String get loginStepUsePasswordInstead;
+
+  /// Alt row from step 1 into the register flow
+  ///
+  /// In en, this message translates to:
+  /// **'New here? Create account'**
+  String get loginStepCreateAccountRow;
+
+  /// Divider label between the primary CTA and alternative auth paths
+  ///
+  /// In en, this message translates to:
+  /// **'or'**
+  String get loginStepOr;
+
+  /// Screen-reader label for the step-flow back arrow
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get loginStepBack;
+
+  /// Accessible progress label for the step flow
+  ///
+  /// In en, this message translates to:
+  /// **'Step {step} of {total}'**
+  String loginStepProgress(int step, int total);
+
   /// Recovery identifier step title
   ///
   /// In en, this message translates to:
@@ -688,6 +814,54 @@ abstract class SharedAuthLocalizations {
   /// In en, this message translates to:
   /// **'Enter {digits} digits for {code}'**
   String loginPhoneFormatHint(int digits, String code);
+
+  /// Fallback title of the supervisor sign-in screen (staff copy missing)
+  ///
+  /// In en, this message translates to:
+  /// **'Supervisor access'**
+  String get supervisorLoginTitle;
+
+  /// Fallback supporting text of the supervisor sign-in screen
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to manage bookings, assignments, QC, and workshop operations.'**
+  String get supervisorLoginSubtitle;
+
+  /// Fallback app identity name shown on the supervisor auth shell
+  ///
+  /// In en, this message translates to:
+  /// **'Orient Supervisor Console'**
+  String get supervisorAppName;
+
+  /// Fallback app purpose shown on the supervisor auth shell
+  ///
+  /// In en, this message translates to:
+  /// **'Review incoming bookings, assign advisors and technicians, monitor jobs, and complete quality checks.'**
+  String get supervisorAppPurpose;
+
+  /// Fallback intended users shown on the supervisor auth shell
+  ///
+  /// In en, this message translates to:
+  /// **'For workshop supervisors'**
+  String get supervisorIntendedUsers;
+
+  /// Fallback label of the supervisor username field
+  ///
+  /// In en, this message translates to:
+  /// **'Username or email'**
+  String get supervisorUsernameLabel;
+
+  /// Fallback hint of the supervisor username field
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your username or email'**
+  String get supervisorUsernameHint;
+
+  /// Fallback validation when supervisor credentials are empty
+  ///
+  /// In en, this message translates to:
+  /// **'Enter username and password'**
+  String get supervisorEnterCredentials;
 }
 
 class _SharedAuthLocalizationsDelegate
