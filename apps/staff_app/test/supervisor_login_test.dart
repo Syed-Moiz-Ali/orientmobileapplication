@@ -1,10 +1,13 @@
-// Phase-2c: supervisor login characterization (staff-local screen).
+// Supervisor login: 2-step recomposition characterization (staff-local screen).
 //
 // Per `packages/shared_auth/test/supervisor_characterization_plan.md` these
-// tests live under `apps/staff_app/test/` (staff ARB access) and pin the 2c
-// redesign: mapped (never raw) error copy, shared_auth fallback keys, App*
-// composition, busy single-submit, edit-clears-error, and the forgot route.
-// Logic is untouched — only visuals, tree structure, and copy keys changed.
+// tests live under `apps/staff_app/test/` (staff ARB access) and pin the step
+// flow: identifier (step 1) → password (step 2) collecting into the existing
+// `login()` call. Every behavior assertion from the combined form is kept
+// (validation, single-submit, mapped copy, no raw text, persisted session,
+// forgot route, edit-clears-error); step tests add the transition mapping
+// (same login call), back-preserves-values, errors landing in step 2, and
+// progress semantics. Logic is untouched — only presentation changed.
 import 'dart:async';
 import 'dart:io';
 
@@ -223,23 +226,219 @@ Future<ProviderContainer> pumpSupervisor(
   return container;
 }
 
+/// Settles the 220 ms slide+fade so exactly one field is in the tree
+/// afterwards: one frame to start the transition (the exit `reverse()` is
+/// issued during that build, so a lone time-jump would land before it
+/// starts), one jump past the motion, one flush frame for AnimatedSwitcher's
+/// outgoing-child removal.
+Future<void> settleStepTransition(WidgetTester tester) async {
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 300));
+  await tester.pump();
+}
+
+/// Drives step 1 → step 2 with [identifier], settling the transition.
+Future<void> continueToPasswordStep(
+  WidgetTester tester,
+  String identifier,
+) async {
+  await tester.enterText(find.byType(TextField), identifier);
+  await tester.pump();
+  await tester.tap(find.byType(AppPillButton));
+  await settleStepTransition(tester);
+}
+
+/// Submits the step-2 password form and settles the login round-trip.
+Future<void> submitPasswordStep(WidgetTester tester, String password) async {
+  await tester.enterText(find.byType(TextField), password);
+  await tester.pump();
+  await tester.tap(find.byType(AppPillButton));
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 300));
+}
+
 void main() {
   setUpAll(loadStaffTestFonts);
 
-  group('supervisor App* composition', () {
-    testWidgets('renders App* controls on the shared shell', (tester) async {
+  group('supervisor step structure', () {
+    testWidgets('step 1 shows the identifier field, Continue, no back arrow',
+        (tester) async {
+      await pumpSupervisor(tester);
+      final t = lookupSharedAuthLocalizations(const Locale('en'));
+
+      expect(find.byType(AppStepScaffold), findsOneWidget);
+      expect(find.byType(AuthShell), findsNothing);
+      // Exactly one field on step 1: the identifier (LTR-locked).
+      expect(find.byType(AppInputField), findsOneWidget);
+      expect(
+        tester.widget<AppInputField>(find.byType(AppInputField)).forceLtr,
+        isTrue,
+      );
+      expect(find.text(t.loginFieldPassword), findsNothing);
+      expect(find.byType(AppPillButton), findsOneWidget);
+      expect(find.byType(AppIconButton), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Continue advances to the password step with recap + back',
+        (tester) async {
+      final semantics = tester.ensureSemantics();
+      final repo = FakeAuthRepository();
+      await pumpSupervisor(tester, repo: repo);
+      final t = lookupSharedAuthLocalizations(const Locale('en'));
+      final s = lookupStaffLocalizations(const Locale('en'));
+
+      expect(
+        find.bySemanticsLabel(s.advisorIntakeWizardStepOf(1, 2)),
+        findsOneWidget,
+      );
+
+      await continueToPasswordStep(tester, 'super');
+
+      // Advancing alone never calls the repository.
+      expect(repo.loginCalls, 0);
+      // Step 2: password field only, identifier recap, back arrow, CTA swap.
+      expect(find.byType(AppInputField), findsOneWidget);
+      expect(find.text(t.loginFieldPassword), findsOneWidget);
+      expect(find.text('super'), findsOneWidget);
+      expect(find.byTooltip(s.advisorCheckInBack), findsOneWidget);
+      // Back (44+dp target) + the password visibility toggle.
+      expect(find.byType(AppIconButton), findsNWidgets(2));
+      expect(
+        tester.getSize(find.byTooltip(s.advisorCheckInBack)),
+        const Size(48, 48),
+      );
+      expect(
+        find.bySemanticsLabel(s.advisorIntakeWizardStepOf(2, 2)),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+      semantics.dispose();
+    });
+
+    testWidgets('password field takes focus on step entry', (tester) async {
       await pumpSupervisor(tester);
 
-      expect(find.byType(AuthShell), findsOneWidget);
-      expect(find.byType(AppInputField), findsNWidgets(2));
-      expect(find.byType(AppPillButton), findsOneWidget);
-      expect(find.byType(AppTextButton), findsOneWidget);
+      await continueToPasswordStep(tester, 'super');
+
+      final passwordField = tester.widget<TextField>(find.byType(TextField));
+      expect(passwordField.focusNode?.hasFocus, isTrue);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('supervisor step transitions', () {
+    testWidgets('email identifier maps to the email slot of the same call',
+        (tester) async {
+      String? gotEmail;
+      String? gotPhone;
+      String? gotPassword;
+      final repo = FakeAuthRepository()
+        ..loginHandler = (email, phone, password) async {
+          gotEmail = email;
+          gotPhone = phone;
+          gotPassword = password;
+          return Success(FakeAuthRepository.authResult());
+        };
+      final storage = FakeTokenStorage();
+      await pumpSupervisor(tester, repo: repo, storage: storage);
+
+      await continueToPasswordStep(tester, 'lead@orient.ae');
+      await submitPasswordStep(tester, 'secret123');
+
+      expect(repo.loginCalls, 1);
+      expect(gotEmail, 'lead@orient.ae');
+      expect(gotPhone, isEmpty);
+      expect(gotPassword, 'secret123');
+      expect(await storage.getToken(), 'test-token');
+      expect(await storage.getRole(), UserRole.supervisor.name);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('username identifier maps to the phone slot of the same call',
+        (tester) async {
+      String? gotEmail;
+      String? gotPhone;
+      final repo = FakeAuthRepository()
+        ..loginHandler = (email, phone, password) async {
+          gotEmail = email;
+          gotPhone = phone;
+          return Success(FakeAuthRepository.authResult());
+        };
+      final storage = FakeTokenStorage();
+      await pumpSupervisor(tester, repo: repo, storage: storage);
+
+      await continueToPasswordStep(tester, 'super');
+      await submitPasswordStep(tester, 'secret123');
+
+      expect(repo.loginCalls, 1);
+      expect(gotEmail, isEmpty);
+      expect(gotPhone, 'super');
+      expect(await storage.getToken(), 'test-token');
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('back preserves typed values and refocuses identifier',
+        (tester) async {
+      final repo = FakeAuthRepository();
+      final storage = FakeTokenStorage();
+      await pumpSupervisor(tester, repo: repo, storage: storage);
+      final s = lookupStaffLocalizations(const Locale('en'));
+
+      await continueToPasswordStep(tester, 'super');
+      await tester.enterText(find.byType(TextField), 'secret123');
+      await tester.pump();
+
+      await tester.tap(find.byTooltip(s.advisorCheckInBack));
+      await settleStepTransition(tester);
+
+      // Step 1 again with the identifier intact; focus is back on it.
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller?.text,
+        'super',
+      );
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).focusNode?.hasFocus,
+        isTrue,
+      );
+
+      // Forward again: the password survived the round trip, so the queued
+      // login succeeds without retyping.
+      await tester.tap(find.byType(AppPillButton));
+      await settleStepTransition(tester);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller?.text,
+        'secret123',
+      );
+      await tester.tap(find.byType(AppPillButton));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(repo.loginCalls, 1);
+      expect(await storage.getToken(), 'test-token');
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('login errors land in step 2', (tester) async {
+      final repo = FakeAuthRepository()
+        ..loginHandler = (_, __, ___) async =>
+            const Failure(UnknownException('boom'));
+      await pumpSupervisor(tester, repo: repo);
+      final t = lookupSharedAuthLocalizations(const Locale('en'));
+
+      await continueToPasswordStep(tester, 'super');
+      await submitPasswordStep(tester, 'secret123');
+
+      // Still on step 2 (password visible), banner with the mapped copy.
+      expect(find.text(t.loginFieldPassword), findsOneWidget);
+      expect(find.byType(AppBanner), findsOneWidget);
+      expect(find.textContaining(t.errorServerRetryRef), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });
 
   group('supervisor validation', () {
-    testWidgets('empty credentials show the staff copy in a banner',
+    testWidgets('empty identifier shows the staff copy in a banner',
         (tester) async {
       final repo = FakeAuthRepository();
       await pumpSupervisor(tester, repo: repo);
@@ -270,6 +469,23 @@ void main() {
       expect(find.byType(AppBanner), findsNothing);
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets('editing the password clears a login-failure banner',
+        (tester) async {
+      final repo = FakeAuthRepository()
+        ..loginHandler = (_, __, ___) async =>
+            const Failure(UnknownException('boom'));
+      await pumpSupervisor(tester, repo: repo);
+
+      await continueToPasswordStep(tester, 'super');
+      await submitPasswordStep(tester, 'secret123');
+      expect(find.byType(AppBanner), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField), 'secret1234');
+      await tester.pump();
+      expect(find.byType(AppBanner), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
   });
 
   group('supervisor mapped failures (never raw)', () {
@@ -281,12 +497,8 @@ void main() {
             );
       await pumpSupervisor(tester, repo: repo);
 
-      await tester.enterText(find.byType(TextField).at(0), 'super');
-      await tester.enterText(find.byType(TextField).at(1), 'secret123');
-      await tester.pump();
-      await tester.tap(find.byType(AppPillButton));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+      await continueToPasswordStep(tester, 'super');
+      await submitPasswordStep(tester, 'secret123');
 
       expect(repo.loginCalls, 1);
       expect(find.byType(AppBanner), findsOneWidget);
@@ -314,12 +526,8 @@ void main() {
       final storage = FakeTokenStorage();
       await pumpSupervisor(tester, repo: repo, storage: storage);
 
-      await tester.enterText(find.byType(TextField).at(0), 'super');
-      await tester.enterText(find.byType(TextField).at(1), 'secret123');
-      await tester.pump();
-      await tester.tap(find.byType(AppPillButton));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+      await continueToPasswordStep(tester, 'super');
+      await submitPasswordStep(tester, 'secret123');
 
       final t = lookupSharedAuthLocalizations(const Locale('en'));
       expect(find.textContaining(t.errorServerRetryRef), findsOneWidget);
@@ -344,8 +552,8 @@ void main() {
       await pumpSupervisor(tester, repo: repo, storage: storage);
       final t = lookupSharedAuthLocalizations(const Locale('en'));
 
-      await tester.enterText(find.byType(TextField).at(0), 'super');
-      await tester.enterText(find.byType(TextField).at(1), 'secret123');
+      await continueToPasswordStep(tester, 'super');
+      await tester.enterText(find.byType(TextField), 'secret123');
       await tester.pump();
       await tester.tap(find.byType(AppPillButton));
       await tester.pump();
@@ -358,7 +566,7 @@ void main() {
       expect(button.isLoading, isTrue);
 
       // Second tap while busy is ignored.
-      await tester.tap(find.text(t.authActionSigningIn));
+      await tester.tap(find.byType(AppPillButton), warnIfMissed: false);
       await tester.pump();
       expect(repo.loginCalls, 1);
 
@@ -390,11 +598,41 @@ void main() {
       );
       await pumpSupervisor(tester, router: router);
 
+      await continueToPasswordStep(tester, 'super');
+
       await tester.tap(find.text(t.loginActionForgotPassword));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.text('forgot-stub'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('supervisor compact RTL large-text', () {
+    testWidgets('320px ar 1.3x flow has no overflow', (tester) async {
+      final repo = FakeAuthRepository()
+        ..loginHandler = (_, __, ___) async =>
+            const Failure(UnknownException('boom'));
+      await pumpSupervisor(tester, repo: repo, locale: const Locale('ar'));
+      tester.view.physicalSize = const Size(640, 1136);
+      tester.view.devicePixelRatio = 2.0;
+      tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+
+      // Long identifier exercises the recap truncation on step 2.
+      await continueToPasswordStep(
+        tester,
+        'very-long-supervisor-name@orient-workshop.ae',
+      );
+      expect(tester.takeException(), isNull);
+
+      await submitPasswordStep(tester, 'secret123');
+      // Failure banner + recap + password field all fit via scrolling.
+      expect(find.byType(AppBanner), findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 300));
       expect(tester.takeException(), isNull);
     });
   });
