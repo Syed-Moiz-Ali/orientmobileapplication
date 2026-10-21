@@ -396,6 +396,39 @@ class CustomerLocalizationsEn extends CustomerLocalizations {
   String get vhFallbackName => 'Vehicle';
 
   @override
+  String get vhSearchTitle => 'Search vehicles';
+
+  @override
+  String get vhSearchHint => 'Search by name, plate, or colour';
+
+  @override
+  String get vhSearchNoMatch => 'No vehicles match your search.';
+
+  @override
+  String get vhFilterTitle => 'Filter vehicles';
+
+  @override
+  String get vhFilterAll => 'All';
+
+  @override
+  String get vhFilterBooked => 'Booked or requested';
+
+  @override
+  String get vhFilterLastService => 'Last service';
+
+  @override
+  String get vhFilterNone => 'No active context';
+
+  @override
+  String get vhFilterShow => 'Show results';
+
+  @override
+  String get vhFilterNoMatch => 'No vehicles match this filter.';
+
+  @override
+  String get vhFilterClear => 'Clear';
+
+  @override
   String get avTitleAdd => 'Add vehicle';
 
   @override

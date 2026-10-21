@@ -392,6 +392,39 @@ class CustomerLocalizationsAr extends CustomerLocalizations {
   String get vhFallbackName => 'مركبة';
 
   @override
+  String get vhSearchTitle => 'البحث في المركبات';
+
+  @override
+  String get vhSearchHint => 'ابحث بالاسم أو اللوحة أو اللون';
+
+  @override
+  String get vhSearchNoMatch => 'لا توجد مركبات مطابقة لبحثك.';
+
+  @override
+  String get vhFilterTitle => 'تصفية المركبات';
+
+  @override
+  String get vhFilterAll => 'الكل';
+
+  @override
+  String get vhFilterBooked => 'محجوزة أو مطلوبة';
+
+  @override
+  String get vhFilterLastService => 'آخر صيانة';
+
+  @override
+  String get vhFilterNone => 'لا يوجد نشاط حالي';
+
+  @override
+  String get vhFilterShow => 'عرض النتائج';
+
+  @override
+  String get vhFilterNoMatch => 'لا توجد مركبات مطابقة لهذه التصفية.';
+
+  @override
+  String get vhFilterClear => 'مسح';
+
+  @override
   String get avTitleAdd => 'إضافة مركبة';
 
   @override

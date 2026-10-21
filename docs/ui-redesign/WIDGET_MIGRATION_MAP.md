@@ -300,7 +300,41 @@ by the approvals/register/chart/tab surfaces):
 
 Kept verbatim: `_findKpi` / `_trendOf` (byte-identical, display-only),
 all 12 action defs (icons/labels/hints/routes/tabs in order),
-`AppSplitView` medium layout + wide 5/4/3 flexes, `RefreshIndicator` +
+`AppSplitView` medium + wide 5/4/3 flexes, `RefreshIndicator` +
 `AppResponsivePage`, dashboard shell (app bar, bottom nav/rail, search
 shortcuts). Two new ARB keys (`ownerHomeApprovalsBanner`,
 `ownerHomeLoadError`, en+ar, gen-l10n from the package dir).
+
+## Phase 6 vehicles-list recomposition (branch `ui/integration-1`)
+
+Vehicles list (`customer_vehicles_tab.dart` + `customer_vehicle_record.dart`
++ new `customer_vehicles_search_sheet.dart` +
+`customer_vehicles_filter_sheet.dart`) recomposed presentation-only;
+providers/sync/refresh, `contextFor`/`specs`/`plateLabel`/`mileageLabel`
+predicates, `selectTab`, all routes, Keys and error mapping untouched.
+Legacy usages below drop to zero on the vehicles surface (verified by grep;
+the shared classes themselves are kept — still used by booking/detail
+sheets and other customer surfaces):
+
+| Deleted legacy widget | Homes before | Replaced by | Notes |
+|---|---|---|---|
+| bespoke `_Header` (title + count + `TextButton.icon` Add) | vehicles tab (1) | `AppPageHeader` (title `vhTitle` + count subtitle, same copy; search + filter `AppIconButton`s top-right ONLY when loaded list > 5 — the ONE sanctioned U1 exception; `TextButton.icon` Add kept when non-empty) | Same title/count/Add copy + destinations; ≤ 5 items = cards only, no find-aids |
+| (no search affordance) | vehicles tab (0) | `CustomerVehiclesSearchSheet`: `showAppModalSheet` + `AppSearchField` (`vhSearchHint`) over loaded records (name/plate/specs substring, plates punctuation-insensitive); result tap closes + reveals the record via `ensureVisible`; no-match (`vhSearchNoMatch`) + `Clear` | Permitted "list-scoped search over loaded records"; no new routes/logic |
+| (no filter affordance) | vehicles tab (0) | `CustomerVehiclesFilterSheet`: `showAppModalSheet` + `AppChip` single-select (All / `vhInService` / `vhFilterBooked` / `vhFilterLastService` / `vhFilterNone`) + `Show results` + `Clear`; in-place filter, filtered count, no-match + `Clear` | Only honest facets (context derived via existing `contextFor`); no new routes/logic |
+| bespoke `_Grouped` bordered container + dividers | vehicles tab (1 per column) | whitespace-separated `AppSurfaceCard(outlined: false)` rows (borderless light w/ shadow, bordered dark) with the same chunking predicate (single column compact or < 4; 2-col medium, 3-col large) | `AppListGroup` is settings-rows only and would dim rich cards; same atoms, same layout rule |
+| bespoke record chrome (silhouette `Stack`, `_ContextLine` container, `_Actions` Wrap, `_SyncFailedNotice`, `_DeleteFailedNotice` styling) | record (per card) | art band kept (`VehicleSilhouetteArt` + `CustomerPlateChip` overlay, `PositionedDirectional`) clipped to the card top; title = make/model/year; plate = LTR meta; status pill ONLY from `contextFor` via `AppStatusChip` (sentence case — `.toUpperCase()` removed); context detail + `View`/`Track` kept; sync/delete notices → `AppBanner` (same retry handlers); action row = direct `Book service` + overflow menu (`Edit`/`Remove`, existing routes) | Card hierarchy binding (title/plate/pill/tile, no pill when none); taps never regress (Book ≤ 1 from list) |
+| bespoke `_NoVehicles` / `_LoadFailure` panels | vehicles tab (1 + 1) | `AppEmptyState` (exactly 1 icon + 1 sentence + 1 `vhAdd` action → same wizard) / `AppErrorState` (`vhLoadFail*` + `vhRetry`, same retry) | Same copy/retry/destinations |
+| bespoke `_UnmatchedDeleteRecovery` + `CustomerRefreshNotice` | vehicles tab (1 + 1) | `AppBanner` error per missing operation (same retry) + `AppBanner` warning (same `stRefreshFail` + retry) | Same copy/retry; stale data kept |
+| `AppSkeleton` vehicles skeleton | vehicles tab (1) | `AppShimmerSkeleton` (header lines + `card(208)`) mirroring the cards | Same loading contract (`isLoading && isEmpty`) |
+| `showAppConfirmationDialog` (destructive) on this surface | vehicles tab (1) | confirmation bottom sheet via `showAppModalSheet` (same title/body/`customerRemoveVehicle` + snackbar contracts, destructive confirm, NO undo) | Same handler/copy; presentation only |
+
+Kept verbatim (shared tile grammar — `customer_vehicle_presentation.dart`,
+`customer_plate_chip.dart`, providers, router untouched):
+`contextFor`/`bookingsFor`/`specs`/`plateLabel`/`mileageLabel` (blank stays
+unknown, plate upper-cased single-spaced, zero as `0`), VIN LTR lock,
+`_confirmRemove`/`_retryRemoval` handler flow, `ValueKey('vehicle-<id>')`,
+confirmation + snackbar contracts, `RefreshIndicator` + `AppResponsivePage`
+(max 1040), bottom nav (no rail — consumer contract), haptics, RTL mirroring.
+Eleven new ARB keys (`vhSearchTitle/Hint/NoMatch`,
+`vhFilterTitle/All/Booked/LastService/None/Show/NoMatch/Clear`, en+ar,
+gen-l10n from `apps/customer_app`).

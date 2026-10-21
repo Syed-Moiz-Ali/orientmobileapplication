@@ -11,8 +11,9 @@ import 'package:customer_app/features/customer/presentation/providers/customer_p
 import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_vehicle_presentation.dart';
 import 'package:customer_app/features/customer/presentation/support/failed_vehicle_delete.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_status_notices.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_vehicle_record.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_vehicles_filter_sheet.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_vehicles_search_sheet.dart';
 
 /// My vehicles — the customer's registered cars.
 ///
@@ -22,6 +23,11 @@ import 'package:customer_app/features/customer/presentation/widgets/customer_veh
 /// is no vehicle photography (the API has no vehicle image), and no health or
 /// service-due claim, because those fields are written by the client as
 /// defaults rather than by the workshop.
+///
+/// Presentation only — providers, sync, predicates, refresh, routes and keys
+/// are unchanged; the list is rebuilt on shared atoms (AppPageHeader, cards,
+/// search/filter sheets, AppBanner, AppEmptyState/AppErrorState,
+/// AppShimmerSkeleton).
 class CustomerVehiclesTab extends ConsumerStatefulWidget {
   const CustomerVehiclesTab({super.key});
 
@@ -37,10 +43,19 @@ class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
   /// failed refresh cannot turn the restore into an endless reload loop.
   final Set<String> _restoreRequested = {};
 
+  /// List-scoped context filter (presentation state only; the context
+  /// derivation stays in `CustomerVehiclePresentation.contextFor`).
+  CustomerVehicleFilter _filter = CustomerVehicleFilter.all;
+
+  /// Scroll anchors for search-result reveals (presentation only).
+  final Map<String, GlobalKey> _scrollKeys = {};
+
+  GlobalKey _scrollKeyFor(String id) =>
+      _scrollKeys.putIfAbsent(id, () => GlobalKey());
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
+    final colors = Theme.of(context).colorScheme;
     final dash = ref.watch(customerDashboardProvider);
     final vehicles = dash.vehicles;
     final bookings =
@@ -75,6 +90,50 @@ class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
     final firstLoadFailed =
         vehicles.isEmpty && dash.loadError.isNotEmpty && !dash.isLoading;
 
+    // One derivation per build (same predicate the records use): the filter
+    // sheet and the rendered list read the same map, so the filter can never
+    // promise a vehicle the list does not show.
+    final contexts = <String, CustomerVehicleContext?>{
+      for (final vehicle in vehicles)
+        vehicle.id: CustomerVehiclePresentation.contextFor(
+          vehicle: vehicle,
+          bookings: bookings,
+          liveService: liveService,
+        ),
+    };
+    bool matchesFilter(CustomerVehicleContext? serviceContext) =>
+        switch (_filter) {
+          CustomerVehicleFilter.all => true,
+          CustomerVehicleFilter.inService =>
+            serviceContext?.kind ==
+              CustomerVehicleContextKind.inService,
+          CustomerVehicleFilter.upcoming =>
+            serviceContext?.kind == CustomerVehicleContextKind.upcoming,
+          CustomerVehicleFilter.completed =>
+            serviceContext?.kind == CustomerVehicleContextKind.completed,
+          CustomerVehicleFilter.none => serviceContext == null,
+        };
+    final visible = [
+      for (final vehicle in vehicles)
+        if (matchesFilter(contexts[vehicle.id])) vehicle,
+    ];
+    _scrollKeys.removeWhere(
+      (id, _) => !vehicles.any((vehicle) => vehicle.id == id),
+    );
+
+    // Progressive disclosure (the ONE sanctioned U1 exception on this
+    // screen): the search + filter find-aids appear ONLY when the loaded list
+    // has MORE THAN 5 items; with ≤ 5 items the cards stand alone.
+    final showFindAids = vehicles.length > 5;
+    final t = context.cx;
+    final subtitle = _filter == CustomerVehicleFilter.all
+        ? (vehicles.isEmpty
+              ? t.vhCountNone
+              : vehicles.length == 1
+              ? t.vhCountOne
+              : t.vhCountMany(vehicles.length))
+        : t.vhCountMany(visible.length);
+
     return RefreshIndicator(
       onRefresh: () => ref.read(customerDashboardProvider.notifier).refresh(),
       color: colors.primary,
@@ -85,53 +144,102 @@ class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (dash.isLoading && vehicles.isEmpty)
-              // Phase 07.1: bespoke _VehiclesSkeleton migrated to AppSkeleton.
-              const Column(
+              // Skeleton mirrors the cards: header lines + card shape.
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  AppSkeleton.text(width: 160, height: 26),
-                  SizedBox(height: AppDimensions.s10),
-                  AppSkeleton.text(width: 180, height: 12),
-                  SizedBox(height: AppDimensions.s20),
-                  AppSkeleton.card(height: 208),
+                  const AppShimmerSkeleton(width: 160, height: 26),
+                  const SizedBox(height: AppDimensions.s10),
+                  const AppShimmerSkeleton(width: 180, height: 12),
+                  const SizedBox(height: AppDimensions.s20),
+                  const AppShimmerSkeleton.card(height: 208),
                 ],
               )
             else ...[
-              _Header(
-                count: vehicles.length,
-                onAdd: vehicles.isEmpty
-                    ? null
-                    : () => context.push(AppRoutes.customerAddVehicle),
+              AppPageHeader(
+                title: t.vhTitle,
+                subtitle: subtitle,
+                actions: [
+                  if (showFindAids) ...[
+                    AppIconButton(
+                      icon: Icons.search_rounded,
+                      tooltip: t.vhSearchTitle,
+                      onPressed: () => _openSearch(vehicles),
+                    ),
+                    AppIconButton(
+                      icon: Icons.filter_list_rounded,
+                      tooltip: t.vhFilterTitle,
+                      onPressed: _openFilter,
+                    ),
+                  ],
+                  if (vehicles.isNotEmpty)
+                    TextButton.icon(
+                      onPressed: () =>
+                          context.push(AppRoutes.customerAddVehicle),
+                      icon: const Icon(Icons.add_rounded, size: 18),
+                      label: Text(t.vhAdd),
+                    ),
+                ],
               ),
               if (dash.loadError.isNotEmpty && vehicles.isNotEmpty) ...[
                 const SizedBox(height: AppDimensions.s16),
-                CustomerRefreshNotice(
-                  onRetry: () =>
-                      ref.read(customerDashboardProvider.notifier).refresh(),
+                AppBanner(
+                  kind: AppBannerKind.warning,
+                  message: t.stRefreshFail,
+                  actionLabel: t.stRetry,
+                  onAction: () => ref
+                      .read(customerDashboardProvider.notifier)
+                      .refresh(),
                 ),
               ],
-              // A failed delete whose vehicle cannot yet be restored still needs
-              // a visible, retryable recovery path.
+              // A failed delete whose vehicle cannot yet be restored still
+              // needs a visible, retryable recovery path.
               if (missing.isNotEmpty) ...[
                 const SizedBox(height: AppDimensions.s16),
-                _UnmatchedDeleteRecovery(
-                  operations: [for (final id in missing) failedByVehicle[id]!],
-                  busyId: _removingId,
-                  onRetry: _retryRemoval,
-                ),
+                for (final operation in [
+                  for (final id in missing) failedByVehicle[id]!,
+                ]) ...[
+                  AppBanner(
+                    kind: AppBannerKind.error,
+                    message:
+                        '${t.vhDeleteFailTitle} ${t.vhDeleteFailBody}',
+                    actionLabel: _removingId.isEmpty
+                        ? t.vhRetryRemoval
+                        : null,
+                    onAction: _removingId.isEmpty
+                        ? () => _retryRemoval(operation)
+                        : null,
+                  ),
+                  const SizedBox(height: AppDimensions.s8),
+                ],
               ],
               const SizedBox(height: AppDimensions.s20),
               if (firstLoadFailed)
-                _LoadFailure(
-                  onRetry: () =>
-                      ref.read(customerDashboardProvider.notifier).refresh(),
+                AppErrorState(
+                  title: t.vhLoadFailTitle,
+                  message: t.vhLoadFailBody,
+                  retryLabel: t.vhRetry,
+                  onRetry: () => ref
+                      .read(customerDashboardProvider.notifier)
+                      .refresh(),
                 )
               else if (vehicles.isEmpty)
-                _NoVehicles(
-                  onAdd: () => context.push(AppRoutes.customerAddVehicle),
+                AppEmptyState(
+                  icon: Icons.directions_car_outlined,
+                  title: t.vhEmptyTitle,
+                  message: t.vhEmptyBody,
+                  actionLabel: t.vhAdd,
+                  onAction: () =>
+                      context.push(AppRoutes.customerAddVehicle),
+                )
+              else if (visible.isEmpty)
+                _FilterNoMatch(
+                  onClear: () => setState(
+                    () => _filter = CustomerVehicleFilter.all,
+                  ),
                 )
               else
-                _records(vehicles, bookings, liveService, failedByVehicle),
+                _records(visible, contexts, failedByVehicle),
               const SizedBox(height: AppDimensions.s32),
             ],
           ],
@@ -142,41 +250,48 @@ class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
 
   Widget _records(
     List<CustomerVehicleEntity> vehicles,
-    List<CustomerBookingEntity> bookings,
-    CustomerServiceEntity? liveService,
+    Map<String, CustomerVehicleContext?> contexts,
     Map<String, FailedVehicleDelete> failedByVehicle,
   ) {
     final records = [
       for (final vehicle in vehicles)
-        CustomerVehicleRecord(
-          key: ValueKey('vehicle-${vehicle.id}'),
-          vehicle: vehicle,
-          busy: _removingId == vehicle.id,
-          serviceContext: CustomerVehiclePresentation.contextFor(
+        SizedBox(
+          key: _scrollKeyFor(vehicle.id),
+          child: CustomerVehicleRecord(
+            key: ValueKey('vehicle-${vehicle.id}'),
             vehicle: vehicle,
-            bookings: bookings,
-            liveService: liveService,
+            busy: _removingId == vehicle.id,
+            serviceContext: contexts[vehicle.id],
+            onBookService: () => context.push(
+              AppRoutes.customerBookServiceLocation(vehicleId: vehicle.id),
+            ),
+            onEdit: () => context.push(AppRoutes.customerEditVehicle(vehicle.id)),
+            onRemove: () => _confirmRemove(vehicle),
+            onOpenBooking: (booking) =>
+                context.push(AppRoutes.customerBookingDetail, extra: booking),
+            onTrackService: () => context.push(AppRoutes.customerServiceStatus),
+            syncFailed: ref
+                .watch(vehicleIdentityReaderProvider)
+                .hasFailedCreate(vehicle.id),
+            onRetrySync: () => customerRetryVehicleSync(ref),
+            deleteFailed: failedByVehicle.containsKey(vehicle.id),
+            onRetryRemoval: () => _retryRemoval(failedByVehicle[vehicle.id]!),
           ),
-          onBookService: () => context.push(
-            AppRoutes.customerBookServiceLocation(vehicleId: vehicle.id),
-          ),
-          onEdit: () => context.push(AppRoutes.customerEditVehicle(vehicle.id)),
-          onRemove: () => _confirmRemove(vehicle),
-          onOpenBooking: (booking) =>
-              context.push(AppRoutes.customerBookingDetail, extra: booking),
-          onTrackService: () => context.push(AppRoutes.customerServiceStatus),
-          syncFailed: ref
-              .watch(vehicleIdentityReaderProvider)
-              .hasFailedCreate(vehicle.id),
-          onRetrySync: () => customerRetryVehicleSync(ref),
-          deleteFailed: failedByVehicle.containsKey(vehicle.id),
-          onRetryRemoval: () => _retryRemoval(failedByVehicle[vehicle.id]!),
         ),
     ];
 
     // One column on phones, two balanced columns where there is room.
     if (records.length < 4 || context.adaptive.isCompact) {
-      return _Grouped(children: records);
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var index = 0; index < records.length; index++) ...[
+            records[index],
+            if (index < records.length - 1)
+              const SizedBox(height: AppDimensions.s12),
+          ],
+        ],
+      );
     }
     final columns = context.adaptive.isLarge ? 3 : 2;
     final size = (records.length / columns).ceil();
@@ -186,12 +301,51 @@ class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
         for (var index = 0; index < columns; index++) ...[
           if (index > 0) const SizedBox(width: AppDimensions.s20),
           Expanded(
-            child: _Grouped(
-              children: records.skip(index * size).take(size).toList(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (
+                  var row = index * size;
+                  row < (index + 1) * size && row < records.length;
+                  row++
+                ) ...[
+                  records[row],
+                  if (row < (index + 1) * size - 1 && row < records.length - 1)
+                    const SizedBox(height: AppDimensions.s12),
+                ],
+              ],
             ),
           ),
         ],
       ],
+    );
+  }
+
+  void _openSearch(List<CustomerVehicleEntity> vehicles) {
+    showCustomerVehiclesSearchSheet(
+      context,
+      vehicles: vehicles,
+      onSelect: (vehicle) {
+        final anchor = _scrollKeys[vehicle.id]?.currentContext;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          if (anchor != null) {
+            Scrollable.ensureVisible(
+              anchor,
+              duration: const Duration(milliseconds: 300),
+              alignment: 0.05,
+            );
+          }
+        });
+      },
+    );
+  }
+
+  void _openFilter() {
+    showCustomerVehiclesFilterSheet(
+      context,
+      selected: _filter,
+      onApply: (selected) => setState(() => _filter = selected),
     );
   }
 
@@ -200,17 +354,43 @@ class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
     final name = vehicle.displayName.trim();
     final plate = CustomerVehiclePresentation.plateLabel(vehicle.plateNumber);
     final t = context.cx;
-    final confirmed = await showAppConfirmationDialog(
-      context,
-      title: name.isEmpty ? t.vhRemoveNoName : t.vhRemoveTitle(name),
-      message: plate.isEmpty
-          ? t.vhRemoveBodyNoPlate
-          : t.vhRemoveBody(plate),
-      confirmLabel: t.vhRemoveCta,
-      cancelLabel: t.vhKeepCta,
-      icon: Icons.delete_outline_rounded,
-      destructive: true,
-    );
+    final colors = Theme.of(context).colorScheme;
+    // Confirmation becomes a bottom sheet (destructive, no undo — same
+    // customerRemoveVehicle handler + snackbar contracts as before).
+    final confirmed =
+        await showAppModalSheet<bool>(
+          context: context,
+          title: name.isEmpty ? t.vhRemoveNoName : t.vhRemoveTitle(name),
+          builder: (sheetContext) => Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                plate.isEmpty
+                    ? t.vhRemoveBodyNoPlate
+                    : t.vhRemoveBody(plate),
+                style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(sheetContext).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: AppDimensions.s16),
+              FilledButton(
+                onPressed: () => Navigator.of(sheetContext).pop(true),
+                style: FilledButton.styleFrom(
+                  backgroundColor: colors.error,
+                  foregroundColor: colors.onError,
+                ),
+                child: Text(t.vhRemoveCta),
+              ),
+              const SizedBox(height: AppDimensions.s8),
+              TextButton(
+                onPressed: () => Navigator.of(sheetContext).pop(false),
+                child: Text(t.vhKeepCta),
+              ),
+            ],
+          ),
+        ) ??
+        false;
     if (!confirmed || !mounted) return;
 
     setState(() => _removingId = vehicle.id);
@@ -266,282 +446,34 @@ class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
   }
 }
 
-class _Header extends StatelessWidget {
-  final int count;
-  final VoidCallback? onAdd;
+/// Filter-no-match state: the loaded list is non-empty but nothing matches the
+/// active context filter. One sentence + one Clear control.
+class _FilterNoMatch extends StatelessWidget {
+  final VoidCallback onClear;
 
-  const _Header({required this.count, required this.onAdd});
-
-  @override
-  Widget build(BuildContext context) {
-    final t = context.cx;
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Semantics(
-                header: true,
-                child: Text(
-                  t.vhTitle,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    color: colors.onSurface,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.4,
-                  ),
-                ),
-              ),
-            ),
-            if (onAdd != null) ...[
-              const SizedBox(width: AppDimensions.s8),
-              TextButton.icon(
-                onPressed: onAdd,
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: Text(context.cx.vhAdd),
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: AppDimensions.s4),
-        Text(
-          count == 0
-              ? t.vhCountNone
-              : count == 1
-              ? t.vhCountOne
-              : t.vhCountMany(count),
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: colors.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// One grouped surface per column, rows separated by dividers.
-class _Grouped extends StatelessWidget {
-  final List<Widget> children;
-
-  const _Grouped({required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-        border: Border.all(color: colors.outlineVariant),
-      ),
-      child: Column(
-        children: [
-          for (var index = 0; index < children.length; index++) ...[
-            children[index],
-            if (index < children.length - 1)
-              Divider(height: 1, color: colors.outlineVariant),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _NoVehicles extends StatelessWidget {
-  final VoidCallback onAdd;
-
-  const _NoVehicles({required this.onAdd});
+  const _FilterNoMatch({required this.onClear});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-        border: Border.all(color: colors.outlineVariant),
-      ),
+    return Center(
       child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.s18),
+        padding: const EdgeInsets.symmetric(vertical: AppDimensions.s24),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              context.cx.vhEmptyTitle,
-              style: theme.textTheme.titleSmall?.copyWith(
-                color: colors.onSurface,
-                fontWeight: FontWeight.w800,
+              context.cx.vhFilterNoMatch,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: AppDimensions.s4),
-            Text(
-              context.cx.vhEmptyBody,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant,
-                height: 1.45,
-              ),
+            const SizedBox(height: AppDimensions.s8),
+            TextButton(
+              onPressed: onClear,
+              child: Text(context.cx.vhFilterClear),
             ),
-            const SizedBox(height: AppDimensions.s16),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: FilledButton.icon(
-                onPressed: onAdd,
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: Text(context.cx.vhAdd),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LoadFailure extends StatelessWidget {
-  final VoidCallback onRetry;
-
-  const _LoadFailure({required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-        border: Border.all(color: colors.outlineVariant),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.s18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              context.cx.vhLoadFailTitle,
-              style: theme.textTheme.titleSmall?.copyWith(
-                color: colors.onSurface,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: AppDimensions.s4),
-            Text(
-              context.cx.vhLoadFailBody,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: AppDimensions.s12),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: FilledButton(
-                onPressed: onRetry,
-                child: Text(context.cx.vhRetry),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Page-level recovery for a failed removal whose vehicle cannot yet be shown
-/// (canonical reload pending or failing). It never fabricates the vehicle: it
-/// states the honest server truth and offers the single retry.
-class _UnmatchedDeleteRecovery extends StatelessWidget {
-  final List<FailedVehicleDelete> operations;
-  final String busyId;
-  final Future<void> Function(FailedVehicleDelete operation) onRetry;
-
-  const _UnmatchedDeleteRecovery({
-    required this.operations,
-    required this.busyId,
-    required this.onRetry,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return Semantics(
-      liveRegion: true,
-      container: true,
-      label:
-          '${context.cx.vhDeleteFailTitle} ${context.cx.vhDeleteFailBody}',
-      child: Container(
-        padding: const EdgeInsets.all(AppDimensions.s14),
-        decoration: BoxDecoration(
-          color: Color.alphaBlend(
-            colors.error.withValues(alpha: 0.05),
-            colors.surface,
-          ),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-          border: Border.all(color: colors.error.withValues(alpha: 0.20)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.error_outline_rounded,
-                  size: AppDimensions.iconSm,
-                  color: colors.error,
-                ),
-                const SizedBox(width: AppDimensions.s6),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        context.cx.vhDeleteFailTitle,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colors.onSurface,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: AppDimensions.r2),
-                      Text(
-                        context.cx.vhDeleteFailBody,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colors.onSurfaceVariant,
-                          height: 1.35,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            for (final operation in operations) ...[
-              const SizedBox(height: AppDimensions.s8),
-              Align(
-                alignment: Alignment.centerRight,
-                child: SizedBox(
-                  height: AppDimensions.touchTarget,
-                  child: FilledButton(
-                    onPressed: busyId.isNotEmpty
-                        ? null
-                        : () => onRetry(operation),
-                    child: Text(
-                      busyId == operation.vehicleId
-                          ? context.cx.vhRetrying
-                          : context.cx.vhRetryRemoval,
-                    ),
-                  ),
-                ),
-              ),
-            ],
           ],
         ),
       ),

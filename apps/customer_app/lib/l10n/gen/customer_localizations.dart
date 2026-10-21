@@ -815,6 +815,72 @@ abstract class CustomerLocalizations {
   /// **'Vehicle'**
   String get vhFallbackName;
 
+  /// Vehicle search sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Search vehicles'**
+  String get vhSearchTitle;
+
+  /// Vehicle search field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name, plate, or colour'**
+  String get vhSearchHint;
+
+  /// Vehicle search no-match
+  ///
+  /// In en, this message translates to:
+  /// **'No vehicles match your search.'**
+  String get vhSearchNoMatch;
+
+  /// Vehicle filter sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Filter vehicles'**
+  String get vhFilterTitle;
+
+  /// Vehicle filter option
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get vhFilterAll;
+
+  /// Vehicle filter option
+  ///
+  /// In en, this message translates to:
+  /// **'Booked or requested'**
+  String get vhFilterBooked;
+
+  /// Vehicle filter option
+  ///
+  /// In en, this message translates to:
+  /// **'Last service'**
+  String get vhFilterLastService;
+
+  /// Vehicle filter option
+  ///
+  /// In en, this message translates to:
+  /// **'No active context'**
+  String get vhFilterNone;
+
+  /// Vehicle filter confirm
+  ///
+  /// In en, this message translates to:
+  /// **'Show results'**
+  String get vhFilterShow;
+
+  /// Vehicle filter no-match
+  ///
+  /// In en, this message translates to:
+  /// **'No vehicles match this filter.'**
+  String get vhFilterNoMatch;
+
+  /// Vehicle filter clear
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get vhFilterClear;
+
   /// Add title
   ///
   /// In en, this message translates to:
