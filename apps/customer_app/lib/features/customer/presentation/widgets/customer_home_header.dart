@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_core/shared_core.dart';
 
 import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 
-/// Compact personal header for the Customer Home surface.
+/// Greeting header for the Customer Home, composed from [AppPageHeader].
 ///
 /// The greeting only — notifications live in the shell bar, so this row
 /// never duplicates that chrome.
@@ -19,32 +20,30 @@ class CustomerHomeHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.cx;
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
     final name = firstName.trim();
     final welcome = isNewCustomer ? t.garWelcome : t.garHello;
 
+    if (name.isEmpty) {
+      return AppPageHeader(title: welcome, subtitle: t.garBrandSub);
+    }
+    // Sentence-case greeting (C3): AppPageHeader upper-cases its eyebrow
+    // slot, so the greeting renders as its own muted line above the name
+    // headline instead of going through that slot.
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        if (name.isNotEmpty)
-          Text(
-            welcome,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: colors.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
         Text(
-          name.isNotEmpty ? name : welcome,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.headlineSmall?.copyWith(
-            color: colors.onSurface,
+          welcome,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w800,
-            letterSpacing: -0.4,
+            fontSize: 11,
           ),
         ),
+        const SizedBox(height: AppSpacing.xs),
+        AppPageHeader(title: name, subtitle: t.garBrandSub),
       ],
     );
   }

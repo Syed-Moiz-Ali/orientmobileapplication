@@ -323,6 +323,54 @@ abstract class CustomerLocalizations {
   /// **'All bookings'**
   String get garRecentAll;
 
+  /// Garage carousel show-all action
+  ///
+  /// In en, this message translates to:
+  /// **'Show all'**
+  String get garShowAll;
+
+  /// Home hero overflow one
+  ///
+  /// In en, this message translates to:
+  /// **'1 more item needs review'**
+  String get garAttentionMoreOne;
+
+  /// Home hero overflow many
+  ///
+  /// In en, this message translates to:
+  /// **'{count} more items need review'**
+  String garAttentionMoreMany(int count);
+
+  /// No description provided for @garUnpaidBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Review and settle your outstanding invoices.'**
+  String get garUnpaidBody;
+
+  /// Home hero CTA opening invoices for review
+  ///
+  /// In en, this message translates to:
+  /// **'Review invoices'**
+  String get garUnpaidCta;
+
+  /// Garage badge: confirmed upcoming booking
+  ///
+  /// In en, this message translates to:
+  /// **'Booked'**
+  String get garStatusBooked;
+
+  /// Garage badge: unconfirmed booking request
+  ///
+  /// In en, this message translates to:
+  /// **'Requested'**
+  String get garStatusRequested;
+
+  /// Garage badge: most recent finished service
+  ///
+  /// In en, this message translates to:
+  /// **'Last service'**
+  String get garStatusLastService;
+
   /// Upcoming section
   ///
   /// In en, this message translates to:

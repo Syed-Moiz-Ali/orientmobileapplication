@@ -123,6 +123,32 @@ class CustomerLocalizationsEn extends CustomerLocalizations {
   String get garRecentAll => 'All bookings';
 
   @override
+  String get garShowAll => 'Show all';
+
+  @override
+  String get garAttentionMoreOne => '1 more item needs review';
+
+  @override
+  String garAttentionMoreMany(int count) {
+    return '$count more items need review';
+  }
+
+  @override
+  String get garUnpaidBody => 'Review and settle your outstanding invoices.';
+
+  @override
+  String get garUnpaidCta => 'Review invoices';
+
+  @override
+  String get garStatusBooked => 'Booked';
+
+  @override
+  String get garStatusRequested => 'Requested';
+
+  @override
+  String get garStatusLastService => 'Last service';
+
+  @override
   String get garUpcomingTitle => 'Coming up';
 
   @override

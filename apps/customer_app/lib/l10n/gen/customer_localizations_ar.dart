@@ -123,6 +123,32 @@ class CustomerLocalizationsAr extends CustomerLocalizations {
   String get garRecentAll => 'كل الحجوزات';
 
   @override
+  String get garShowAll => 'عرض الكل';
+
+  @override
+  String get garAttentionMoreOne => 'عنصر آخر يحتاج إلى مراجعة';
+
+  @override
+  String garAttentionMoreMany(int count) {
+    return '$count عناصر أخرى تحتاج إلى مراجعة';
+  }
+
+  @override
+  String get garUnpaidBody => 'راجع وسدد فواتيرك المستحقة.';
+
+  @override
+  String get garUnpaidCta => 'مراجعة الفواتير';
+
+  @override
+  String get garStatusBooked => 'محجوز';
+
+  @override
+  String get garStatusRequested => 'مطلوب';
+
+  @override
+  String get garStatusLastService => 'آخر صيانة';
+
+  @override
   String get garUpcomingTitle => 'القادم';
 
   @override

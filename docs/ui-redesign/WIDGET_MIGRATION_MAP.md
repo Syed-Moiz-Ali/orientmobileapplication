@@ -91,3 +91,19 @@ once the legacy widget hits zero usages.
 | `AppDataTable` (+ `AppDataTableHeader`) | `AppTable` | legacy `AppTable` (`app_table.dart`) |
 | `AppNavRail` | `AppNavigationRail` | legacy `AppNavigationRail` (shells) |
 | `AppBottomSheet` file move | `app_bottom_sheet.dart` | legacy `showAppModalSheet` (`app_bottom_sheet.dart`) |
+
+## Phase 6 customer-home recomposition (branch `ui/phase-6-customer`)
+
+Home (`customer_home_tab.dart`) recomposed presentation-only onto 1P pattern
+widgets. Deleted legacy home widgets below at zero remaining usages
+(verified by repo grep; no other app/package referenced them):
+
+| Deleted legacy widget | Homes before | Replaced by | Notes |
+|---|---|---|---|
+| `CustomerHomeServiceSummary` (+ `_LiveServicePanel`, `_ActiveBookingPanel`, `_WelcomePanel`, `_IdlePanel`) | customer home tab only (1) | `CustomerHomeHero` (ONE `AppMediaCard`: approval > payment due > in-service > upcoming > idle + "+N more" row into approvals) | Same priority order read from the replaced code; same routes/CTAs; new-customer branch now `AppEmptyState` |
+| `CustomerGarageCarousel` (+ `_VehicleCard`, `_ContextBadge`, pager + dots) | customer home tab only (1) | `CustomerHomeGarage` (`AppCarousel`, ~2.2 peek, "Show all" into the vehicles tab) | Cards keep silhouette art + booking-derived context badge + plate; no invented scores/favorites/promos |
+| `CustomerAttentionPanel` usage on Home | home only (class kept) | hero/banner position on Home | Class KEPT with reason: still used by `customer_service_status_tab.dart` (Status detail), where full adjudication lives |
+| `CustomerRefreshNotice` usage on Home | home only (class kept) | `AppBanner` (warning) + keep last data on Home | Class KEPT with reason: still used by bookings/vehicles/profile/status/notifications tabs |
+| `CustomerSurfacePanel` | — (not deleted) | — | KEPT: used by approvals, bookings, breakdown, vehicles, status panels, booking-success |
+| legacy `SectionHeader` on Home garage/recent | home garage + recent (2) | `AppCarousel` header / `AppSection` + `AppListGroup` | Shared `SectionHeader` class itself kept (used elsewhere); Home no longer references it |
+| legacy `EmptyState`/`ErrorView` on Home loading/error | home (2) | `AppShimmerSkeleton` / `AppEmptyState` / `AppErrorState` | Home now contributes zero `AppSkeleton`-legacy call sites (loading skeleton migrated) |
