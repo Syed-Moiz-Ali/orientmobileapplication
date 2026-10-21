@@ -495,7 +495,7 @@ UX
 ## C16 hard-reject list (reviewers cap any violating screen at 10/16)
 - Cards in LIGHT theme have no borders (soft shadow or flat, separated by whitespace). Dark may use border.
 - No orphan tiles: tile rows are 3 equal columns or a horizontally scrolling row; never a 2x2 with a lone tile.
-- Exactly ONE filled accent element per section (one primary CTA). No second filled tile/chip next to it.
+<- Exactly ONE filled accent element per section (one primary CTA). No second filled tile/chip next to it.
 - No duplicate entry points for the same thing (search icon + search field, hero + See all + tab for the
   same list). One path per task.
 - No permanent status pills (e.g. "Synced"); show sync/connection only when abnormal, as an AppBanner.
@@ -510,7 +510,7 @@ UX
 - Carousels must show a visible peek of the next card, otherwise use a list.
 
 ## C17. Mandatory usability laws (any violated law caps the screen at 8/16, no exceptions)
-- U0. The user must never have to hunt, scroll or tap more than necessary. When in doubt, fewer steps.
+<- U0. The user must never have to think, hunt, scroll or tap more than necessary. When in doubt, fewer steps.
 - U1. SEARCH: a search ICON in the header at the TOP RIGHT (next to notifications and avatar). Tapping opens a
   full-screen search (auto-focused field, recents in normal case, scan inside, results). NEVER an inline search
   field in the page. Same placement on every dashboard/list screen in every app.
@@ -520,7 +520,7 @@ UX
   task may take more taps than before; the most frequent one should be <= 2.
 - U4. REACHABILITY: frequent create/scan actions are reachable without scrolling and in the lower half of the
   screen or in a sticky bar.
-- U5. NO TRUNCATION OF PRIMARY TEXT: headline/greeting wrap to 2 lines; never "…" on a person's name or a
+<- U5. NO TRUNCATION OF PRIMARY TEXT: headline/greeting/name wrap to 2 lines; never "…" on a person's name or a
   primary label; never a label cut mid-word. Horizontal rows either fit completely (3 equal columns) or scroll
   with a clean peek where the cut item's icon AND label start are clearly visible. Prefer fitting over scrolling
   for <= 4 items.

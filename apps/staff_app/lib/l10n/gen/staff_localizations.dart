@@ -251,25 +251,25 @@ abstract class StaffLocalizations {
   /// Section kicker above the quick-action tile grid
   ///
   /// In en, this message translates to:
-  /// **'Quick Actions'**
+  /// **'Quick actions'**
   String get advisorQuickActionsEyebrow;
 
   /// Quick action: scan vehicle
   ///
   /// In en, this message translates to:
-  /// **'Scan Vehicle'**
+  /// **'Scan vehicle'**
   String get advisorActionScanTitle;
 
   /// Quick action subtitle: scan vehicle
   ///
   /// In en, this message translates to:
-  /// **'VIN / Plate'**
+  /// **'VIN / plate'**
   String get advisorActionScanSubtitle;
 
   /// Quick action: new job card
   ///
   /// In en, this message translates to:
-  /// **'New Job Card'**
+  /// **'New job card'**
   String get advisorActionNewJobTitle;
 
   /// Quick action subtitle: new job card
@@ -305,7 +305,7 @@ abstract class StaffLocalizations {
   /// Section title for the shift metric strip
   ///
   /// In en, this message translates to:
-  /// **'Work Summary'**
+  /// **'Work summary'**
   String get advisorWorkSummary;
 
   /// Legacy section action (unused on home; retained for parity)
@@ -317,8 +317,14 @@ abstract class StaffLocalizations {
   /// Section title for recent job cards
   ///
   /// In en, this message translates to:
-  /// **'Assigned Work Orders'**
+  /// **'Assigned work orders'**
   String get advisorAssignedWorkOrders;
+
+  /// Neutral section title: the work-orders feed is status-agnostic (U8), so Assigned would over-promise
+  ///
+  /// In en, this message translates to:
+  /// **'Work orders'**
+  String get advisorWorkOrdersTitle;
 
   /// Section action opening the full jobs list
   ///
@@ -335,13 +341,13 @@ abstract class StaffLocalizations {
   /// Metric tile label: total orders
   ///
   /// In en, this message translates to:
-  /// **'Total Orders'**
+  /// **'Total orders'**
   String get advisorMetricTotalOrders;
 
   /// Metric tile label: in progress
   ///
   /// In en, this message translates to:
-  /// **'In Progress'**
+  /// **'In progress'**
   String get advisorMetricInProgress;
 
   /// Metric tile label: delivered
@@ -401,7 +407,7 @@ abstract class StaffLocalizations {
   /// Jobs status filter: in progress
   ///
   /// In en, this message translates to:
-  /// **'In Progress'**
+  /// **'In progress'**
   String get advisorFilterInProgress;
 
   /// Jobs status filter: completed
@@ -419,7 +425,7 @@ abstract class StaffLocalizations {
   /// Jobs status filter: QC check
   ///
   /// In en, this message translates to:
-  /// **'QC Check'**
+  /// **'QC check'**
   String get advisorFilterQc;
 
   /// Jobs status filter: cancelled
@@ -511,6 +517,42 @@ abstract class StaffLocalizations {
   /// In en, this message translates to:
   /// **'Updated {time}'**
   String advisorHomeUpdatedAt(String time);
+
+  /// Home hero key number: inspections due today
+  ///
+  /// In en, this message translates to:
+  /// **'{count} inspections due today'**
+  String advisorHeroDueTitle(int count);
+
+  /// Home hero plain-language sentence under the key number
+  ///
+  /// In en, this message translates to:
+  /// **'Review what\'s urgent first.'**
+  String get advisorHeroSentence;
+
+  /// Home hero primary action opening the Jobs tab
+  ///
+  /// In en, this message translates to:
+  /// **'View jobs'**
+  String get advisorHeroViewJobs;
+
+  /// Home hero sentence when nothing is due today
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re caught up — new jobs will appear here.'**
+  String get advisorHeroCaughtUp;
+
+  /// Empty assigned-list title on the advisor home
+  ///
+  /// In en, this message translates to:
+  /// **'No jobs assigned yet'**
+  String get advisorHomeEmptyTitle;
+
+  /// Empty assigned-list body on the advisor home
+  ///
+  /// In en, this message translates to:
+  /// **'New job cards will appear here. Create one to get started.'**
+  String get advisorHomeEmptyBody;
 
   /// Quick-action tile: approvals
   ///
@@ -2303,7 +2345,7 @@ abstract class StaffLocalizations {
   /// Job status label: in progress
   ///
   /// In en, this message translates to:
-  /// **'In Progress'**
+  /// **'In progress'**
   String get advisorStatusInProgress;
 
   /// Job status label: completed
@@ -2315,13 +2357,13 @@ abstract class StaffLocalizations {
   /// Job status label: waiting parts
   ///
   /// In en, this message translates to:
-  /// **'Waiting Parts'**
+  /// **'Waiting parts'**
   String get advisorStatusWaitingParts;
 
   /// Job status label: QC check
   ///
   /// In en, this message translates to:
-  /// **'QC Check'**
+  /// **'QC check'**
   String get advisorStatusQc;
 
   /// Job status label: cancelled
@@ -2333,13 +2375,13 @@ abstract class StaffLocalizations {
   /// Job status label: awaiting supervisor
   ///
   /// In en, this message translates to:
-  /// **'Awaiting Supervisor'**
+  /// **'Awaiting supervisor'**
   String get advisorStatusAwaitingSupervisor;
 
   /// Job status label: vehicle received
   ///
   /// In en, this message translates to:
-  /// **'Vehicle Received'**
+  /// **'Vehicle received'**
   String get advisorStatusVehicleReceived;
 
   /// Job status label: inspected
@@ -2357,13 +2399,13 @@ abstract class StaffLocalizations {
   /// Job status label: work assigned
   ///
   /// In en, this message translates to:
-  /// **'Work Assigned'**
+  /// **'Work assigned'**
   String get advisorStatusWorkAssigned;
 
   /// Job status label: waiting customer approval
   ///
   /// In en, this message translates to:
-  /// **'Waiting Customer Approval'**
+  /// **'Waiting customer approval'**
   String get advisorStatusWaitingCustomerApproval;
 
   /// Job status label: delivered
@@ -2375,13 +2417,13 @@ abstract class StaffLocalizations {
   /// Job status label: QC passed
   ///
   /// In en, this message translates to:
-  /// **'QC Passed'**
+  /// **'QC passed'**
   String get advisorStatusQcPassed;
 
   /// Job status label: pending approval
   ///
   /// In en, this message translates to:
-  /// **'Pending Approval'**
+  /// **'Pending approval'**
   String get advisorStatusPendingApproval;
 
   /// Intake page title / top bar
@@ -3647,7 +3689,7 @@ abstract class StaffLocalizations {
   /// Open the full job card workspace
   ///
   /// In en, this message translates to:
-  /// **'Open Job Card'**
+  /// **'Open job card'**
   String get advisorActionOpenJob;
 
   /// Contextual row overflow action tooltip

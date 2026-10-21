@@ -12,9 +12,22 @@ import 'advisor_sheet.dart';
 
 /// Global find sheet: search across job cards, customers/vehicles and
 /// approvals, with a scan shortcut. Hive search behavior is unchanged.
+///
+/// Recents are presentation state owned by the opener (the home keeps one
+/// session list across sheet opens, capped here): the sheet seeds its
+/// recents row from [recents] and reports every remembered query through
+/// [onRemember]. Standalone use (no recents passed) behaves exactly as
+/// before — recents live only while the sheet is open.
 class AdvisorSearchSheet extends ConsumerStatefulWidget {
   final VoidCallback onScan;
-  const AdvisorSearchSheet({super.key, required this.onScan});
+  final List<String> recents;
+  final ValueChanged<String>? onRemember;
+  const AdvisorSearchSheet({
+    super.key,
+    required this.onScan,
+    this.recents = const [],
+    this.onRemember,
+  });
 
   @override
   ConsumerState<AdvisorSearchSheet> createState() => _AdvisorSearchSheetState();
@@ -24,8 +37,9 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
   final _ctrl = TextEditingController();
   String _query = '';
 
-  /// Session-only recent searches (presentation state; cleared on dismiss).
-  final List<String> _recent = <String>[];
+  /// Session-only recent searches (presentation state; cleared on dismiss
+  /// unless the opener persists them via [AdvisorSearchSheet.onRemember]).
+  late final List<String> _recent = [...widget.recents.take(5)];
 
   @override
   void dispose() {
@@ -63,6 +77,7 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
   void _remember(String query) {
     final q = query.trim();
     if (q.isEmpty) return;
+    widget.onRemember?.call(q);
     setState(() {
       _recent.remove(q);
       _recent.insert(0, q);

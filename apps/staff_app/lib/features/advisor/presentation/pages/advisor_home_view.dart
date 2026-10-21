@@ -15,7 +15,6 @@ import 'package:staff_app/l10n/gen/staff_localizations.dart';
 import 'advisor_jobs_view.dart';
 import 'advisor_reports_view.dart';
 import '../widgets/advisor_approval_sheet.dart';
-import '../widgets/advisor_job_card_row.dart';
 import '../widgets/advisor_notification_sheet.dart';
 import '../widgets/advisor_profile_sheet.dart';
 import '../widgets/advisor_search_sheet.dart';
@@ -48,6 +47,23 @@ class AdvisorHomeView extends ConsumerStatefulWidget {
 
 class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
   int _navIndex = 0;
+
+  /// Session-only recent searches (presentation state): owned here so the
+  /// full-screen search sheet shows recents across opens within the home
+  /// session. Same list shape the removed inline pill kept — no logic.
+  final List<String> _searchRecents = <String>[];
+
+  void _rememberSearch(String query) {
+    final q = query.trim();
+    if (q.isEmpty) return;
+    setState(() {
+      _searchRecents.remove(q);
+      _searchRecents.insert(0, q);
+      if (_searchRecents.length > 5) {
+        _searchRecents.removeRange(5, _searchRecents.length);
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -178,14 +194,44 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
     await ref.read(syncEngineProvider).syncAll();
   }
 
-  void _showSearch() => _sheet(
-    AdvisorSearchSheet(
-      onScan: () {
-        Navigator.pop(context);
-        _openScan();
-      },
-    ),
-  );
+  // U1: the header search icon is the ONE search path. The existing
+  // AdvisorSearchSheet (same predicate, session recents, scan CTA inside,
+  // autofocus) presents full-screen via the existing bottom-sheet mechanism
+  // only — no new routes. Ctrl+K opens the same sheet.
+  void _showSearch() {
+    HapticFeedback.selectionClick();
+    final size = MediaQuery.sizeOf(context);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
+        ),
+        // Tight full-size box: the sheet route sizes to content, so the
+        // content itself claims the full screen (U1 full-screen search).
+        // The box carries the surface token (the route Material is
+        // transparent), so the whole screen reads as one search surface.
+        child: SizedBox.fromSize(
+          size: size,
+          child: ColoredBox(
+            color: Theme.of(sheetContext).colorScheme.surface,
+            child: SingleChildScrollView(
+              child: AdvisorSearchSheet(
+                recents: _searchRecents,
+                onRemember: _rememberSearch,
+                onScan: () {
+                  Navigator.pop(context);
+                  _openScan();
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   void _openApprovals() {
     final approvals =
@@ -320,11 +366,20 @@ class _AdvisorAvatar extends StatelessWidget {
 }
 
 // ─── ADVISOR DASHBOARD TAB CONTENT ───────────────────────────────────────────
-// Greeting-led composition (Phase 06 correction + transformation): greeting
-// header (no WorkspaceAppBar) → action grid → assigned work orders
-// (urgent-first divider rows) → slim work-summary strip last. Urgent work
-// surfaces inside the assigned list via sort + status pills; there is no
-// separate attention panel.
+// U-laws composition (rebuild): greeting header (date + search/bell/avatar
+// row, full-width greeting, muted branch·shift; bell offset badge + avatar,
+// search icon opens the full-screen search sheet) -> ONE hero summary card
+// (one primary CTA; calm status row with NO button when nothing is due) ->
+// ONE row of 3 EQUAL quick-action columns (scan lives only here) ->
+// assigned work as a LIST of large borderless cards (vehicle/customer-first,
+// conditional See-all) with NO work-summary section behind it. No inline
+// search pill: the header icon + Ctrl+K are the one search path. No permanent
+// sync pill: offline/queued surfaces once as an AppBanner. Urgent work
+// still surfaces inside the assigned list via the UNCHANGED urgent-first
+// sort + status chips; there is no separate attention panel.
+// Assigned is a LIST (not a carousel): N is small (<= 6 visible),
+// statuses need side-by-side comparison, and a carousel would hide urgent
+// items and cost the above-the-fold first order at 360x800.
 class _AdvisorDashboardContent extends ConsumerStatefulWidget {
   final VoidCallback onOpenScan;
   final VoidCallback onNewJobCard;
@@ -355,39 +410,6 @@ class _AdvisorDashboardContentState
     extends ConsumerState<_AdvisorDashboardContent> {
   JobCardEntity? _selected;
   DateTime _lastRefresh = DateTime.now();
-  final _searchCtrl = TextEditingController();
-  final _searchFocus = FocusNode();
-  String _query = '';
-  final List<String> _recents = <String>[];
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    _searchFocus.dispose();
-    super.dispose();
-  }
-
-  void _clearSearch() {
-    _searchCtrl.clear();
-    setState(() => _query = '');
-  }
-
-  void _submitSearch(String v) {
-    final query = v.trim();
-    if (query.isNotEmpty) {
-      setState(() {
-        _recents.remove(query);
-        _recents.insert(0, query);
-        if (_recents.length > 4) _recents.removeRange(4, _recents.length);
-      });
-    }
-    FocusScope.of(context).unfocus();
-  }
-
-  void _applyRecent(String query) {
-    _searchCtrl.text = query;
-    setState(() => _query = query);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -404,32 +426,24 @@ class _AdvisorDashboardContentState
     final jobsLoading = recentJobsState.isLoading && recentJobs.isEmpty;
     final jobsError = recentJobsState.hasError;
     final sorted = _sortedUrgentFirst(recentJobs);
-    // Plate-aware search across id / customer / vehicle (local-first cards
-    // carry "Model · PLATE" in vehicleInfo). Filter the full list, then cap.
-    final q = _query.trim().toLowerCase();
-    final matches = q.isEmpty
-        ? sorted
-        : sorted
-              .where(
-                (jc) =>
-                    jc.id.toLowerCase().contains(q) ||
-                    jc.customerName.toLowerCase().contains(q) ||
-                    jc.vehicleInfo.toLowerCase().contains(q),
-              )
-              .toList();
-    // Min 5 visible without scrolling past chrome; cap keeps summary in reach.
-    final visible = matches.take(6).toList();
+    // Min 6 visible without scrolling past chrome; the conditional See-all
+    // below appears only when more exist than shown (U7).
+    final visible = sorted.take(6).toList();
 
-    final wide = context.adaptive.pick(
+    // Medium (600–1024) is two-column like expanded (list + compact
+    // preview); compact stays single-column. Expanded caps at 1200.
+    final twoCol = context.adaptive.pick(
       compact: false,
-      medium: false,
+      medium: true,
       expanded: true,
     );
     final maxWidth = context.adaptive.pick(
       compact: double.infinity,
       medium: 640.0,
-      expanded: 1180.0,
+      expanded: 1200.0,
     );
+    final offline =
+        ref.watch(connectivityStatusProvider).value == ConnectivityResult.none;
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -445,18 +459,17 @@ class _AdvisorDashboardContentState
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              // ── 1. GREETING HEADER (owns identity + actions, no app bar) ──
+              // ── 1. GREETING HEADER (AppPageHeader + offline pill) ──────────
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(
                   AppDimensions.s20,
-                  AppDimensions.s16,
+                  AppDimensions.s12,
                   AppDimensions.s20,
                   0,
                 ),
                 sliver: SliverToBoxAdapter(
-                  child: _GreetingHeader(
+                  child: _AdvisorHomeHeader(
                     info: info,
-                    pendingSync: widget.pendingSync,
                     approvalsCount: widget.approvalsCount,
                     onSearch: widget.onOpenSearch,
                     onNotifications: () {
@@ -468,7 +481,8 @@ class _AdvisorDashboardContentState
                         builder: (_) => const AdvisorNotificationSheet(),
                       );
                     },
-                    onProfile: () {
+                    onShowProfile: () {
+                      HapticFeedback.selectionClick();
                       showModalBottomSheet(
                         context: context,
                         backgroundColor: Colors.transparent,
@@ -489,51 +503,65 @@ class _AdvisorDashboardContentState
                   ),
                 ),
               ),
-              // ── 2. SEARCH HERO (branded SliverAppBar, pinned search) ──────
-              SliverAppBar(
-                pinned: true,
-                floating: false,
-                automaticallyImplyLeading: false,
-                expandedHeight: context.adaptive.pick(
-                  compact: 216.0,
-                  medium: 224.0,
-                  expanded: 240.0,
-                ),
-                toolbarHeight: 0,
-                titleSpacing: 0,
-                elevation: 0,
-                scrolledUnderElevation: 0,
-                surfaceTintColor: Colors.transparent,
-                backgroundColor: colors.surface,
-                shape: Border(bottom: BorderSide(color: colors.outlineVariant)),
-                flexibleSpace: FlexibleSpaceBar(
-                  background: _SearchHero(
-                    recents: _recents,
-                    onRecent: _applyRecent,
+              // Sync telemetry lives ONLY here (C16 hard-reject: no permanent
+              // status pill). Normal case (online, nothing queued) shows
+              // nothing; abnormal sync surfaces once as an AppBanner.
+              if (offline || widget.pendingSync > 0)
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppDimensions.s20,
+                    AppDimensions.s12,
+                    AppDimensions.s20,
+                    0,
+                  ),
+                  sliver: SliverToBoxAdapter(
+                    child: AppBanner(
+                      kind: offline
+                          ? AppBannerKind.warning
+                          : AppBannerKind.info,
+                      message: offline
+                          ? t.advisorOfflineNotice
+                          : SharedCoreL10n.of(
+                              context,
+                            ).connectivityQueuedCount(widget.pendingSync),
+                    ),
                   ),
                 ),
-                bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(72),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppDimensions.s20,
-                      AppDimensions.s4,
-                      AppDimensions.s20,
-                      AppDimensions.s12,
-                    ),
-                    child: _PremiumSearchField(
-                      controller: _searchCtrl,
-                      focusNode: _searchFocus,
-                      query: _query,
-                      hintText: t.advisorJobsSearchHint,
-                      onChanged: (v) => setState(() => _query = v),
-                      onSubmitted: _submitSearch,
-                      onClear: _clearSearch,
-                      onScan: widget.onOpenScan,
-                    ),
+              // ── 2. HERO SUMMARY (ONE hero card + View-jobs CTA) ───────────
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppDimensions.s20,
+                  AppDimensions.s10,
+                  AppDimensions.s20,
+                  0,
+                ),
+                sliver: SliverToBoxAdapter(
+                  child: _AdvisorHeroCard(
+                    inspectionsDue: stats?.inspectionsToday ?? 0,
+                    newToday: stats?.newJobCardsToday ?? 0,
+                    isLoading: jobsLoading,
+                    onViewJobs: () => widget.onNavigateTab(1),
                   ),
                 ),
               ),
+              // ── 3. QUICK ACTIONS (one row, or 2x2 when narrow) ────────────
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppDimensions.s20,
+                  AppDimensions.s10,
+                  AppDimensions.s20,
+                  0,
+                ),
+                sliver: SliverToBoxAdapter(
+                  child: _AdvisorQuickActions(
+                    approvalsCount: widget.approvalsCount,
+                    onScan: widget.onOpenScan,
+                    onNewJob: widget.onNewJobCard,
+                    onApprovals: widget.onOpenApprovals,
+                  ),
+                ),
+              ),
+              // ── 4. ASSIGNED WORK + SUMMARY ─────────────────────────────────
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(
                   AppDimensions.s20,
@@ -545,61 +573,31 @@ class _AdvisorDashboardContentState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (wide) ...[
-                        // ── 3. ACTION GRID + 5. SUMMARY RAIL (desktop) ────────────
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: _ActionStrip(
-                                approvalsCount: widget.approvalsCount,
-                                onScan: widget.onOpenScan,
-                                onNewJob: widget.onNewJobCard,
-                                onApprovals: widget.onOpenApprovals,
-                              ),
-                            ),
-                            const SizedBox(width: AppDimensions.s24),
-                            SizedBox(
-                              width: 320,
-                              child: _SummaryStrip(
-                                jobs: sorted,
-                                statsNew: stats?.newJobCardsToday ?? 0,
-                                statsActive: stats?.inspectionsToday ?? 0,
-                                statsReady: stats?.delivered ?? 0,
-                                isLoading: jobsLoading,
-                                onOpenJobs: () => widget.onNavigateTab(1),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: AppDimensions.s24),
-                        // ── 4. ASSIGNED + SIDE PREVIEW (desktop) ──────────────────
+                      if (twoCol) ...[
+                        // ── 4. ASSIGNED + SIDE PREVIEW (medium/expanded) ─────
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
                               flex: 3,
-                              child: _AssignedSection(
+                              child: _AssignedCards(
                                 jobs: visible,
-                                totalCount: matches.length,
+                                totalCount: sorted.length,
                                 isLoading: jobsLoading,
                                 hasError: jobsError,
-                                isSearching: q.isNotEmpty,
-                                onClearSearch: _clearSearch,
-                                selectedId: _selected?.id,
                                 onRetry: () => ref.invalidate(
                                   advisorRecentJobCardsProvider,
                                 ),
                                 onSelect: (jc) =>
                                     setState(() => _selected = jc),
                                 onSeeAll: () => widget.onNavigateTab(1),
-                                onScan: widget.onOpenScan,
+                                onNewJob: widget.onNewJobCard,
                               ),
                             ),
                             const SizedBox(width: AppDimensions.s24),
                             Expanded(
                               flex: 2,
-                              child: _DesktopPreview(
+                              child: _AdvisorPreviewCard(
                                 jc:
                                     _selected ??
                                     (visible.isNotEmpty ? visible.first : null),
@@ -609,40 +607,17 @@ class _AdvisorDashboardContentState
                           ],
                         ),
                       ] else ...[
-                        // ── 3. ACTION GRID (compact 2x2, 4-up on wider) ─────────────
-                        _ActionStrip(
-                          approvalsCount: widget.approvalsCount,
-                          onScan: widget.onOpenScan,
-                          onNewJob: widget.onNewJobCard,
-                          onApprovals: widget.onOpenApprovals,
-                        ),
-                        const SizedBox(height: AppDimensions.s24),
-
-                        // ── 4. ASSIGNED WORK ORDERS (urgent-first divider rows) ─────
-                        _AssignedSection(
+                        // ── 4. ASSIGNED WORK (large card rows) ───────────────
+                        _AssignedCards(
                           jobs: visible,
-                          totalCount: matches.length,
+                          totalCount: sorted.length,
                           isLoading: jobsLoading,
                           hasError: jobsError,
-                          isSearching: q.isNotEmpty,
-                          onClearSearch: _clearSearch,
-                          selectedId: null,
                           onRetry: () =>
                               ref.invalidate(advisorRecentJobCardsProvider),
                           onSelect: widget.onJobCard,
                           onSeeAll: () => widget.onNavigateTab(1),
-                          onScan: widget.onOpenScan,
-                        ),
-                        const SizedBox(height: AppDimensions.s24),
-
-                        // ── 5. WORK SUMMARY LAST (slim inline metrics, no cards) ────
-                        _SummaryStrip(
-                          jobs: sorted,
-                          statsNew: stats?.newJobCardsToday ?? 0,
-                          statsActive: stats?.inspectionsToday ?? 0,
-                          statsReady: stats?.delivered ?? 0,
-                          isLoading: jobsLoading,
-                          onOpenJobs: () => widget.onNavigateTab(1),
+                          onNewJob: widget.onNewJobCard,
                         ),
                       ],
                       const SizedBox(height: AppDimensions.s8),
@@ -660,9 +635,9 @@ class _AdvisorDashboardContentState
 }
 
 // ─── URGENCY SORT ────────────────────────────────────────────────────────────
-// Urgent-first ordering replaces the deleted attention panel: actionable
-// statuses (pending / approval / parts / QC) sort above active work, which
-// sorts above finished + cancelled. Stable within rank (server order kept).
+// Urgent-first ordering is unchanged logic: actionable statuses
+// (pending / approval / parts / QC) sort above active work, which sorts above
+// finished + cancelled. Stable within rank (server order kept).
 int _urgencyRank(JobCardStatus status) => switch (status) {
   JobCardStatus.pending ||
   JobCardStatus.pendingApproval ||
@@ -696,32 +671,55 @@ String _shortShift(String shift) {
   return cut.isEmpty ? shift.trim() : cut;
 }
 
+/// Presentation mapping from job status to the single [AppStatusChip] kind on
+/// the home cards. Same taxonomy as [advisorStatusPill]; labels come from the
+/// shared [advisorStatusLabel] vocabulary so wording never drifts.
+AppStatusKind _homeStatusKind(JobCardStatus status) => switch (status) {
+  JobCardStatus.pending ||
+  JobCardStatus.pendingApproval ||
+  JobCardStatus.awaitingSupervisor ||
+  JobCardStatus.waitingCustomerApproval => AppStatusKind.warning,
+  JobCardStatus.completed ||
+  JobCardStatus.approved ||
+  JobCardStatus.delivered ||
+  JobCardStatus.qualityCheckPassed => AppStatusKind.success,
+  JobCardStatus.waitingParts => AppStatusKind.error,
+  JobCardStatus.qualityCheck ||
+  JobCardStatus.inProgress ||
+  JobCardStatus.workAssigned ||
+  JobCardStatus.inspected ||
+  JobCardStatus.vehicleReceived => AppStatusKind.info,
+  JobCardStatus.cancelled => AppStatusKind.neutral,
+};
+
 // ─── 1. GREETING HEADER ──────────────────────────────────────────────────────
-// One header row: greeting texts (eyebrow date + 22/800 title + branch·shift)
-// plus integrated actions (search, Synced pill, bell + badge, avatar). No
-// WorkspaceAppBar on this tab by product exception.
-class _GreetingHeader extends ConsumerWidget {
+// U1/U9 headline header (presentation only): small sentence-case date line
+// with the search icon + bell (badge offset OUTSIDE the glyph, never
+// covering it) + avatar top-right — same placement as customer home. The
+// greeting below spans the full width and wraps to 2 lines with the FULL
+// name (never "…" on a person's name, U5), then the muted branch·shift
+// subtitle. No sync pill: sync state surfaces only as an AppBanner when
+// abnormal (offline or queued). Compact chrome keeps the first assigned
+// order above the fold at 360x800.
+class _AdvisorHomeHeader extends ConsumerWidget {
   final AdvisorInfo info;
-  final int pendingSync;
   final int approvalsCount;
   final VoidCallback onSearch;
   final VoidCallback onNotifications;
-  final VoidCallback onProfile;
+  final VoidCallback onShowProfile;
 
-  const _GreetingHeader({
+  const _AdvisorHomeHeader({
     required this.info,
-    required this.pendingSync,
     required this.approvalsCount,
     required this.onSearch,
     required this.onNotifications,
-    required this.onProfile,
+    required this.onShowProfile,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
     final t = StaffLocalizations.of(context)!;
+    // Sentence-case date on its own muted line (never ALL CAPS, C3/C11).
     final date = MaterialLocalizations.of(
       context,
     ).formatMediumDate(DateTime.now());
@@ -734,136 +732,224 @@ class _GreetingHeader extends ConsumerWidget {
         ref.watch(advisorNotificationsProvider).valueOrNull ??
         const <StaffNotificationResponse>[];
     final bellCount = notifications.length + approvalsCount;
+    // Arabic path: Latin names/branch data stay LTR inside isolates; the
+    // branch/shift values themselves are backend data (no ar key exists),
+    // so they render as received.
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final greetingName = isArabic ? '\u2066${info.name}\u2069' : info.name;
 
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Text(
                 date,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: colors.onSurfaceVariant,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: AppTypography.tracking(context, 0.8),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: AppDimensions.s4),
-              Text(
-                t.advisorGreeting(info.name),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: colors.onSurface,
-                  letterSpacing: -0.2,
-                ),
-              ),
-              if (contextLine.isNotEmpty) ...[
-                const SizedBox(height: AppDimensions.s4),
-                Text(
-                  contextLine,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(width: AppDimensions.s8),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              onPressed: () {
-                HapticFeedback.selectionClick();
-                onSearch();
-              },
-              tooltip: t.advisorActionSearchTitle,
-              icon: const Icon(Icons.search_rounded),
-              color: colors.onSurfaceVariant,
             ),
-            OfflineStatusPill(pendingSyncCount: pendingSync),
-            IconButton(
-              onPressed: onNotifications,
-              tooltip: t.advisorNotificationsTitle,
-              icon: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  const Icon(Icons.notifications_none_rounded),
-                  if (bellCount > 0)
-                    PositionedDirectional(
-                      top: -2,
-                      end: -2,
-                      child: _HeaderBadge(count: bellCount),
+            // The ONE search path (U1/U7): opens the full-screen search
+            // sheet (autofocus + recents + scan inside). Ctrl+K stays.
+            AppIconButton(
+              icon: Icons.search_rounded,
+              onPressed: onSearch,
+              tooltip: t.advisorSearchTitle,
+            ),
+            // Bell with its badge floated ABOVE the glyph (top -8 straddles
+            // the hit-area edge, disjoint from the centered 20px glyph).
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                AppIconButton(
+                  icon: Icons.notifications_none_rounded,
+                  onPressed: () {
+                    HapticFeedback.selectionClick();
+                    onNotifications();
+                  },
+                  tooltip: t.advisorNotificationsTitle,
+                ),
+                if (bellCount > 0)
+                  PositionedDirectional(
+                    top: -8,
+                    end: -6,
+                    child: AppBadge(
+                      count: bellCount,
+                      kind: AppBadgeKind.error,
+                      semanticLabel: '$bellCount',
                     ),
-                ],
-              ),
-              color: colors.onSurfaceVariant,
+                  ),
+              ],
             ),
-            InkWell(
-              onTap: onProfile,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-              child: Tooltip(
-                message: t.advisorProfileLabel,
-                child: _AdvisorAvatar(radius: 16, initials: info.initials),
-              ),
+            const SizedBox(width: AppDimensions.s4),
+            AppAvatar(
+              name: info.name,
+              initials: info.initials,
+              size: AppAvatarSize.small,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onShowProfile();
+              },
+              semanticLabel: t.advisorProfileLabel,
             ),
           ],
         ),
+        const SizedBox(height: AppDimensions.s8),
+        Text(
+          t.advisorGreeting(greetingName),
+          // Two full lines: the headline names the advisor, so the name
+          // wraps instead of amputating to "Omar ...". Visible (never
+          // ellipsis): a long name must read in full (U5).
+          maxLines: 2,
+          softWrap: true,
+          overflow: TextOverflow.visible,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: Theme.of(context).colorScheme.onSurface,
+            letterSpacing: -0.2,
+          ),
+        ),
+        if (contextLine.isNotEmpty) ...[
+          const SizedBox(height: AppDimensions.s4),
+          Text(
+            contextLine,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.35,
+            ),
+          ),
+        ],
       ],
     );
   }
 }
 
-class _HeaderBadge extends StatelessWidget {
-  final int count;
-  const _HeaderBadge({required this.count});
+// ─── 2. HERO SUMMARY ─────────────────────────────────────────────────────────
+// ONE hero card (AppSurfaceCard, no media block — the old icon slot rendered
+// a dead grey box-in-box above the headline): the key number (inspections
+// due today) + a plain-language delta sentence + ONE verb-first primary CTA
+// ("View jobs") into the Jobs tab. Zero due collapses to a compact calm
+// status row with NO filled button (U6: a filled CTA exists only when it
+// leads to something that exists). Skeleton mirrors the card while the
+// first load is in flight.
+class _AdvisorHeroCard extends StatelessWidget {
+  final int inspectionsDue;
+  final int newToday;
+  final bool isLoading;
+  final VoidCallback onViewJobs;
+
+  const _AdvisorHeroCard({
+    required this.inspectionsDue,
+    required this.newToday,
+    required this.isLoading,
+    required this.onViewJobs,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final label = count > 9 ? '9+' : '$count';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-      decoration: BoxDecoration(
-        color: colors.error,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: colors.onError,
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          fontFeatures: const [FontFeature.tabularFigures()],
+    final t = StaffLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    if (isLoading) {
+      // Same footprint as the loaded hero card (title + sentence + CTA).
+      return const AppShimmerSkeleton.card(height: 148);
+    }
+    // Zero state owns honest calm copy: no "urgent first", no "0 …" key
+    // number, no filled button to nothing.
+    if (inspectionsDue == 0) {
+      final semantic = context.semanticColors;
+      return AppSurfaceCard(
+        radius: AppRadius.xl,
+        outlined: false,
+        padding: const EdgeInsets.all(AppDimensions.s16),
+        child: Row(
+          children: [
+            Icon(
+              Icons.check_circle_rounded,
+              size: 20,
+              color: semantic.success.base,
+            ),
+            const SizedBox(width: AppDimensions.s10),
+            Expanded(
+              child: Text(
+                t.advisorHeroCaughtUp,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
         ),
+      );
+    }
+    final title = t.advisorHeroDueTitle(inspectionsDue);
+    final sentence = newToday == 0
+        ? t.advisorHeroSentence
+        : '${t.advisorDeltaToday(newToday)}. ${t.advisorHeroSentence}';
+    // Borderless in light theme (shadow path, C16 hard-reject); dark takes
+    // the shared border path. ONE primary CTA inside the card.
+    return AppSurfaceCard(
+      radius: AppRadius.xl,
+      outlined: false,
+      padding: const EdgeInsets.all(AppDimensions.s20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s4),
+          Text(
+            sentence,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.s12),
+          AppPillButton.primary(
+            label: t.advisorHeroViewJobs,
+            size: AppPillButtonSize.small,
+            isExpanded: false,
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              onViewJobs();
+            },
+          ),
+        ],
       ),
     );
   }
 }
 
-// ─── 3. ACTION GRID ─────────────────────────────────────────────────────────
-// Live product override (2026-10-15): the horizontal scroll strip tested
-// poorly — owner preferred the 2x2 grid. Restored as a compact 2x2 grid
-// (tight 64px tiles, 8px gaps, eyebrow above) going 4-up static on medium+.
-// Recorded as an override of correction D3 in REPORT_PHASE_06 §14.
-class _ActionStrip extends StatelessWidget {
+// ─── 3. QUICK ACTIONS ────────────────────────────────────────────────────────
+// 3 EQUAL columns (U5: prefer fitting over scrolling for <= 4 items), so
+// full-word labels survive 320px + 1.3x + ar with no horizontal cut-offs
+// and no mid-word cuts. No filled tile: the hero CTA is the screen's one
+// primary action, so every tile is a neutral surface (borderless shadow in
+// light, shared border in dark). The approvals count appears exactly ONCE,
+// on the badge — never duplicated in the label. Scan lives ONLY here.
+class _AdvisorQuickActions extends StatelessWidget {
   final int approvalsCount;
   final VoidCallback onScan;
   final VoidCallback onNewJob;
   final VoidCallback onApprovals;
 
-  const _ActionStrip({
+  const _AdvisorQuickActions({
     required this.approvalsCount,
     required this.onScan,
     required this.onNewJob,
@@ -873,1037 +959,362 @@ class _ActionStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = StaffLocalizations.of(context)!;
-    final staticRow = context.adaptive.pick(
-      compact: false,
-      medium: true,
-      expanded: true,
-    );
-
-    final scan = _StripTile(
-      label: t.advisorActionScanTitle,
-      icon: Icons.qr_code_scanner_rounded,
-      kind: _StripKind.primary,
-      badgeCount: 0,
-      onTap: onScan,
-    );
-    final newJob = _StripTile(
-      label: t.advisorActionNewJobTitle,
-      icon: Icons.add_rounded,
-      kind: _StripKind.outlined,
-      badgeCount: 0,
-      onTap: onNewJob,
-    );
-    final approvals = _StripTile(
-      label: t.advisorActionApprovalsTitle,
-      icon: Icons.fact_check_outlined,
-      kind: _StripKind.outlined,
-      badgeCount: approvalsCount,
-      onTap: onApprovals,
-    );
-
-    // Search lives in the 30% SliverAppBar hero now, not in the grid: two
-    // tiles up top, approvals full-width beneath; 3-up static on medium+.
-    if (staticRow) {
-      return Row(
-        children: [
-          Expanded(child: scan),
-          const SizedBox(width: AppDimensions.s8),
-          Expanded(child: newJob),
-          const SizedBox(width: AppDimensions.s8),
-          Expanded(child: approvals),
-        ],
-      );
-    }
-    return Column(
-      children: [
-        Row(
+    final tiles = <_AdvisorQuickTileData>[
+      _AdvisorQuickTileData(
+        key: const Key('advisor_quick_scan'),
+        label: t.advisorActionScanTitle,
+        hint: t.advisorActionScanSubtitle,
+        icon: Icons.qr_code_scanner_rounded,
+        onTap: onScan,
+      ),
+      _AdvisorQuickTileData(
+        key: const Key('advisor_quick_new'),
+        label: t.advisorActionNewJobTitle,
+        hint: t.advisorActionNewJobSubtitle,
+        icon: Icons.add_rounded,
+        accentIcon: true,
+        onTap: onNewJob,
+      ),
+      _AdvisorQuickTileData(
+        key: const Key('advisor_quick_approvals'),
+        label: t.advisorActionApprovalsTitle,
+        hint: t.advisorActionApprovalsSubtitle,
+        icon: Icons.fact_check_outlined,
+        badgeCount: approvalsCount,
+        onTap: onApprovals,
+      ),
+    ];
+    return Semantics(
+      label: t.advisorQuickActionsEyebrow,
+      // IntrinsicHeight + stretch: equal-height columns inside the
+      // unbounded sliver height (a bare stretch Row cannot lay out with
+      // infinite cross-axis constraints).
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(child: scan),
-            const SizedBox(width: AppDimensions.s8),
-            Expanded(child: newJob),
+            for (var i = 0; i < tiles.length; i++) ...[
+              if (i > 0) const SizedBox(width: AppDimensions.s10),
+              Expanded(child: _AdvisorQuickTile(action: tiles[i])),
+            ],
           ],
         ),
-        const SizedBox(height: AppDimensions.s8),
-        approvals,
-      ],
+      ),
     );
   }
 }
 
-enum _StripKind { primary, outlined, ghost }
-
-class _StripTile extends StatelessWidget {
+class _AdvisorQuickTileData {
+  final Key? key;
   final String label;
+  final String hint;
   final IconData icon;
-  final _StripKind kind;
+  final VoidCallback onTap;
+  final bool accentIcon;
   final int badgeCount;
-  final VoidCallback onTap;
 
-  const _StripTile({
+  const _AdvisorQuickTileData({
+    this.key,
     required this.label,
+    required this.hint,
     required this.icon,
-    required this.kind,
-    required this.badgeCount,
     required this.onTap,
+    this.accentIcon = false,
+    this.badgeCount = 0,
   });
+}
+
+class _AdvisorQuickTile extends StatelessWidget {
+  final _AdvisorQuickTileData action;
+
+  const _AdvisorQuickTile({required this.action});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final isPrimary = kind == _StripKind.primary;
-    final isGhost = kind == _StripKind.ghost;
-    final bg = isPrimary ? colors.primary : Colors.transparent;
-    final fg = isPrimary ? colors.onPrimary : colors.onSurface;
+    final dark = theme.brightness == Brightness.dark;
 
-    return Material(
-      color: bg,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
-        side: BorderSide(
-          color: isPrimary || isGhost
-              ? Colors.transparent
-              : colors.outlineVariant,
-        ),
+    // Borderless in light (shadow + whitespace, C16 hard-reject); the dark
+    // path keeps the shared 1px border and no shadow. No fixed width: the
+    // parent Row gives each tile an equal third, and the label wraps to
+    // 2 lines on word boundaries instead of cutting mid-word (U5).
+    final tile = Container(
+      key: action.key,
+      constraints: const BoxConstraints(minHeight: 76),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.sm,
       ),
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          onTap();
-        },
-        borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
-        splashColor: colors.primary.withValues(alpha: 0.08),
-        highlightColor: colors.primary.withValues(alpha: 0.04),
-        child: SizedBox(
-          height: 64,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  color: isPrimary ? fg : colors.primary,
-                  size: AppDimensions.iconMd,
-                ),
-                const SizedBox(width: AppDimensions.s8),
-                Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      fontSize: 12,
-                      color: isPrimary ? fg : colors.onSurface,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                if (badgeCount > 0) ...[
-                  const SizedBox(width: AppDimensions.s6),
-                  _CountBadge(count: badgeCount, onPrimary: isPrimary),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Badge pops on count change (160ms, static under reduced motion).
-class _CountBadge extends StatelessWidget {
-  final int count;
-  final bool onPrimary;
-  const _CountBadge({required this.count, required this.onPrimary});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    return TweenAnimationBuilder<double>(
-      key: ValueKey<int>(count),
-      tween: Tween<double>(begin: 0.7, end: 1),
-      duration: AppMotion.resolve(context, AppMotion.fast),
-      curve: AppMotion.enter,
-      builder: (context, scale, child) =>
-          Transform.scale(scale: scale, child: child),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.s8,
-          vertical: 2,
-        ),
-        decoration: BoxDecoration(
-          color: onPrimary
-              ? colors.onPrimary.withValues(alpha: 0.22)
-              : colors.primary.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-        ),
-        child: Text(
-          '$count',
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: onPrimary ? colors.onPrimary : colors.primary,
-            fontWeight: FontWeight.w800,
-            fontFeatures: const [FontFeature.tabularFigures()],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── 2b. SEARCH HERO BACKGROUND ──────────────────────────────────────────────
-// Premium branded command header for the SliverAppBar: a confident hyper-cobalt
-// wash folding into the deep-navy high-emphasis surface, softened by low-alpha
-// light blooms and an oversized ghost glyph. White type + frosted recents chips
-// sit bottom-aligned so the pinned search field docks into it cleanly. Static
-// art (no animation budget); recents are session-only presentation state. The
-// copy is top-anchored so the pinned search field never occludes it, with the
-// whole band rounded at the bottom to float above the canvas.
-class _SearchHero extends StatelessWidget {
-  final List<String> recents;
-  final void Function(String) onRecent;
-
-  const _SearchHero({required this.recents, required this.onRecent});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final semantic = context.semanticColors;
-    final t = StaffLocalizations.of(context)!;
-
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(
-        bottom: Radius.circular(AppDimensions.radiusSheet),
-      ),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: AlignmentDirectional.topStart,
-            end: AlignmentDirectional.bottomEnd,
-            colors: [
-              colors.primary,
-              Color.lerp(colors.primary, semantic.surfaceStrong, 0.58)!,
-              semantic.surfaceStrong,
-            ],
-            stops: const [0.0, 0.58, 1.0],
-          ),
-        ),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            const PositionedDirectional(
-              top: -80,
-              end: -56,
-              child: _HeroBloom(size: 232, color: Color(0x1FFFFFFF)),
-            ),
-            PositionedDirectional(
-              bottom: -64,
-              start: -40,
-              child: _HeroBloom(
-                size: 184,
-                color: colors.primary.withValues(alpha: 0.34),
-              ),
-            ),
-            PositionedDirectional(
-              top: 0,
-              end: -28,
-              child: Icon(
-                Icons.travel_explore_rounded,
-                size: 150,
-                color: Colors.white.withValues(alpha: 0.08),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppDimensions.s20,
-                AppDimensions.s16,
-                AppDimensions.s20,
-                0,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(
-                            AppDimensions.radiusMd,
-                          ),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.22),
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.search_rounded,
-                          color: Colors.white,
-                          size: AppDimensions.iconLg,
-                        ),
-                      ),
-                      const SizedBox(width: AppDimensions.s12),
-                      Expanded(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              t.advisorSearchTitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                fontSize: 21,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                                letterSpacing: -0.2,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              t.advisorSearchHint,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: Colors.white.withValues(alpha: 0.78),
-                                height: 1.25,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (recents.isNotEmpty) ...[
-                    const SizedBox(height: AppDimensions.s14),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.history_rounded,
-                          size: AppDimensions.iconXs,
-                          color: Colors.white.withValues(alpha: 0.70),
-                        ),
-                        const SizedBox(width: AppDimensions.s6),
-                        Text(
-                          t.advisorSearchRecent.toUpperCase(),
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            fontSize: 10,
-                            color: Colors.white.withValues(alpha: 0.70),
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: AppTypography.tracking(context, 0.8),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppDimensions.s8),
-                    SizedBox(
-                      height: 32,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: recents.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(width: AppDimensions.s8),
-                        itemBuilder: (context, i) => _RecentChip(
-                          label: recents[i],
-                          onTap: () => onRecent(recents[i]),
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// Soft radial light bloom used for depth on the branded hero. Low-alpha only —
-// decorative, never a coloured glow on interactive chrome.
-class _HeroBloom extends StatelessWidget {
-  final double size;
-  final Color color;
-
-  const _HeroBloom({required this.size, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
-        ),
-      ),
-    );
-  }
-}
-
-class _RecentChip extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  const _RecentChip({required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Material(
-      color: Colors.white.withValues(alpha: 0.14),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-        side: BorderSide(color: Colors.white.withValues(alpha: 0.28)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          onTap();
-        },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.s12,
-            vertical: AppDimensions.s4,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.history_rounded,
-                size: AppDimensions.iconXs,
-                color: Colors.white.withValues(alpha: 0.85),
-              ),
-              const SizedBox(width: AppDimensions.s6),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── 2c. PREMIUM SEARCH FIELD ────────────────────────────────────────────────
-// Pinned base of the search hero: a 56px floating white pill (soft card shadow,
-// primed to the modal elevation + cobalt ring on focus) with a trailing cobalt
-// scan CTA bisected by a hairline. Filters the assigned list inline by id /
-// customer / plate.
-class _PremiumSearchField extends StatefulWidget {
-  final TextEditingController controller;
-  final FocusNode focusNode;
-  final String query;
-  final String hintText;
-  final void Function(String) onChanged;
-  final void Function(String) onSubmitted;
-  final VoidCallback onClear;
-  final VoidCallback onScan;
-
-  const _PremiumSearchField({
-    required this.controller,
-    required this.focusNode,
-    required this.query,
-    required this.hintText,
-    required this.onChanged,
-    required this.onSubmitted,
-    required this.onClear,
-    required this.onScan,
-  });
-
-  @override
-  State<_PremiumSearchField> createState() => _PremiumSearchFieldState();
-}
-
-class _PremiumSearchFieldState extends State<_PremiumSearchField> {
-  bool _focused = false;
-
-  @override
-  void initState() {
-    super.initState();
-    widget.focusNode.addListener(_onFocus);
-  }
-
-  @override
-  void dispose() {
-    widget.focusNode.removeListener(_onFocus);
-    super.dispose();
-  }
-
-  void _onFocus() {
-    if (mounted) setState(() => _focused = widget.focusNode.hasFocus);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final t = StaffLocalizations.of(context)!;
-
-    return AnimatedContainer(
-      duration: AppMotion.resolve(context, AppMotion.fast),
-      curve: AppMotion.standardCurve,
-      height: 56,
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-        border: Border.all(
-          color: _focused ? colors.primary : colors.outlineVariant,
-          width: _focused ? 1.6 : 1,
-        ),
-        boxShadow: _focused
-            ? AppDimensions.shadowModal
-            : AppDimensions.shadowCard,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: dark ? Border.all(color: colors.outline) : null,
+        boxShadow: dark ? null : AppShadows.e1,
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const SizedBox(width: AppDimensions.s16),
           Icon(
-            Icons.search_rounded,
-            size: AppDimensions.iconMd,
-            color: colors.primary,
+            action.icon,
+            size: 24,
+            color: action.accentIcon
+                ? colors.primary
+                : colors.onSurfaceVariant,
           ),
-          const SizedBox(width: AppDimensions.s10),
-          Expanded(
-            child: TextField(
-              controller: widget.controller,
-              focusNode: widget.focusNode,
-              onChanged: widget.onChanged,
-              onSubmitted: widget.onSubmitted,
-              textInputAction: TextInputAction.search,
-              maxLines: 1,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colors.onSurface,
-              ),
-              decoration: InputDecoration(
-                hintText: widget.hintText,
-                hintMaxLines: 1,
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
-                hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                  color: colors.onSurfaceVariant,
-                ),
-              ),
+          const SizedBox(height: AppSpacing.sm),
+          // Two-line wrap on word boundaries; equal columns keep full words
+          // visible at 1.3x/320/ar instead of mid-word cuts. The count lives
+          // on the badge only (label has no number).
+          Text(
+            action.label,
+            maxLines: 2,
+            softWrap: true,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: colors.onSurface,
+              fontWeight: FontWeight.w800,
             ),
           ),
-          if (widget.query.isNotEmpty)
-            IconButton(
-              onPressed: widget.onClear,
-              tooltip: SharedCoreL10n.of(context).filterBarClear,
-              icon: const Icon(Icons.clear_rounded),
-              color: colors.onSurfaceVariant,
-            ),
-          Container(width: 1, height: 24, color: colors.outlineVariant),
-          Padding(
-            padding: const EdgeInsets.all(AppDimensions.s4),
-            child: Material(
-              color: colors.primary,
-              shape: const CircleBorder(),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  widget.onScan();
-                },
-                customBorder: const CircleBorder(),
-                child: Tooltip(
-                  message: t.advisorActionScanTitle,
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppDimensions.s10),
-                    child: Icon(
-                      Icons.qr_code_scanner_rounded,
-                      size: AppDimensions.iconMd,
-                      color: colors.onPrimary,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: AppDimensions.s4),
         ],
       ),
     );
+
+    final tappable = Semantics(
+      button: true,
+      excludeSemantics: true,
+      label: action.badgeCount > 0
+          ? '${action.label}, ${action.badgeCount}, ${action.hint}'
+          : '${action.label}, ${action.hint}',
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          action.onTap();
+        },
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: action.badgeCount > 0
+            ? Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  tile,
+                  // Badge floats above the tile corner, disjoint from the
+                  // centered glyph (same offset-outside rule as the bell).
+                  PositionedDirectional(
+                    top: -8,
+                    end: -6,
+                    child: AppBadge(
+                      count: action.badgeCount,
+                      kind: AppBadgeKind.error,
+                    ),
+                  ),
+                ],
+              )
+            : tile,
+      ),
+    );
+    return tappable;
   }
 }
 
-// ─── 4. ASSIGNED WORK ORDERS ─────────────────────────────────────────────────
-// Eyebrow + count + See all; 72px divider rows (no cards-per-row): status dot
-// 8px + customer 15/600 + plate pill + job mono 12 LTR + status pill right +
-// time muted 12 + chevron. Urgent-first with "Due today" microcopy.
-class _AssignedSection extends ConsumerWidget {
+// ─── 5. ASSIGNED WORK ────────────────────────────────────────────────────────
+// AppSection + large card rows: job id, customer + vehicle + plate, ONE
+// status chip + one-line status sentence, trailing chevron into the job
+// workspace. Urgent-first order UNCHANGED (logic).
+class _AssignedCards extends ConsumerWidget {
   final List<JobCardEntity> jobs;
   final int totalCount;
   final bool isLoading;
   final bool hasError;
-  final bool isSearching;
-  final VoidCallback onClearSearch;
-  final String? selectedId;
   final VoidCallback onRetry;
   final void Function(JobCardEntity) onSelect;
   final VoidCallback onSeeAll;
-  final VoidCallback onScan;
+  final VoidCallback onNewJob;
 
-  const _AssignedSection({
+  const _AssignedCards({
     required this.jobs,
     required this.totalCount,
     required this.isLoading,
     required this.hasError,
-    this.isSearching = false,
-    required this.onClearSearch,
-    required this.selectedId,
     required this.onRetry,
     required this.onSelect,
     required this.onSeeAll,
-    required this.onScan,
+    required this.onNewJob,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
     final t = StaffLocalizations.of(context)!;
-    final offline =
-        ref.watch(connectivityStatusProvider).value == ConnectivityResult.none;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      t.advisorAssignedWorkOrders.toUpperCase(),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        fontSize: 11,
-                        color: colors.onSurfaceVariant,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: AppTypography.tracking(context, 0.8),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppDimensions.s8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimensions.s8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colors.primary.withValues(alpha: 0.10),
-                      borderRadius: BorderRadius.circular(
-                        AppDimensions.radiusXs,
-                      ),
-                      border: Border.all(
-                        color: colors.primary.withValues(alpha: 0.18),
-                      ),
-                    ),
-                    child: Text(
-                      '$totalCount',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: colors.primary,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 10,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            TextButton(
-              onPressed: onSeeAll,
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.s8,
-                  vertical: AppDimensions.s4,
-                ),
-                minimumSize: const Size(0, AppDimensions.touchTarget),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: Text(
-                t.advisorSeeAll,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: colors.primary,
-                ),
-              ),
+    Widget child;
+    if (isLoading) {
+      // Skeleton mirrors the final large cards (same radii/gaps, two cards).
+      child = const Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppShimmerSkeleton.card(height: 148),
+          SizedBox(height: AppDimensions.s12),
+          AppShimmerSkeleton.card(height: 148),
+        ],
+      );
+    } else if (hasError) {
+      child = AppErrorState(
+        title: t.advisorDataError,
+        message: t.advisorOfflineNotice,
+        onRetry: onRetry,
+        retryLabel: SharedCoreL10n.of(context).commonRetry,
+      );
+    } else if (jobs.isEmpty) {
+      child = AppEmptyState(
+        icon: Icons.assignment_outlined,
+        title: t.advisorHomeEmptyTitle,
+        message: t.advisorHomeEmptyBody,
+        actionLabel: t.advisorActionNewJobTitle,
+        onAction: () {
+          HapticFeedback.selectionClick();
+          onNewJob();
+        },
+      );
+    } else {
+      child = Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < jobs.length; i++) ...[
+            if (i > 0) const SizedBox(height: AppDimensions.s12),
+            _AssignedJobCard(
+              jc: jobs[i],
+              urgent: _urgencyRank(jobs[i].status) == 0,
+              onTap: onSelect,
             ),
           ],
-        ),
-        if (offline) ...[
-          Row(
-            children: [
-              Icon(
-                Icons.cloud_off_rounded,
-                size: AppDimensions.iconXs,
-                color: colors.onSurfaceVariant,
-              ),
-              const SizedBox(width: AppDimensions.s6),
-              Expanded(
-                child: Text(
-                  t.advisorOfflineNotice,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppDimensions.s8),
         ],
-        if (isLoading)
-          const _AssignedSkeletonRows()
-        else if (hasError)
-          EmptyState.error(message: t.advisorDataError, onRetry: onRetry)
-        else if (jobs.isEmpty)
-          if (isSearching)
-            Column(
-              children: [
-                EmptyState.noMatch(
-                  icon: Icons.search_off_rounded,
-                  message: t.advisorNoMatchingJobs,
-                ),
-                const SizedBox(height: AppDimensions.s16),
-                Center(
-                  child: TextButton(
-                    onPressed: onClearSearch,
-                    style: TextButton.styleFrom(
-                      minimumSize: const Size(0, AppDimensions.touchTarget),
-                    ),
-                    child: Text(SharedCoreL10n.of(context).filterBarClear),
-                  ),
-                ),
-              ],
-            )
-          else
-            EmptyState(
-              icon: Icons.assignment_outlined,
-              message: t.advisorNoActiveJobs,
-              actionLabel: t.advisorActionScanTitle,
-              onAction: onScan,
-            )
-        else
-          Container(
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(color: colors.outlineVariant),
-                bottom: BorderSide(color: colors.outlineVariant),
-              ),
-            ),
-            child: Column(
-              children: [
-                for (var i = 0; i < jobs.length; i++) ...[
-                  if (i > 0)
-                    Divider(
-                      height: 1,
-                      thickness: 1,
-                      color: colors.outlineVariant,
-                    ),
-                  _FadeSlideIn(
-                    child: AdvisorJobCardRow(
-                      jc: jobs[i],
-                      selected: selectedId == jobs[i].id,
-                      showDueToday: _urgencyRank(jobs[i].status) == 0,
-                      onTap: onSelect,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-}
+      );
+    }
 
-// Skeleton mirrors the 72px divider-row geometry (dot + lines + pill).
-class _AssignedSkeletonRows extends StatelessWidget {
-  const _AssignedSkeletonRows();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        for (var i = 0; i < 5; i++)
-          const Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppDimensions.s16,
-              vertical: AppDimensions.s12,
-            ),
-            child: SizedBox(
-              height: 48,
-              child: Row(
-                children: [
-                  AppSkeleton.circle(size: 8),
-                  SizedBox(width: AppDimensions.s12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        AppSkeleton.text(width: 160, height: 14),
-                        SizedBox(height: AppDimensions.s6),
-                        AppSkeleton.text(width: 220, height: 12),
-                      ],
-                    ),
-                  ),
-                  SizedBox(width: AppDimensions.s12),
-                  AppSkeleton.text(width: 64, height: 22),
-                ],
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-// 220ms fade-slide list entrance; static under reduced motion.
-class _FadeSlideIn extends StatelessWidget {
-  final Widget child;
-  const _FadeSlideIn({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(
-        begin: AppMotion.reducedMotion(context) ? 1 : 0,
-        end: 1,
-      ),
-      duration: AppMotion.resolve(context, AppMotion.standard),
-      curve: AppMotion.enter,
-      builder: (context, value, child) => Opacity(
-        opacity: value,
-        child: Transform.translate(
-          offset: Offset(0, 8 * (1 - value)),
-          child: child,
-        ),
-      ),
+    // U7: See-all appears ONLY when more items exist than shown — the hero
+    // "View jobs" CTA is the one persistent path into the Jobs tab.
+    final showSeeAll = totalCount > jobs.length;
+    return AppSection(
+      // Count inline on the header line (never on its own line). Neutral
+      // title (U8): the feed is status-agnostic, so "Assigned" would promise
+      // filtering the backend does not do (see LOGIC_FOLLOWUPS.md).
+      title: '${t.advisorWorkOrdersTitle} ($totalCount)',
+      seeAllLabel: showSeeAll ? t.advisorSeeAll : null,
+      onSeeAll: showSeeAll
+          ? () {
+              HapticFeedback.selectionClick();
+              onSeeAll();
+            }
+          : null,
       child: child,
     );
   }
 }
 
-// ─── 5. WORK SUMMARY (LAST) ──────────────────────────────────────────────────
-// Slim 3-inline strip: 20sp tabular values + 11px muted deltas, 1px dividers
-// instead of cards. Taps open the jobs tab. Zeros render as a muted dash,
-// never giant 0-cards. No analytics link (no such route; reports is a tab).
-class _SummaryStrip extends StatelessWidget {
-  final List<JobCardEntity> jobs;
-  final int statsNew;
-  final int statsActive;
-  final int statsReady;
-  final bool isLoading;
-  final VoidCallback onOpenJobs;
+/// One assigned job as a large borderless card, vehicle/customer-first
+/// (C16 card hierarchy): title = the thing the advisor recognizes
+/// (customer + vehicle), then the single status pill, then meta, with the
+/// job id as small LTR mono meta — never the title. One plain status
+/// sentence + ONE status chip + trailing chevron into the workspace.
+/// Urgent-first order is UNCHANGED (logic). Identifiers and times stay
+/// LTR in RTL.
+class _AssignedJobCard extends StatelessWidget {
+  final JobCardEntity jc;
+  final bool urgent;
+  final void Function(JobCardEntity) onTap;
 
-  const _SummaryStrip({
-    required this.jobs,
-    required this.statsNew,
-    required this.statsActive,
-    required this.statsReady,
-    required this.isLoading,
-    required this.onOpenJobs,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final t = StaffLocalizations.of(context)!;
-
-    final total = jobs.length;
-    final inProgress = jobs
-        .where((j) => j.status == JobCardStatus.inProgress)
-        .length;
-    final ready = jobs
-        .where(
-          (j) =>
-              j.status == JobCardStatus.completed ||
-              j.status == JobCardStatus.delivered ||
-              j.status == JobCardStatus.qualityCheckPassed,
-        )
-        .length;
-
-    if (isLoading) {
-      return const SizedBox(height: 76, child: AppSkeleton.card(height: 76));
-    }
-
-    final cells = <Widget>[
-      _MetricCell(
-        label: t.advisorMetricTotalOrders,
-        value: total,
-        delta: statsNew,
-        deltaText: statsNew == 0 ? null : t.advisorDeltaToday(statsNew),
-        onTap: onOpenJobs,
-      ),
-      _MetricCell(
-        label: t.advisorMetricInProgress,
-        value: inProgress,
-        delta: statsActive,
-        deltaText: statsActive == 0 ? null : t.advisorDeltaToday(statsActive),
-        onTap: onOpenJobs,
-      ),
-      _MetricCell(
-        label: t.advisorMetricReady,
-        value: ready,
-        delta: statsReady,
-        deltaText: statsReady == 0 ? null : t.advisorDeltaToday(statsReady),
-        onTap: onOpenJobs,
-      ),
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          t.advisorWorkSummary.toUpperCase(),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.labelSmall?.copyWith(
-            fontSize: 11,
-            color: colors.onSurfaceVariant,
-            fontWeight: FontWeight.w800,
-            letterSpacing: AppTypography.tracking(context, 0.8),
-          ),
-        ),
-        const SizedBox(height: AppDimensions.s12),
-        Row(
-          children: [
-            for (var i = 0; i < cells.length; i++) ...[
-              if (i > 0)
-                Container(
-                  width: 1,
-                  height: 56,
-                  color: colors.outlineVariant,
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.s8,
-                  ),
-                ),
-              Expanded(child: cells[i]),
-            ],
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _MetricCell extends StatelessWidget {
-  final String label;
-  final int value;
-  final int delta;
-  final String? deltaText;
-  final VoidCallback onTap;
-
-  const _MetricCell({
-    required this.label,
-    required this.value,
-    required this.delta,
-    required this.deltaText,
+  const _AssignedJobCard({
+    required this.jc,
+    required this.urgent,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final empty = value == 0;
-
-    return Semantics(
-      button: true,
-      label: '$label: ${empty ? '–' : value}',
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            onTap();
-          },
-          borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
-          splashColor: colors.primary.withValues(alpha: 0.08),
-          highlightColor: colors.primary.withValues(alpha: 0.04),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: AppDimensions.s8,
-              horizontal: AppDimensions.s4,
-            ),
+    final sentence = urgent ? '${t.advisorDueToday} · ${jc.time}' : jc.time;
+    return AppSurfaceCard(
+      outlined: false,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap(jc);
+      },
+      semanticLabel: '${jc.customerName}, ${jc.id}',
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
+                // Recognized name first: customer + vehicle.
                 Text(
-                  empty ? '–' : '$value',
-                  maxLines: 1,
+                  '${jc.customerName} · ${jc.vehicleInfo}',
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: empty ? colors.onSurfaceVariant : colors.onSurface,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontSize: 11,
-                    color: colors.onSurfaceVariant,
+                  style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
+                    color: colors.onSurface,
                   ),
                 ),
+                const SizedBox(height: AppDimensions.s8),
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: AppStatusChip(
+                    label: advisorStatusLabel(t, jc.status),
+                    kind: _homeStatusKind(jc.status),
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.s4),
                 Text(
-                  deltaText ?? '–',
+                  sentence,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontSize: 11,
+                  style: theme.textTheme.bodyMedium?.copyWith(
                     color: colors.onSurfaceVariant,
-                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.s4),
+                // Id is small meta (LTR mono, tabular), never the title.
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Text(
+                    jc.id,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.mono(
+                      color: colors.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-        ),
+          const SizedBox(width: AppDimensions.s8),
+          DirectionalIcon(
+            Icons.chevron_right_rounded,
+            size: 20,
+            color: colors.onSurfaceVariant,
+          ),
+        ],
       ),
     );
   }
 }
 
-// Desktop side preview reusing the job-card sheet fields inline (no new
-// routes; Open pushes the existing job-detail route).
-class _DesktopPreview extends StatelessWidget {
+// Desktop side preview rebuilt with App* cards (same selection state, same
+// Open route — no new routes).
+class _AdvisorPreviewCard extends StatelessWidget {
   final JobCardEntity? jc;
   final void Function(JobCardEntity) onOpen;
 
-  const _DesktopPreview({required this.jc, required this.onOpen});
+  const _AdvisorPreviewCard({required this.jc, required this.onOpen});
 
   @override
   Widget build(BuildContext context) {
@@ -1913,13 +1324,8 @@ class _DesktopPreview extends StatelessWidget {
     final job = jc;
 
     if (job == null) {
-      return Container(
-        padding: const EdgeInsets.all(AppDimensions.s20),
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-          border: Border.all(color: colors.outlineVariant),
-        ),
+      return AppSurfaceCard(
+        outlined: false,
         child: Text(
           t.advisorJobsSelectPrompt,
           style: theme.textTheme.bodySmall?.copyWith(
@@ -1929,15 +1335,11 @@ class _DesktopPreview extends StatelessWidget {
       );
     }
 
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.s16),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-        border: Border.all(color: colors.outlineVariant),
-      ),
+    return AppSurfaceCard(
+      outlined: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
@@ -1953,7 +1355,14 @@ class _DesktopPreview extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppDimensions.s8),
-              advisorStatusPill(t, job.status),
+              // Bounded so long labels wrap inside narrow medium previews
+              // (Row gives non-flex children unbounded width otherwise).
+              Flexible(
+                child: AppStatusChip(
+                  label: advisorStatusLabel(t, job.status),
+                  kind: _homeStatusKind(job.status),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: AppDimensions.s8),
@@ -1975,16 +1384,14 @@ class _DesktopPreview extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppDimensions.s12),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: () => onOpen(job),
-              icon: const Icon(
-                Icons.open_in_new_rounded,
-                size: AppDimensions.iconSm,
-              ),
-              label: Text(t.advisorActionOpenJob),
-            ),
+          AppPillButton.primary(
+            label: t.advisorActionOpenJob,
+            icon: Icons.open_in_new_rounded,
+            size: AppPillButtonSize.small,
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              onOpen(job);
+            },
           ),
         ],
       ),

@@ -1,7 +1,7 @@
 # UX Brief TEMPLATE (copy for each screen; all sections mandatory)
 
 ## User goal
-One task per screen: who opens it, what do they need, what single action completes it.
+<One task per screen: who opens this, what do they need, what single action completes it.
 
 ## Single primary action
 Exactly one. Name it + its destination.
@@ -16,7 +16,7 @@ List every removed structure and where secondary paths go (sheet/overflow/tabs).
 removed at zero usages (record in WIDGET_MIGRATION_MAP.md). No logic changes.
 
 ## Flow / sections
-C16 structure for the screen kind. Steps only where the task is a flow (one-time/complex per the
+<C16 structure for the screen kind. Steps only where the task is a flow (one-time/complex per the
 scoped step-flow rule); frequent tasks stay on one screen.
 
 ## Hard-reject checklist (all must hold; reviewer caps at 10/16 on ANY violation)
@@ -27,7 +27,7 @@ scoped step-flow rule); frequent tasks stay on one screen.
 - [ ] No permanent status pills (abnormal → AppBanner)
 - [ ] Badges offset outside icons, clear area kept
 - [ ] No ALL CAPS; no label/badge number duplication
-- [ ] Search = one top pill/screen (dashboards/lists) — never inline mid-page
+- [ ] Search = one top pill/screen (dashboards/lists) → full search screen/sheet (never inline mid-page)
 - [ ] Above the fold: first primary item visible at 360x800 idle (wireframe below proves it)
 - [ ] Card hierarchy: recognizable title → status pill → meta (IDs are meta)
 - [ ] Carousels peek or are lists

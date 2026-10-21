@@ -4,16 +4,20 @@ import 'package:shared_core/shared_core.dart';
 
 import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 
-/// The small, intentional set of Customer Home actions as four large touch
-/// tiles: Book service (the one emphasised action), Breakdown help,
-/// Invoices and History.
+/// The small, intentional set of Customer Home actions: Book service (the one
+/// emphasised action), Breakdown help, Invoices and History.
 ///
-/// Book service is the only emphasised tile; everything else is neutral so
-/// the screen never turns into a rainbow. When the customer has no vehicles
-/// yet the history tile is dropped — the welcome panel already owns the
-/// new-customer call to action.
+/// Wide canvases keep the C16 one-row intent (four tiles across); narrower
+/// rows reflow to a 2x2 grid so every label keeps full words instead of
+/// truncating mid-word. Tile labels always wrap to two lines — Arabic and
+/// 1.3x text scale reflow instead of overflowing. When the customer has no
+/// vehicles yet the history tile is dropped — the new-customer empty state
+/// already owns that call to action. While the payment-due hero is showing,
+/// the Invoices tile is dropped too (U7: the hero CTA owns that one task,
+/// so the same destination is never offered twice on one screen).
 class CustomerHomeQuickActions extends StatelessWidget {
   final bool hasVehicles;
+  final bool showInvoices;
   final VoidCallback onBookService;
   final VoidCallback onBreakdownHelp;
   final VoidCallback onInvoices;
@@ -22,6 +26,7 @@ class CustomerHomeQuickActions extends StatelessWidget {
   const CustomerHomeQuickActions({
     super.key,
     required this.hasVehicles,
+    this.showInvoices = true,
     required this.onBookService,
     required this.onBreakdownHelp,
     required this.onInvoices,
@@ -45,12 +50,13 @@ class CustomerHomeQuickActions extends StatelessWidget {
         icon: Icons.car_crash_rounded,
         onTap: onBreakdownHelp,
       ),
-      _QuickAction(
-        label: t.garActionInvoices,
-        hint: t.garActionInvoicesHint,
-        icon: Icons.receipt_long_rounded,
-        onTap: onInvoices,
-      ),
+      if (showInvoices)
+        _QuickAction(
+          label: t.garActionInvoices,
+          hint: t.garActionInvoicesHint,
+          icon: Icons.receipt_long_rounded,
+          onTap: onInvoices,
+        ),
       if (hasVehicles)
         _QuickAction(
           label: t.garActionHistory,
@@ -60,41 +66,50 @@ class CustomerHomeQuickActions extends StatelessWidget {
         ),
     ];
 
-    final wide = context.adaptive.pick(
-      compact: false,
-      medium: false,
-      expanded: true,
-      large: true,
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Semantics(
-          header: true,
-          child: Text(
-            t.garActionsTitle,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontWeight: FontWeight.w800,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // 4-across needs ~120px per tile for full-word 13sp labels; narrower
+        // rows (phones, half-width medium column) use a 2x2 grid instead of
+        // truncating mid-word. Both keep >= 48dp targets and full Semantics.
+        if (constraints.maxWidth < 480) {
+          final rows = <List<_QuickAction>>[];
+          for (var i = 0; i < actions.length; i += 2) {
+            rows.add(actions.sublist(i, (i + 2).clamp(0, actions.length)));
+          }
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (var r = 0; r < rows.length; r++) ...[
+                if (r > 0) const SizedBox(height: AppSpacing.md),
+                Row(
+                  // start (not stretch): this column scrolls, so the row's
+                  // height is unbounded and stretch would force infinity.
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (var i = 0; i < rows[r].length; i++) ...[
+                      if (i > 0) const SizedBox(width: AppSpacing.md),
+                      Expanded(child: _QuickActionTile(action: rows[r][i])),
+                    ],
+                    // Odd tile count: keep the last row balanced.
+                    if (rows[r].length == 1)
+                      const Expanded(child: SizedBox.shrink()),
+                  ],
                 ),
-          ),
-        ),
-        const SizedBox(height: AppDimensions.s12),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: actions.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: wide ? 4 : 2,
-            crossAxisSpacing: AppDimensions.s10,
-            mainAxisSpacing: AppDimensions.s10,
-            // Tall enough for icon + two-line label + hint at 1.3x.
-            mainAxisExtent: 132,
-          ),
-          itemBuilder: (_, i) => _QuickActionTile(action: actions[i]),
-        ),
-      ],
+              ],
+            ],
+          );
+        }
+        return Row(
+          // start (not stretch): see above — the home column scrolls.
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var i = 0; i < actions.length; i++) ...[
+              if (i > 0) const SizedBox(width: AppSpacing.md),
+              Expanded(child: _QuickActionTile(action: actions[i])),
+            ],
+          ],
+        );
+      },
     );
   }
 }
@@ -135,54 +150,46 @@ class _QuickActionTile extends StatelessWidget {
           HapticFeedback.selectionClick();
           action.onTap();
         },
-        borderRadius: BorderRadius.circular(AppDimensions.radiusPanel),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Container(
-          padding: const EdgeInsets.all(AppDimensions.s14),
+          constraints: const BoxConstraints(minHeight: 88),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm,
+            vertical: AppSpacing.md,
+          ),
           decoration: BoxDecoration(
             color: emphasised
                 ? colors.primary.withValues(alpha: 0.08)
                 : colors.surface,
-            borderRadius:
-                BorderRadius.circular(AppDimensions.radiusPanel),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(
               color: emphasised
                   ? colors.primary.withValues(alpha: 0.32)
                   : colors.outlineVariant,
             ),
-            boxShadow: AppDimensions.shadowCard,
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 action.icon,
                 size: 24,
                 color: emphasised ? colors.primary : colors.onSurfaceVariant,
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    action.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: emphasised ? colors.primary : colors.onSurface,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    action.hint,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
-                ],
+              const SizedBox(height: AppSpacing.sm),
+              // Two-line wrap on word boundaries; the 2x2 reflow above keeps
+              // full words visible at 1.3x/320/ar instead of mid-word cuts.
+              Text(
+                action.label,
+                maxLines: 2,
+                softWrap: true,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: emphasised ? colors.primary : colors.onSurface,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ],
           ),

@@ -2,6 +2,8 @@ import 'package:customer_app/features/customer/domain/entities/customer_entities
 import 'package:customer_app/features/customer/presentation/support/customer_booking_relations.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_bookings_presentation.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
+import 'package:flutter/widgets.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_models/shared_models.dart' as models;
 
 /// What a vehicle record may honestly say.
@@ -13,6 +15,28 @@ import 'package:shared_models/shared_models.dart' as models;
 /// customer's own bookings instead.
 abstract final class CustomerVehiclePresentation {
   CustomerVehiclePresentation._();
+
+  /// `45,000 km` — display-only grouping for garage cards (C11).
+  ///
+  /// The grouping itself is [AppFormatters.group] (Latin digits in every
+  /// locale per the frozen product policy — the locale here is fixed because
+  /// [AppFormatters.group] is locale-independent); this helper only extracts
+  /// the numeric part. Anything unparseable falls back to [mileageLabel]
+  /// unchanged. Never used for payloads or input: [apiPayload] and
+  /// [mileageInput] keep the canonical [mileageLabel] form.
+  static String displayMileage(String raw) {
+    final label = mileageLabel(raw);
+    if (label.isEmpty) return '';
+    final number = label
+        .replaceFirst(RegExp(r'\s*[kK][mM]$'), '')
+        .trim()
+        .replaceAll(',', '')
+        .replaceAll(' ', '');
+    if (number.isEmpty) return label;
+    final parsed = double.tryParse(number);
+    if (parsed == null) return label;
+    return '${const AppFormatters(Locale('en')).group(parsed)} km';
+  }
 
   /// `48,200 km` — one `km` suffix, or empty when the mileage is unknown.
   /// A blank mileage is never turned into `0 km`.

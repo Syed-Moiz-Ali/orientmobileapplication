@@ -323,6 +323,84 @@ abstract class CustomerLocalizations {
   /// **'All bookings'**
   String get garRecentAll;
 
+  /// Garage carousel show-all action
+  ///
+  /// In en, this message translates to:
+  /// **'Show all'**
+  String get garShowAll;
+
+  /// Home header search icon label and sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get garSearchTitle;
+
+  /// Home search sheet field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search vehicles and bookings'**
+  String get garSearchHint;
+
+  /// Home search sheet empty-query hint, no recents stored
+  ///
+  /// In en, this message translates to:
+  /// **'Type to search your vehicles and bookings.'**
+  String get garSearchEmpty;
+
+  /// Home search sheet no-results message
+  ///
+  /// In en, this message translates to:
+  /// **'No matches. Try a different search.'**
+  String get garSearchNoMatch;
+
+  /// Home hero overflow one
+  ///
+  /// In en, this message translates to:
+  /// **'1 more item needs review'**
+  String get garAttentionMoreOne;
+
+  /// Home hero overflow many
+  ///
+  /// In en, this message translates to:
+  /// **'{count} more items need review'**
+  String garAttentionMoreMany(int count);
+
+  /// No description provided for @garUnpaidBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Review and settle your outstanding invoices.'**
+  String get garUnpaidBody;
+
+  /// Home hero CTA opening invoices for review
+  ///
+  /// In en, this message translates to:
+  /// **'Review invoices'**
+  String get garUnpaidCta;
+
+  /// Payment hero status chip, distinct from the title count
+  ///
+  /// In en, this message translates to:
+  /// **'Unpaid'**
+  String get garUnpaidChip;
+
+  /// Garage badge: confirmed upcoming booking
+  ///
+  /// In en, this message translates to:
+  /// **'Booked'**
+  String get garStatusBooked;
+
+  /// Garage badge: unconfirmed booking request
+  ///
+  /// In en, this message translates to:
+  /// **'Requested'**
+  String get garStatusRequested;
+
+  /// Garage badge: most recent finished service
+  ///
+  /// In en, this message translates to:
+  /// **'Last service'**
+  String get garStatusLastService;
+
   /// Upcoming section
   ///
   /// In en, this message translates to:
