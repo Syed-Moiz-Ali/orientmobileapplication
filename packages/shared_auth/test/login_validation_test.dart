@@ -1,8 +1,11 @@
-// Phase-2b characterization: login local validation.
+// Phase-2b characterization: login local validation (migrated to the step flow).
 //
-// Guards the CURRENT inline-error copy + routing so the 2c redesign preserves
+// Guards the CURRENT inline-error copy + routing so the redesign preserves
 // them: empty identifier, invalid email, short phone, empty password, short
-// create-password, and empty name in register mode.
+// create-password, and empty name in register mode. Step mapping: Step 1
+// validates the identifier (Continue advances with ZERO API calls); the
+// password step validates the password; R1 validates the name and R3 the
+// created password.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_core/shared_core.dart';
@@ -19,11 +22,14 @@ void main() {
       final repo = FakeAuthRepository();
       await pumpLoginView(tester, repo: repo);
 
+      expect(find.text(t.loginStepIdentifierTitle), findsOneWidget);
       await tester.tap(find.text(t.loginActionContinue));
       await tester.pump();
 
       expect(find.text(t.validationEnterIdentifier), findsOneWidget);
       expect(repo.loginCalls, 0);
+      expect(repo.sendOtpCalls, 0);
+      expect(repo.sendEmailOtpCalls, 0);
       expect(tester.takeException(), isNull);
     });
 
@@ -68,6 +74,14 @@ void main() {
         'user@example.com',
       );
       await tester.pump();
+      await tapAndSettleStep(tester, find.text(t.loginActionContinue));
+
+      // Step 1 accepted the identifier with no API call and advanced.
+      expect(find.text(t.loginStepPasswordTitle), findsOneWidget);
+      expect(repo.loginCalls, 0);
+      expect(repo.sendOtpCalls, 0);
+      expect(repo.sendEmailOtpCalls, 0);
+
       await tester.tap(find.text(t.loginActionContinue));
       await tester.pump();
 
@@ -87,7 +101,7 @@ void main() {
   group('login local validation (register mode)', () {
     Future<void> openRegister(WidgetTester tester) async {
       final t = enAuthL10n();
-      await tapAndSettleMode(tester, find.text(t.loginNewCustomer));
+      await tapAndSettleStep(tester, find.text(t.loginStepCreateAccountRow));
     }
 
     testWidgets('register toggle reveals the name field', (tester) async {
@@ -95,8 +109,11 @@ void main() {
       await pumpLoginView(tester, allowRegistration: true);
       await openRegister(tester);
 
+      expect(find.text(t.loginStepRegisterNameTitle), findsOneWidget);
       expect(find.text(t.loginFieldFullName), findsOneWidget);
-      expect(find.text(t.loginActionCreateAccount), findsOneWidget);
+      expect(find.text(t.loginActionContinue), findsOneWidget);
+      // The create-account CTA lives only on R3, not on R1.
+      expect(find.text(t.loginActionCreateAccount), findsNothing);
       expect(tester.takeException(), isNull);
     });
 
@@ -106,11 +123,7 @@ void main() {
       await pumpLoginView(tester, repo: repo, allowRegistration: true);
       await openRegister(tester);
 
-      final fields = find.byType(TextField);
-      await tester.enterText(fields.at(1), 'user@example.com');
-      await tester.enterText(fields.at(2), 'secret123');
-      await tester.pump();
-      await tester.tap(find.text(t.loginActionCreateAccount));
+      await tester.tap(find.text(t.loginActionContinue));
       await tester.pump();
 
       expect(find.text(t.validationEnterName), findsOneWidget);
@@ -125,10 +138,15 @@ void main() {
       await pumpLoginView(tester, repo: repo, allowRegistration: true);
       await openRegister(tester);
 
-      final fields = find.byType(TextField);
-      await tester.enterText(fields.at(0), 'Sam Example');
-      await tester.enterText(fields.at(1), 'user@example.com');
-      await tester.enterText(fields.at(2), '123');
+      await tester.enterText(find.byType(TextField).first, 'Sam Example');
+      await tester.pump();
+      await tapAndSettleStep(tester, find.text(t.loginActionContinue));
+      await tester.enterText(find.byType(TextField).first, 'user@example.com');
+      await tester.pump();
+      await tapAndSettleStep(tester, find.text(t.loginActionContinue));
+
+      expect(find.text(t.loginStepRegisterPasswordTitle), findsOneWidget);
+      await tester.enterText(find.byType(TextField).first, '123');
       await tester.pump();
       await tester.tap(find.text(t.loginActionCreateAccount));
       await tester.pump();

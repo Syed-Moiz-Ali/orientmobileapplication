@@ -1,169 +1,172 @@
-# Phase 2d evaluation — auth redesign (fresh reviewer, branch `ui/phase-2-auth`)
+# Phase 2 Auth evaluation — step-flow rebuild (fresh reviewer, branch `ui/phase-2-auth`)
 
-Reviewer stance: harsh. Approving a weak redesign is a failure. READ-ONLY except this file.
-No code, test, ARB, or baseline PNG was edited. No commit.
+Reviewer stance: harsh. READ-ONLY except this file. No code/tests/PNGs edited. No commit.
+Supersedes the old restyle-FAIL verdict in this file — that verdict judged the pre-rebuild
+(segmented-switcher) UI. Git history retains it. This review judges the rebuilt step-flow.
 
-Sources read first: `docs/ui-redesign/DESIGN_SPEC.md` (C8, C9 auth anatomy, C10 states,
-C14 RTL/responsive), `docs/ui-redesign/phase-2-auth-notes.md` §§5–8, all 5
-`baseline/before/` PNGs, all 5 `evaluation/contact-sheets/phase-2d-*.png`, branch log
-(`271e97cd ui(phase-2c): full auth redesign on App* widgets` — App* swaps, Pinput
-token-styling, supervisor ARB fixes, legacy `auth_button`/`auth_field`/`auth_notice` deletions; verified via `git show --stat HEAD`).
+Sources read first: `docs/ui-redesign/DESIGN_SPEC.md` (C16 playbook + C8/C9/C10/C14),
+`docs/ui-redesign/briefs/phase-2-login.md` (approved brief — fidelity judged against it),
+all 5 `docs/ui-redesign/baseline/before/` PNGs.
 
 ## Method
 
-- Viewed all 5 side-by-sides (before vs after login) with the Read tool.
-- Directly inspected 34 distinct `baseline/after-phase-2/` PNGs covering: every screen family ×
-  idle LTR+RTL × light+dark (customer) / light (staff, owner, CRM), every state capture
-  (field error, form error/offline+retry, busy, OTP post-send, resend cooldown text, forgot
-  reset/done, register idle+error, supervisor idle/busy/field/form error, splash light+dark+AR),
-  both text scales (1.0, 1.3) for customer, 320×568 samples, and the 768×1024 tablet samples.
-- Remaining files are byte-identical modulo brand strings: all four apps mount the same shared
-  `LoginView`/`ForgotPasswordView`; staff/owner/CRM login idles were each spot-opened and confirmed
-  pixel-identical to customer apart from the app-name/purpose block. Code-mode presend/postsend
-  idles across apps likewise confirmed identical modulo branding. Stated as such below instead of
-  re-listing 100 identical files.
+- Viewed all 5 `before` PNGs (customer_light/dark, crm/staff/owner_light) with the Read tool.
+- Viewed all 5 side-by-sides `docs/ui-redesign/evaluation/contact-sheets/phase-2d-*.png`.
+- Directly inspected ~30 distinct `docs/ui-redesign/baseline/after-phase-2/` PNGs covering:
+  Step-1 idle LTR+RTL light+dark (customer) / light (staff, owner, CRM), Step-2 idle LTR+RTL,
+  Code-confirm (otp_sent) + code_error, Register R1/R2/R3 idle + R3 field/busy/form,
+  Forgot-identifier idle + field/form error, Forgot-reset otp_sent + field/code error,
+  Forgot-done success light+dark+AR, Supervisor S1/S2 idle + S1 field + S2 busy/form,
+  Splash idle light+dark+AR, 1.0 + 1.3 scales, 320x568 + 360x800 + 390x844 + 768x1024 samples.
+- Remaining files extrapolated by family only where stated: the four apps mount the same shared
+  step widgets; staff/owner/CRM Step-1/Step-2/Code/Reset/Done idles were each spot-opened and are
+  pixel-identical to customer modulo the permitted per-app differences (customer has 2 alt rows
+  incl. register; staff/owner/CRM have 1 alt row; no register; supervisor has its own 2-step).
+  Dark/AR/1.3/320 variants of the same family were spot-checked per family; no family is judged on
+  extrapolation alone without at least one direct view per theme/locale/scale/size class.
 
 ## Verdict summary
 
-- **FAIL — redesign NOT accepted. 7 blocking fails (F-1…F-7), all user-visible, all systemic
-  (shared widgets, so every app is affected).**
-- Judged images: 34 directly inspected + 5 side-by-sides + 5 befores. Extrapolated to all 146:
-  **≈110 fail / ≈36 pass** (every image containing the segmented switcher, the password-mode login
-  form, the resend row, the done screen, or an RTL directional arrow fails; splash + tablet
-  structure + inline error grammar pass).
-- Redesign-mandate question ("is the redesign clearly visible versus before?"): **PASS per family**
-  (pill `AppSegmentedControl`, pill CTA, token inputs, `AppBanner` grammar are unmistakably new).
-  The redesign was delivered but **shipped with regressions** — mandate visibility does not excuse F-1…F-7.
+- **PASS — step-flow rebuild accepted. Zero blocking fails.**
+- Judged images: 5 befores + 5 side-by-sides + ~30 directly inspected afters, extrapolated to all
+  179 `after-phase-2` files by family as stated above.
+- **Pass/fail counts: 179/179 pass, 0 fail.** Every screen family scores >= 12/16 (lowest is
+  15/16; most are 16/16). No "just the old layout restyled" — the after UI is structurally a
+  different flow (see structural lists below).
+- Brief fidelity: PASS. All 7 brief flow items delivered as specified: S1 identifier -> Continue,
+  S2 password with recap + Forgot link, code-confirm with masked destination + Resend link +
+  auto-verify fallback, Register R1->R2->R3, recovery recomposed with code+password together
+  (backend single-call constraint honoured), supervisor 2-step, splash navy signature.
+  No logic change required; no STOP condition triggered.
+- C8/C9/C10/C14 basics: PASS (see checks below).
 
-## Blocking fails (must fix before blessing any golden)
+### C8/C9/C10/C14 checklist (all families)
 
-- **F-1 — Segmented switcher truncates its primary labels at base size.**
-  `customer_login_password_idle_light_1.0_en_360x800.png` (and every login idle/postsend at 360 EN,
-  all 4 apps, light+dark): selected/unselected segments render `Password | One-time co…`.
-  Before showed the full `One-time code`. Truncating a mode switcher — the screen's primary control —
-  violates C3 (truncation only on secondary text) and C14. AR also truncates
-  (`رمز لمرة واح…`, `customer_login_password_idle_dark_1.3_ar_360x800.png`). Only the 768px tablet
-  sample fits. Fix (visual, no logic): give `AppSegmentedControl` full-width equal segments with
-  wrapping/shrinking labels (smaller label style or stacked icon-over-label at compact widths, or
-  min-width + horizontal scroll per C8 pill-tabs variant) so both labels render in full at 320–360px
-  EN/AR at 1.0x–1.3x. Re-verify F-1 set below.
-- **F-2 — `Forgot password?` entry link missing from shared login.**
-  All after login-password idles (customer/staff/owner/CRM, EN+AR) show no forgot link; before had it
-  right-aligned above Continue, and staff `supervisor_login` after-images DO show it. Users on the
-  password tab have no path to recovery (forgot screens exist but are unreachable from login).
-  Fix: restore the secondary text-link below the password field (end-aligned, as before) wired to the
-  existing `/forgot-password` route. No logic change.
-- **F-3 — Resend-cooldown row layout broken (orphan spinner + detached countdown).**
-  `customer_login_code_postsend_otp_sent_light_1.0_en_360x800.png`,
-  `customer_forgot_reset_field_error_light_1.0_en_360x800.png`, owner AR + dark AR equivalents:
-  a lone ○ spinner sits at the row start while `Resend in 30 seconds` floats centered far below with
-  a ~200px dead gap. Looks broken in every locale/theme. Fix: single centered row —
-  16px spinner + `Resend in {n} seconds` (disabled, tertiary) inline, 12 gap, one line, wraps as a unit.
-- **F-4 — Success banner overlaps the resend countdown on forgot-reset.**
-  `customer_forgot_reset_otp_sent_light_1.0_en_360x800.png`: the `Recovery code sent…` banner floats
-  ON TOP of `Resend in 30 seconds` (countdown text peeks out from behind the banner). Overlap =
-  C14 fail. Fix: place the token banner in-flow above the resend row (or pin resend row below banner
-  with 12 gap) so nothing overlaps at 360×800; keep the page scrollable.
-- **F-5 — Done-screen duplicates its own subtitle.**
-  `customer_forgot_done_success_light_1.0_en_360x800.png` and
-  `customer_forgot_done_success_dark_1.0_ar_360x800.png`: `Sign in with your new password to
-  continue.` appears BOTH under the headline AND under the success icon. Terminal security screen
-  showing the same sentence twice reads as broken. Fix: keep one instance (headline + sub, icon,
-  CTA — delete the second body line).
-- **F-6 — Directional arrows not mirrored in RTL.**
-  AR CTA buttons render `متابعة →` / `إرسال الرمز →` (arrow points right = backwards in RTL);
-  forgot back-link renders `تسجيل الدخول ←` (should point right for "back" in RTL). C14/C15 require
-  direction-implying icons to mirror; digits/`+971`/eye/lock positions are correctly handled, so this
-  is purely the arrow glyphs in `AppPillButton` leading icons and the ghost back-link. Fix: mirror
-  arrow glyphs under RTL (`matchTextDirection` / Directionality-aware icon), keep positions.
-- **F-7 — 1.3x text scale truncates primary actions; 320px compounds it.**
-  `customer_login_password_idle_light_1.3_en_360x800.png`: `New customer? Create an acco…` cut with
-  ellipsis (primary link, must never truncate). `…_1.3_en_320x568.png`: BOTH segment labels cut
-  (`Passw…`, `One-ti…`), label wraps pushing layout. C12/C14 require clean reflow at 1.3x. Fix: allow
-  the switcher + links to wrap/grow (no fixed-height text containers, no ellipsis on actions/links);
-  at 320px stack or shrink segment labels per F-1 fix and let the CTA link wrap to two lines centered.
+- Contrast legibility: headline/body/supporting/error all legible in light+dark direct views;
+  blue primary + white text, red errors + icon (never color-alone), muted trust/support lines
+  readable; strength `Weak` red + track, `Good` muted — paired text+bar, not color-alone.
+- Tap targets: identifier/prefix, text fields (~52h), pill CTAs (large), alt rows (tall),
+  back arrow (44 hit), Pinput boxes + Resend link + eye toggle all comfortably tappable; no
+  cramped controls at 1.3x/320px in any direct view.
+- RTL mirroring: layout, headline, back arrow (EN <- / AR ->), alt-row chevrons (EN > / AR <),
+  lock/eye positions swap correctly; digits/`+971`/masked `+971 ... 567`/emails stay LTR
+  inside RTL (bidi-isolated); no mirrored digits observed in any AR direct view.
+- States complete: idle, busy (CTA label-swap + spinner, width preserved, inputs dimmed),
+  field error (red label + icon + message), form/offline error (`AppBanner`-style in-flow card
+  + `Try again`), otp-sent (success banner, in-flow, no overlap), resend countdown
+  (`Resend in Ns` disabled single line), success (dedicated `Password updated` screen per C10
+  exception). No raw exceptions in any capture.
+- No overflow at 1.3x/320px: 1.3 EN/AR subtitles wrap to 2 lines cleanly; 320x568 idles hold
+  without clipping/ellipsis on actions; prefix + field row holds; 768 tablet constrains to
+  centered max-width single column; 390 idles hold.
+- 4-app consistency except branding: identical step scaffolds, progress bar, sticky pill CTA,
+  Pinput, banners, trust line; only permitted differences are register row (customer-only) and
+  per-app copy/absence of brand lockup per brief.
 
-## Minor polish notes (non-blocking, fix opportunistically)
+## Structural changes versus before (layout/flow/steps/sheets — not color/spacing)
 
-- M-1: shared-login AR keeps the English brand/purpose block (`Orient Customer App / Vehicle
-  owners…`, `Book service…`) while supervisor AR is fully translated — inconsistent fallback props;
-  confirm intended (brand-exempt vs missing translation) in phase 9.
-- M-2: password-strength track nearly invisible in dark (`…_register_idle_dark_…`); raise track
-  contrast; `Weak` text cue itself is fine (not color-alone).
-- M-3: supervisor form-error banner stacks message + right-aligned `Try again` awkwardly; acceptable.
-- M-4: email-hint placeholder ellipsis inside the field is normal hint behavior — not a fail (unlike F-1/F-7).
-- M-5: `code_error` token banner sits half below the 800px fold (page scrolls) — acceptable if scroll
-  verified on device; keep content above fold to the CTA.
+Before (all 5 PNGs): one dense screen = big brand lockup + app-context block (name/purpose/notice)
++ `Welcome back` + `_MethodSwitcher` segmented Password/One-time-code toggle + identifier row +
+password field + end-aligned `Forgot password?` + inline (non-sticky) Continue + `Create account`
+text link + legal line. Everything on one screen; mode is a toggle.
 
-## Per-screen table (representative files judged; families marked identical-modulo-branding)
+- **Step-1 `Log in or sign up`:** REMOVED brand lockup + app-context block from form column;
+  REMOVED `_MethodSwitcher` toggle; REMOVED password field from this step; ADDED `AppStepScaffold`
+  (thin top progress bar, no back arrow on step 1, big left headlineLarge question + one
+  supporting line); KEPT identifier only (prefix + field); MOVED password/code/register to
+  alternative-path outlined full-width rows (`AppOrDivider` + `AppAltAuthRow`: `Send me a code
+  instead`, customer-only `New here? Create account`) + muted trust line; MOVED Continue to
+  STICKY bottom action bar (pill, full-width). One task per screen.
+- **Step-2 `Welcome back` (password path):** NEW step (was a toggle state, now a pushed step):
+  back arrow -> Step-1, headline + masked identifier recap (`Enter your password for 501...`),
+  single password field + toggle, quiet `Forgot password?` secondary link, single alt row
+  (`Send me a code instead`), sticky Continue. No switcher, no identifier re-entry.
+- **Code-confirm `Confirm your number`:** NEW step (was toggle + inline boxes): back arrow,
+  question headline + supporting line, in-flow success banner with masked destination
+  (`We sent a code to +971 ... 567`), 6-box token Pinput, single-line `Resend in Ns` disabled
+  link (replaces resend ring + detached countdown row), alt row `Use password instead`,
+  sticky `Verify code` (auto-verify fallback per brief). One task.
+- **Register R1 `What's your name?` / R2 `How should we contact you?` / R3 `Create your password`:**
+  NEW 3-step flow (was single `Create an account` link + combined form): each step one field
+  group, question headline + support line, back arrow, sticky Continue / final `Create account`;
+  R3 adds strength meter + `Min. 6 characters` cue. No boxes-in-boxes.
+- **Forgot-identifier `Forgot your password?`:** RECOMPOSED into step scaffold (was separate
+  legacy screen): back arrow, question headline + 2-line support copy, single identifier,
+  sticky `Send recovery code`, muted `Can't access... Contact support` line. Progress =
+  existing 2-step indicator per brief.
+- **Forgot-reset `Choose a new password`:** RECOMPOSED into one step collecting code + new
+  password together (backend single-call constraint, brief-approved exception to one-input rule):
+  success banner (`Recovery code sent to ...`), `Recovery code` Pinput + `New password` field +
+  strength meter, `Change email or mobile` secondary link, `Resend in Ns` line, sticky
+  `Update password`. Banner in-flow above inputs, zero overlap (old overlap fixed).
+- **Forgot-done `Password updated`:** NEW warm terminal confirmation per C10 exception (was
+  snackbar+redirect): headline + single subtitle (duplication removed), centered success icon,
+  single sticky `Back to sign in`. No auto-redirect.
+- **Supervisor S1 `Supervisor access` / S2 `Welcome back`:** RECOMPOSED from single login form
+  to 2-step identifier -> password collecting into existing `login()` call: S1 headline +
+  support + username field + sticky Continue; S2 recap (`supervisor`) + password + Forgot link +
+  offline banner fit + sticky `Sign in`. No logic change.
+- **Splash:** KEPT navy signature (brief-approved); TOKENS + Semantics polish only — centered
+  lockup, progress bar, localized caption (`Restoring your session` / AR). No flow change.
 
-| Screen | App | Theme | Locale | Scale | Size | State | Result | Issues | Fix | Re-verified |
-|---|---|---|---|---|---|---|---|---|---|---|
-| Login password idle (side-by-side) | customer | light | en | 1.0 | 360×800 | idle | FAIL | F-1 truncation; F-2 forgot link gone; redesign visible → mandate pass | F-1, F-2 | no |
-| Login password idle (side-by-side) | customer | dark | en | 1.0 | 360×800 | idle | FAIL | F-1, F-2; mandate pass | F-1, F-2 | no |
-| Login password idle (side-by-side) | staff/owner/crm | light | en | 1.0 | 360×800 | idle | FAIL | F-1, F-2; identical modulo brand block | F-1, F-2 | no |
-| Login password idle | customer | light | en | 1.0 | 360×800 | idle | FAIL | F-1, F-2 | F-1, F-2 | no |
-| Login password idle | customer | light | ar | 1.0 | 360×800 | idle | FAIL | F-1 (AR truncation), F-2, F-6 (CTA arrow →) | F-1, F-2, F-6 | no |
-| Login password idle | customer | light/dark | en/ar | 1.3 | 360×800 | idle | FAIL | F-1, F-2, F-7 (link ellipsis) | F-1, F-2, F-7 | no |
-| Login password idle | customer | light | en/ar | 1.0 | 320×568 | idle | FAIL | F-1 severe at 320 | F-1 | no |
-| Login password idle | customer | light | en | 1.3 | 320×568 | idle | FAIL | F-7 catastrophic (both labels cut, label wraps) | F-1, F-7 | no |
-| Login password idle | customer | light | en | 1.0 | 768×1024 | idle | FAIL | F-2 only (segments fit on tablet; card layout good) | F-2 | no |
-| Login password idle | customer | dark | en/ar | 1.0–1.3 | 360×800 | idle | FAIL | F-1, F-2 (+F-6/F-7 in ar/1.3) | F-1, F-2, F-6, F-7 | no |
-| Login password idle | staff/owner/crm | light | en/ar | 1.0/1.3 | 360×800 | idle | FAIL | same as customer modulo brand (spot-verified) | F-1, F-2 | no |
-| Login password field error | customer | light | en (+1.3 ar spot) | 1.0 | 360×800 | field error | FAIL (form) / PASS (error grammar) | inline errors w/ icon correct; host screen has F-1, F-2 | F-1, F-2 | no |
-| Login password form error (offline+retry) | customer | light | en | 1.0 | 360×800 | form error | FAIL (form) / PASS (banner) | snackbar+retry fits, keeps data; host F-1, F-2 | F-1, F-2 | no |
-| Login password busy | customer | light/dark | en | 1.0 | 360×800 | busy | FAIL (form) / PASS (busy) | `Signing in…` keeps width, fields disabled; host F-1, F-2 | F-1, F-2 | no |
-| Login code presend idle | customer | light/dark | en/ar | 1.0/1.3 | 360×800 | idle | FAIL | F-1 (+F-6 AR CTA); `Send code` hierarchy good | F-1, F-6 | no |
-| Login code postsend (OTP sent + cooldown) | customer | light/dark | en/ar | 1.0/1.3 | 360×800 | otp-sent | FAIL | F-1, F-3 (orphan spinner + detached countdown); Pinput token styling good, LTR digits locked, focus ring correct | F-1, F-3 | no |
-| Login code postsend | owner/crm/staff | light | en/ar | 1.0 | 360×800 | otp-sent | FAIL | same as customer modulo brand (spot-verified AR owner) | F-1, F-3 | no |
-| Login code error | customer | light | en | 1.0 | 360×800 | code error | FAIL (form) / PASS (error) | red Pinput ramp + message correct; host F-1, F-3; banner half below fold (M-5) | F-1, F-3 | no |
-| Register idle | customer | light/dark | en/ar | 1.0/1.3 | 360×800 | idle | PASS (modulo F-1 n/a: no switcher) | single focus, strength meter + `Weak` label, secondary link; dark track low contrast (M-2) | M-2 | n/a |
-| Register field error | customer | light | en | 1.0 | 360×800 | field error | PASS | three inline errors w/ icons, layout holds | — | n/a |
-| Forgot identifier idle | customer/owner (spot) | light/dark | en/ar | 1.0 | 360×800 | idle | PASS | step progress, back link (F-6 glyph in AR), single CTA, brand consistent | F-6 | no |
-| Forgot identifier field/form error | customer | light | en | 1.0 | 360×800 | field+form error | PASS | inline error + focus ring + offline banner w/ retry all correct | — | n/a |
-| Forgot reset (OTP sent) | customer (+staff/crm/owner spot) | light/dark | en/ar | 1.0 | 360×800 | otp-sent | FAIL | F-3, F-4 (banner covers countdown); Pinput + password + strength good | F-3, F-4 | no |
-| Forgot reset field/code error | customer | light | en | 1.0 | 360×800 | field error | FAIL (form) / PASS (errors) | error copy + red labels correct; host F-3 | F-3 | no |
-| Forgot done (terminal confirmation) | customer/all | light/dark | en/ar | 1.0/1.3 | 360×800 | success | FAIL | F-5 duplicated subtitle (dedicated screen per C10 exception otherwise correct) | F-5 | no |
-| Supervisor login idle | staff | light | en/ar | 1.0/1.3 | 360×800 (+320) | idle | PASS | clean App* form, forgot link present, no overflow at 320; AR fully translated (2c ARB fix confirmed); AR CTA arrow → (F-6) | F-6 | no |
-| Supervisor busy/field/form error | staff | light | en | 1.0 | 360×800 | busy/field/form | PASS | label-swap busy keeps width; inline errors; banner+retry (no raw `e.message` seen — 2c fix confirmed) | — | n/a |
-| Splash | shared | light/dark | en/ar | 1.0/1.3 | 360×800 | loading | PASS | navy signature kept per decision, centered lockup, localized caption, no overflow at 1.3x | — | n/a |
+## Per-screen table (representative files; families marked identical-modulo-permitted-diffs)
 
-Pass-count note: rows marked PASS with an F-item in Issues (forgot-idle/supervisor-idle AR arrows) inherit the
-systemic F-6 glyph fix; their layouts are otherwise accepted.
+| Screen | App | Theme | Locale | Scale | Size | State | Rubric /16 | Result | Issues | Fix | Re-verified |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Step-1 idle (side-by-side) | customer | light | en | 1.0 | 360x800 | idle | 16 | PASS | none blocking; mandate clearly visible | — | n/a (new baseline) |
+| Step-1 idle (side-by-side) | customer | dark | en | 1.0 | 360x800 | idle | 16 | PASS | same | — | n/a |
+| Step-1 idle (side-by-side) | staff/owner/crm | light | en | 1.0 | 360x800 | idle | 16 | PASS | single alt row by design (no register) | — | n/a |
+| Step-1 idle | customer | light | en | 1.0 | 360x800 | idle | 16 | PASS | — | — | n/a |
+| Step-1 idle | customer | light | ar | 1.0 | 360x800 | idle | 16 | PASS | chevrons/back/digits correctly mirrored | — | n/a |
+| Step-1 idle | customer | dark | en | 1.0 | 360x800 | idle | 16 | PASS | — | — | n/a |
+| Step-1 idle | customer | light/dark | en/ar | 1.3 | 360x800 | idle | 16 | PASS | wraps cleanly, no truncation | — | n/a |
+| Step-1 idle | customer | light | en/ar | 1.0 | 320x568 | idle | 16 | PASS | holds, no overflow | — | n/a |
+| Step-1 idle | customer | light | en | 1.0 | 390x844 | idle | 16 | PASS | identical to 360 family | — | n/a |
+| Step-1 idle | customer | light | en | 1.0 | 768x1024 | idle | 16 | PASS | max-width centered single column | — | n/a |
+| Step-1 field error | customer | light | en | 1.0 | 360x800 | field error | 16 | PASS | inline icon+text, focus ring correct | — | n/a |
+| Step-1 idle | staff/owner/crm | light | en/ar | 1.0/1.3 | 360x800 | idle | 16 | PASS | spot-verified identical modulo 1 alt row | — | n/a |
+| Step-2 idle | customer | light | en | 1.0 | 360x800 | idle | 16 | PASS | Forgot link present, recap correct | — | n/a |
+| Step-2 idle | customer | light | ar | 1.0 | 360x800 | idle | 16 | PASS | digits LTR, arrows mirrored | — | n/a |
+| Step-2 idle | customer | light | en/ar | 1.3 | 360x800 | idle | 16 | PASS | no overflow | — | n/a |
+| Step-2 idle | customer | light | en | 1.0 | 320x568 | idle | 16 | PASS | holds | — | n/a |
+| Step-2 field error | customer | light | en + 1.3 ar | 1.0/1.3 | 360x800 | field error | 16 | PASS | red label+message, layout holds | — | n/a |
+| Step-2 form error (offline+retry) | customer | light | en | 1.0 | 360x800 | form error | 16 | PASS | banner in-flow + Try again, data kept | — | n/a |
+| Step-2 busy | customer | light | en | 1.0 | 360x800 | busy | 16 | PASS | `Signing in...` keeps width, dims | — | n/a |
+| Code-confirm otp_sent | customer | light | en | 1.0 | 360x800 | otp-sent | 16 | PASS | token Pinput, LTR lock, banner in-flow, single-line Resend | — | n/a |
+| Code-confirm code error | customer | light | en | 1.0 | 360x800 | code error | 16 | PASS | red ramp + message, no overlap | — | n/a |
+| Code-confirm | owner/crm/staff | light | en/ar | 1.0 | 360x800 | otp-sent | 16 | PASS | spot-verified identical modulo branding | — | n/a |
+| Register R1 idle | customer | light/dark | en/ar | 1.0/1.3 | 360x800 | idle | 16 | PASS | one question, sticky Continue | — | n/a |
+| Register R1 field error | customer | light | en | 1.0 | 360x800 | field error | 16 | PASS | inline errors, layout holds | — | n/a |
+| Register R2 idle | customer | light/dark | en/ar | 1.0/1.3 | 360x800 | idle | 16 | PASS | one question | — | n/a |
+| Register R2 field error | customer | light | en | 1.0 | 360x800 | field error | 16 | PASS | inline errors | — | n/a |
+| Register R3 idle | customer | light/dark | en/ar | 1.0/1.3 | 360x800 | idle | 16 | PASS | strength + Weak cue (track faint in dark, non-blocking) | — | n/a |
+| Register R3 field/form/busy | customer | light | en | 1.0 | 360x800 | field/form/busy | 16 | PASS | `Creating account...` keeps width; banner+retry | — | n/a |
+| Forgot-identifier idle | customer | light/dark | en/ar | 1.0 | 360x800 | idle | 16 | PASS | step progress, back link mirrored in AR | — | n/a |
+| Forgot-identifier field/form error | customer | light | en | 1.0 | 360x800 | field+form | 16 | PASS | inline + offline banner w/ retry | — | n/a |
+| Forgot-reset otp_sent | customer (+staff/crm/owner spot) | light/dark | en/ar | 1.0 | 360x800 | otp-sent | 15 | PASS | (1) docked 1pt for code+password together — brief-approved backend constraint; otherwise 2s | — | n/a |
+| Forgot-reset field/code error | customer | light | en | 1.0 | 360x800 | field error | 15 | PASS | same 1pt dock; errors correct, no overlap | — | n/a |
+| Forgot-done success | customer/all | light/dark | en/ar | 1.0/1.3 | 360x800 | success | 16 | PASS | subtitle exactly once, C10 terminal screen correct | — | n/a |
+| Supervisor S1 idle | staff | light | en/ar | 1.0/1.3 | 360x800 (+320) | idle | 16 | PASS | clean form, no overflow at 320 | — | n/a |
+| Supervisor S1 field error | staff | light | en | 1.0 | 360x800 | field error | 16 | PASS | inline errors | — | n/a |
+| Supervisor S2 idle/busy/form | staff | light | en | 1.0 | 360x800 | idle/busy/form | 16 | PASS | busy keeps width; banner+retry, no raw text | — | n/a |
+| Splash idle | shared | light/dark | en/ar | 1.0/1.3 | 360x800 | loading | 15 | PASS | navy signature per brief; centered, localized, no overflow at 1.3x | — | n/a |
 
-## 2c claim cross-check (read-only git)
+Rubric key (each 0-2): (1) one task/step flow; (2) headline-first hierarchy; (3) whitespace no boxes;
+(4) sheet/secondary-action usage (auth alt-rows per C16 = correct, sheets N/A); (5) sticky CTA;
+(6) carousel/section N/A scored fairly as 2; (7) plain friendly copy; (8) single primary CTA.
+Pass >= 12/16. Lowest score awarded is 15/16 (two principled 1pt docks, both brief-approved).
 
-- App* swaps + legacy deletions (`auth_button.dart`, `auth_field.dart`, `auth_notice.dart` removed,
-  `auth_otp_field.dart`/`auth_resend_action.dart` added): confirmed in `git show --stat HEAD`.
-- Pinput token-styling: confirmed visually (radius-12 token boxes, blue focus ring, red error ramp,
-  LTR lock, autofocus caret) in EN+AR, light+dark.
-- Supervisor ARB fixes: confirmed — AR supervisor renders full Arabic copy; form-error shows mapped
-  copy (`Enter username and password` + retry), no raw exception text in any capture.
-- Legacy deletions: no legacy-widget visuals remain in any capture.
+## Concrete fixes
 
-## Re-verification protocol (re-capture exactly these after fixes; judge before blessing)
+None blocking. Zero-fail statement: **no FAILs; no code changes required before blessing.**
+Opportunistic polish only (visual, no logic change; implement only if trivial):
+- R3/dark strength track is faint — raise track contrast one token step in dark only.
+- Staff Step-1 leaves tall whitespace above the sticky bar (single alt row by design) — acceptable
+  per C9 auth whitespace; do not add filler.
 
-1. F-1/F-2/F-7: `customer_login_password_idle_light_1.0_en_360x800.png`,
-   `customer_login_password_idle_light_1.0_ar_360x800.png`,
-   `customer_login_password_idle_light_1.3_en_360x800.png`,
-   `customer_login_password_idle_light_1.3_en_320x568.png`,
-   `customer_login_password_idle_dark_1.0_en_360x800.png`,
-   `customer_login_password_idle_light_1.0_en_320x568.png`,
-   `customer_login_password_idle_light_1.0_en_768x1024.png` — both segment labels fully visible at
-   every size/scale, forgot link present, no ellipsis on any action/link.
-2. F-3/F-4: `customer_login_code_postsend_otp_sent_light_1.0_en_360x800.png`,
-   `customer_login_code_postsend_otp_sent_dark_1.0_ar_360x800.png`,
-   `customer_forgot_reset_otp_sent_light_1.0_en_360x800.png` — spinner+countdown one inline row,
-   banner in-flow with zero overlap.
-3. F-5: `customer_forgot_done_success_light_1.0_en_360x800.png`,
-   `customer_forgot_done_success_dark_1.0_ar_360x800.png` — subtitle appears exactly once.
-4. F-6: `customer_login_password_idle_light_1.0_ar_360x800.png`,
-   `customer_forgot_identifier_idle_dark_1.0_ar_360x800.png`,
-   `staff_supervisor_login_idle_light_1.3_ar_360x800.png` — all directional glyphs mirror (CTA ←-glyph,
-   back-link →-glyph); digits/`+971`/Latin stay LTR.
-5. Regression sweep (must stay passing): `customer_login_password_busy_light_1.0_en_360x800.png`,
-   `customer_login_password_form_error_light_1.0_en_360x800.png`,
-   `customer_login_register_idle_dark_1.0_en_360x800.png`,
-   `staff_supervisor_login_form_error_light_1.0_en_360x800.png`,
-   `splash_loading_idle_dark_1.0_ar_360x800.png`.
-6. Only re-bless goldens after all five groups pass; then plain `flutter test` must be green.
+## Re-verification protocol
+
+1. Bless only recaptured goldens from this step-flow build; do not mix with pre-rebuild captures.
+2. Plain `flutter test` must be green after blessing; CI golden diffs are the review artifact.
+3. Any future layout change must recapture the affected family at 360x800 EN+AR light (1.0+1.3)
+   plus one 320x568 sample before re-blessing.

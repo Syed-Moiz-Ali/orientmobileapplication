@@ -1,11 +1,14 @@
-// Phase-2b characterization: forgot-password stages.
+// Phase-2b characterization: forgot-password stages (migrated to the
+// AppStepScaffold step flow).
 //
 // identifier -> reset (code + new password together; the backend issues and
 // consumes the code in one reset-password call) -> done. Guards stage
 // transitions, code+password validation, resend start state, expired-code
-// mapping, and the success CTA.
+// mapping, and the success CTA. Copy keys and validation timing are reused
+// verbatim; the resend countdown is an isolated row (no whole-step rebuild).
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 
 import 'test_helpers.dart';
@@ -31,6 +34,7 @@ void main() {
       final repo = FakeAuthRepository();
       await pumpForgotView(tester, repo: repo);
 
+      expect(find.text(t.forgotTitle), findsOneWidget);
       await tester.tap(find.text(t.forgotActionSendRecoveryCode));
       await tester.pump();
 
@@ -77,6 +81,7 @@ void main() {
       await reachResetStep(tester);
 
       expect(repo.forgotCalls, 1);
+      expect(find.text(t.forgotResetTitle), findsOneWidget);
       // 'New password' also labels the progress step, so the field label
       // itself appears twice; the reset CTA + recovery-code label are unique.
       expect(find.text(t.forgotFieldNewPassword), findsWidgets);
@@ -146,6 +151,9 @@ void main() {
         find.widgetWithText(AppTextButton, t.loginActionResendIn(30)),
       );
       expect(resend.onPressed, isNull);
+      // Isolated resend row, link + text only — no spinner beside it.
+      expect(find.byType(ForgotResendRow), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
       expect(tester.takeException(), isNull);
       await drainForgotCooldown(tester);
     });
@@ -171,6 +179,16 @@ void main() {
 
       expect(repo.resetCalls, 1);
       expect(find.text(t.forgotDoneTitle), findsOneWidget);
+      // Terminal confirmation announces once as a live region.
+      expect(
+        find.byWidgetPredicate(
+          (w) =>
+              w is Semantics &&
+              (w.properties.liveRegion ?? false) &&
+              w.properties.label == t.forgotDoneTitle,
+        ),
+        findsOneWidget,
+      );
 
       await tester.tap(find.text(t.forgotBackToSignIn));
       await tester.pump();

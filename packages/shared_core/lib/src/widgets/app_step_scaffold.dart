@@ -84,6 +84,12 @@ class AppStepScaffold extends StatelessWidget {
   /// Pass-through to the sticky CTA loading state (width preserved).
   final bool isLoading;
 
+  /// Optional busy label shown while [isLoading] is true (e.g. "Signing
+  /// in…"). The rest label stays laid out invisibly behind the busy row so
+  /// the button width never shifts. When null the rest label is kept with an
+  /// overlaid spinner.
+  final String? busyLabel;
+
   /// Transition key override for the animated content switch.
   final Key? stepKey;
 
@@ -103,6 +109,7 @@ class AppStepScaffold extends StatelessWidget {
     required this.ctaLabel,
     required this.onCta,
     this.isLoading = false,
+    this.busyLabel,
     this.stepKey,
     this.progressSemanticLabel,
   }) : assert(
@@ -252,6 +259,7 @@ class AppStepScaffold extends StatelessWidget {
                     ),
             child: AppPillButton.primary(
               label: ctaLabel,
+              busyLabel: busyLabel,
               onPressed: onCta,
               isLoading: isLoading,
             ),

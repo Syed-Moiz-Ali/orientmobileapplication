@@ -161,6 +161,72 @@ class SharedAuthLocalizationsEn extends SharedAuthLocalizations {
   }
 
   @override
+  String get loginStepIdentifierTitle => 'Log in or sign up';
+
+  @override
+  String get loginStepIdentifierSubtitle =>
+      'Enter your email or mobile number to continue.';
+
+  @override
+  String get loginStepPasswordTitle => 'Welcome back';
+
+  @override
+  String loginStepPasswordSubtitle(String identifier) {
+    return 'Enter your password for $identifier.';
+  }
+
+  @override
+  String get loginStepCodeTitle => 'Confirm your number';
+
+  @override
+  String get loginStepCodeSubtitle => 'Enter the 6-digit code we sent you.';
+
+  @override
+  String loginStepCodeDestination(String target) {
+    return 'We sent a code to $target.';
+  }
+
+  @override
+  String get loginStepRegisterNameTitle => 'What\'s your name?';
+
+  @override
+  String get loginStepRegisterNameSubtitle => 'Tell us how to address you.';
+
+  @override
+  String get loginStepRegisterContactTitle => 'How should we contact you?';
+
+  @override
+  String get loginStepRegisterContactSubtitle =>
+      'Enter your email or mobile number.';
+
+  @override
+  String get loginStepRegisterPasswordTitle => 'Create your password';
+
+  @override
+  String get loginStepRegisterPasswordSubtitle =>
+      'Choose a password with at least 6 characters.';
+
+  @override
+  String get loginStepUseCodeInstead => 'Send me a code instead';
+
+  @override
+  String get loginStepUsePasswordInstead => 'Use password instead';
+
+  @override
+  String get loginStepCreateAccountRow => 'New here? Create account';
+
+  @override
+  String get loginStepOr => 'or';
+
+  @override
+  String get loginStepBack => 'Back';
+
+  @override
+  String loginStepProgress(int step, int total) {
+    return 'Step $step of $total';
+  }
+
+  @override
   String get forgotTitle => 'Forgot your password?';
 
   @override

@@ -1,25 +1,26 @@
-// Phase-2b characterization: one-time-code (OTP) step on login.
+// Phase-2b characterization: one-time-code (OTP) step on login (migrated to
+// the step flow).
 //
 // Covers the send-code transition (verify CTA appears), and that expired vs
-// invalid backend codes render DISTINCT inline copy on the OTP field.
-import 'package:flutter/material.dart';
+// invalid backend codes render DISTINCT inline copy on the OTP field. The
+// confirm step shows the masked destination line (new copy key) instead of
+// the raw full-number banner.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
 
 import 'test_helpers.dart';
 
-/// Switches to code mode and sends a code to a valid phone number.
-/// Ends on the verify step (default send handlers succeed).
+/// Sends a code to a valid phone number via the Step 1 alt row.
+/// Ends on the code-confirm step (default send handlers succeed).
 Future<void> reachVerifyStep(WidgetTester tester) async {
-  final t = enAuthL10n();
-  await tapAndSettleMode(tester, find.text(t.authMethodCode));
-  await tester.enterText(find.byType(TextField).first, '501234567');
-  await tester.pump();
-  await tester.tap(find.text(t.loginActionSendCode));
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 300));
+  await reachCodeConfirm(tester, '501234567');
 }
+
+/// Masked-destination assertions use the shared [maskedPhoneTail] helper from
+/// test_helpers (banner wraps its message in bidi isolates, so tests match
+/// with containing-finders, never exact text).
+
 
 void main() {
   setUpAll(loadAuthTestFonts);
@@ -35,12 +36,16 @@ void main() {
 
       expect(repo.sendOtpCalls, 1);
       expect(container.read(loginProvider).otpSent, isTrue);
+      expect(find.text(t.loginStepCodeTitle), findsOneWidget);
       expect(find.text(t.loginActionVerifyCode), findsOneWidget);
       expect(find.byType(AuthOtpField), findsOneWidget);
+      // Masked destination line on the confirm step (never the raw number).
+      expect(find.textContaining('We sent a code to'), findsOneWidget);
+      expect(find.textContaining(maskedPhoneTail()), findsOneWidget);
+      expect(find.textContaining('501234567'), findsNothing);
       // One-time-code confirmation arrives as an in-flow success banner
       // (phase-2 F-4: never an overlay, so it can't cover the resend row).
       expect(find.byType(AppBanner), findsOneWidget);
-      expect(find.textContaining('Code sent to'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });
@@ -62,9 +67,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.text(t.errorOtpExpired), findsOneWidget);
-      // The send-step success banner is still up; no error snackbar joins
+      // The masked destination line is still up; no error snackbar joins
       // it — code failures never surface as snackbars.
-      expect(find.textContaining('Code sent to'), findsOneWidget);
+      expect(find.textContaining('We sent a code to'), findsOneWidget);
+      expect(find.textContaining(maskedPhoneTail()), findsOneWidget);
+      expect(find.textContaining('501234567'), findsNothing);
       expect(tester.takeException(), isNull);
     });
 
@@ -88,8 +95,10 @@ void main() {
 
       expect(find.text(t.errorOtpInvalid), findsOneWidget);
       expect(find.text(t.errorOtpExpired), findsNothing);
-      // No error snackbar either — the send-step success banner stands alone.
-      expect(find.textContaining('Code sent to'), findsOneWidget);
+      // No error snackbar either — the destination line stands alone.
+      expect(find.textContaining('We sent a code to'), findsOneWidget);
+      expect(find.textContaining(maskedPhoneTail()), findsOneWidget);
+      expect(find.textContaining('501234567'), findsNothing);
       expect(tester.takeException(), isNull);
     });
   });

@@ -241,6 +241,65 @@ Future<void> tapAndSettleMode(WidgetTester tester, Finder finder) async {
   await tester.pump(const Duration(milliseconds: 500));
 }
 
+/// Lets a step-flow transition retire the outgoing step: one frame to process
+/// the tap, then 500ms (past the 220ms [AppMotion] standard token) so stale
+/// fields leave the tree before finders run.
+Future<void> tapAndSettleStep(WidgetTester tester, Finder finder) async {
+  await tester.tap(finder);
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 500));
+}
+
+/// Enters [identifier] on Step 1 ("Log in or sign up") and taps Continue.
+/// Ends on the password step ("Welcome back"). Fires ZERO API calls — the
+/// transition is local validation + setter sync only.
+Future<void> reachPasswordStep(
+  WidgetTester tester,
+  String identifier, {
+  SharedAuthLocalizations? l10n,
+}) async {
+  final t = l10n ?? enAuthL10n();
+  await tester.enterText(find.byType(TextField).first, identifier);
+  await tester.pump();
+  await tapAndSettleStep(tester, find.text(t.loginActionContinue));
+}
+
+/// Enters [identifier] on Step 1 and taps the "Send me a code instead" alt
+/// row. Ends on the code-confirm step (default send handlers succeed, 30s
+/// cooldown running).
+Future<void> reachCodeConfirm(
+  WidgetTester tester,
+  String identifier, {
+  SharedAuthLocalizations? l10n,
+}) async {
+  final t = l10n ?? enAuthL10n();
+  await tester.enterText(find.byType(TextField).first, identifier);
+  await tester.pump();
+  await tester.tap(find.text(t.loginStepUseCodeInstead));
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 300));
+}
+
+/// Opens the register flow (customer builds) and walks R1 (name) + R2
+/// (contact), landing on R3 (password). Fires ZERO API calls — R1/R2 Continue
+/// handlers are local validation only. The caller enters the password on R3
+/// and taps the create-account CTA.
+Future<void> reachRegisterR3(
+  WidgetTester tester,
+  String name,
+  String contact, {
+  SharedAuthLocalizations? l10n,
+}) async {
+  final t = l10n ?? enAuthL10n();
+  await tapAndSettleStep(tester, find.text(t.loginStepCreateAccountRow));
+  await tester.enterText(find.byType(TextField).first, name);
+  await tester.pump();
+  await tapAndSettleStep(tester, find.text(t.loginActionContinue));
+  await tester.enterText(find.byType(TextField).first, contact);
+  await tester.pump();
+  await tapAndSettleStep(tester, find.text(t.loginActionContinue));
+}
+
 /// Drains the forgot view's 30s resend loop so no fake-async timer is pending
 /// at teardown. Call AFTER asserting the START state — the suite never waits
 /// out the loop for behavior, this is pure cleanup (the view's dispose only
@@ -327,3 +386,9 @@ Future<ProviderContainer> pumpForgotView(
     tester.element(find.byType(ForgotPasswordView)),
   );
 }
+
+/// Masked phone tail used by OTP destination assertions (shared so every
+/// step test pins the same never-raw-number copy). Mirrors the view's
+/// masking; matched with containing-finders since the banner wraps copy
+/// in bidi isolates.
+String maskedPhoneTail() => '••• ••• 567';

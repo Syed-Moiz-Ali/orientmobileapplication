@@ -1,35 +1,37 @@
-// Phase-2b characterization: register mode on login.
+// Phase-2b characterization: register mode on login (migrated to the R1/R2/R3
+// step flow).
 //
-// Register is a progressive disclosure of the same column (never a separate
-// route): the toggle reveals the name field, submit goes through
-// LoginNotifier.register(), and success fires onLoginSuccess.
+// Register is its own step flow behind "New here? Create account" (never a
+// separate route): R1 name → R2 contact → R3 password, then submit goes
+// through LoginNotifier.register() once, and success fires onLoginSuccess.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_core/shared_core.dart';
 
 import 'test_helpers.dart';
 
-/// Opens register mode (customer builds) and retires the outgoing form.
+/// Opens the register flow (customer builds) and lands on R1.
 Future<void> openRegister(WidgetTester tester) async {
   final t = enAuthL10n();
-  await tapAndSettleMode(tester, find.text(t.loginNewCustomer));
+  await tapAndSettleStep(tester, find.text(t.loginStepCreateAccountRow));
 }
 
 void main() {
   setUpAll(loadAuthTestFonts);
 
   group('register mode', () {
-    testWidgets('toggle reveals name field + create-account CTA',
-        (tester) async {
+    testWidgets('toggle reveals name field + continue CTA', (tester) async {
       final t = enAuthL10n();
       await pumpLoginView(tester, allowRegistration: true);
       await openRegister(tester);
 
+      expect(find.text(t.loginStepRegisterNameTitle), findsOneWidget);
       expect(find.text(t.loginFieldFullName), findsOneWidget);
-      expect(find.text(t.loginFieldCreatePassword), findsOneWidget);
-      expect(find.text(t.loginActionCreateAccount), findsOneWidget);
-      // Password-mode CTA is replaced, not duplicated.
-      expect(find.text(t.loginActionContinue), findsNothing);
+      expect(find.text(t.loginActionContinue), findsOneWidget);
+      // The create-account CTA lives only on R3, not on R1.
+      expect(find.text(t.loginActionCreateAccount), findsNothing);
+      // The password field lives on R3, not on R1.
+      expect(find.text(t.loginFieldCreatePassword), findsNothing);
       expect(tester.takeException(), isNull);
     });
 
@@ -44,12 +46,10 @@ void main() {
         allowRegistration: true,
         onLoginSuccess: () => successes++,
       );
-      await openRegister(tester);
+      await reachRegisterR3(tester, 'Sam Example', 'user@example.com');
 
-      final fields = find.byType(TextField);
-      await tester.enterText(fields.at(0), 'Sam Example');
-      await tester.enterText(fields.at(1), 'user@example.com');
-      await tester.enterText(fields.at(2), 'secret123');
+      expect(find.text(t.loginStepRegisterPasswordTitle), findsOneWidget);
+      await tester.enterText(find.byType(TextField).first, 'secret123');
       await tester.pump();
       await tester.tap(find.text(t.loginActionCreateAccount));
       await tester.pump();
@@ -78,12 +78,9 @@ void main() {
         allowRegistration: true,
         onLoginSuccess: () => successes++,
       );
-      await openRegister(tester);
+      await reachRegisterR3(tester, 'Sam Example', 'user@example.com');
 
-      final fields = find.byType(TextField);
-      await tester.enterText(fields.at(0), 'Sam Example');
-      await tester.enterText(fields.at(1), 'user@example.com');
-      await tester.enterText(fields.at(2), 'secret123');
+      await tester.enterText(find.byType(TextField).first, 'secret123');
       await tester.pump();
       await tester.tap(find.text(t.loginActionCreateAccount));
       await tester.pump();

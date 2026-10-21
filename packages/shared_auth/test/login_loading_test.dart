@@ -1,7 +1,9 @@
-// Phase-2b characterization: loading state on login.
+// Phase-2b characterization: loading state on login (migrated to the step flow).
 //
-// While a login future is pending the CTA swaps to its busy label, shows a
-// spinner, is disabled, and a second tap cannot submit twice.
+// While a login future is pending the password-step CTA swaps to its busy
+// label, shows a spinner, is disabled, and a second tap cannot submit twice.
+// Step 1 Continue never loads (it fires zero API calls); loading lives on
+// the password step's submit.
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -28,9 +30,8 @@ void main() {
         onLoginSuccess: () => successes++,
       );
 
-      final fields = find.byType(TextField);
-      await tester.enterText(fields.at(0), 'user@example.com');
-      await tester.enterText(fields.at(1), 'secret123');
+      await reachPasswordStep(tester, 'user@example.com');
+      await tester.enterText(find.byType(TextField).first, 'secret123');
       await tester.pump();
       await tester.tap(find.text(t.loginActionContinue));
       await tester.pump();
@@ -62,9 +63,8 @@ void main() {
         ..loginHandler = (_, __, ___) => gate.future;
       await pumpLoginView(tester, repo: repo);
 
-      final fields = find.byType(TextField);
-      await tester.enterText(fields.at(0), 'user@example.com');
-      await tester.enterText(fields.at(1), 'secret123');
+      await reachPasswordStep(tester, 'user@example.com');
+      await tester.enterText(find.byType(TextField).first, 'secret123');
       await tester.pump();
       await tester.tap(find.text(t.loginActionContinue));
       await tester.pump();

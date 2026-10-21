@@ -96,6 +96,33 @@ once the legacy widget hits zero usages.
 | `SecurityBadge` | `AuthShell` footer (all auth screens) | none | KEPT: app-aware legal composite, token-only |
 | `AuthShell` / `AuthSurface` internals | login, forgot, supervisor | none (layout authority) | KEPT per plan (already C9) |
 
+## Auth controls (phase-2 step flow — shared_auth login/forgot; supervisor untouched)
+
+| Legacy (auth-local) | Homes (call sites) | App* replacement | Notes |
+|---|---|---|---|
+| `_MethodSwitcher` + `AppSegmentedControl` login usage | login (1) | step progression (`AppStepScaffold` 1/2 + `AppAltAuthRow`) | REMOVED from login by the step flow (password-first; code is the alt row). `AppSegmentedControl` itself stays in shared_core untouched |
+| `AuthResendAction` (cooldown ring) | login (0), forgot (0) | `LoginResendRow` / `ForgotResendRow` (`auth_step_resend.dart`, link + countdown text only) | DELETED (`auth_resend_action.dart` removed, export swapped). Ring + detached row replaced per brief; rows rebuild in isolation (`select` / `ValueListenableBuilder`) so the 1 Hz ticks never rebuild the step |
+| `AuthShell` page usage | login (0), forgot (0) | `AppStepScaffold` (+ `AuthStepBrandPanel` on split) | KEPT with reason: still the exported layout authority and still referenced by the frozen supervisor slice (`supervisor_login_test.dart` negative assertion); deleting the class would break that slice. Zero page usages after the step flow |
+| `AuthOtpField` (Pinput) | login code (1), forgot reset (1) | none — third-party concession | KEPT: token-styled, LTR lock, autofocus, digitsOnly, completion untouched |
+| `AuthCountryCodeButton` | login identifier (2: Step 1 + R2) | none — domain picker | KEPT: dial-code picker on tokens + `AppSelectionSheet`; no App* equivalent |
+| `AuthPasswordStrength` | login R3 (1), forgot reset (1) | none (feeds `AppInputField.belowField`) | KEPT as auth-scoped scoring UI |
+| `SecurityBadge` | Step 1 trust line + split brand panel | none | KEPT: per-app `securityNotice` passthrough + shared fallback; no new claims |
+| `AppStepScaffold` | shared_core (extended) | n/a (additive `busyLabel` passthrough) | EXTENDED additively: optional `busyLabel` → sticky CTA label-swap (Signing in…/Verifying…/Creating account…/Sending…/Updating…), width preserved. No existing behavior changed |
+
+| Legacy (auth-local) | Homes (call sites) | App* replacement | Notes |
+|---|---|---|---|
+| `AuthTextField` | login (6), forgot (3), supervisor (2) | `AppInputField` (+ `belowField`, `labelTrailing`, localized toggle tooltips, `textCapitalization` extensions) | DELETED (`auth_field.dart` → `auth_otp_field.dart`). LTR force, autofill, focus order, keyboard actions preserved via pass-through |
+| `AuthPrimaryButton` (+ `AuthButton` alias) | login (4), forgot (3), supervisor (1), `AuthSessionExpiredView` (1) | `AppPillButton.primary` (+ `busyLabel` extension) | DELETED (`auth_button.dart` removed). Busy label-swap + disabled treatment preserved via `busyLabel` |
+| `AuthLinkButton` | login (3), forgot (2), supervisor (1), recovery progress (1) | `AppTextButton` | DELETED. 48dp target, icon support kept where used |
+| `AuthNotice` / `AuthNoticeSlot` | supervisor (1) | `AppBanner` (error kind + retry action) | DELETED (`auth_notice.dart` removed). Form-level failures stay snackbar+retry in shared views (reviewer-judged fit) |
+| `_MethodSwitcher` (private) | login (1) | `AppSegmentedControl` (+ `icon` on `AppSegmentedOption`) | DELETED (inline `AppSegmentedControl`, icons preserved via extension) |
+| `AuthResendAction` | login (1), forgot (1) | token-rebuilt on `AppTextButton` (same class name) | KEPT as auth-scoped composite: no App* countdown control exists; internals now pure tokens + `AppTextButton`, Row→Wrap (fixes a 320px transient overflow) |
+| `AuthCountryCodeButton` | login (1, phone-like entry) | none (token-refresh in place) | KEPT: domain-specific dial-code picker on tokens + `AppSelectionSheet`; no App* equivalent. Aligned to the input border ramp |
+| `AuthPasswordStrength` | login register (1), forgot reset (1) | none (restyled, feeds `AppInputField.belowField`) | KEPT as auth-scoped scoring UI; concept retained per plan |
+| `AuthOtpField` (Pinput) | login code (1), forgot reset (1) | none — third-party concession | KEPT: full token-styling pass (resting = `inputBorder` token, 1.5px focus/error, AA pairs asserted). LTR lock, autofocus, digitsOnly, completion untouched |
+| `SecurityBadge` | `AuthShell` footer (all auth screens) | none | KEPT: app-aware legal composite, token-only |
+| `AuthShell` / `AuthSurface` internals | login, forgot, supervisor | none (layout authority) | KEPT per plan (already C9) |
+
 ## Rename paths to spec names (polish phase, one codemod each at zero usages)
 
 | Interim (built) | Spec name | Blocked by |

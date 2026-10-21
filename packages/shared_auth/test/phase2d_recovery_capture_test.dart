@@ -1,12 +1,10 @@
 // Phase-2d AFTER captures: forgot-password + splash idle matrix
 // (capture-only, no app code).
 //
-// Covers every recovery idle screen x (customer light+dark, staff/owner/CRM
-// light) x (LTR en, RTL ar) x (text scale 1.0, 1.3) on phone 360x800:
-// Covers every recovery idle screen x (customer light+dark, staff/owner/CRM
+// Covers every recovery step idle x (customer light+dark, staff/owner/CRM
 // light) x (LTR en, RTL ar) x (text scale 1.0, 1.3) on phone 360x800:
 // identifier stage, reset stage post-send (in-flow code-sent banner + 30s
-// resend cooldown), done stage (warm success + single CTA), plus the branded
+// resend link), done stage (warm success + single CTA), plus the branded
 // navy splash (light/dark x en/ar x 1.0/1.3).
 //
 // Every test that reaches the reset stage drains the 30s resend loop AFTER

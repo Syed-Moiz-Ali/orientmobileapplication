@@ -1,10 +1,13 @@
-// Phase-2d AFTER captures: supervisor login (capture-only, no app code).
+// Phase-2d AFTER captures: supervisor login step flow (capture-only, no app
+// code).
 //
 // Staff-local screen, so it lives under apps/staff_app/test (same reason as
-// the 2b/2c supervisor characterization). Idle x (LTR en, RTL ar) x
-// (text scale 1.0, 1.3) on phone 360x800, plus empty-submit banner, busy CTA
-// and offline banner + retry states (en, 1.0, 360x800), plus small 320x568
-// idle. Staff ships the light theme only.
+// the 2b/2c supervisor characterization). Step 1 (identifier behind Continue,
+// zero API calls) x (LTR en, RTL ar) x (text scale 1.0, 1.3) on phone
+// 360x800; step 2 ("Welcome back" + password behind the sign-in CTA); plus
+// step-1 empty-submit banner, step-2 busy CTA and offline banner + retry
+// states (en, 1.0, 360x800), plus small 320x568 step-1 idle. Staff ships the
+// light theme only.
 //
 // Conventions copied from the phase-1 baseline harness: real bundled fonts
 // (Plus Jakarta Sans + IBM Plex Sans Arabic + MaterialIcons) in setUpAll,
@@ -259,31 +262,56 @@ Future<void> captureSupervisor(WidgetTester tester, String fileName) async {
 }
 
 String _supervisorName({
+  required String step,
   required String state,
   required double textScale,
   required Locale locale,
   required int w,
   required int h,
 }) =>
-    'staff_supervisor_login_${state}_light_${textScale.toStringAsFixed(1)}_${locale.languageCode}_${w}x$h.png';
+    'staff_supervisor_${step}_${state}_light_${textScale.toStringAsFixed(1)}_${locale.languageCode}_${w}x$h.png';
+
+/// Step 1 -> step 2: enters the identifier and taps the step-1 Continue.
+/// Step 1 fires ZERO API calls (non-empty gate + step advance only).
+Future<void> reachSupervisorStep2(
+  WidgetTester tester,
+  Locale locale, {
+  String identifier = 'supervisor',
+}) async {
+  await tester.enterText(find.byType(TextField).first, identifier);
+  await tester.pump();
+  await tester.tap(find.byType(AppPillButton));
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 500));
+}
 
 void main() {
   setUpAll(loadSupervisorCaptureFonts);
 
-  group('supervisor login idle 360x800', () {
+  group('supervisor step1 idle 360x800', () {
     for (final locale in [const Locale('en'), const Locale('ar')]) {
       for (final scale in [1.0, 1.3]) {
         testWidgets(
-          'staff supervisor login idle light $scale ${locale.languageCode} 360x800',
+          'staff supervisor step1 idle light $scale ${locale.languageCode} 360x800',
           (tester) async {
             await pumpSupervisorCapture(
               tester,
               locale: locale,
               textScale: scale,
             );
+            // Step-1 headline comes from the staff bundle (AppBanner copy is
+            // bidi-isolated, so exact-text finders do not match it).
+            expect(
+              find.text(
+                lookupStaffLocalizations(locale).supervisorLoginTitle,
+              ),
+              findsOneWidget,
+            );
+            expect(find.byType(AppBanner), findsNothing);
             await captureSupervisor(
               tester,
               _supervisorName(
+                step: 'step1',
                 state: 'idle',
                 textScale: scale,
                 locale: locale,
@@ -297,16 +325,56 @@ void main() {
     }
   });
 
-  group('supervisor login states 360x800', () {
-    testWidgets('staff supervisor login field-error light 1.0 en 360x800',
+  group('supervisor step2 idle 360x800', () {
+    for (final locale in [const Locale('en'), const Locale('ar')]) {
+      for (final scale in [1.0, 1.3]) {
+        testWidgets(
+          'staff supervisor step2 idle light $scale ${locale.languageCode} 360x800',
+          (tester) async {
+            await pumpSupervisorCapture(
+              tester,
+              locale: locale,
+              textScale: scale,
+            );
+            await reachSupervisorStep2(tester, locale);
+            expect(
+              find.text(
+                lookupSharedAuthLocalizations(locale).loginWelcomeTitle,
+              ),
+              findsOneWidget,
+            );
+            await captureSupervisor(
+              tester,
+              _supervisorName(
+                step: 'step2',
+                state: 'idle',
+                textScale: scale,
+                locale: locale,
+                w: 360,
+                h: 800,
+              ),
+            );
+          },
+        );
+      }
+    }
+  });
+
+  group('supervisor step states 360x800', () {
+    testWidgets('staff supervisor step1 field-error light 1.0 en 360x800',
         (tester) async {
       const locale = Locale('en');
       await pumpSupervisorCapture(tester);
+      // Empty submit: the non-empty gate raises the legacy banner.
       await tester.tap(find.byType(AppPillButton));
       await tester.pump();
+      // The banner message is bidi-isolated (U+2066…U+2069), so match a
+      // substring instead of the exact copy.
+      expect(find.textContaining('Enter username'), findsWidgets);
       await captureSupervisor(
         tester,
         _supervisorName(
+          step: 'step1',
           state: 'field_error',
           textScale: 1.0,
           locale: locale,
@@ -316,22 +384,22 @@ void main() {
       );
     });
 
-    testWidgets('staff supervisor login busy light 1.0 en 360x800',
+    testWidgets('staff supervisor step2 busy light 1.0 en 360x800',
         (tester) async {
       const locale = Locale('en');
       final gate = Completer<Result<AuthResult>>();
       final repo = CaptureAuthRepository()
         ..loginHandler = (_, __, ___) => gate.future;
       await pumpSupervisorCapture(tester, repo: repo);
-      final fields = find.byType(TextField);
-      await tester.enterText(fields.at(0), 'supervisor');
-      await tester.enterText(fields.at(1), 'secret123');
+      await reachSupervisorStep2(tester, locale);
+      await tester.enterText(find.byType(TextField).first, 'secret123');
       await tester.pump();
       await tester.tap(find.byType(AppPillButton));
       await tester.pump();
       await captureSupervisor(
         tester,
         _supervisorName(
+          step: 'step2',
           state: 'busy',
           textScale: 1.0,
           locale: locale,
@@ -348,7 +416,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
     });
 
-    testWidgets('staff supervisor login form-error light 1.0 en 360x800',
+    testWidgets('staff supervisor step2 form-error light 1.0 en 360x800',
         (tester) async {
       const locale = Locale('en');
       final repo = CaptureAuthRepository()
@@ -356,9 +424,8 @@ void main() {
               NetworkException('SocketException: failed host lookup'),
             );
       await pumpSupervisorCapture(tester, repo: repo);
-      final fields = find.byType(TextField);
-      await tester.enterText(fields.at(0), 'supervisor');
-      await tester.enterText(fields.at(1), 'secret123');
+      await reachSupervisorStep2(tester, locale);
+      await tester.enterText(find.byType(TextField).first, 'secret123');
       await tester.pump();
       await tester.tap(find.byType(AppPillButton));
       await tester.pump();
@@ -366,6 +433,7 @@ void main() {
       await captureSupervisor(
         tester,
         _supervisorName(
+          step: 'step2',
           state: 'form_error',
           textScale: 1.0,
           locale: locale,
@@ -376,8 +444,8 @@ void main() {
     });
   });
 
-  group('supervisor login small 320x568', () {
-    testWidgets('staff supervisor login idle light 1.0 en 320x568',
+  group('supervisor step1 small 320x568', () {
+    testWidgets('staff supervisor step1 idle light 1.0 en 320x568',
         (tester) async {
       const locale = Locale('en');
       await pumpSupervisorCapture(
@@ -388,6 +456,7 @@ void main() {
       await captureSupervisor(
         tester,
         _supervisorName(
+          step: 'step1',
           state: 'idle',
           textScale: 1.0,
           locale: locale,

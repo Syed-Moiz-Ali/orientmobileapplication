@@ -1,7 +1,11 @@
-// Phase-2b characterization: success/failure navigation on login.
+// Phase-2b characterization: success/failure navigation on login (migrated
+// to the step flow).
 //
 // An authenticated session fires onLoginSuccess EXACTLY once per successful
-// submit — never on failures, never twice across extra frames.
+// submit — never on failures, never twice across extra frames. Step mapping:
+// Step 1 Continue advances with zero API calls; the password step submits via
+// loginWithPassword; the code-confirm step (reached through the
+// "Send me a code instead" alt row) verifies.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_auth/shared_auth.dart';
@@ -24,9 +28,10 @@ void main() {
         onLoginSuccess: () => successes++,
       );
 
-      final fields = find.byType(TextField);
-      await tester.enterText(fields.at(0), 'user@example.com');
-      await tester.enterText(fields.at(1), 'secret123');
+      await reachPasswordStep(tester, 'user@example.com');
+      // Step 1 advanced with no API call.
+      expect(repo.loginCalls, 0);
+      await tester.enterText(find.byType(TextField).first, 'secret123');
       await tester.pump();
       await tester.tap(find.text(t.loginActionContinue));
       await tester.pump();
@@ -49,12 +54,8 @@ void main() {
         onLoginSuccess: () => successes++,
       );
 
-      await tapAndSettleMode(tester, find.text(t.authMethodCode));
-      await tester.enterText(find.byType(TextField).first, '501234567');
-      await tester.pump();
-      await tester.tap(find.text(t.loginActionSendCode));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+      await reachCodeConfirm(tester, '501234567');
+      expect(find.text(t.loginStepCodeTitle), findsOneWidget);
 
       container.read(loginProvider.notifier).setOtp('123456');
       await tester.pump();
@@ -80,9 +81,8 @@ void main() {
         onLoginSuccess: () => successes++,
       );
 
-      final fields = find.byType(TextField);
-      await tester.enterText(fields.at(0), 'user@example.com');
-      await tester.enterText(fields.at(1), 'secret123');
+      await reachPasswordStep(tester, 'user@example.com');
+      await tester.enterText(find.byType(TextField).first, 'secret123');
       await tester.pump();
       await tester.tap(find.text(t.loginActionContinue));
       await tester.pump();

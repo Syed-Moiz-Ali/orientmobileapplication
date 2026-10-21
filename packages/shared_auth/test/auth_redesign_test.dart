@@ -1,9 +1,10 @@
-// Phase-2c verification: the C9 recomposition uses App* widgets everywhere,
-// the legacy auth controls are gone from the tree, contrast pairs measure AA,
-// and 320px + 1.3x text scale stay overflow-free.
+// Phase-2c verification (migrated to the step flow): the C16 step
+// recomposition uses App* widgets everywhere, the legacy auth controls are
+// gone from the tree (segmented switcher + cooldown ring removed by design),
+// contrast pairs measure AA, and 320px + 1.3x text scale stay overflow-free.
 //
 // Behavior assertions live in the 2b characterization files; this file pins
-// the redesign itself (structure, tokens, states, small screens).
+// the step-flow structure itself (steps, tokens, states, small screens).
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -88,15 +89,16 @@ Future<ProviderContainer> pumpForgotSmall(
   );
 }
 
-/// The auth column scrollable: the only vertical [Scrollable] in the tree
+/// The step scrollable: the vertical [Scrollable] inside the step scaffold
 /// (single-line fields own horizontal internals). Passed explicitly because
 /// [WidgetTester.scrollUntilVisible] cannot disambiguate on its own.
 Finder authColumnScrollable() => find.byWidgetPredicate(
       (w) => w is Scrollable && w.axis == Axis.vertical,
     );
 
-/// Scrolls [finder] into view inside the auth scrollable, then taps it.
-/// The 320px viewport leaves CTAs below the fold; a raw tap would miss.
+/// Scrolls [finder] into view inside the step scrollable, then taps it.
+/// The 320px viewport leaves fields below the fold; a raw tap would miss.
+/// The sticky CTA never needs this — it stays pinned above the keyboard.
 Future<void> tapVisible(WidgetTester tester, Finder finder) async {
   await tester.scrollUntilVisible(
     finder,
@@ -108,7 +110,7 @@ Future<void> tapVisible(WidgetTester tester, Finder finder) async {
   await tester.pump();
 }
 
-/// Scroll-aware variant of [tapAndSettleMode] for below-the-fold controls.
+/// Scroll-aware step advance for below-the-fold controls.
 Future<void> tapSettleVisible(WidgetTester tester, Finder finder) async {
   await tester.scrollUntilVisible(
     finder,
@@ -124,66 +126,71 @@ Future<void> tapSettleVisible(WidgetTester tester, Finder finder) async {
 void main() {
   setUpAll(loadAuthTestFonts);
 
-  group('App* composition (login)', () {
-    testWidgets('password mode renders App* controls only', (tester) async {
+  group('App* composition (login steps)', () {
+    testWidgets('step 1 renders App* step controls only', (tester) async {
       final t = enAuthL10n();
       await pumpLoginView(tester, onForgotPassword: () {});
 
-      // Raw-type byType cannot match the private _SignInMode instantiation;
-      // the predicate form matches any AppSegmentedControl.
+      // One step scaffold, step-1 headline, no segmented switcher anywhere.
+      expect(find.byType(AppStepScaffold), findsOneWidget);
+      expect(find.text(t.loginStepIdentifierTitle), findsOneWidget);
       final segmented = find.byWidgetPredicate(
         (w) => w is AppSegmentedControl<dynamic>,
       );
-      expect(segmented, findsOneWidget);
-      expect(
-        find.descendant(
-          of: segmented,
-          matching: find.text(t.authMethodPassword),
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(
-          of: segmented,
-          matching: find.text(t.authMethodCode),
-        ),
-        findsOneWidget,
-      );
-      // Identifier + password fields on the shared input.
-      expect(find.byType(AppInputField), findsNWidgets(2));
+      expect(segmented, findsNothing);
+      // Identifier-only: a single shared input on step 1.
+      expect(find.byType(AppInputField), findsOneWidget);
       expect(find.byType(AppPillButton), findsOneWidget);
       expect(
         find.widgetWithText(AppPillButton, t.loginActionContinue),
         findsOneWidget,
       );
-      // Secondary links are text buttons now.
-      expect(find.byType(AppTextButton), findsWidgets);
-      expect(find.text(t.loginActionForgotPassword), findsOneWidget);
+      // Alternative paths are outlined rows behind an "or" divider.
+      // (Step 1 carries no text-button links; the forgot link lives on the
+      // password step and resend on the confirm step.)
+      expect(find.byType(AppOrDivider), findsOneWidget);
+      expect(find.byType(AppAltAuthRow), findsWidgets);
+      expect(find.text(t.loginStepUseCodeInstead), findsOneWidget);
+      expect(find.byType(AppTextButton), findsNothing);
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('register mode keeps the strength slot on AppInputField',
+    testWidgets('password step keeps forgot link + password field',
+        (tester) async {
+      final t = enAuthL10n();
+      await pumpLoginView(tester, onForgotPassword: () {});
+      await reachPasswordStep(tester, 'user@example.com');
+
+      expect(find.text(t.loginStepPasswordTitle), findsOneWidget);
+      expect(find.byType(AppInputField), findsOneWidget);
+      expect(find.text(t.loginActionForgotPassword), findsOneWidget);
+      expect(find.byType(AppTextButton), findsWidgets);
+      expect(find.text(t.loginStepUseCodeInstead), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('register R3 keeps the strength slot on AppInputField',
         (tester) async {
       final t = enAuthL10n();
       await pumpLoginView(tester, allowRegistration: true);
-      await tapAndSettleMode(tester, find.text(t.loginNewCustomer));
+      await reachRegisterR3(tester, 'Sam Example', 'user@example.com');
 
       expect(find.byType(AuthPasswordStrength), findsOneWidget);
       expect(find.text(t.loginMinCharacters), findsOneWidget);
       expect(find.byType(AppPillButton), findsOneWidget);
+      expect(
+        find.widgetWithText(AppPillButton, t.loginActionCreateAccount),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('code mode keeps the token-styled OTP field', (tester) async {
+    testWidgets('code step keeps the token-styled OTP field', (tester) async {
       final t = enAuthL10n();
       await pumpLoginView(tester);
-      await tapAndSettleMode(tester, find.text(t.authMethodCode));
-      await tester.enterText(find.byType(TextField).first, '501234567');
-      await tester.pump();
-      await tester.tap(find.text(t.loginActionSendCode));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+      await reachCodeConfirm(tester, '501234567');
 
+      expect(find.text(t.loginStepCodeTitle), findsOneWidget);
       expect(find.byType(AuthOtpField), findsOneWidget);
       // OTP digits stay LTR-locked inside any layout direction.
       final ltr = find.ancestor(
@@ -195,24 +202,22 @@ void main() {
         ),
       );
       expect(ltr, findsWidgets);
-      // Resend is the rebuilt token control: ring + text button.
-      expect(find.byType(AuthResendAction), findsOneWidget);
+      // Resend is the isolated link + countdown row: no cooldown ring.
+      expect(find.byType(LoginResendRow), findsOneWidget);
       expect(find.byType(AppTextButton), findsWidgets);
-      expect(find.descendant(
-        of: find.byType(AuthResendAction),
-        matching: find.byType(CircularProgressIndicator),
-      ), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
       expect(tester.takeException(), isNull);
     });
   });
 
-  group('App* composition (forgot)', () {
-    testWidgets('identifier stage keeps the step progress + CTA',
+  group('App* composition (forgot steps)', () {
+    testWidgets('identifier stage keeps the step scaffold + CTA',
         (tester) async {
       final t = enAuthL10n();
       await pumpForgotView(tester);
 
-      expect(find.byType(AppStepProgress), findsOneWidget);
+      expect(find.byType(AppStepScaffold), findsOneWidget);
+      expect(find.text(t.forgotTitle), findsOneWidget);
       expect(find.byType(AppInputField), findsOneWidget);
       expect(
         find.widgetWithText(AppPillButton, t.forgotActionSendRecoveryCode),
@@ -385,30 +390,64 @@ void main() {
     });
   });
 
+  group('step keys resolve in en + ar with no blanks', () {
+    test('all eighteen step keys resolve with distinct ar copy', () {
+      final en = lookupSharedAuthLocalizations(const Locale('en'));
+      final ar = lookupSharedAuthLocalizations(const Locale('ar'));
+      final pairs = <String Function(SharedAuthLocalizations)>[
+        (t) => t.loginStepIdentifierTitle,
+        (t) => t.loginStepIdentifierSubtitle,
+        (t) => t.loginStepPasswordTitle,
+        (t) => t.loginStepRegisterNameTitle,
+        (t) => t.loginStepRegisterNameSubtitle,
+        (t) => t.loginStepRegisterContactTitle,
+        (t) => t.loginStepRegisterContactSubtitle,
+        (t) => t.loginStepRegisterPasswordTitle,
+        (t) => t.loginStepRegisterPasswordSubtitle,
+        (t) => t.loginStepUseCodeInstead,
+        (t) => t.loginStepUsePasswordInstead,
+        (t) => t.loginStepCreateAccountRow,
+        (t) => t.loginStepOr,
+        (t) => t.loginStepBack,
+      ];
+      for (final get in pairs) {
+        expect(get(en).trim(), isNotEmpty);
+        expect(get(ar).trim(), isNotEmpty);
+        expect(get(ar), isNot(equals(get(en))));
+      }
+      expect(en.loginStepProgress(1, 2), 'Step 1 of 2');
+      expect(ar.loginStepProgress(1, 2).trim(), isNotEmpty);
+      expect(en.loginStepPasswordSubtitle('sam@example.com'), contains('sam@example.com'));
+      expect(en.loginStepCodeDestination('X'), contains('X'));
+    });
+  });
+
   group('small screens (320px @ 1.3x)', () {
-    testWidgets('login password idle + field errors stay clean',
-        (tester) async {
+    testWidgets('step 1 + field errors stay clean', (tester) async {
       final t = enAuthL10n();
       await pumpLoginSmall(tester);
 
-      await tapVisible(tester, find.text(t.loginActionContinue));
+      expect(find.text(t.loginStepIdentifierTitle), findsOneWidget);
+      await tester.tap(find.text(t.loginActionContinue));
+      await tester.pump();
       expect(find.text(t.validationEnterIdentifier), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('register mode stays clean', (tester) async {
+    testWidgets('register R1-R3 stay clean', (tester) async {
       final t = enAuthL10n();
       await pumpLoginSmall(tester, allowRegistration: true);
-      await tapSettleVisible(tester, find.text(t.loginNewCustomer));
+      await tapSettleVisible(tester, find.text(t.loginStepCreateAccountRow));
 
-      expect(find.text(t.loginFieldFullName), findsOneWidget);
+      expect(find.text(t.loginStepRegisterNameTitle), findsOneWidget);
+      await tapVisible(tester, find.text(t.loginActionContinue));
+      expect(find.text(t.validationEnterName), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('code verify step stays clean', (tester) async {
+    testWidgets('code confirm step stays clean', (tester) async {
       final t = enAuthL10n();
       await pumpLoginSmall(tester);
-      await tapSettleVisible(tester, find.text(t.authMethodCode));
       await tester.scrollUntilVisible(
         find.byType(TextField).first,
         200,
@@ -417,10 +456,9 @@ void main() {
       await tester.pump();
       await tester.enterText(find.byType(TextField).first, '501234567');
       await tester.pump();
-      await tapVisible(tester, find.text(t.loginActionSendCode));
-      await tester.pump(const Duration(milliseconds: 300));
+      await tapSettleVisible(tester, find.text(t.loginStepUseCodeInstead));
 
-      expect(find.text(t.loginActionVerifyCode), findsOneWidget);
+      expect(find.text(t.loginStepCodeTitle), findsOneWidget);
       expect(find.byType(AuthOtpField), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
@@ -430,16 +468,19 @@ void main() {
       final t = enAuthL10n();
       await pumpForgotSmall(tester);
 
-      await tapVisible(tester, find.text(t.forgotActionSendRecoveryCode));
+      await tester.tap(find.text(t.forgotActionSendRecoveryCode));
+      await tester.pump();
       expect(find.text(t.validationEnterIdentifier), findsOneWidget);
 
       await tester.enterText(find.byType(TextField).first, '501234567');
       await tester.pump();
-      await tapVisible(tester, find.text(t.forgotActionSendRecoveryCode));
+      await tester.tap(find.text(t.forgotActionSendRecoveryCode));
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.text(t.forgotActionUpdatePassword), findsOneWidget);
 
-      await tapVisible(tester, find.text(t.forgotActionUpdatePassword));
+      await tester.tap(find.text(t.forgotActionUpdatePassword));
+      await tester.pump();
       expect(find.text(t.validationEnter6DigitRecovery), findsOneWidget);
       expect(find.text(t.validationUseAtLeast6), findsOneWidget);
       expect(tester.takeException(), isNull);

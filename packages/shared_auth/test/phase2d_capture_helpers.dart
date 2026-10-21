@@ -17,6 +17,19 @@
 // - 2b fakes (`FakeAuthRepository` / `FakeTokenStorage`) drive deterministic
 //   states (offline/500 failures, otpSent, cooldown).
 //
+// Step-flow notes (phase-2 recomposition, no switcher anymore):
+// - Step 1 ("Log in or sign up") Continue fires ZERO API calls (local
+//   validation + setter sync); the password step is the default step 2 for
+//   ALL apps; the code-confirm step is the secondary alternative behind the
+//   "Send me a code instead" row; register is its own R1/R2/R3 flow behind
+//   "New here? Create account" (customer only).
+// - The resend control is a plain link (`loginActionResendCode`) that becomes
+//   a disabled readable countdown (`loginActionResendIn`) while cooling down
+//   (no ring, no spinner) — finders assert the link + countdown text.
+// - Step headlines (`loginStepIdentifierTitle`, `loginStepPasswordTitle`,
+//   `loginStepCodeTitle`, `loginStepRegister*Title`) are the stable finders;
+//   the step dots + back arrow come from `AppStepScaffold`.
+//
 // Per-app hook strings are the English fallbacks from each app's router (what
 // the shared views receive when the app localizations are absent); customer
 // alone enables registration, matching its router.
@@ -135,7 +148,7 @@ const smallDpr = 2.0;
 const tabletSize = Size(1536, 2048);
 const tabletDpr = 2.0;
 
-/// `<app>_<screen>_<state>_<theme>_<scale>_<locale>_<width>x<height>.png`.
+/// `<app>_<screen>_<state>_<theme>_<scale>_<locale>_<w>x<h>.png`.
 String afterName({
   required String app,
   required String screen,
@@ -164,6 +177,16 @@ Finder authScroll() => find.byWidgetPredicate(
 Future<void> reveal(WidgetTester tester, Finder finder) async {
   await tester.scrollUntilVisible(finder, 200, scrollable: authScroll());
   await tester.pump();
+}
+
+/// Brings [finder] on screen, taps it, and retires the step transition
+/// (AnimatedSwitcher over the 220ms [AppMotion] token): one frame + 500ms.
+/// Below-the-fold rows at 320px would otherwise sit under the sticky CTA.
+Future<void> revealTapSettle(WidgetTester tester, Finder finder) async {
+  await reveal(tester, finder);
+  await tester.tap(finder);
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 500));
 }
 
 ThemeData _captureTheme(bool dark, Locale locale) => dark
@@ -341,42 +364,94 @@ Future<void> captureAfter(WidgetTester tester, String fileName) async {
   expect(tester.takeException(), isNull);
 }
 
-/// Switches the login form to code mode and retires the outgoing form.
-Future<void> switchToCodeMode(WidgetTester tester, Locale locale) async {
+/// Step 1 -> password step ("Welcome back"): enters [identifier] and taps the
+/// step-1 Continue. Fires ZERO API calls (local validation + setter sync).
+Future<void> reachStep2Password(
+  WidgetTester tester,
+  Locale locale, {
+  String identifier = '501234567',
+}) async {
   final t = bundleFor(locale);
-  await tapAndSettleMode(tester, find.text(t.authMethodCode));
+  await tester.enterText(find.byType(TextField).first, identifier);
+  await tester.pump();
+  await revealTapSettle(tester, find.text(t.loginActionContinue));
 }
 
-/// Sends a login code to a valid phone number (ends on the verify step with
-/// the in-flow success banner up and the resend cooldown at 30s).
+/// Step 1 -> code-confirm step ("Confirm your number"): enters [identifier]
+/// and taps the "Send me a code instead" alt row. Ends on the code step with
+/// the in-flow sent banner up and the resend cooldown at 30s.
 ///
-/// The entrance animation needs ~800ms of fake time before pixels are fully
-/// settled (finder assertions pass at +300ms, but the golden would catch
-/// the transition mid-slide).
-Future<void> sendLoginCode(WidgetTester tester, Locale locale) async {
+/// The entrance needs ~800ms of fake time before pixels are fully settled
+/// (finder assertions pass at +300ms, but the golden would catch the
+/// transition mid-slide); the cooldown has not ticked yet at 800ms, so the
+/// countdown deterministically reads 30s.
+Future<void> reachCodeStep(
+  WidgetTester tester,
+  Locale locale, {
+  String identifier = '501234567',
+}) async {
   final t = bundleFor(locale);
-  await tester.enterText(find.byType(TextField).first, '501234567');
+  await tester.enterText(find.byType(TextField).first, identifier);
   await tester.pump();
-  final cta = find.text(t.loginActionSendCode);
-  await reveal(tester, cta);
-  await tester.tap(cta);
+  final row = find.text(t.loginStepUseCodeInstead);
+  await reveal(tester, row);
+  await tester.tap(row);
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 300));
   await tester.pump(const Duration(milliseconds: 500));
 }
 
-/// Opens register mode (customer builds) and retires the outgoing form.
-Future<void> openRegisterMode(WidgetTester tester, Locale locale) async {
+/// Opens the register flow from step 1 (ends on R1 "What's your name?").
+/// Customer builds only.
+Future<void> openCaptureRegister(WidgetTester tester, Locale locale) async {
   final t = bundleFor(locale);
-  final toggle = find.text(t.loginNewCustomer);
-  await reveal(tester, toggle);
-  await tapAndSettleMode(tester, toggle);
+  await revealTapSettle(tester, find.text(t.loginStepCreateAccountRow));
+}
+
+/// Completes R1 with [name] (ends on R2). ZERO API calls.
+Future<void> continueCaptureRegisterName(
+  WidgetTester tester,
+  Locale locale, {
+  String name = 'Sam Example',
+}) async {
+  final t = bundleFor(locale);
+  await tester.enterText(find.byType(TextField).first, name);
+  await tester.pump();
+  await revealTapSettle(tester, find.text(t.loginActionContinue));
+}
+
+/// Completes R2 with [contact] (ends on R3 "Create your password").
+/// ZERO API calls.
+Future<void> continueCaptureRegisterContact(
+  WidgetTester tester,
+  Locale locale, {
+  String contact = 'user@example.com',
+}) async {
+  final t = bundleFor(locale);
+  await tester.enterText(find.byType(TextField).first, contact);
+  await tester.pump();
+  await revealTapSettle(tester, find.text(t.loginActionContinue));
+}
+
+/// Opens the register flow and walks R1 (name) + R2 (contact), landing on R3
+/// (create password). Fires ZERO API calls — R1/R2 Continue handlers are
+/// local validation only. The caller enters the password on R3 and taps the
+/// create-account CTA.
+Future<void> reachCaptureRegisterR3(
+  WidgetTester tester,
+  Locale locale, {
+  String name = 'Sam Example',
+  String contact = 'user@example.com',
+}) async {
+  await openCaptureRegister(tester, locale);
+  await continueCaptureRegisterName(tester, locale, name: name);
+  await continueCaptureRegisterContact(tester, locale, contact: contact);
 }
 
 /// Completes the forgot identifier step (ends on the reset stage with the
 /// in-flow code-sent banner up and the resend cooldown at 30s).
 ///
-/// Same ~800ms settle as [sendLoginCode]: the stage entrance must finish
+/// Same ~800ms settle as [reachCodeStep]: the stage entrance must finish
 /// before pixels are captured.
 Future<void> reachForgotReset(WidgetTester tester, Locale locale) async {
   final t = bundleFor(locale);

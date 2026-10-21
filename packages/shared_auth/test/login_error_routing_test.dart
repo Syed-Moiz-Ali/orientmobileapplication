@@ -1,8 +1,10 @@
-// Phase-2b characterization: field-vs-form error routing on login.
+// Phase-2b characterization: field-vs-form error routing on login (migrated
+// to the step flow).
 //
 // Field-mapped backend failures render INLINE on their field (no snackbar);
 // form-level failures (offline / 500) render as a snackbar WITH a retry
-// action. The 2c redesign must preserve this split.
+// action. The step flow preserves this split: identifier failures surface on
+// the password step's recap path, code failures on the confirm step.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_auth/shared_auth.dart';
@@ -10,14 +12,14 @@ import 'package:shared_core/shared_core.dart';
 
 import 'test_helpers.dart';
 
-/// Fills a valid identifier + password pair, then submits.
+/// Fills a valid identifier on Step 1, advances, fills a valid password on
+/// Step 2, then submits.
 Future<void> submitValidCredentials(
   WidgetTester tester,
   SharedAuthLocalizations t,
 ) async {
-  final fields = find.byType(TextField);
-  await tester.enterText(fields.at(0), 'user@example.com');
-  await tester.enterText(fields.at(1), 'secret123');
+  await reachPasswordStep(tester, 'user@example.com', l10n: t);
+  await tester.enterText(find.byType(TextField).first, 'secret123');
   await tester.pump();
   await tester.tap(find.text(t.loginActionContinue));
   await tester.pump();
@@ -67,13 +69,8 @@ void main() {
             const Failure(ValidationException('that otp is invalid'));
       final container = await pumpLoginView(tester, repo: repo);
 
-      // Switch to code mode, send the code (default success handler).
-      await tapAndSettleMode(tester, find.text(t.authMethodCode));
-      await tester.enterText(find.byType(TextField).first, '501234567');
-      await tester.pump();
-      await tester.tap(find.text(t.loginActionSendCode));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+      // Step 1 alt row sends the code (default success handler).
+      await reachCodeConfirm(tester, '501234567');
       expect(find.text(t.loginActionVerifyCode), findsOneWidget);
 
       container.read(loginProvider.notifier).setOtp('123456');
@@ -83,10 +80,13 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       // Canonical invalid-code copy (not the raw message) on the OTP field.
-      // The send-step success snackbar is still up; no error snackbar joins
+      // The masked destination line is still up; no error snackbar joins
       // it — code failures never surface as snackbars.
       expect(find.text(t.errorOtpInvalid), findsOneWidget);
-      expect(find.textContaining('Code sent to'), findsOneWidget);
+      expect(find.text(t.loginStepCodeTitle), findsOneWidget);
+      expect(find.textContaining('We sent a code to'), findsOneWidget);
+      expect(find.textContaining(maskedPhoneTail()), findsOneWidget);
+      expect(find.textContaining('501234567'), findsNothing);
       expect(tester.takeException(), isNull);
     });
   });
