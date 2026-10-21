@@ -45,8 +45,9 @@ class AppSegmentedOption<T> {
 ///   onSurface at 16.49:1 light / 18.19:1 dark); selected is textPrimary
 ///   semibold on a surface chip (never color alone: chip + e1 shadow in
 ///   light / outline border in dark + weight + `selected` Semantics).
-/// - Text scale 1.3x: labels ellipsize inside their segment; the control
-///   keeps its 40/48 geometry.
+/// - Narrow widths / text scale 1.3x: labels shrink to fit (FittedBox
+///   scaleDown) instead of truncating — primary mode labels must never
+///   ellipsize (phase-2 F-1/F-7). The control keeps its 40/48 geometry.
 class AppSegmentedControl<T> extends StatelessWidget {
   final List<AppSegmentedOption<T>> options;
   final T selected;
@@ -113,7 +114,7 @@ class AppSegmentedControl<T> extends StatelessWidget {
               child: Container(
                 height: 40,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
+                  horizontal: AppSpacing.md,
                 ),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
@@ -135,21 +136,27 @@ class AppSegmentedControl<T> extends StatelessWidget {
                         size: 18,
                         color: scheme.onSurface,
                       ),
-                      const SizedBox(width: AppSpacing.sm),
+                      const SizedBox(width: AppSpacing.xs),
                     ],
+                    // Shrink-to-fit (never ellipsis): at 320–360 px the two
+                    // labels share ~140 px each, so `One-time code` at 1.3x
+                    // scales down slightly instead of cutting to `One-ti…`.
                     Flexible(
-                      child: Text(
-                        option.label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                              // Unselected ink sits directly on the sunken track:
-                              // onSurface keeps >= 4.5 in both modes (see doc).
-                              color: scheme.onSurface,
-                              fontWeight: isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.w400,
-                            ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          option.label,
+                          maxLines: 1,
+                          softWrap: false,
+                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                // Unselected ink sits directly on the sunken track:
+                                // onSurface keeps >= 4.5 in both modes (see doc).
+                                color: scheme.onSurface,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                              ),
+                        ),
                       ),
                     ),
                   ],

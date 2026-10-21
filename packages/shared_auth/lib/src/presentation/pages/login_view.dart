@@ -62,12 +62,6 @@ class _LoginViewState extends ConsumerState<LoginView> {
   String? _passwordError;
   String? _nameError;
 
-  /// Tracks whether the one-time-code confirmation was already announced, so
-  /// the success snackbar fires exactly once per send (and again after the
-  /// next send). Form-level API failures surface as snackbars with a retry
-  /// action; field-level failures surface inline — never both, never nowhere.
-  bool _otpAnnounced = false;
-
   @override
   void dispose() {
     _identifierCtrl.dispose();
@@ -293,7 +287,6 @@ class _LoginViewState extends ConsumerState<LoginView> {
       _identifierError = null;
       _passwordError = null;
       _nameError = null;
-      _otpAnnounced = false;
     });
     _dismissSnack();
     notifier.reset();
@@ -322,25 +315,13 @@ class _LoginViewState extends ConsumerState<LoginView> {
       subtitle = t.loginWelcomeSubtitle;
     }
 
-    // One-time-code confirmation: announced once per send as a success
-    // snackbar (no banner). Post-frame because this runs inside build.
-    if (state.otpSent && !_otpAnnounced) {
-      _otpAnnounced = true;
-      final target = state.method == AuthMethod.email
-          ? state.email
-          : '${state.countryCode} ${state.phone}';
-      final sentCopy = t.loginCodeSent(target);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        showAppSnackBar(
-          context,
-          message: sentCopy,
-          tone: AppSnackBarTone.success,
-        );
-      });
-    } else if (!state.otpSent && _otpAnnounced) {
-      _otpAnnounced = false;
-    }
+    // One-time-code confirmation is an in-flow success banner rendered by
+    // the code form below (phase-2 F-4): it sits above the resend row in the
+    // scrollable column, so it can never overlay the countdown the way the
+    // previous floating snackbar did. It shows exactly while otpSent holds
+    // (once per send, again after the next send) and announces through the
+    // banner's live region. Form-level API failures still surface as
+    // snackbars with a retry action via _surfaceApiError.
 
     // Mapped OTP copy: expired vs incorrect codes get distinct text on the
     // OTP field itself (same grammar, no duplicate snackbar). Anything the
@@ -685,7 +666,16 @@ class _SignInPasswordForm extends StatelessWidget {
             const SizedBox(height: AppDimensions.s4),
             Align(
               alignment: AlignmentDirectional.centerEnd,
-              child: AppTextButton(label: t.loginActionForgotPassword, onPressed: busy ? null : onForgotPassword),
+              // UnconstrainedBox: AppTextButton's Container carries an
+              // alignment and would otherwise expand to the column width
+              // (centering the label); the link hugs its content at the
+              // field end, as before.
+              child: UnconstrainedBox(
+                alignment: AlignmentDirectional.center,
+                child: AppTextButton(
+                    label: t.loginActionForgotPassword,
+                    onPressed: busy ? null : onForgotPassword),
+              ),
             ),
           ],
           const SizedBox(height: AppDimensions.s24),
@@ -858,10 +848,20 @@ class _CodeForm extends StatelessWidget {
     final t = SharedAuthL10n.of(context);
 
     if (state.otpSent) {
+      final target = state.method == AuthMethod.email
+          ? state.email
+          : '${state.countryCode} ${state.phone}';
       return AutofillGroup(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // In-flow sent confirmation (F-4): above the OTP field, so the
+            // resend row below the CTA never sits under an overlay.
+            AppBanner(
+              kind: AppBannerKind.success,
+              message: t.loginCodeSent(target),
+            ),
+            const SizedBox(height: AppDimensions.s20),
             AuthOtpField(
               onChanged: onOtpChanged,
               errorText: otpError,

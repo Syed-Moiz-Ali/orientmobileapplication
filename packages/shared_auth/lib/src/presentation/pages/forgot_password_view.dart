@@ -172,13 +172,10 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
           _stage = _RecoveryStage.reset;
         });
         _startCooldown();
-        // Code-sent confirmation: success snackbar, no banner. Values in the
-        // controllers are preserved for the reset step.
-        showAppSnackBar(
-          context,
-          message: t.forgotCodeSent(_maskedDestination),
-          tone: AppSnackBarTone.success,
-        );
+        // Code-sent confirmation is an in-flow success banner at the top of
+        // the reset step (phase-2 F-4) — never a floating snackbar, so it
+        // can never overlay the resend countdown. Values in the controllers
+        // are preserved for the reset step.
       },
       failure: (error) {
         final display = mapAuthError(error, t);
@@ -343,6 +340,7 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
             key: const ValueKey('reset'),
             passwordCtrl: _passwordCtrl,
             password: _password,
+            sentMessage: t.forgotCodeSent(_maskedDestination),
             codeError: _codeError,
             passwordError: _passwordError,
             isLoading: _isLoading,
@@ -513,6 +511,7 @@ class _IdentifierStep extends StatelessWidget {
 class _ResetStep extends StatelessWidget {
   final TextEditingController passwordCtrl;
   final String password;
+  final String sentMessage;
   final String? codeError;
   final String? passwordError;
   final bool isLoading;
@@ -528,6 +527,7 @@ class _ResetStep extends StatelessWidget {
     super.key,
     required this.passwordCtrl,
     required this.password,
+    required this.sentMessage,
     required this.codeError,
     required this.passwordError,
     required this.isLoading,
@@ -548,6 +548,14 @@ class _ResetStep extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // In-flow sent confirmation (F-4): pinned above the OTP field with
+          // the resend row kept below the CTA, so banner and countdown can
+          // never overlap at 360×800. The page stays scrollable.
+          AppBanner(
+            kind: AppBannerKind.success,
+            message: sentMessage,
+          ),
+          const SizedBox(height: AppDimensions.s20),
           AuthOtpField(
             label: t.forgotFieldRecoveryCode,
             onChanged: onOtpChanged,
@@ -612,6 +620,9 @@ class _ResetStep extends StatelessWidget {
 /// Redesigned (phase-2c): a warm layered emblem — soft success halo, solid
 /// success disc, white check — announced once as a live region under the
 /// shell's done title/subtitle, then the single full-width return CTA.
+/// The subtitle lives ONLY in the shell (phase-2 F-5: the second body copy
+/// under the emblem was deleted — a terminal screen must not repeat its own
+/// sentence).
 class _RecoverySuccess extends StatelessWidget {
   final VoidCallback onBackToLogin;
 
@@ -659,15 +670,6 @@ class _RecoverySuccess extends StatelessWidget {
                   ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(height: AppDimensions.s12),
-          Text(
-            t.forgotDoneSubtitle,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              height: 1.5,
             ),
           ),
           const SizedBox(height: AppDimensions.s24),

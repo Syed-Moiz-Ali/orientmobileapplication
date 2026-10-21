@@ -37,8 +37,9 @@ void main() {
       expect(container.read(loginProvider).otpSent, isTrue);
       expect(find.text(t.loginActionVerifyCode), findsOneWidget);
       expect(find.byType(AuthOtpField), findsOneWidget);
-      // One-time-code confirmation arrives as a success snackbar.
-      expect(find.byType(SnackBar), findsOneWidget);
+      // One-time-code confirmation arrives as an in-flow success banner
+      // (phase-2 F-4: never an overlay, so it can't cover the resend row).
+      expect(find.byType(AppBanner), findsOneWidget);
       expect(find.textContaining('Code sent to'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
@@ -61,7 +62,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.text(t.errorOtpExpired), findsOneWidget);
-      // The send-step success snackbar is still up; no error snackbar joins
+      // The send-step success banner is still up; no error snackbar joins
       // it — code failures never surface as snackbars.
       expect(find.textContaining('Code sent to'), findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -87,7 +88,7 @@ void main() {
 
       expect(find.text(t.errorOtpInvalid), findsOneWidget);
       expect(find.text(t.errorOtpExpired), findsNothing);
-      // No error snackbar either — the send-step success one stands alone.
+      // No error snackbar either — the send-step success banner stands alone.
       expect(find.textContaining('Code sent to'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });

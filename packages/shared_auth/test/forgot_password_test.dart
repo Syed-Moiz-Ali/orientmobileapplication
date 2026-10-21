@@ -82,7 +82,9 @@ void main() {
       expect(find.text(t.forgotFieldNewPassword), findsWidgets);
       expect(find.text(t.forgotFieldRecoveryCode), findsOneWidget);
       expect(find.text(t.forgotActionUpdatePassword), findsOneWidget);
-      expect(find.byType(SnackBar), findsOneWidget);
+      // Code-sent confirmation is the in-flow success banner (phase-2 F-4),
+      // announced once via its live region — never an overlay.
+      expect(find.byType(AppBanner), findsOneWidget);
       expect(find.textContaining('Recovery code sent to'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await drainForgotCooldown(tester);
@@ -125,8 +127,9 @@ void main() {
 
       expect(repo.resetCalls, 1);
       expect(find.text(t.errorOtpExpired), findsOneWidget);
-      // Editing the OTP dismisses the code-sent success snackbar by design,
-      // and the code-mapped failure adds no error snackbar — inline only.
+      // Editing the OTP hides any snackbar by design (the code-sent
+      // confirmation itself is the in-flow banner, unaffected), and the
+      // code-mapped failure adds no error snackbar — inline only.
       expect(find.byType(SnackBar), findsNothing);
       expect(tester.takeException(), isNull);
       await drainForgotCooldown(tester);
