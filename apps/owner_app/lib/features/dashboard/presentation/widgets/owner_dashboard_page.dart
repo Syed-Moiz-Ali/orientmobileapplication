@@ -6,6 +6,7 @@ import 'package:shared_core/shared_core.dart';
 import 'package:owner_app/core/router/app_router.dart';
 import 'package:owner_app/features/dashboard/domain/entities/dashboard_entities.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/dashboard_ui_providers.dart';
+import 'package:owner_app/features/dashboard/presentation/widgets/owner_search.dart';
 import 'package:owner_app/l10n/gen/owner_localizations.dart';
 
 /// Presentation-only derivation over the frozen adapter figures.
@@ -28,16 +29,21 @@ OwnerKpi? _findKpi(List<OwnerKpi> kpis, List<String> keys) {
 TelemetryTrend _trendOf(String sub) =>
     sub.trim().startsWith('-') ? TelemetryTrend.down : TelemetryTrend.up;
 
-/// Executive cockpit (O1, Archetype 8): revenue hero → micro-pods → telemetry
-/// curves → job register → quick actions. Every figure is a frozen adapter
-/// value rendered verbatim; missing series render placeholders, never zeros
-/// dressed as data. Desktop is a 3-column panoramic console (never a
-/// stretched phone); compact stacks with swipeable chart pages.
+/// Executive cockpit (O1, Archetype 8): revenue hero → micro-pods → blocker
+/// banner → telemetry curves → job register → quick actions. Every figure is
+/// a frozen adapter value rendered verbatim; missing series render
+/// placeholders, never zeros dressed as data. Desktop is a 3-column
+/// panoramic console (never a stretched phone); compact stacks the curves
+/// (no swipeable pages) with the record-row register fallback. Presentation
+/// only: providers/routes/sync/refresh/period logic, filter predicates,
+/// bottom nav + rail, pull-to-refresh, haptics and keys are untouched.
 class OwnerDashboardPage extends ConsumerWidget {
   const OwnerDashboardPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = OwnerLocalizations.of(context)!;
+    final coreT = SharedCoreL10n.of(context);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final state = ref.watch(dashboardUiProvider);
@@ -55,7 +61,7 @@ class OwnerDashboardPage extends ConsumerWidget {
         register.isNotEmpty;
 
     if (state.isLoading && !hasAnyData) {
-      return const AppSkeleton.page();
+      return const _HomeSkeleton();
     }
 
     final wide = context.adaptive.pick(
@@ -81,18 +87,21 @@ class OwnerDashboardPage extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (state.errorMessage != null) ...[
-              ErrorView(
+              AppErrorState(
+                title: t.ownerHomeLoadError,
                 message: state.errorMessage!,
                 onRetry: notifier.refresh,
+                retryLabel: coreT.commonRetry,
               ),
               const SizedBox(height: AppDimensions.s16),
             ],
-            const _CockpitHeader(),
+            _HomeHeader(kpis: kpis),
             const SizedBox(height: AppDimensions.s20),
             _RevenueHero(kpis: kpis),
             const SizedBox(height: AppDimensions.s20),
             _MicroPods(kpis: kpis),
             const SizedBox(height: AppDimensions.s24),
+            _ApprovalsBlocker(kpis: kpis),
             if (wide)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,9 +123,9 @@ class OwnerDashboardPage extends ConsumerWidget {
                     child: _JobRegister(items: register),
                   ),
                   const SizedBox(width: AppDimensions.s24),
-                  Expanded(
+                  const Expanded(
                     flex: 3,
-                    child: _QuickActions(narrow: true),
+                    child: _QuickActions(),
                   ),
                 ],
               )
@@ -128,17 +137,15 @@ class OwnerDashboardPage extends ConsumerWidget {
               const SizedBox(height: AppDimensions.s24),
               _JobRegister(items: register),
               const SizedBox(height: AppDimensions.s24),
-              const _QuickActions(narrow: false),
+              const _QuickActions(),
             ] else ...[
-              _SwipeCharts(
-                sales: sales,
-                profit: profit,
-                expenses: expenses,
-              ),
+              _RevenueCurve(sales: sales, profit: profit),
+              const SizedBox(height: AppDimensions.s24),
+              _CostCurve(profit: profit, expenses: expenses),
               const SizedBox(height: AppDimensions.s24),
               _JobRegister(items: register),
               const SizedBox(height: AppDimensions.s24),
-              const _QuickActions(narrow: false),
+              const _QuickActions(),
             ],
             const SizedBox(height: 80),
           ],
@@ -148,18 +155,64 @@ class OwnerDashboardPage extends ConsumerWidget {
   }
 }
 
-/// Cockpit wayfinding: title + live/count pills derived from the real KPI
-/// list (same faces as the 07.1 header, now localized).
-class _CockpitHeader extends ConsumerWidget {
-  const _CockpitHeader();
+/// Layout-mirroring loading skeleton: header lines + hero card + pod row +
+/// chart card + register rows. Same radii/heights as the content stills.
+class _HomeSkeleton extends StatelessWidget {
+  const _HomeSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final adaptive = context.adaptive;
+    final pods = adaptive.isCompact ? 2 : 3;
+    return AppResponsivePage(
+      physics: const NeverScrollableScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const AppShimmerSkeleton.textBlock(lines: 2),
+          const SizedBox(height: AppDimensions.s20),
+          const AppShimmerSkeleton.card(height: 148),
+          const SizedBox(height: AppDimensions.s20),
+          Row(
+            children: [
+              for (var i = 0; i < pods; i++) ...[
+                if (i > 0) const SizedBox(width: AppDimensions.s12),
+                const Expanded(child: AppShimmerSkeleton.card(height: 132)),
+              ],
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s24),
+          const AppShimmerSkeleton.card(height: 190),
+          const SizedBox(height: AppDimensions.s24),
+          const AppShimmerSkeleton.listRows(rows: 3),
+        ],
+      ),
+    );
+  }
+}
+
+/// Home wayfinding: ops title + branch subtitle with the end-side search
+/// action opening the existing command palette (U1, same destination set as
+/// the shell trigger), then live/count pills rebuilt on shared atoms.
+///
+/// The search glyph sits on the SAME row as the title on EVERY breakpoint
+/// (plain Row, not AppPageHeader whose compact layout stacks actions below
+/// the subtitle) — the Row mirrors in RTL so the action stays end-side.
+/// Same strings, same text styles, same AppIconButton contract.
+///
+/// The KPI lists arrive from the notifier (frozen derivation below); the
+/// header itself takes them as plain parameters so it rebuilds with the
+/// data instead of freezing on the first content frame.
+class _HomeHeader extends ConsumerWidget {
+  final List<OwnerKpi> kpis;
+
+  const _HomeHeader({required this.kpis});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = OwnerLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final semantic = context.semanticColors;
-    final kpis = ref.read(dashboardUiProvider.notifier).kpis;
 
     final active =
         _findKpi(kpis, ['open', 'active']) ?? (kpis.isEmpty ? null : kpis.first);
@@ -168,46 +221,59 @@ class _CockpitHeader extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AppPageHeader(
-          title: t.ownerOpsTitle,
-          subtitle: t.ownerOpsSubtitle,
-          trailing: Container(
-            padding: const EdgeInsets.all(AppDimensions.s8),
-            decoration: BoxDecoration(
-              color: colors.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    t.ownerOpsTitle,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: colors.onSurface,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  const SizedBox(height: AppDimensions.s4),
+                  Text(
+                    t.ownerOpsSubtitle,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colors.onSurfaceVariant,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: Icon(
-              Icons.analytics_rounded,
-              color: colors.primary,
-              size: AppDimensions.iconMd,
+            const SizedBox(width: AppDimensions.s8),
+            AppIconButton(
+              icon: Icons.search_rounded,
+              tooltip: t.ownerSearchHint,
+              onPressed: () => openOwnerSearch(context, ref),
             ),
-          ),
+          ],
         ),
         const SizedBox(height: AppDimensions.s12),
         Wrap(
           spacing: AppDimensions.s8,
           runSpacing: AppDimensions.s8,
           children: [
-            StatusPill(
+            AppStatusChip(
               label: t.ownerPillLive,
-              showDot: true,
-              fg: colors.primary,
-              bg: colors.primary.withValues(alpha: 0.10),
+              kind: AppStatusKind.accent,
             ),
             if (active != null)
-              StatusPill(
+              AppStatusChip(
                 label: t.ownerPillActive(active.value),
-                icon: Icons.directions_car_rounded,
-                fg: colors.primary,
-                bg: colors.primary.withValues(alpha: 0.10),
+                kind: AppStatusKind.info,
               ),
             if (fresh != null)
-              StatusPill(
+              AppStatusChip(
                 label: t.ownerPillToday(fresh.value),
-                icon: Icons.check_circle_rounded,
-                fg: semantic.success.base,
-                bg: semantic.success.subtle,
+                kind: AppStatusKind.success,
               ),
           ],
         ),
@@ -216,8 +282,8 @@ class _CockpitHeader extends ConsumerWidget {
   }
 }
 
-/// Revenue ticker hero: the revenue KPI (or the first KPI when the server
-/// does not label one) as a hero pod with its verbatim delta line. No
+/// Revenue hero: the revenue KPI (or the first KPI when the server does not
+/// label one) as a single wide KPI card with its verbatim delta line. No
 /// revenue KPI on record renders an explicit empty state — never a zero.
 class _RevenueHero extends StatelessWidget {
   final List<OwnerKpi> kpis;
@@ -231,23 +297,30 @@ class _RevenueHero extends StatelessWidget {
         (kpis.isEmpty ? null : kpis.first);
 
     if (hero == null) {
-      return EmptyState(
+      return AppEmptyState(
         icon: Icons.payments_outlined,
-        message: t.ownerHeroEmpty,
+        title: t.ownerHeroEmpty,
+        message: t.ownerHeroEmptyHint,
       );
     }
-    final delta = hero.sub.trim().isEmpty ? null : hero.sub.trim();
+    final delta = hero.sub.trim();
     // Server values stay verbatim; the LTR lock keeps `AED 84K`-style figures
     // reading correctly inside RTL layouts.
     return Directionality(
       textDirection: TextDirection.ltr,
-      child: TelemetryMetricPod(
-        isHero: true,
+      child: AppKpiCard.wide(
         label: hero.label,
         value: hero.value,
-        deltaLabel: delta,
-        trend: delta == null ? TelemetryTrend.flat : _trendOf(delta),
+        // ONE delta line: the trend badge already renders the verbatim
+        // sub-line, so supportingText would read it twice.
+        trend: delta.isEmpty
+            ? null
+            : KpiTrend(
+                label: delta,
+                isPositive: _trendOf(hero.sub) == TelemetryTrend.up,
+              ),
         icon: hero.icon,
+        semanticState: hero.state,
       ),
     );
   }
@@ -271,31 +344,47 @@ class _MicroPods extends StatelessWidget {
     if (pods.isEmpty) return const SizedBox.shrink();
 
     final adaptive = context.adaptive;
+    // Same scale-aware grid contract as the sibling KpiGrid: 2 columns of
+    // short cards on compact phones (single column only below 360px), and
+    // the cell aspect relaxes with the system text scale so tiles grow
+    // instead of clipping at 1.3x+. Medium+ keep one row per pod family.
+    // Compact base 1.1: at 360px the 158px cell is ~144px tall against
+    // ~94px of tile content (verified in widget tests), so the 2-col tiles
+    // fit with no overflow and no dead square space; hero + pod row +
+    // banner stay above the fold.
+    final textScale =
+        MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 2.0);
+    final compactAspect = (adaptive.isSmallMobile ? 2.15 : 1.1) / textScale;
     return AppAdaptiveGrid(
-      columns: adaptive.pick(
-        compact: pods.length == 1 ? 1 : 2,
-        medium: pods.length,
-        expanded: pods.length,
-        large: pods.length,
-      ),
-      minChildWidth: adaptive.isCompact ? 160 : 200,
+      columns: adaptive.isSmallMobile
+          ? 1
+          : adaptive.pick(
+              compact: pods.length == 1 ? 1 : 2,
+              medium: pods.length,
+              expanded: pods.length,
+              large: pods.length,
+            ),
+      minChildWidth: adaptive.isCompact ? 142 : 200,
+      childAspectRatio: adaptive.isCompact ? compactAspect : 1,
       spacing: adaptive.itemSpacing,
       runSpacing: adaptive.itemSpacing,
       children: [
         for (final pod in pods)
           Directionality(
             textDirection: TextDirection.ltr,
-            // The delta badge already renders the verbatim sub-line; a
-            // supporting twin would double the row and squeeze 320px cells.
-            child: TelemetryMetricPod(
+            child: AppKpiCard(
               label: pod.label,
               value: pod.value,
-              deltaLabel:
-                  pod.sub.trim().isEmpty ? null : pod.sub.trim(),
+              // ONE delta line: the trend badge already renders the verbatim
+              // sub-line (see hero).
               trend: pod.sub.trim().isEmpty
-                  ? TelemetryTrend.flat
-                  : _trendOf(pod.sub),
+                  ? null
+                  : KpiTrend(
+                      label: pod.sub.trim(),
+                      isPositive: _trendOf(pod.sub) == TelemetryTrend.up,
+                    ),
               icon: pod.icon,
+              semanticState: pod.state,
             ),
           ),
       ],
@@ -303,9 +392,46 @@ class _MicroPods extends StatelessWidget {
   }
 }
 
-/// Shared curve-card chrome: section header, legend in chart-palette order
-/// (mirrored in RTL by the theme), the sparkline itself, and a first/last
-/// month rule. Empty series render the chart placeholder — never a blank.
+/// Conditional blocker: the approvals-WIP KPI becomes an inline banner only
+/// when the family exists and work is actually waiting. The value renders
+/// verbatim; the drill opens the read-only triage queue (no decision
+/// buttons exist anywhere on this surface).
+class _ApprovalsBlocker extends StatelessWidget {
+  final List<OwnerKpi> kpis;
+
+  const _ApprovalsBlocker({required this.kpis});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = OwnerLocalizations.of(context)!;
+    final approvals = _findKpi(kpis, ['approval']);
+    if (approvals == null) return const SizedBox.shrink();
+    // Visibility only — never a figure change: unparseable values stay
+    // visible (the family exists), an explicit zero stays silent.
+    final pending = int.tryParse(approvals.value.trim());
+    if (pending != null && pending <= 0) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AppBanner(
+          kind: AppBannerKind.warning,
+          message: t.ownerHomeApprovalsBanner(approvals.value),
+          actionLabel: t.ownerRegisterAll,
+          onAction: () {
+            HapticFeedback.selectionClick();
+            context.push(AppRoutes.pendingApprovals);
+          },
+        ),
+        const SizedBox(height: AppDimensions.s24),
+      ],
+    );
+  }
+}
+
+/// Shared chart card: section header, legend in chart-palette order (mirrored
+/// in RTL by the theme), the sparkline itself, and a first/last month rule.
+/// Empty series render the chart placeholder — never a blank.
 class _CurveCard extends StatelessWidget {
   final String title;
   final List<String> legendLabels;
@@ -452,83 +578,15 @@ class _CostCurve extends StatelessWidget {
   }
 }
 
-/// Compact-only swipeable charts: the two curves as pages with dots. Wider
-/// viewports use the split/3-column layouts above instead.
-class _SwipeCharts extends StatefulWidget {
-  final List<SalesTrendPoint> sales;
-  final List<SalesTrendPoint> profit;
-  final List<SalesTrendPoint> expenses;
-
-  const _SwipeCharts({
-    required this.sales,
-    required this.profit,
-    required this.expenses,
-  });
-
-  @override
-  State<_SwipeCharts> createState() => _SwipeChartsState();
-}
-
-class _SwipeChartsState extends State<_SwipeCharts> {
-  final _controller = PageController();
-  int _page = 0;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Column(
-      children: [
-        SizedBox(
-          // 320px @1.3x wraps the legend to two lines; the fixed height
-          // covers both densities without clipping.
-          height: 320,
-          child: PageView(
-            controller: _controller,
-            onPageChanged: (i) => setState(() => _page = i),
-            children: [
-              _RevenueCurve(sales: widget.sales, profit: widget.profit),
-              _CostCurve(profit: widget.profit, expenses: widget.expenses),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppDimensions.s10),
-        Semantics(
-          label: 'Page ${_page + 1} of 2',
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              for (var i = 0; i < 2; i++)
-                Container(
-                  width: 7,
-                  height: 7,
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.s4,
-                  ),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: i == _page
-                        ? colors.primary
-                        : colors.outlineVariant,
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Job register: dense sortable-feel table on desktop (sticky-ready AppTable
-/// with a compact record-row fallback on phones), tapping a row opens the
-/// real register. Empty renders the table empty state, never blank space.
+/// Job register: sortable-feel table on medium+ screens, an `AppListGroup`
+/// of value rows with Show-all on compact (capped at five rows so the
+/// section never pushes the quick actions off a small still). Any row — or
+/// the Show-all — opens the real register. Empty renders an honest empty
+/// state, never blank space.
 class _JobRegister extends StatelessWidget {
+  /// Compact rows shown before the Show-all appears.
+  static const int _compactWindow = 5;
+
   final List<JobCardRegisterItem> items;
 
   const _JobRegister({required this.items});
@@ -537,59 +595,88 @@ class _JobRegister extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = OwnerLocalizations.of(context)!;
     final formatters = AppFormatters.of(context);
+    final compact = context.adaptive.isCompact;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SectionHeader(
-          title: t.ownerRegisterTitle,
-          trailing: TextButton(
-            onPressed: () {
-              HapticFeedback.selectionClick();
-              context.push(AppRoutes.jobCards);
-            },
-            child: Text(t.ownerRegisterAll),
-          ),
-        ),
-        AppTable<JobCardRegisterItem>(
-          columns: [
-            AppTableColumn(label: t.ownerRegisterCategory, flex: 3),
-            AppTableColumn(label: t.ownerRegisterOpen, flex: 2),
-            AppTableColumn(label: t.ownerRegisterTotal, flex: 2),
-          ],
-          items: items,
-          cells: (context, item) => [
-            AppTableCell.text(context, item.label),
-            AppTableCell.numeric(context, formatters.group(item.open)),
-            AppTableCell.numeric(context, formatters.group(item.total)),
-          ],
-          onRowTap: (item) {
-            HapticFeedback.selectionClick();
-            context.push(AppRoutes.jobCards);
-          },
-          emptyMessage: t.ownerRegisterEmpty,
-          compactBuilder: (context, item) => Padding(
-            padding: const EdgeInsets.only(bottom: AppDimensions.s8),
-            child: AppRecordRow(
-              title: item.label,
-              metadata: Directionality(
-                textDirection: TextDirection.ltr,
-                child: Text(
-                  '${t.ownerRegisterOpen}: ${formatters.group(item.open)} · '
-                  '${t.ownerRegisterTotal}: ${formatters.group(item.total)}',
-                  style: AppTextStyles.mono(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-              onTap: () {
-                HapticFeedback.selectionClick();
-                context.push(AppRoutes.jobCards);
-              },
+    Widget section(Widget body) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SectionHeader(
+              title: t.ownerRegisterTitle,
+              trailing: items.isEmpty
+                  ? null
+                  : TextButton(
+                      onPressed: () {
+                        HapticFeedback.selectionClick();
+                        context.push(AppRoutes.jobCards);
+                      },
+                      child: Text(t.ownerRegisterAll),
+                    ),
             ),
+            body,
+          ],
+        );
+
+    if (compact) {
+      if (items.isEmpty) {
+        return section(
+          AppEmptyState(
+            icon: Icons.assignment_outlined,
+            title: t.ownerRegisterEmpty,
+            message: t.ownerRegisterEmptyHint,
           ),
+        );
+      }
+      final shown = items.take(_compactWindow).toList();
+      final hasMore = items.length > shown.length;
+      return section(
+        AppListGroup(
+          items: [
+            for (final item in shown)
+              AppListGroupItem(
+                title: item.label,
+                valueText:
+                    '${t.ownerRegisterOpen}: ${formatters.group(item.open)} · '
+                    '${t.ownerRegisterTotal}: ${formatters.group(item.total)}',
+                showChevron: true,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  context.push(AppRoutes.jobCards);
+                },
+              ),
+            if (hasMore)
+              AppListGroupItem(
+                leadingIcon: Icons.expand_more_rounded,
+                title: t.ownerRegisterAll,
+                showChevron: false,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  context.push(AppRoutes.jobCards);
+                },
+              ),
+          ],
         ),
-      ],
+      );
+    }
+
+    return section(
+      AppTable<JobCardRegisterItem>(
+        columns: [
+          AppTableColumn(label: t.ownerRegisterCategory, flex: 3),
+          AppTableColumn(label: t.ownerRegisterOpen, flex: 2),
+          AppTableColumn(label: t.ownerRegisterTotal, flex: 2),
+        ],
+        items: items,
+        cells: (context, item) => [
+          AppTableCell.text(context, item.label),
+          AppTableCell.numeric(context, formatters.group(item.open)),
+          AppTableCell.numeric(context, formatters.group(item.total)),
+        ],
+        onRowTap: (item) {
+          HapticFeedback.selectionClick();
+          context.push(AppRoutes.jobCards);
+        },
+        emptyMessage: t.ownerRegisterEmpty,
+      ),
     );
   }
 }
@@ -608,20 +695,29 @@ class _ActionDef {
   });
 }
 
-/// Quick actions: the twelve real destinations as shared record rows in an
-/// adaptive grid. Accent hexes are gone — every tile resolves theme ink.
-class _QuickActions extends ConsumerWidget {
-  final bool narrow;
-
-  const _QuickActions({required this.narrow});
+/// Quick actions: the twelve real destinations — the top four as equal tiles
+/// in one row (two-by-two on compact so labels never clip at 1.3x), the
+/// remaining eight behind an inline Show-all list group. No destination is
+/// dropped or invented; routes and tab targets are unchanged.
+class _QuickActions extends ConsumerStatefulWidget {
+  const _QuickActions();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_QuickActions> createState() => _QuickActionsState();
+}
+
+class _QuickActionsState extends ConsumerState<_QuickActions> {
+  /// Inline expansion for the overflow destinations (presentation-only local
+  /// state; the destinations themselves are unchanged).
+  var _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
     final t = OwnerLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final notifier = ref.read(dashboardUiProvider.notifier);
-    final adaptive = context.adaptive;
+    final compact = context.adaptive.isCompact;
 
     void push(String route) => context.push(route);
 
@@ -700,8 +796,15 @@ class _QuickActions extends ConsumerWidget {
       ),
     ];
 
-    Widget tile(_ActionDef action) => AppRecordRow(
-          leading: Container(
+    const topCount = 4;
+    final top = actions.take(topCount).toList();
+    final rest = actions.skip(topCount).toList();
+
+    Widget tile(_ActionDef action) {
+      final body = Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
             width: 40,
             height: 40,
             decoration: BoxDecoration(
@@ -717,19 +820,54 @@ class _QuickActions extends ConsumerWidget {
               size: AppDimensions.iconMd,
             ),
           ),
-          title: action.label,
-          subtitle: action.hint,
+          const SizedBox(height: AppDimensions.s8),
+          Text(
+            action.label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: colors.onSurface,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      );
+
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
           onTap: () {
             HapticFeedback.selectionClick();
             action.run(context, notifier);
           },
+          borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 72),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.s8,
+                vertical: AppDimensions.s10,
+              ),
+              child: Center(child: body),
+            ),
+          ),
+        ),
+      );
+    }
+
+    Widget topRow(List<_ActionDef> row) => IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var i = 0; i < row.length; i++) ...[
+                if (i > 0) const SizedBox(width: AppDimensions.s10),
+                Expanded(child: tile(row[i])),
+              ],
+            ],
+          ),
         );
 
-    // A single column renders as an intrinsic-height stream: fixed-height
-    // grid cells clip two-line subtitles at 1.3x (audited 320/1280px), so
-    // the grid is only used multi-column.
-    final singleColumn =
-        narrow || adaptive.isCompact;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -737,25 +875,42 @@ class _QuickActions extends ConsumerWidget {
           header: true,
           child: SectionHeader(title: t.ownerActionsTitle),
         ),
-        if (singleColumn)
-          for (final action in actions) ...[
-            tile(action),
+        if (compact)
+          for (var i = 0; i < top.length; i += 2) ...[
+            topRow(top.sublist(i, (i + 2).clamp(0, top.length))),
             const SizedBox(height: AppDimensions.s10),
           ]
         else
-          AppAdaptiveGrid(
-            columns: adaptive.pick(compact: 1, medium: 3, expanded: 4, large: 4),
-            minChildWidth: 200,
-            spacing: AppDimensions.s10,
-            runSpacing: AppDimensions.s10,
-            childAspectRatio: adaptive.pick(
-              compact: 3.4,
-              // 800px @1.3x needs the extra height for two-line subtitles.
-              medium: 1.3,
-              expanded: 1.8,
-              large: 2.0,
-            ),
-            children: [for (final action in actions) tile(action)],
+          topRow(top),
+        const SizedBox(height: AppDimensions.s10),
+        if (rest.isNotEmpty && !_expanded)
+          AppListGroup(
+            items: [
+              AppListGroupItem(
+                leadingIcon: Icons.expand_more_rounded,
+                title: t.ownerRegisterAll,
+                subtitle: rest.map((a) => a.label).take(3).join(' · '),
+                showChevron: false,
+                onTap: () => setState(() => _expanded = true),
+              ),
+            ],
+          )
+        else if (rest.isNotEmpty)
+          AppListGroup(
+            items: [
+              for (final action in rest)
+                AppListGroupItem(
+                  leadingIcon: action.icon,
+                  accentLeading: true,
+                  title: action.label,
+                  subtitle: action.hint,
+                  showChevron: true,
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    action.run(context, notifier);
+                  },
+                ),
+            ],
           ),
       ],
     );

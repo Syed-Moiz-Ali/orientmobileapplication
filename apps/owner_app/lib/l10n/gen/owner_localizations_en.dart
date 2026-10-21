@@ -109,6 +109,14 @@ class OwnerLocalizationsEn extends OwnerLocalizations {
   String get ownerHeroEmptyHint => 'Pull to refresh when you are back online.';
 
   @override
+  String get ownerHomeLoadError => 'Could not load the latest figures';
+
+  @override
+  String ownerHomeApprovalsBanner(String value) {
+    return '$value waiting for owner review';
+  }
+
+  @override
   String get ownerChartSalesProfit => 'Sales & profit';
 
   @override
@@ -143,6 +151,10 @@ class OwnerLocalizationsEn extends OwnerLocalizations {
 
   @override
   String get ownerRegisterEmpty => 'No register rows.';
+
+  @override
+  String get ownerRegisterEmptyHint =>
+      'New jobs will appear here when they are booked.';
 
   @override
   String get ownerActionsTitle => 'Quick actions';

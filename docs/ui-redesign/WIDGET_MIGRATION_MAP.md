@@ -146,3 +146,33 @@ row, hairline dividers), `TechnicianStopwatch`, `TechnicianPlateChip`,
 `_activeJob` / `_urgentFirst` derivation, `take(5)` queue window, View-all
 visibility + `selectTab(1)` destination, progress math, pull-to-refresh,
 freshness footer, haptics. Zero new ARB keys (all copy reused).
+
+## Phase 7 owner-home recomposition (branch `ui/dashboards-2`)
+
+Owner home (`owner_dashboard_page.dart` + palette source
+`dashboard_body.dart` → shared `owner_search.dart`) recomposed
+presentation-only onto App* pattern widgets; providers/routes/sync/
+refresh/period logic, `_findKpi` / `_trendOf` derivation, filter
+predicates, bottom nav + rail, pull-to-refresh, haptics and keys
+untouched. Legacy usages below drop to zero on the home surface
+(verified by grep; the shared classes themselves are kept — still used
+by the approvals/register/chart/tab surfaces):
+
+| Deleted legacy widget | Homes before | Replaced by | Notes |
+|---|---|---|---|
+| bespoke `_CockpitHeader` chrome (analytics trailing `Container` + `StatusPill` live/active/today pills) | home (1 header + 3 pills) | `AppPageHeader` (ops title + branch subtitle + end-side `AppIconButton` search opening the existing palette, U1) + `AppStatusChip` pills (accent/info/success, verbatim labels) | Same titles/subtitle/pill copy; search opens the shared `owner_search.dart` palette (same 9 destinations, no new route); header takes `kpis` as params so pills populate (fixes the const+`ref.read` freeze, providers untouched) |
+| `TelemetryMetricPod` hero + micro-pods | home (1 hero + 3 pods) | `AppKpiCard.wide` hero + `AppKpiCard` 2-col grid (LTR-locked figures, verbatim labels/values/deltas, `semanticState` from the adapter) | ONE delta line each (trend badge only); missing families omitted, never zero-filled; overline casing unchanged (both uppercase non-Arabic) |
+| conditional blockers (none — silent) | home (0) | `AppBanner(warning)` approvals-WIP only (`ownerHomeApprovalsBanner`, value verbatim, `View all` drills to read-only triage) | Overdue-AR banner STOPPED (AR not in dashboard payload — new fetch would be logic); no decision buttons (no endpoint) |
+| bespoke `_CurveCard` chrome + compact swipeable `PageView` | home (2 curves) | Same shared atoms (`AppCard.standard` + `SectionHeader` + `SparklineChart` + first/last month rule); curves stack on compact | No `AppChartCard` in shared_core — composition, not invention; timeframe pills STOPPED (period does not drive trends; pills would be fake) |
+| `AppTable` compact duality (`compactBuilder` record rows) | home (1 register) | `AppTable` on medium+ (same columns/cells/routes/empty copy); `AppListGroup` of value rows on compact (LTR-locked `Open: X · Total: Y`, chevron, Show-all past 5 rows, `ownerRegisterAll` → same `jobCards` route) | View-all trailing kept, shown only when rows exist; empty → `AppEmptyState` (`ownerRegisterEmpty` + `ownerHeroEmptyHint`) |
+| bespoke quick-action record rows (12-row single column) | home (12) | Top-4 equal tiles (72px min-height, 4-across / 2×2 compact, wrap-safe) + inline Show-all `AppListGroup` for the remaining 8 (preview subtitle, expand-only) | All 12 destinations survive with identical routes/tabs (10 pushes + `selectTab(1/2)`); order preserved |
+| `AppSkeleton.page` loading | home (1) | `AppShimmerSkeleton` layout-mirroring (header lines + hero card + pod row + chart card + 3 rows) | Same loading contract (`isLoading && !hasAnyData`) |
+| legacy `ErrorView` | home (1) | `AppErrorState` (`ownerHomeLoadError` + server message verbatim + shared `commonRetry`) | Same message/retry; stale data kept; offline owned by the shell pill (no new banner) |
+| shell-local palette destination list (`_Destination`) | shell (1) | shared `openOwnerSearch` (`owner_search.dart`), used by shell trigger + header search | Ids/labels/hints/icons/run targets verbatim; no new routes |
+
+Kept verbatim: `_findKpi` / `_trendOf` (byte-identical, display-only),
+all 12 action defs (icons/labels/hints/routes/tabs in order),
+`AppSplitView` medium layout + wide 5/4/3 flexes, `RefreshIndicator` +
+`AppResponsivePage`, dashboard shell (app bar, bottom nav/rail, search
+shortcuts). Two new ARB keys (`ownerHomeApprovalsBanner`,
+`ownerHomeLoadError`, en+ar, gen-l10n from the package dir).
