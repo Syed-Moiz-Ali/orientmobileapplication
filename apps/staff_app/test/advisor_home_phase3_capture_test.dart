@@ -28,13 +28,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/advisor/domain/entities/advisor_stats_entity.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'package:staff_app/features/advisor/domain/entities/pending_approval_entity.dart';
 import 'package:staff_app/features/advisor/presentation/pages/advisor_home_view.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_reports_provider.dart';
+import 'package:staff_app/features/advisor/presentation/widgets/advisor_search_sheet.dart';
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
 const _outDir = 'after-phase-3-advisor';
@@ -204,7 +207,7 @@ Future<void> _capture(
   Size logicalSize = const Size(360, 800),
   double dpr = 3.0,
   String? searchQuery,
-  bool clearAfterSubmit = false,
+  bool submitAndReopen = false,
 }) async {
   final oldShadows = debugDisableShadows;
   debugDisableShadows = false;
@@ -236,6 +239,22 @@ Future<void> _capture(
   // runAsync + a real delay (proven pattern from the phase-0a baseline):
   // the pump runs on real event-loop turns while the fake clock stays fixed,
   // so shimmer/transition frames land byte-identically on every run.
+  //
+  // The sheet's submit path pushes the job-detail route (existing target),
+  // so the harness runs behind a stub GoRouter; the detail is a stub page.
+  final router = GoRouter(
+    initialLocation: '/',
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (_, __) => const Scaffold(body: AdvisorHomeView()),
+      ),
+      GoRoute(
+        path: AppRoutes.advisorJobDetail,
+        builder: (_, __) => const Scaffold(body: Text('JOB DETAIL STUB')),
+      ),
+    ],
+  );
   await tester.runAsync(() async {
     await tester.pumpWidget(
       ProviderScope(
@@ -264,7 +283,7 @@ Future<void> _capture(
             (ref) => Stream<ConnectivityResult>.value(connectivity),
           ),
         ],
-        child: MaterialApp(
+        child: MaterialApp.router(
           debugShowCheckedModeBanner: false,
           locale: locale,
           supportedLocales: AppLocales.supported,
@@ -282,7 +301,7 @@ Future<void> _capture(
             ).copyWith(textScaler: TextScaler.linear(scale)),
             child: child!,
           ),
-          home: const Scaffold(body: AdvisorHomeView()),
+          routerConfig: router,
         ),
       ),
     );
@@ -291,16 +310,36 @@ Future<void> _capture(
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 300));
 
-  if (searchQuery != null) {
-    await tester.enterText(find.byType(TextField).first, searchQuery);
-    await tester.pump();
-    await tester.testTextInput.receiveAction(TextInputAction.search);
+  Future<void> openSearch() async {
+    await tester.tap(find.byTooltip('Search'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    if (clearAfterSubmit) {
-      await tester.enterText(find.byType(TextField).first, '');
+    await tester.pump(const Duration(milliseconds: 300));
+  }
+
+  if (searchQuery != null) {
+    // U1: the header icon is the one search path. Open the full-screen
+    // sheet, type there, and capture the SHEET states (results / recents).
+    await openSearch();
+    final field = find.descendant(
+      of: find.byType(AdvisorSearchSheet),
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(field, searchQuery);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    if (submitAndReopen) {
+      // Submit records the recent (home-owned session list), opens the top
+      // hit's existing detail route, then backs out and reopens: the sheet
+      // now shows the recents row in its normal case.
+      await tester.testTextInput.receiveAction(TextInputAction.search);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('JOB DETAIL STUB'), findsOneWidget);
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await openSearch();
     }
   }
 
@@ -432,13 +471,13 @@ void main() {
         searchQuery: 'LAYLA',
       );
     });
-    testWidgets('search recents row after clear', (tester) async {
+    testWidgets('search recents row after submit + reopen', (tester) async {
       await _capture(
         tester,
         name: _name('search-recents', 1.0, 'en', const Size(360, 800)),
         jobs: const [_done, _urgent, _active],
         searchQuery: 'LAYLA',
-        clearAfterSubmit: true,
+        submitAndReopen: true,
       );
     });
   });

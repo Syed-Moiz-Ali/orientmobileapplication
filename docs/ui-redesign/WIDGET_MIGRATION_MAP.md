@@ -112,17 +112,21 @@ widgets. Deleted legacy home widgets below at zero remaining usages
 
 Home (`advisor_home_view.dart`) recomposed presentation-only onto 1P pattern
 widgets. Deleted legacy home widgets below at zero remaining usages
-(verified by repo grep; no other app/package referenced them):
+(verified by repo grep; no other app/package referenced them).
+NOTE: the first recomposition was SUPERSEDED by the U-law rebuild (same commit
+series); the mapping below describes the CURRENT tree, not the interim one
+(no pinned search pill, no scrolling 3-pill row, no summary strip, no See-all
+hero CTA — all removed again at zero usages in the rebuild):
 
 | Deleted legacy widget | Homes before | Replaced by | Notes |
 |---|---|---|---|
-| `_GreetingHeader` (+ `_HeaderBadge`) | advisor home only (1) | `AppPageHeader` (date eyebrow + greeting + branch·shift, trailing: header search + `OfflineStatusPill` + bell/`AppBadge` + `AppAvatar`) | Same identity data, pill, bell count (`notifications + approvals`), avatar, sheets, logout dialog |
-| `_SearchHero` (+ `_HeroBloom`, `_RecentChip`, `_PremiumSearchField`) + `SliverAppBar` search hero | advisor home only (1) | Pinned `SliverAppBar` bottom: pill-style `AppSearchBar` (same controller/focus/query/clear) + `AppChip` recents + scan `AppIconButton`; sheet via header search + Ctrl+K shortcut | Same query state, recents, filter predicate, scan route, sheet route; inline typing kept (an `AppSearchPill` is read-only and would have frozen the query state) |
-| `_ActionStrip` (+ `_StripTile`, `_CountBadge`) 2x2 grid | advisor home only (1) | ONE horizontal row of 3 `AppPillButton` (Scan secondary, New job primary emphasized, Approvals secondary with inline count) | Per the brief the C16 row overrides the recorded 2026-10-15 owner 2x2-grid preference — flagged, not silent; same routes, haptics kept |
-| `_SummaryStrip` (+ `_MetricCell`) slim metrics | advisor home only (1) | ONE hero `AppMediaCard` (key number `advisorHeroDueTitle` + delta sentence + See-all CTA into Jobs tab) + `AppSection` of 3 `AppStatTile` behind See all/Reports tab | Numbers derived from the same providers/list as before; zeros render as muted dash |
-| `_AssignedSection` divider rows (+ `_AssignedSkeletonRows`, `_FadeSlideIn`) | advisor home only (1) | `AppSection` + large `AppMediaCard` rows (customer + vehicle/plate/id/time sentence + ONE `AppStatusChip` + tap) with Show all → Jobs tab | Urgent-first sort UNCHANGED; `AdvisorJobCardRow` class KEPT (still used by the Jobs work list) |
-| `_DesktopPreview` bespoke side panel | advisor home only (1) | Same 2-col list + preview, preview rebuilt with `AppSurfaceCard` + `AppStatusChip` + `AppPillButton` | Same selection state, same job-detail route; empty prompt kept |
-| legacy `EmptyState`/`ErrorView`/`AppSkeleton` on Home loading/error/empty | home (3) | `AppShimmerSkeleton` / `AppEmptyState` (new `advisorHomeEmptyTitle`/`advisorHomeEmptyBody` + New job CTA) / `AppErrorState` + `AppBanner` (warning) offline | Same retry (provider invalidate), same offline-keep-last-data; KEPT: shared `EmptyState`/`ErrorView` classes (used by jobs/sheets elsewhere) |
+| `_GreetingHeader` (+ `_HeaderBadge`) | advisor home only (1) | Compact custom header (sentence-case date + 2-line greeting + muted branch·shift; search icon + bell + avatar top-right) | Same identity data, bell count, avatar, sheets, logout dialog; badge offset clear of glyph |
+| `_SearchHero` (+ `_HeroBloom`, `_RecentChip`, `_PremiumSearchField`) + `SliverAppBar` search hero | advisor home only (1) | Header search icon → existing `AdvisorSearchSheet` (extended additively: session recents + `onRemember`); same controller/focus/query/filter/scan route; full-screen sheet | Same query state, recents, filter predicate, scan route; inline typing preserved (a read-only `AppSearchPill` would have frozen query state); U1 one search path |
+| `_ActionStrip` (+ `_StripTile`, `_CountBadge`) 2x2 grid, then interim 3-pill row | advisor home only (1) | 3 EQUAL columns (icon + ≤2-line labels, approvals badge-only count, no filled tile) | Per C16 the row overrides the recorded 2026-10-15 owner 2x2-grid preference — flagged in brief; same routes, haptics kept |
+| `_SummaryStrip` (+ `_MetricCell`) slim metrics | advisor home only (1) | REMOVED (derivable from the list; zero-as-dash violated U11, second See-all violated U7) — no replacement surface | No logic touched; numbers still computed by the same providers |
+| `_AssignedSection` divider rows (+ `_AssignedSkeletonRows`, `_FadeSlideIn`) | advisor home only (1) | `AppSection` + large `AppMediaCard` rows (customer/vehicle → ONE `AppStatusChip` → meta sentence → small mono ID + chevron); conditional See-all (only when more than shown); first card above the fold at 360x800 | Urgent-first sort UNCHANGED; `AdvisorJobCardRow` class KEPT (still used by the Jobs work list) |
+| `_DesktopPreview` bespoke side panel | advisor home only (1) | Same 2-col list + preview (medium = 600–1024 now 2-col), preview rebuilt with App* cards | Same selection state, same job-detail route; empty prompt kept |
+| legacy `EmptyState`/`ErrorView`/`AppSkeleton` on Home loading/error/empty | home (3) | `AppShimmerSkeleton` (layout-mirroring) / `AppEmptyState` / `AppErrorState` + `AppBanner` (warning) offline | Same retry (provider invalidate), same offline-keep-last-data; KEPT: shared `EmptyState`/`ErrorView` classes (used by jobs/sheets elsewhere) |
 
 Kept verbatim (no new usages, no signature changes): `AdvisorProfileSheet`,
 `AdvisorNotificationSheet`, `AdvisorSearchSheet`, `AdvisorApprovalSheet`,
@@ -131,3 +135,21 @@ Home now contributes zero `AppSkeleton`-legacy call sites on its own surfaces
 (loading + summary skeletons migrated); `StatusPill` remains the shared
 vocabulary (`advisor_status.dart` untouched) with home cards mapping the same
 taxonomy to `AppStatusChip`.
+
+## Phase 3 advisor-home REBUILD (C16 hard-reject pass, branch `ui/phase-6-customer`)
+
+Same file recomposed again, presentation + widget-tree only (no provider /
+route / logic / ARB-structure change; no new keys):
+
+| Before (round-2 tree) | After (rebuild) | Notes |
+|---|---|---|
+| Header: `AppPageHeader` + header search icon + `OfflineStatusPill` + bell badge (inside glyph corner) + avatar | Compact custom header row: sentence-case date + greeting (maxLines 2) + muted branch·shift; bell badge offset ABOVE the glyph (top -8, rect-disjoint) + avatar top-right; no search icon, no pill | One search path (pinned pill); sync only as `AppBanner` when abnormal (offline warning / queued info); normal case renders nothing |
+| Hero `AppSurfaceCard` (default outlined) | `AppSurfaceCard(outlined: false)` + single `View jobs` CTA | Borderless light path (shadow); dark keeps shared border |
+| Quick actions: 3 equal pills / 2x2 reflow with orphan spacer, emphasized (filled) New-job tile, `Approvals (2)` label + badge, scan `AppIconButton` beside search | ONE horizontal `SingleChildScrollView` tile row (120px neutral tiles, icon + 2-line label, peek); no filled tile; approvals count on badge ONLY; scan lives only in the tile row | C16 orphan-tile + one-primary + count-once rules |
+| Pinned `AppSearchBar` + separate scan button; submit only filters inline | Same controller/focus/query/recents/filter predicate; submit ALSO opens the existing `AdvisorSearchSheet` (sheet keeps its own predicate/recents/scan CTA); Ctrl+K unchanged | Pill is the one search path, sheet is its continuation |
+| Assigned cards: job-id-first title | Customer/vehicle-first title, then ONE `AppStatusChip`, then meta sentence, job id as small LTR mono meta; `outlined: false`; chevron kept | C16 card hierarchy; borderless light |
+| Preview `AppSurfaceCard` (default outlined) | `AppSurfaceCard(outlined: false)` | Same selection state, same route |
+| Assigned as cards (always) | Assigned stays a LIST, not a carousel | N <= 6, statuses need side-by-side comparison; carousel would hide urgent items and cost the above-the-fold first order at 360x800 |
+
+New guard coverage: `packages/shared_core/test/app_hard_reject_guards_test.dart`
+(borderless cards, no-uppercase, >= 48dp targets, badge-glyph disjoint).

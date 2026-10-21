@@ -126,6 +126,18 @@ class CustomerLocalizationsEn extends CustomerLocalizations {
   String get garShowAll => 'Show all';
 
   @override
+  String get garSearchTitle => 'Search';
+
+  @override
+  String get garSearchHint => 'Search vehicles and bookings';
+
+  @override
+  String get garSearchEmpty => 'Type to search your vehicles and bookings.';
+
+  @override
+  String get garSearchNoMatch => 'No matches. Try a different search.';
+
+  @override
   String get garAttentionMoreOne => '1 more item needs review';
 
   @override
@@ -138,6 +150,9 @@ class CustomerLocalizationsEn extends CustomerLocalizations {
 
   @override
   String get garUnpaidCta => 'Review invoices';
+
+  @override
+  String get garUnpaidChip => 'Unpaid';
 
   @override
   String get garStatusBooked => 'Booked';

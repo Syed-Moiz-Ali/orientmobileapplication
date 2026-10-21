@@ -232,6 +232,10 @@ Future<void> _capture(
   Locale locale = const Locale('en'),
   Size logicalSize = const Size(360, 800),
   double dpr = 3.0,
+  // Opens the header search sheet before capturing (U1 surface).
+  bool openSearch = false,
+  // Typed into the sheet field before capturing (empty = hint state).
+  String searchQuery = '',
 }) async {
   final oldShadows = debugDisableShadows;
   debugDisableShadows = false;
@@ -303,6 +307,17 @@ Future<void> _capture(
   });
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 300));
+
+  if (openSearch) {
+    await tester.tap(find.byTooltip('Search'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    if (searchQuery.isNotEmpty) {
+      await tester.enterText(find.byType(TextField), searchQuery);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+  }
 
   await expectLater(
     find.byType(MaterialApp),
@@ -408,6 +423,30 @@ void main() {
         approvals: idleApprovals(),
         logicalSize: const Size(1180, 820),
         dpr: 2.0,
+      );
+    });
+  });
+
+  group('search sheet en light @360x800', () {
+    testWidgets('search sheet open (empty query)', (tester) async {
+      await _capture(
+        tester,
+        name: _name('search-open', 'light', 1.0, 'en', const Size(360, 800)),
+        state: idleState(),
+        bookings: idleBookings(),
+        approvals: idleApprovals(),
+        openSearch: true,
+      );
+    });
+    testWidgets('search sheet with query', (tester) async {
+      await _capture(
+        tester,
+        name: _name('search-query', 'light', 1.0, 'en', const Size(360, 800)),
+        state: idleState(),
+        bookings: idleBookings(),
+        approvals: idleApprovals(),
+        openSearch: true,
+        searchQuery: 'cam',
       );
     });
   });

@@ -6,7 +6,8 @@ import 'package:customer_app/features/customer/presentation/support/customer_l10
 import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
 
 /// The single most important thing on Customer Home, as ONE [AppMediaCard]
-/// plus ONE explicit verb-first CTA button.
+/// plus ONE explicit verb-first CTA button — or, when nothing is due, as a
+/// compact calm status row with no button at all (U6).
 ///
 /// Hero priority is read from the existing presentation rules, in order:
 /// 1. an approval waiting for a decision ([CustomerAttentionPanel] lists
@@ -14,7 +15,9 @@ import 'package:customer_app/features/customer/presentation/support/customer_ser
 /// 2. a genuinely unpaid invoice (same panel, second row),
 /// 3. a live workshop job (the previous summary led with it),
 /// 4. the next upcoming booking (previous summary, second branch),
-/// 5. idle — nothing active (same summary, fallback).
+/// 5. idle — nothing active (calm status row, same as the advisor rebuild:
+///    the quick-action tiles keep the one booking path, so the hero carries
+///    no duplicate CTA per U7).
 ///
 /// The card carries dot + label + one sentence; the CTA button below it is
 /// the tappable target (the card stays tappable too). When more than one
@@ -33,7 +36,6 @@ class CustomerHomeHero extends StatelessWidget {
   final VoidCallback onViewAllAttention;
   final VoidCallback onTrackService;
   final VoidCallback onViewBooking;
-  final VoidCallback onBookService;
 
   const CustomerHomeHero({
     super.key,
@@ -48,7 +50,6 @@ class CustomerHomeHero extends StatelessWidget {
     required this.onViewAllAttention,
     required this.onTrackService,
     required this.onViewBooking,
-    required this.onBookService,
   });
 
   @override
@@ -96,7 +97,9 @@ class CustomerHomeHero extends StatelessWidget {
             icon: Icons.receipt_long_rounded,
             title: due,
             meta: t.garUnpaidBody,
-            status: AppStatusChip(label: due, kind: AppStatusKind.warning),
+            // C16: no numbers duplicated in label and badge — the chip says
+            // "Unpaid" while the title keeps the count.
+            status: AppStatusChip(label: t.garUnpaidChip, kind: AppStatusKind.warning),
             onTap: onViewInvoices,
             semanticLabel: '$due. ${t.garUnpaidCta}',
           ),
@@ -168,18 +171,68 @@ class CustomerHomeHero extends StatelessWidget {
       );
     }
 
-    final title = t.jsNoService;
-    return _HeroCardWithCta(
-      card: AppMediaCard(
-        icon: Icons.garage_rounded,
-        title: title,
-        meta: vehicleCount == 1 ? t.jsIdleOne : t.jsIdleMany,
-        status: AppStatusChip(label: title, kind: AppStatusKind.neutral),
-        onTap: onBookService,
-        semanticLabel: '$title. ${t.stBookService}',
+    // U6/U7: nothing is due, so the hero collapses to the same compact calm
+    // status row the advisor rebuild uses — no full card, no button to
+    // nothing. The Book-service tile below keeps the one booking path.
+    return CustomerHomeStatusRow(
+      message: vehicleCount == 1 ? t.jsIdleOne : t.jsIdleMany,
+      icon: Icons.check_circle_rounded,
+    );
+  }
+}
+
+/// Compact calm status row for "nothing is due" (U6, advisor parity).
+///
+/// An [AppSurfaceCard] with a calm icon + one sentence — never a filled CTA
+/// to nothing. The optional [actionLabel]/[onAction] is a quiet text action
+/// (used once: the new-customer row keeps "Add your vehicle" one tap away
+/// because booking requires a vehicle). The sentence reads as plain text
+/// and the text action keeps its own button semantics.
+class CustomerHomeStatusRow extends StatelessWidget {
+  final String message;
+  final IconData icon;
+  final Color? iconColor;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  const CustomerHomeStatusRow({
+    super.key,
+    required this.message,
+    required this.icon,
+    this.iconColor,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final semantic = context.semanticColors;
+    final hasAction = actionLabel != null && onAction != null;
+    return AppSurfaceCard(
+      radius: AppRadius.xl,
+      outlined: false,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(icon, size: 20, color: iconColor ?? semantic.success.base),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              message,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
+            ),
+          ),
+          if (hasAction) ...[
+            const SizedBox(width: AppSpacing.sm),
+            AppTextButton(label: actionLabel!, onPressed: onAction),
+          ],
+        ],
       ),
-      ctaLabel: t.stBookService,
-      onCta: onBookService,
     );
   }
 }

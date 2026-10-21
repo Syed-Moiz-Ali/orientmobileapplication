@@ -22,14 +22,14 @@ class CustomerHomeGarage extends StatelessWidget {
   final void Function(CustomerVehicleEntity vehicle) onBookVehicle;
   final void Function(CustomerBookingEntity booking)? onOpenBooking;
   final VoidCallback? onTrackService;
-  final VoidCallback onSeeAll;
+  final VoidCallback? onSeeAll;
 
   const CustomerHomeGarage({
     super.key,
     required this.vehicles,
     required this.bookings,
     required this.onBookVehicle,
-    required this.onSeeAll,
+    this.onSeeAll,
     this.liveService,
     this.onOpenBooking,
     this.onTrackService,
@@ -43,15 +43,22 @@ class CustomerHomeGarage extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         // ~2.2 cards visible in the compact viewport; wider canvases cap the
-        // extent so cards stay readable instead of stretching.
-        final extent = (constraints.maxWidth / 2.2).clamp(150.0, 300.0);
+        // extent so cards stay readable instead of stretching. One vehicle is
+        // fully shown (nothing to peek at), so it takes the available width
+        // instead of the peek slot — the grouped spec line stays whole.
+        final extent = vehicles.length == 1
+            ? constraints.maxWidth.clamp(150.0, 480.0)
+            : (constraints.maxWidth / 2.2).clamp(150.0, 300.0);
         return AppCarousel(
           title: vehicles.length == 1 ? t.garTitleOne : t.garTitleMany,
           seeAllLabel: t.garShowAll,
-          onSeeAll: () {
-            HapticFeedback.selectionClick();
-            onSeeAll();
-          },
+          // U7: one vehicle is fully shown — no "Show all" to the same list.
+          onSeeAll: onSeeAll == null
+              ? null
+              : () {
+                  HapticFeedback.selectionClick();
+                  onSeeAll!();
+                },
           cardExtent: extent,
           semanticLabel: vehicles.length == 1
               ? t.garTitleOne
@@ -106,8 +113,8 @@ class _VehicleCard extends StatelessWidget {
     // each matching its own surface).
     final specs = <String>[
       if (vehicle.year > 0) '${vehicle.year}',
-      if (CustomerVehiclePresentation.mileageLabel(vehicle.mileage).isNotEmpty)
-        CustomerVehiclePresentation.mileageLabel(vehicle.mileage),
+      if (CustomerVehiclePresentation.displayMileage(vehicle.mileage).isNotEmpty)
+        CustomerVehiclePresentation.displayMileage(vehicle.mileage),
       if (vehicle.color.trim().isNotEmpty) vehicle.color.trim(),
     ];
     final ctx = serviceContext;

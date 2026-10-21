@@ -126,6 +126,18 @@ class CustomerLocalizationsAr extends CustomerLocalizations {
   String get garShowAll => 'عرض الكل';
 
   @override
+  String get garSearchTitle => 'بحث';
+
+  @override
+  String get garSearchHint => 'ابحث في المركبات والحجوزات';
+
+  @override
+  String get garSearchEmpty => 'اكتب للبحث في مركباتك وحجوزاتك.';
+
+  @override
+  String get garSearchNoMatch => 'لا توجد نتائج. جرّب بحثًا مختلفًا.';
+
+  @override
   String get garAttentionMoreOne => 'عنصر آخر يحتاج إلى مراجعة';
 
   @override
@@ -138,6 +150,9 @@ class CustomerLocalizationsAr extends CustomerLocalizations {
 
   @override
   String get garUnpaidCta => 'مراجعة الفواتير';
+
+  @override
+  String get garUnpaidChip => 'غير مدفوعة';
 
   @override
   String get garStatusBooked => 'محجوز';

@@ -14,6 +14,7 @@ import 'package:customer_app/features/customer/presentation/widgets/customer_hom
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_header.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_hero.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_quick_actions.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_home_search_sheet.dart';
 
 /// Customer Home — an Airbnb-grade garage feed answering four questions in
 /// the first viewport: who am I, which car needs me, what is happening with
@@ -54,9 +55,10 @@ class CustomerHomeTab extends ConsumerWidget {
 
     // First load only — a user-initiated refresh must never blank the screen.
     if (state.isLoading && !hasAnyData) {
-      return const AppResponsivePage(
+      return AppResponsivePage(
+        physics: const AlwaysScrollableScrollPhysics(),
         maxContentWidth: 1080,
-        child: _HomeLoadingSkeleton(),
+        child: const _HomeLoadingSkeleton(),
       );
     }
 
@@ -101,10 +103,14 @@ class CustomerHomeTab extends ConsumerWidget {
     );
 
     final Widget heroSlot = isNewCustomer
-        ? AppEmptyState(
-            icon: Icons.directions_car_filled_rounded,
-            title: t.garHeroEmpty,
+        // U6: the new-customer state is the same compact calm status row as
+        // the nothing state — no full hero card. "Add your vehicle" stays a
+        // quiet text action (downgraded from the filled hero CTA; booking
+        // requires a vehicle so the path stays one tap).
+        ? CustomerHomeStatusRow(
             message: t.garHeroEmptyBody,
+            icon: Icons.directions_car_filled_rounded,
+            iconColor: Theme.of(context).colorScheme.primary,
             actionLabel: t.garHeroAdd,
             onAction: () => context.push(AppRoutes.customerAddVehicle),
           )
@@ -135,11 +141,12 @@ class CustomerHomeTab extends ConsumerWidget {
                 );
               }
             },
-            onBookService: () =>
-                context.push(AppRoutes.customerBookService),
           );
     final actions = CustomerHomeQuickActions(
       hasVehicles: vehicles.isNotEmpty,
+      // U7: while the payment-due hero is showing it owns the invoices task,
+      // so the tile steps aside instead of offering the same destination.
+      showInvoices: state.unpaidInvoices == 0,
       onBookService: () => context.push(AppRoutes.customerBookService),
       onBreakdownHelp: () => context.push(AppRoutes.customerBreakdownHelp),
       onInvoices: () => context.push(AppRoutes.approvalsLocation()),
@@ -157,17 +164,27 @@ class CustomerHomeTab extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (state.loadError.isNotEmpty) ...[
-              AppBanner(
-                kind: AppBannerKind.warning,
-                message: state.loadError,
-                actionLabel: t.garRetry,
-                onAction: notifier.refresh,
-              ),
+              // Message-only banner (advisor parity): the shared AppBanner
+              // stacks its action slot full-width with the icon centered
+              // against the stack; without an action the icon + message
+              // render baseline-aligned. Refresh stays one pull away, and
+              // the full error state keeps its Retry button.
+              AppBanner(kind: AppBannerKind.warning, message: state.loadError),
               const SizedBox(height: AppSpacing.lg),
             ],
             CustomerHomeHeader(
               firstName: state.profile?.firstName ?? '',
               isNewCustomer: isNewCustomer,
+              onSearch: () => _showSearch(
+                context,
+                vehicles: vehicles,
+                bookings: bookings,
+                onSelectVehicle: bookVehicle,
+                onSelectBooking: (booking) => context.push(
+                  AppRoutes.customerBookingDetail,
+                  extra: booking,
+                ),
+              ),
             ),
             const SizedBox(height: AppSpacing.screenPaddingPhone),
             if (wide)
@@ -186,14 +203,17 @@ class CustomerHomeTab extends ConsumerWidget {
             ],
             if (vehicles.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.xl),
-              CustomerHomeGarage(
-                vehicles: vehicles,
-                bookings: bookings,
-                liveService: activeService,
-                onBookVehicle: bookVehicle,
-                onSeeAll: () => notifier.selectDestination(
-                  CustomerDestination.vehicles,
-                ),
+            CustomerHomeGarage(
+              vehicles: vehicles,
+              bookings: bookings,
+              liveService: activeService,
+              onBookVehicle: bookVehicle,
+              // U7: a single vehicle is fully shown — no "Show all".
+              onSeeAll: vehicles.length == 1
+                  ? null
+                  : () => notifier.selectDestination(
+                      CustomerDestination.vehicles,
+                    ),
                 onOpenBooking: (booking) => context.push(
                   AppRoutes.customerBookingDetail,
                   extra: booking,
@@ -242,8 +262,9 @@ class CustomerHomeTab extends ConsumerWidget {
   }
 }
 
-/// Skeleton mirroring the final home layout: header, hero card, garage peek,
-/// quick-action tiles, then activity rows — no full-screen spinner.
+/// Skeleton mirroring the loaded home layout: greeting header + search icon
+/// block, hero card + full-width CTA block, 2x2 quick-action tiles, garage
+/// pair, then activity rows — no full-screen spinner.
 class _HomeLoadingSkeleton extends StatelessWidget {
   const _HomeLoadingSkeleton();
 
@@ -258,12 +279,22 @@ class _HomeLoadingSkeleton extends StatelessWidget {
               child: AppShimmerSkeleton.textBlock(lines: 2, lineHeight: 14),
             ),
             SizedBox(width: AppSpacing.lg),
-            AppShimmerSkeleton.circle(size: 42),
+            AppShimmerSkeleton.circle(size: 48),
           ],
         ),
         const SizedBox(height: AppSpacing.screenPaddingPhone),
         const AppShimmerSkeleton.card(height: 190),
+        const SizedBox(height: AppSpacing.md),
+        const AppShimmerSkeleton(height: 52, radius: AppRadius.pill),
         const SizedBox(height: AppSpacing.xl),
+        Row(
+          children: const [
+            Expanded(child: AppShimmerSkeleton.card(height: 120)),
+            SizedBox(width: AppSpacing.md),
+            Expanded(child: AppShimmerSkeleton.card(height: 120)),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
         Row(
           children: const [
             Expanded(child: AppShimmerSkeleton.card(height: 120)),
@@ -274,13 +305,9 @@ class _HomeLoadingSkeleton extends StatelessWidget {
         const SizedBox(height: AppSpacing.xl),
         Row(
           children: const [
-            Expanded(child: AppShimmerSkeleton.card(height: 88)),
+            Expanded(child: AppShimmerSkeleton.card(height: 120)),
             SizedBox(width: AppSpacing.md),
-            Expanded(child: AppShimmerSkeleton.card(height: 88)),
-            SizedBox(width: AppSpacing.md),
-            Expanded(child: AppShimmerSkeleton.card(height: 88)),
-            SizedBox(width: AppSpacing.md),
-            Expanded(child: AppShimmerSkeleton.card(height: 88)),
+            Expanded(child: AppShimmerSkeleton.card(height: 120)),
           ],
         ),
         const SizedBox(height: AppSpacing.xl),
@@ -288,6 +315,52 @@ class _HomeLoadingSkeleton extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Opens the full-screen search sheet over the home's existing vehicles +
+/// bookings (U1 — same full-screen modal mechanism as the advisor home).
+/// No new routes: result taps reuse the home's own destinations.
+void _showSearch(
+  BuildContext context, {
+  required List<CustomerVehicleEntity> vehicles,
+  required List<CustomerBookingEntity> bookings,
+  required void Function(CustomerVehicleEntity vehicle) onSelectVehicle,
+  required void Function(CustomerBookingEntity booking) onSelectBooking,
+}) {
+  final size = MediaQuery.sizeOf(context);
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (sheetContext) => Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
+      ),
+      // Tight full-size box: the sheet route sizes to content, so the
+      // content itself claims the screen (U1 full-screen search). The box
+      // carries the surface token (the route Material is transparent).
+      child: SizedBox.fromSize(
+        size: size,
+        child: ColoredBox(
+          color: Theme.of(sheetContext).colorScheme.surface,
+          child: SingleChildScrollView(
+            child: CustomerHomeSearchSheet(
+              vehicles: vehicles,
+              bookings: bookings,
+              onSelectVehicle: (vehicle) {
+                Navigator.pop(sheetContext);
+                onSelectVehicle(vehicle);
+              },
+              onSelectBooking: (booking) {
+                Navigator.pop(sheetContext);
+                onSelectBooking(booking);
+              },
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 /// Most recent finished work, used for a compact activity summary. Provider

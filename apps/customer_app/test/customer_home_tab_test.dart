@@ -69,6 +69,20 @@ class _FixedHomeNotifier extends CustomerDashboardNotifier {
   CustomerDashboardState build() => fixed;
 }
 
+const _vehicle2 = CustomerVehicleEntity(
+  id: 'v2',
+  brand: 'Honda',
+  model: 'Civic',
+  plateNumber: 'XYZ 5678',
+  vin: '',
+  color: 'Silver',
+  year: 2019,
+  mileage: '78200 km',
+  lastService: '',
+  nextDue: '',
+  healthScore: -1,
+);
+
 CustomerDashboardState _state({
   bool isLoading = false,
   String loadError = '',
@@ -153,12 +167,32 @@ void main() {
       bookings: const [_completed],
     );
 
-    expect(find.text('2 unpaid invoices'), findsWidgets);
+    // Title keeps the count exactly once; the chip no longer echoes it.
+    expect(find.text('2 unpaid invoices'), findsOneWidget);
+    expect(find.text('Unpaid'), findsOneWidget);
     expect(
       find.text('Review and settle your outstanding invoices.'),
       findsOneWidget,
     );
     expect(find.byType(AppMediaCard), findsOneWidget);
+    expect(find.text('Review invoices'), findsOneWidget);
+  });
+
+  testWidgets('payment hero suppresses the duplicate invoices tile', (
+    tester,
+  ) async {
+    await _pumpHome(
+      tester,
+      state: _state(vehicles: const [_vehicle], unpaidInvoices: 2),
+      bookings: const [_completed],
+    );
+
+    // U7: one path to invoices — the hero CTA owns it while showing.
+    expect(find.text('Review invoices'), findsOneWidget);
+    expect(find.text('Invoices'), findsNothing);
+    expect(find.text('Book service'), findsOneWidget);
+    expect(find.text('Breakdown help'), findsOneWidget);
+    expect(find.text('History'), findsOneWidget);
   });
 
   testWidgets('service hero with tracking CTA when no attention', (
@@ -188,30 +222,98 @@ void main() {
       bookings: const [_completed],
     );
 
-    // Garage keeps silhouette art + booking context behind "Show all".
+    // U6/U7: nothing is due, so the hero is a calm status row — no media
+    // card, no duplicate Book-service CTA (the tile keeps the one path).
+    expect(find.byType(AppMediaCard), findsNothing);
+    expect(
+      find.text('Your vehicle is not in the workshop right now.'),
+      findsOneWidget,
+    );
+    expect(find.text('Book service'), findsOneWidget);
+    // U7: one vehicle is fully shown — no "Show all".
     expect(find.text('Your vehicle'), findsOneWidget);
-    expect(find.text('Show all'), findsOneWidget);
+    expect(find.text('Show all'), findsNothing);
     expect(find.byType(VehicleSilhouetteArt), findsOneWidget);
-    // One row of tiles with accessible labels; the idle hero carries its
-    // own explicit CTA with the same verb-first copy (structural: 2 texts).
-    expect(find.text('Book service'), findsNWidgets(2));
+    // Search icon sits top-right of the greeting header (U1/U9).
+    expect(find.byTooltip('Search'), findsOneWidget);
+    // One row of tiles with accessible labels.
     expect(find.text('Breakdown help'), findsOneWidget);
-    expect(find.text('Invoices'), findsWidgets);
+    expect(find.text('Invoices'), findsOneWidget);
     expect(find.text('History'), findsOneWidget);
     // Recent activity is an inset group, max three rows.
     expect(find.text('Recent activity'), findsOneWidget);
     expect(find.byType(AppListGroup), findsOneWidget);
   });
 
-  testWidgets('new customer gets one empty state with one action', (
+  testWidgets('two vehicles keep Show all and grouped mileage', (
+    tester,
+  ) async {
+    await _pumpHome(
+      tester,
+      state: _state(vehicles: const [_vehicle, _vehicle2]),
+      bookings: const [_completed],
+    );
+
+    expect(find.text('Your garage'), findsOneWidget);
+    expect(find.text('Show all'), findsOneWidget);
+    // C11: thousands grouping on the garage spec lines.
+    expect(find.textContaining('45,000 km'), findsOneWidget);
+    expect(find.textContaining('78,200 km'), findsOneWidget);
+  });
+
+  testWidgets('new customer gets a calm status row with a text action', (
     tester,
   ) async {
     await _pumpHome(tester, state: _state(withProfile: false));
 
-    expect(find.byType(AppEmptyState), findsOneWidget);
-    expect(find.textContaining('Your garage is empty'), findsOneWidget);
+    // U6: no full hero card for the new-customer state either — the compact
+    // status row carries the full sentence (never cut mid-sentence) and
+    // "Add your vehicle" stays a one-tap text action (booking needs one).
+    expect(find.byType(AppEmptyState), findsNothing);
+    expect(find.byType(AppMediaCard), findsNothing);
+    expect(
+      find.text(
+        'Add your vehicle to book service, follow repair progress, and keep every update in one place.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Add your vehicle'), findsOneWidget);
     expect(find.byType(AppCarousel), findsNothing);
+  });
+
+  testWidgets('header search opens a sheet over existing data', (tester) async {
+    await _pumpHome(
+      tester,
+      state: _state(vehicles: const [_vehicle, _vehicle2]),
+      bookings: const [_completed],
+    );
+
+    await tester.tap(find.byTooltip('Search'));
+    await tester.pumpAndSettle();
+
+    // Empty query: hint only — the app keeps no recents to show.
+    expect(
+      find.text('Search vehicles and bookings'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Type to search your vehicles and bookings.'),
+      findsOneWidget,
+    );
+
+    // Filtering reads the lists the home already holds — no new logic.
+    // (The home cards stay in the tree behind the sheet overlay.)
+    await tester.enterText(find.byType(TextField), 'camry');
+    await tester.pump();
+    expect(find.text('Toyota Camry'), findsNWidgets(2));
+    expect(find.text('Honda Civic'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'zzz-no-match');
+    await tester.pump();
+    expect(
+      find.text('No matches. Try a different search.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('loading skeleton mirrors the final layout', (tester) async {

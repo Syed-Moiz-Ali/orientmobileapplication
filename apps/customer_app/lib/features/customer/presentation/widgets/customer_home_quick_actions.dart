@@ -12,9 +12,12 @@ import 'package:customer_app/features/customer/presentation/support/customer_l10
 /// truncating mid-word. Tile labels always wrap to two lines — Arabic and
 /// 1.3x text scale reflow instead of overflowing. When the customer has no
 /// vehicles yet the history tile is dropped — the new-customer empty state
-/// already owns that call to action.
+/// already owns that call to action. While the payment-due hero is showing,
+/// the Invoices tile is dropped too (U7: the hero CTA owns that one task,
+/// so the same destination is never offered twice on one screen).
 class CustomerHomeQuickActions extends StatelessWidget {
   final bool hasVehicles;
+  final bool showInvoices;
   final VoidCallback onBookService;
   final VoidCallback onBreakdownHelp;
   final VoidCallback onInvoices;
@@ -23,6 +26,7 @@ class CustomerHomeQuickActions extends StatelessWidget {
   const CustomerHomeQuickActions({
     super.key,
     required this.hasVehicles,
+    this.showInvoices = true,
     required this.onBookService,
     required this.onBreakdownHelp,
     required this.onInvoices,
@@ -46,12 +50,13 @@ class CustomerHomeQuickActions extends StatelessWidget {
         icon: Icons.car_crash_rounded,
         onTap: onBreakdownHelp,
       ),
-      _QuickAction(
-        label: t.garActionInvoices,
-        hint: t.garActionInvoicesHint,
-        icon: Icons.receipt_long_rounded,
-        onTap: onInvoices,
-      ),
+      if (showInvoices)
+        _QuickAction(
+          label: t.garActionInvoices,
+          hint: t.garActionInvoicesHint,
+          icon: Icons.receipt_long_rounded,
+          onTap: onInvoices,
+        ),
       if (hasVehicles)
         _QuickAction(
           label: t.garActionHistory,

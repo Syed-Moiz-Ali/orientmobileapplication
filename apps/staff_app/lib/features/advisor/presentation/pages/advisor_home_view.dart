@@ -48,6 +48,23 @@ class AdvisorHomeView extends ConsumerStatefulWidget {
 class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
   int _navIndex = 0;
 
+  /// Session-only recent searches (presentation state): owned here so the
+  /// full-screen search sheet shows recents across opens within the home
+  /// session. Same list shape the removed inline pill kept — no logic.
+  final List<String> _searchRecents = <String>[];
+
+  void _rememberSearch(String query) {
+    final q = query.trim();
+    if (q.isEmpty) return;
+    setState(() {
+      _searchRecents.remove(q);
+      _searchRecents.insert(0, q);
+      if (_searchRecents.length > 5) {
+        _searchRecents.removeRange(5, _searchRecents.length);
+      }
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -177,14 +194,44 @@ class _AdvisorHomeViewState extends ConsumerState<AdvisorHomeView> {
     await ref.read(syncEngineProvider).syncAll();
   }
 
-  void _showSearch() => _sheet(
-    AdvisorSearchSheet(
-      onScan: () {
-        Navigator.pop(context);
-        _openScan();
-      },
-    ),
-  );
+  // U1: the header search icon is the ONE search path. The existing
+  // AdvisorSearchSheet (same predicate, session recents, scan CTA inside,
+  // autofocus) presents full-screen via the existing bottom-sheet mechanism
+  // only — no new routes. Ctrl+K opens the same sheet.
+  void _showSearch() {
+    HapticFeedback.selectionClick();
+    final size = MediaQuery.sizeOf(context);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
+        ),
+        // Tight full-size box: the sheet route sizes to content, so the
+        // content itself claims the full screen (U1 full-screen search).
+        // The box carries the surface token (the route Material is
+        // transparent), so the whole screen reads as one search surface.
+        child: SizedBox.fromSize(
+          size: size,
+          child: ColoredBox(
+            color: Theme.of(sheetContext).colorScheme.surface,
+            child: SingleChildScrollView(
+              child: AdvisorSearchSheet(
+                recents: _searchRecents,
+                onRemember: _rememberSearch,
+                onScan: () {
+                  Navigator.pop(context);
+                  _openScan();
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   void _openApprovals() {
     final approvals =
@@ -319,13 +366,20 @@ class _AdvisorAvatar extends StatelessWidget {
 }
 
 // ─── ADVISOR DASHBOARD TAB CONTENT ───────────────────────────────────────────
-// C16 dashboard composition (phase 3): greeting header -> ONE hero summary
-// card -> 3-tile quick-action row -> pinned search pill (recents) ->
-// assigned work as large card rows with Show all -> summary behind See all.
-// The horizontal quick-action row follows the brief (C16); it overrides the
-// recorded 2026-10-15 owner preference for the 2x2 grid — flagged, not silent.
-// Urgent work still surfaces inside the assigned list via the UNCHANGED
-// urgent-first sort + status chips; there is no separate attention panel.
+// U-laws composition (rebuild): greeting header (date + search/bell/avatar
+// row, full-width greeting, muted branch·shift; bell offset badge + avatar,
+// search icon opens the full-screen search sheet) -> ONE hero summary card
+// (one primary CTA; calm status row with NO button when nothing is due) ->
+// ONE row of 3 EQUAL quick-action columns (scan lives only here) ->
+// assigned work as a LIST of large borderless cards (vehicle/customer-first,
+// conditional See-all) with NO work-summary section behind it. No inline
+// search pill: the header icon + Ctrl+K are the one search path. No permanent
+// sync pill: offline/queued surfaces once as an AppBanner. Urgent work
+// still surfaces inside the assigned list via the UNCHANGED urgent-first
+// sort + status chips; there is no separate attention panel.
+// Assigned is a LIST (not a carousel): N is small (<= 6 visible),
+// statuses need side-by-side comparison, and a carousel would hide urgent
+// items and cost the above-the-fold first order at 360x800.
 class _AdvisorDashboardContent extends ConsumerStatefulWidget {
   final VoidCallback onOpenScan;
   final VoidCallback onNewJobCard;
@@ -356,44 +410,6 @@ class _AdvisorDashboardContentState
     extends ConsumerState<_AdvisorDashboardContent> {
   JobCardEntity? _selected;
   DateTime _lastRefresh = DateTime.now();
-  final _searchCtrl = TextEditingController();
-  final _searchFocus = FocusNode();
-  String _query = '';
-  final List<String> _recents = <String>[];
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    _searchFocus.dispose();
-    super.dispose();
-  }
-
-  void _clearSearch() {
-    _searchCtrl.clear();
-    setState(() => _query = '');
-  }
-
-  void _submitSearch(String v) {
-    final query = v.trim();
-    if (query.isNotEmpty) {
-      setState(() {
-        _recents.remove(query);
-        _recents.insert(0, query);
-        if (_recents.length > 4) _recents.removeRange(4, _recents.length);
-      });
-    }
-    FocusScope.of(context).unfocus();
-  }
-
-  void _applyRecent(String query) {
-    _searchCtrl.text = query;
-    setState(() => _query = query);
-  }
-
-  static bool _visibleRecents(String query, List<String> recents) {
-    final trimmed = query.trim().toLowerCase();
-    return recents.any((r) => r.trim().toLowerCase() != trimmed);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -410,21 +426,9 @@ class _AdvisorDashboardContentState
     final jobsLoading = recentJobsState.isLoading && recentJobs.isEmpty;
     final jobsError = recentJobsState.hasError;
     final sorted = _sortedUrgentFirst(recentJobs);
-    // Plate-aware search across id / customer / vehicle (local-first cards
-    // carry "Model · PLATE" in vehicleInfo). Filter the full list, then cap.
-    final q = _query.trim().toLowerCase();
-    final matches = q.isEmpty
-        ? sorted
-        : sorted
-              .where(
-                (jc) =>
-                    jc.id.toLowerCase().contains(q) ||
-                    jc.customerName.toLowerCase().contains(q) ||
-                    jc.vehicleInfo.toLowerCase().contains(q),
-              )
-              .toList();
-    // Min 5 visible without scrolling past chrome; cap keeps summary in reach.
-    final visible = matches.take(6).toList();
+    // Min 6 visible without scrolling past chrome; the conditional See-all
+    // below appears only when more exist than shown (U7).
+    final visible = sorted.take(6).toList();
 
     // Medium (600–1024) is two-column like expanded (list + compact
     // preview); compact stays single-column. Expanded caps at 1200.
@@ -466,9 +470,8 @@ class _AdvisorDashboardContentState
                 sliver: SliverToBoxAdapter(
                   child: _AdvisorHomeHeader(
                     info: info,
-                    pendingSync: widget.pendingSync,
                     approvalsCount: widget.approvalsCount,
-                    onOpenSearch: widget.onOpenSearch,
+                    onSearch: widget.onOpenSearch,
                     onNotifications: () {
                       HapticFeedback.selectionClick();
                       showModalBottomSheet(
@@ -500,7 +503,10 @@ class _AdvisorDashboardContentState
                   ),
                 ),
               ),
-              if (offline)
+              // Sync telemetry lives ONLY here (C16 hard-reject: no permanent
+              // status pill). Normal case (online, nothing queued) shows
+              // nothing; abnormal sync surfaces once as an AppBanner.
+              if (offline || widget.pendingSync > 0)
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(
                     AppDimensions.s20,
@@ -510,8 +516,14 @@ class _AdvisorDashboardContentState
                   ),
                   sliver: SliverToBoxAdapter(
                     child: AppBanner(
-                      kind: AppBannerKind.warning,
-                      message: t.advisorOfflineNotice,
+                      kind: offline
+                          ? AppBannerKind.warning
+                          : AppBannerKind.info,
+                      message: offline
+                          ? t.advisorOfflineNotice
+                          : SharedCoreL10n.of(
+                              context,
+                            ).connectivityQueuedCount(widget.pendingSync),
                     ),
                   ),
                 ),
@@ -549,56 +561,11 @@ class _AdvisorDashboardContentState
                   ),
                 ),
               ),
-              // ── 4. PINNED SEARCH (AppSearchPill + recents + scan) ─────────
-              // Hidden when there is nothing to filter (empty/error with a
-              // clear query): the header search + Ctrl+K + scan tile stay, so
-              // no affordance is lost. This also lifts the empty/error action
-              // above the fold at base 360px.
-              if (_query.trim().isNotEmpty || sorted.isNotEmpty || jobsLoading)
-                SliverAppBar(
-                  pinned: true,
-                  floating: false,
-                  automaticallyImplyLeading: false,
-                  toolbarHeight: 0,
-                  titleSpacing: 0,
-                  elevation: 0,
-                  scrolledUnderElevation: 0,
-                  surfaceTintColor: Colors.transparent,
-                  backgroundColor: colors.surface,
-                  shape: Border(
-                    bottom: BorderSide(color: colors.outlineVariant),
-                  ),
-                  bottom: PreferredSize(
-                    preferredSize: Size.fromHeight(
-                      _visibleRecents(_query, _recents) ? 116 : 64,
-                    ),
-                    child: ColoredBox(
-                      color: colors.surface,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          AppDimensions.s20,
-                          AppDimensions.s8,
-                          AppDimensions.s20,
-                          AppDimensions.s8,
-                        ),
-                        child: _PinnedSearchBar(
-                          controller: _searchCtrl,
-                          focusNode: _searchFocus,
-                          query: _query,
-                          recents: _recents,
-                          onChanged: (v) => setState(() => _query = v),
-                          onSubmitted: _submitSearch,
-                          onApplyRecent: _applyRecent,
-                          onScan: widget.onOpenScan,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+              // ── 4. ASSIGNED WORK + SUMMARY ─────────────────────────────────
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(
                   AppDimensions.s20,
-                  AppDimensions.s8,
+                  AppDimensions.s12,
                   AppDimensions.s20,
                   110,
                 ),
@@ -607,7 +574,7 @@ class _AdvisorDashboardContentState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (twoCol) ...[
-                        // ── 5. ASSIGNED + SIDE PREVIEW (medium/expanded) ─────
+                        // ── 4. ASSIGNED + SIDE PREVIEW (medium/expanded) ─────
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -615,11 +582,9 @@ class _AdvisorDashboardContentState
                               flex: 3,
                               child: _AssignedCards(
                                 jobs: visible,
-                                totalCount: matches.length,
+                                totalCount: sorted.length,
                                 isLoading: jobsLoading,
                                 hasError: jobsError,
-                                isSearching: q.isNotEmpty,
-                                onClearSearch: _clearSearch,
                                 onRetry: () => ref.invalidate(
                                   advisorRecentJobCardsProvider,
                                 ),
@@ -641,36 +606,18 @@ class _AdvisorDashboardContentState
                             ),
                           ],
                         ),
-                        const SizedBox(height: AppDimensions.s24),
-                        _AdvisorSummary(
-                          jobs: sorted,
-                          statsNew: stats?.newJobCardsToday ?? 0,
-                          isLoading: jobsLoading,
-                          onOpenReports: () => widget.onNavigateTab(2),
-                        ),
                       ] else ...[
-                        // ── 5. ASSIGNED WORK (large card rows) ───────────────
+                        // ── 4. ASSIGNED WORK (large card rows) ───────────────
                         _AssignedCards(
                           jobs: visible,
-                          totalCount: matches.length,
+                          totalCount: sorted.length,
                           isLoading: jobsLoading,
                           hasError: jobsError,
-                          isSearching: q.isNotEmpty,
-                          onClearSearch: _clearSearch,
                           onRetry: () =>
                               ref.invalidate(advisorRecentJobCardsProvider),
                           onSelect: widget.onJobCard,
                           onSeeAll: () => widget.onNavigateTab(1),
                           onNewJob: widget.onNewJobCard,
-                        ),
-                        const SizedBox(height: AppDimensions.s24),
-
-                        // ── 6. SUMMARY BEHIND SEE ALL / REPORTS ──────────────
-                        _AdvisorSummary(
-                          jobs: sorted,
-                          statsNew: stats?.newJobCardsToday ?? 0,
-                          isLoading: jobsLoading,
-                          onOpenReports: () => widget.onNavigateTab(2),
                         ),
                       ],
                       const SizedBox(height: AppDimensions.s8),
@@ -746,21 +693,25 @@ AppStatusKind _homeStatusKind(JobCardStatus status) => switch (status) {
 };
 
 // ─── 1. GREETING HEADER ──────────────────────────────────────────────────────
-// One AppPageHeader: date eyebrow + greeting title + branch·shift subtitle,
-// with the offline pill, bell (+ badge) and avatar as trailing actions.
+// U1/U9 headline header (presentation only): small sentence-case date line
+// with the search icon + bell (badge offset OUTSIDE the glyph, never
+// covering it) + avatar top-right — same placement as customer home. The
+// greeting below spans the full width and wraps to 2 lines with the FULL
+// name (never "…" on a person's name, U5), then the muted branch·shift
+// subtitle. No sync pill: sync state surfaces only as an AppBanner when
+// abnormal (offline or queued). Compact chrome keeps the first assigned
+// order above the fold at 360x800.
 class _AdvisorHomeHeader extends ConsumerWidget {
   final AdvisorInfo info;
-  final int pendingSync;
   final int approvalsCount;
-  final VoidCallback onOpenSearch;
+  final VoidCallback onSearch;
   final VoidCallback onNotifications;
   final VoidCallback onShowProfile;
 
   const _AdvisorHomeHeader({
     required this.info,
-    required this.pendingSync,
     required this.approvalsCount,
-    required this.onOpenSearch,
+    required this.onSearch,
     required this.onNotifications,
     required this.onShowProfile,
   });
@@ -768,9 +719,7 @@ class _AdvisorHomeHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = StaffLocalizations.of(context)!;
-    // Sentence-case date as its own muted line: AppPageHeader upper-cases
-    // its eyebrow slot (shared component, untouched), so the date renders
-    // above it instead of going through that slot (customer-home pattern).
+    // Sentence-case date on its own muted line (never ALL CAPS, C3/C11).
     final date = MaterialLocalizations.of(
       context,
     ).formatMediumDate(DateTime.now());
@@ -793,63 +742,92 @@ class _AdvisorHomeHeader extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          date,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w800,
-            fontSize: 11,
-          ),
-        ),
-        const SizedBox(height: AppDimensions.s4),
-        AppPageHeader(
-          title: t.advisorGreeting(greetingName),
-          subtitle: contextLine.isEmpty ? null : contextLine,
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AppIconButton(
-                icon: Icons.search_rounded,
-                onPressed: () {
-                  HapticFeedback.selectionClick();
-                  onOpenSearch();
-                },
-                tooltip: t.advisorActionSearchTitle,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Text(
+                date,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              const SizedBox(width: AppDimensions.s4),
-              OfflineStatusPill(pendingSyncCount: pendingSync),
-              const SizedBox(width: AppDimensions.s4),
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  AppIconButton(
-                    icon: Icons.notifications_none_rounded,
-                    onPressed: onNotifications,
-                    tooltip: t.advisorNotificationsTitle,
-                  ),
-                  if (bellCount > 0)
-                    PositionedDirectional(
-                      top: 6,
-                      end: 6,
-                      child: AppBadge(
-                        count: bellCount,
-                        kind: AppBadgeKind.error,
-                        semanticLabel: '$bellCount',
-                      ),
+            ),
+            // The ONE search path (U1/U7): opens the full-screen search
+            // sheet (autofocus + recents + scan inside). Ctrl+K stays.
+            AppIconButton(
+              icon: Icons.search_rounded,
+              onPressed: onSearch,
+              tooltip: t.advisorSearchTitle,
+            ),
+            // Bell with its badge floated ABOVE the glyph (top -8 straddles
+            // the hit-area edge, disjoint from the centered 20px glyph).
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                AppIconButton(
+                  icon: Icons.notifications_none_rounded,
+                  onPressed: () {
+                    HapticFeedback.selectionClick();
+                    onNotifications();
+                  },
+                  tooltip: t.advisorNotificationsTitle,
+                ),
+                if (bellCount > 0)
+                  PositionedDirectional(
+                    top: -8,
+                    end: -6,
+                    child: AppBadge(
+                      count: bellCount,
+                      kind: AppBadgeKind.error,
+                      semanticLabel: '$bellCount',
                     ),
-                ],
-              ),
-              const SizedBox(width: AppDimensions.s4),
-              AppAvatar(
-                name: info.name,
-                initials: info.initials,
-                size: AppAvatarSize.small,
-                onTap: onShowProfile,
-                semanticLabel: t.advisorProfileLabel,
-              ),
-            ],
+                  ),
+              ],
+            ),
+            const SizedBox(width: AppDimensions.s4),
+            AppAvatar(
+              name: info.name,
+              initials: info.initials,
+              size: AppAvatarSize.small,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onShowProfile();
+              },
+              semanticLabel: t.advisorProfileLabel,
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.s8),
+        Text(
+          t.advisorGreeting(greetingName),
+          // Two full lines: the headline names the advisor, so the name
+          // wraps instead of amputating to "Omar ...". Visible (never
+          // ellipsis): a long name must read in full (U5).
+          maxLines: 2,
+          softWrap: true,
+          overflow: TextOverflow.visible,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: Theme.of(context).colorScheme.onSurface,
+            letterSpacing: -0.2,
           ),
         ),
+        if (contextLine.isNotEmpty) ...[
+          const SizedBox(height: AppDimensions.s4),
+          Text(
+            contextLine,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.35,
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -859,9 +837,10 @@ class _AdvisorHomeHeader extends ConsumerWidget {
 // ONE hero card (AppSurfaceCard, no media block — the old icon slot rendered
 // a dead grey box-in-box above the headline): the key number (inspections
 // due today) + a plain-language delta sentence + ONE verb-first primary CTA
-// ("View jobs") into the Jobs tab. No stray full-width "See all" here —
-// Show-all lives on the Assigned / summary sections only. Skeleton mirrors
-// the card while the first load is in flight.
+// ("View jobs") into the Jobs tab. Zero due collapses to a compact calm
+// status row with NO filled button (U6: a filled CTA exists only when it
+// leads to something that exists). Skeleton mirrors the card while the
+// first load is in flight.
 class _AdvisorHeroCard extends StatelessWidget {
   final int inspectionsDue;
   final int newToday;
@@ -883,16 +862,44 @@ class _AdvisorHeroCard extends StatelessWidget {
       // Same footprint as the loaded hero card (title + sentence + CTA).
       return const AppShimmerSkeleton.card(height: 148);
     }
+    // Zero state owns honest calm copy: no "urgent first", no "0 …" key
+    // number, no filled button to nothing.
+    if (inspectionsDue == 0) {
+      final semantic = context.semanticColors;
+      return AppSurfaceCard(
+        radius: AppRadius.xl,
+        outlined: false,
+        padding: const EdgeInsets.all(AppDimensions.s16),
+        child: Row(
+          children: [
+            Icon(
+              Icons.check_circle_rounded,
+              size: 20,
+              color: semantic.success.base,
+            ),
+            const SizedBox(width: AppDimensions.s10),
+            Expanded(
+              child: Text(
+                t.advisorHeroCaughtUp,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     final title = t.advisorHeroDueTitle(inspectionsDue);
-    // Zero state owns honest copy: no "urgent first" when nothing is due.
-    final sentence = inspectionsDue == 0
-        ? t.advisorHeroCaughtUp
-        : newToday == 0
+    final sentence = newToday == 0
         ? t.advisorHeroSentence
         : '${t.advisorDeltaToday(newToday)}. ${t.advisorHeroSentence}';
+    // Borderless in light theme (shadow path, C16 hard-reject); dark takes
+    // the shared border path. ONE primary CTA inside the card.
     return AppSurfaceCard(
       radius: AppRadius.xl,
-      padding: const EdgeInsets.all(AppDimensions.s12),
+      outlined: false,
+      padding: const EdgeInsets.all(AppDimensions.s20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -930,12 +937,12 @@ class _AdvisorHeroCard extends StatelessWidget {
 }
 
 // ─── 3. QUICK ACTIONS ────────────────────────────────────────────────────────
-// One horizontal row of 3 tiles (Scan, New job, Approvals with count) on
-// wide rows; narrower rows (< 480 dp: phones, half-width medium column)
-// reflow to a 2x2 grid so every label keeps full words on two lines instead
-// of truncating mid-word (proven customer-home pattern). New job is the
-// emphasized primary. Per the brief this C16 row overrides the recorded
-// 2026-10-15 owner preference for the 2x2 grid.
+// 3 EQUAL columns (U5: prefer fitting over scrolling for <= 4 items), so
+// full-word labels survive 320px + 1.3x + ar with no horizontal cut-offs
+// and no mid-word cuts. No filled tile: the hero CTA is the screen's one
+// primary action, so every tile is a neutral surface (borderless shadow in
+// light, shared border in dark). The approvals count appears exactly ONCE,
+// on the badge — never duplicated in the label. Scan lives ONLY here.
 class _AdvisorQuickActions extends StatelessWidget {
   final int approvalsCount;
   final VoidCallback onScan;
@@ -952,9 +959,6 @@ class _AdvisorQuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = StaffLocalizations.of(context)!;
-    final approvalsLabel = approvalsCount > 0
-        ? '${t.advisorActionApprovalsTitle} ($approvalsCount)'
-        : t.advisorActionApprovalsTitle;
     final tiles = <_AdvisorQuickTileData>[
       _AdvisorQuickTileData(
         key: const Key('advisor_quick_scan'),
@@ -968,12 +972,12 @@ class _AdvisorQuickActions extends StatelessWidget {
         label: t.advisorActionNewJobTitle,
         hint: t.advisorActionNewJobSubtitle,
         icon: Icons.add_rounded,
-        emphasised: true,
+        accentIcon: true,
         onTap: onNewJob,
       ),
       _AdvisorQuickTileData(
         key: const Key('advisor_quick_approvals'),
-        label: approvalsLabel,
+        label: t.advisorActionApprovalsTitle,
         hint: t.advisorActionApprovalsSubtitle,
         icon: Icons.fact_check_outlined,
         badgeCount: approvalsCount,
@@ -982,45 +986,19 @@ class _AdvisorQuickActions extends StatelessWidget {
     ];
     return Semantics(
       label: t.advisorQuickActionsEyebrow,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          // 3-across needs ~120px per tile for full-word labels; narrower
-          // rows use a 2x2 grid instead of truncating mid-word. Both keep
-          // >= 48dp targets and full Semantics.
-          if (constraints.maxWidth < 480) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: _AdvisorQuickTile(action: tiles[0])),
-                    const SizedBox(width: AppDimensions.s10),
-                    Expanded(child: _AdvisorQuickTile(action: tiles[1])),
-                  ],
-                ),
-                const SizedBox(height: AppDimensions.s10),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: _AdvisorQuickTile(action: tiles[2])),
-                    const SizedBox(width: AppDimensions.s10),
-                    const Expanded(child: SizedBox.shrink()),
-                  ],
-                ),
-              ],
-            );
-          }
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (var i = 0; i < tiles.length; i++) ...[
-                if (i > 0) const SizedBox(width: AppDimensions.s10),
-                Expanded(child: _AdvisorQuickTile(action: tiles[i])),
-              ],
+      // IntrinsicHeight + stretch: equal-height columns inside the
+      // unbounded sliver height (a bare stretch Row cannot lay out with
+      // infinite cross-axis constraints).
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var i = 0; i < tiles.length; i++) ...[
+              if (i > 0) const SizedBox(width: AppDimensions.s10),
+              Expanded(child: _AdvisorQuickTile(action: tiles[i])),
             ],
-          );
-        },
+          ],
+        ),
       ),
     );
   }
@@ -1032,7 +1010,7 @@ class _AdvisorQuickTileData {
   final String hint;
   final IconData icon;
   final VoidCallback onTap;
-  final bool emphasised;
+  final bool accentIcon;
   final int badgeCount;
 
   const _AdvisorQuickTileData({
@@ -1041,7 +1019,7 @@ class _AdvisorQuickTileData {
     required this.hint,
     required this.icon,
     required this.onTap,
-    this.emphasised = false,
+    this.accentIcon = false,
     this.badgeCount = 0,
   });
 }
@@ -1055,27 +1033,24 @@ class _AdvisorQuickTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final emphasised = action.emphasised;
+    final dark = theme.brightness == Brightness.dark;
 
+    // Borderless in light (shadow + whitespace, C16 hard-reject); the dark
+    // path keeps the shared 1px border and no shadow. No fixed width: the
+    // parent Row gives each tile an equal third, and the label wraps to
+    // 2 lines on word boundaries instead of cutting mid-word (U5).
     final tile = Container(
       key: action.key,
-      // Fill the cell so the overlay badge anchors to the tile corner.
-      width: double.infinity,
       constraints: const BoxConstraints(minHeight: 76),
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.sm,
         vertical: AppSpacing.sm,
       ),
       decoration: BoxDecoration(
-        color: emphasised
-            ? colors.primary.withValues(alpha: 0.08)
-            : colors.surface,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: emphasised
-              ? colors.primary.withValues(alpha: 0.32)
-              : colors.outlineVariant,
-        ),
+        border: dark ? Border.all(color: colors.outline) : null,
+        boxShadow: dark ? null : AppShadows.e1,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1084,11 +1059,14 @@ class _AdvisorQuickTile extends StatelessWidget {
           Icon(
             action.icon,
             size: 24,
-            color: emphasised ? colors.primary : colors.onSurfaceVariant,
+            color: action.accentIcon
+                ? colors.primary
+                : colors.onSurfaceVariant,
           ),
           const SizedBox(height: AppSpacing.sm),
-          // Two-line wrap on word boundaries; the <480 reflow above keeps
-          // full words visible at 1.3x/320/ar instead of mid-word cuts.
+          // Two-line wrap on word boundaries; equal columns keep full words
+          // visible at 1.3x/320/ar instead of mid-word cuts. The count lives
+          // on the badge only (label has no number).
           Text(
             action.label,
             maxLines: 2,
@@ -1096,7 +1074,7 @@ class _AdvisorQuickTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             style: theme.textTheme.labelMedium?.copyWith(
-              color: emphasised ? colors.primary : colors.onSurface,
+              color: colors.onSurface,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -1107,7 +1085,9 @@ class _AdvisorQuickTile extends StatelessWidget {
     final tappable = Semantics(
       button: true,
       excludeSemantics: true,
-      label: '${action.label}, ${action.hint}',
+      label: action.badgeCount > 0
+          ? '${action.label}, ${action.badgeCount}, ${action.hint}'
+          : '${action.label}, ${action.hint}',
       child: InkWell(
         onTap: () {
           HapticFeedback.selectionClick();
@@ -1119,9 +1099,11 @@ class _AdvisorQuickTile extends StatelessWidget {
                 clipBehavior: Clip.none,
                 children: [
                   tile,
+                  // Badge floats above the tile corner, disjoint from the
+                  // centered glyph (same offset-outside rule as the bell).
                   PositionedDirectional(
-                    top: 8,
-                    end: 8,
+                    top: -8,
+                    end: -6,
                     child: AppBadge(
                       count: action.badgeCount,
                       kind: AppBadgeKind.error,
@@ -1136,95 +1118,6 @@ class _AdvisorQuickTile extends StatelessWidget {
   }
 }
 
-// ─── 4. PINNED SEARCH ────────────────────────────────────────────────────────
-// Pill-style pinned search (AppSearchBar): the same controller, focus,
-// query state, recents and scan CTA as before, so the inline assigned-list
-// filter behaves verbatim. The full search sheet stays one tap away (header
-// search + Ctrl+K shortcut, same route).
-class _PinnedSearchBar extends StatelessWidget {
-  final TextEditingController controller;
-  final FocusNode focusNode;
-  final String query;
-  final List<String> recents;
-  final ValueChanged<String> onChanged;
-  final ValueChanged<String> onSubmitted;
-  final void Function(String) onApplyRecent;
-  final VoidCallback onScan;
-
-  const _PinnedSearchBar({
-    required this.controller,
-    required this.focusNode,
-    required this.query,
-    required this.recents,
-    required this.onChanged,
-    required this.onSubmitted,
-    required this.onApplyRecent,
-    required this.onScan,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final t = StaffLocalizations.of(context)!;
-    // Short verb hint ("Search") always fits beside the scan CTA at base
-    // 360px, 320px and 1.3x; the long jobs-list hint truncated. Recents
-    // never show a chip duplicating the current query.
-    final trimmedQuery = query.trim().toLowerCase();
-    final chips = recents
-        .where((r) => r.trim().toLowerCase() != trimmedQuery)
-        .toList();
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: AppSearchBar(
-                controller: controller,
-                focusNode: focusNode,
-                hint: t.advisorActionSearchTitle,
-                onChanged: onChanged,
-                onSubmitted: onSubmitted,
-              ),
-            ),
-            const SizedBox(width: AppDimensions.s8),
-            AppIconButton(
-              icon: Icons.qr_code_scanner_rounded,
-              onPressed: () {
-                HapticFeedback.selectionClick();
-                onScan();
-              },
-              tooltip: t.advisorActionScanTitle,
-              filled: true,
-              active: true,
-            ),
-          ],
-        ),
-        if (chips.isNotEmpty) ...[
-          const SizedBox(height: AppDimensions.s4),
-          SizedBox(
-            height: 48,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: chips.length,
-              separatorBuilder: (_, __) =>
-                  const SizedBox(width: AppDimensions.s8),
-              itemBuilder: (context, i) => AppChip(
-                label: chips[i],
-                onSelected: (_) {
-                  HapticFeedback.selectionClick();
-                  onApplyRecent(chips[i]);
-                },
-                semanticLabel: chips[i],
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
 // ─── 5. ASSIGNED WORK ────────────────────────────────────────────────────────
 // AppSection + large card rows: job id, customer + vehicle + plate, ONE
 // status chip + one-line status sentence, trailing chevron into the job
@@ -1234,8 +1127,6 @@ class _AssignedCards extends ConsumerWidget {
   final int totalCount;
   final bool isLoading;
   final bool hasError;
-  final bool isSearching;
-  final VoidCallback onClearSearch;
   final VoidCallback onRetry;
   final void Function(JobCardEntity) onSelect;
   final VoidCallback onSeeAll;
@@ -1246,8 +1137,6 @@ class _AssignedCards extends ConsumerWidget {
     required this.totalCount,
     required this.isLoading,
     required this.hasError,
-    this.isSearching = false,
-    required this.onClearSearch,
     required this.onRetry,
     required this.onSelect,
     required this.onSeeAll,
@@ -1278,24 +1167,16 @@ class _AssignedCards extends ConsumerWidget {
         retryLabel: SharedCoreL10n.of(context).commonRetry,
       );
     } else if (jobs.isEmpty) {
-      child = isSearching
-          ? AppEmptyState(
-              icon: Icons.search_off_rounded,
-              title: t.advisorNoMatchingJobs,
-              message: t.advisorJobsSearchHint,
-              actionLabel: SharedCoreL10n.of(context).filterBarClear,
-              onAction: onClearSearch,
-            )
-          : AppEmptyState(
-              icon: Icons.assignment_outlined,
-              title: t.advisorHomeEmptyTitle,
-              message: t.advisorHomeEmptyBody,
-              actionLabel: t.advisorActionNewJobTitle,
-              onAction: () {
-                HapticFeedback.selectionClick();
-                onNewJob();
-              },
-            );
+      child = AppEmptyState(
+        icon: Icons.assignment_outlined,
+        title: t.advisorHomeEmptyTitle,
+        message: t.advisorHomeEmptyBody,
+        actionLabel: t.advisorActionNewJobTitle,
+        onAction: () {
+          HapticFeedback.selectionClick();
+          onNewJob();
+        },
+      );
     } else {
       child = Column(
         mainAxisSize: MainAxisSize.min,
@@ -1313,23 +1194,31 @@ class _AssignedCards extends ConsumerWidget {
       );
     }
 
+    // U7: See-all appears ONLY when more items exist than shown — the hero
+    // "View jobs" CTA is the one persistent path into the Jobs tab.
+    final showSeeAll = totalCount > jobs.length;
     return AppSection(
       // Count inline on the header line (never on its own line).
       title: '${t.advisorAssignedWorkOrders} ($totalCount)',
-      seeAllLabel: t.advisorSeeAll,
-      onSeeAll: () {
-        HapticFeedback.selectionClick();
-        onSeeAll();
-      },
+      seeAllLabel: showSeeAll ? t.advisorSeeAll : null,
+      onSeeAll: showSeeAll
+          ? () {
+              HapticFeedback.selectionClick();
+              onSeeAll();
+            }
+          : null,
       child: child,
     );
   }
 }
 
-/// One assigned job as a large card: job id (LTR mono, tabular) first, then
-/// customer + vehicle + plate, one plain status sentence, ONE status chip,
-/// and a trailing chevron affordance into the job workspace. Urgent-first
-/// order is UNCHANGED (logic). Identifiers and times stay LTR in RTL.
+/// One assigned job as a large borderless card, vehicle/customer-first
+/// (C16 card hierarchy): title = the thing the advisor recognizes
+/// (customer + vehicle), then the single status pill, then meta, with the
+/// job id as small LTR mono meta — never the title. One plain status
+/// sentence + ONE status chip + trailing chevron into the workspace.
+/// Urgent-first order is UNCHANGED (logic). Identifiers and times stay
+/// LTR in RTL.
 class _AssignedJobCard extends StatelessWidget {
   final JobCardEntity jc;
   final bool urgent;
@@ -1348,6 +1237,7 @@ class _AssignedJobCard extends StatelessWidget {
     final colors = theme.colorScheme;
     final sentence = urgent ? '${t.advisorDueToday} · ${jc.time}' : jc.time;
     return AppSurfaceCard(
+      outlined: false,
       onTap: () {
         HapticFeedback.selectionClick();
         onTap(jc);
@@ -1361,16 +1251,7 @@ class _AssignedJobCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Directionality(
-                  textDirection: TextDirection.ltr,
-                  child: Text(
-                    jc.id,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.mono(color: colors.onSurface),
-                  ),
-                ),
-                const SizedBox(height: AppDimensions.s4),
+                // Recognized name first: customer + vehicle.
                 Text(
                   '${jc.customerName} · ${jc.vehicleInfo}',
                   maxLines: 2,
@@ -1378,6 +1259,14 @@ class _AssignedJobCard extends StatelessWidget {
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: colors.onSurface,
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.s8),
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: AppStatusChip(
+                    label: advisorStatusLabel(t, jc.status),
+                    kind: _homeStatusKind(jc.status),
                   ),
                 ),
                 const SizedBox(height: AppDimensions.s4),
@@ -1389,12 +1278,17 @@ class _AssignedJobCard extends StatelessWidget {
                     color: colors.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: AppDimensions.s8),
-                Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: AppStatusChip(
-                    label: advisorStatusLabel(t, jc.status),
-                    kind: _homeStatusKind(jc.status),
+                const SizedBox(height: AppDimensions.s4),
+                // Id is small meta (LTR mono, tabular), never the title.
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Text(
+                    jc.id,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.mono(
+                      color: colors.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ],
@@ -1405,94 +1299,6 @@ class _AssignedJobCard extends StatelessWidget {
             Icons.chevron_right_rounded,
             size: 20,
             color: colors.onSurfaceVariant,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── 6. WORK SUMMARY ─────────────────────────────────────────────────────────
-// Slim metrics behind See all / the Reports tab: total, in-progress, ready.
-// Counts are derived from the same assigned list as before (logic unchanged);
-// zeros render as a muted dash, never a giant 0-card.
-class _AdvisorSummary extends StatelessWidget {
-  final List<JobCardEntity> jobs;
-  final int statsNew;
-  final bool isLoading;
-  final VoidCallback onOpenReports;
-
-  const _AdvisorSummary({
-    required this.jobs,
-    required this.statsNew,
-    required this.isLoading,
-    required this.onOpenReports,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final t = StaffLocalizations.of(context)!;
-
-    final total = jobs.length;
-    final inProgress = jobs
-        .where((j) => j.status == JobCardStatus.inProgress)
-        .length;
-    final ready = jobs
-        .where(
-          (j) =>
-              j.status == JobCardStatus.completed ||
-              j.status == JobCardStatus.delivered ||
-              j.status == JobCardStatus.qualityCheckPassed,
-        )
-        .length;
-
-    if (isLoading) {
-      return const SizedBox(
-        height: 76,
-        child: AppShimmerSkeleton.card(height: 76),
-      );
-    }
-
-    String value(int v) => v == 0 ? '–' : '$v';
-    // Only Total carries a today-delta ("new job cards today" genuinely
-    // grows the total, same source as the hero "+2 today"). Per-metric
-    // today-deltas are not reported by the entities, so In progress / Ready
-    // show no delta rather than an invented one.
-    final String? totalDelta = statsNew == 0
-        ? null
-        : t.advisorDeltaToday(statsNew);
-
-    return AppSection(
-      title: t.advisorWorkSummary,
-      seeAllLabel: t.advisorSeeAll,
-      onSeeAll: () {
-        HapticFeedback.selectionClick();
-        onOpenReports();
-      },
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: AppStatTile(
-              label: t.advisorMetricTotalOrders,
-              value: value(total),
-              deltaText: totalDelta,
-              deltaUp: totalDelta == null ? null : true,
-            ),
-          ),
-          const SizedBox(width: AppDimensions.s12),
-          Expanded(
-            child: AppStatTile(
-              label: t.advisorMetricInProgress,
-              value: value(inProgress),
-            ),
-          ),
-          const SizedBox(width: AppDimensions.s12),
-          Expanded(
-            child: AppStatTile(
-              label: t.advisorMetricReady,
-              value: value(ready),
-            ),
           ),
         ],
       ),
@@ -1517,6 +1323,7 @@ class _AdvisorPreviewCard extends StatelessWidget {
 
     if (job == null) {
       return AppSurfaceCard(
+        outlined: false,
         child: Text(
           t.advisorJobsSelectPrompt,
           style: theme.textTheme.bodySmall?.copyWith(
@@ -1527,6 +1334,7 @@ class _AdvisorPreviewCard extends StatelessWidget {
     }
 
     return AppSurfaceCard(
+      outlined: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
