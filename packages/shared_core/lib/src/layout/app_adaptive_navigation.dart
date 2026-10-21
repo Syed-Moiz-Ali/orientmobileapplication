@@ -124,7 +124,8 @@ class OrientBrandMark extends StatelessWidget {
                   if (workspace != null) ...[
                     const SizedBox(height: 1),
                     Text(
-                      workspace!.toUpperCase(),
+                      // C16: workspace context renders sentence case verbatim.
+                      workspace!,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.labelSmall?.copyWith(

@@ -160,7 +160,8 @@ class _WorkshopFiguresStrip extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            t.techProdFigures.toUpperCase(),
+            // C16: sentence-case ARB copy verbatim — never uppercased.
+            t.techProdFigures,
             style: theme.textTheme.labelSmall?.copyWith(
               color: colors.primary,
               fontWeight: FontWeight.w900,

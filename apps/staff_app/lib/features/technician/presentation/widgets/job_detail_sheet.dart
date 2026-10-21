@@ -724,7 +724,9 @@ class _TaskRow extends StatelessWidget {
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
-                            task.status.label.toUpperCase(),
+                            // C16: frozen entity label verbatim — never
+                            // uppercased (same sentence case as the pills).
+                            task.status.label,
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: tone,
                               fontWeight: FontWeight.w900,

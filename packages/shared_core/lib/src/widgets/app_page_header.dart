@@ -66,8 +66,9 @@ class AppPageHeader extends StatelessWidget {
                 const SizedBox(height: AppDimensions.s6),
               ],
               if (eyebrow != null) ...[
+                // C16: eyebrow renders caller sentence case verbatim.
                 Text(
-                  arabic ? eyebrow! : eyebrow!.toUpperCase(),
+                  eyebrow!,
                   style: textTheme.labelSmall?.copyWith(
                     color: colors.primary,
                     fontWeight: FontWeight.w800,

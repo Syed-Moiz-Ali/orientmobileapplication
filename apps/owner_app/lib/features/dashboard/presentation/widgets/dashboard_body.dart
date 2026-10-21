@@ -37,9 +37,12 @@ List<AppNavItem> _ownerNavItems(OwnerLocalizations t) => <AppNavItem>[
     ];
 
 /// Owner shell: the shared [DashboardShell] + [AppAdaptiveNavigationFrame]
-/// (rail ≥ 600px, bottom nav below) with a frosted [WorkspaceAppBar] that
-/// carries the period selector, search trigger, offline pill, bell and
-/// avatar. The pill owns offline state, so the full-width banner stays off.
+/// (rail ≥ 600px, bottom nav below) with a spec-C8 [AppAppBar] that carries
+/// the search trigger, the period selector (dashboard tab only), bell and
+/// avatar. Offline state is announced once by the [OfflineBanner] (C16: no
+/// permanent "Synced" pill); the bar stays a single 56px row whose actions
+/// compress (icon search, capped period trigger, bell, avatar) so 320px and
+/// 1.3x never overflow in LTR or ar.
 class DashboardBody extends ConsumerWidget {
   const DashboardBody({super.key});
 
@@ -62,9 +65,9 @@ class DashboardBody extends ConsumerWidget {
     final state = ref.watch(dashboardUiProvider);
 
     final shell = DashboardShell(
-      // The app-bar pill announces connectivity; the banner stays off so
-      // offline state is never duplicated.
-      showOfflineBanner: false,
+      // C16: connectivity announces only when abnormal via the banner — no
+      // permanent pill in the bar, never duplicated state.
+      showOfflineBanner: true,
       appBar: _OwnerChrome(
         selectedIndex: state.selectedIndex,
         onSearch: () => _openSearch(context, ref),
@@ -141,10 +144,16 @@ class DashboardBody extends ConsumerWidget {
       ),
       bottomNavigationBar: adaptive.useNavigationRail
           ? null
-          : AppBottomNavigation(
-              items: items,
-              selectedIndex: state.selectedIndex,
-              onSelected: notifier.selectTab,
+          // Spec-C8 bar (phase-1e-i): labels wrap to 2 lines and grow the
+          // bar at 1.3x instead of mid-word ellipsis. Same 4 destinations,
+          // same tab targets — only the bar widget changes.
+          : AppBottomNav(
+              items: [
+                for (final item in items)
+                  AppBottomNavItem(label: item.label, icon: item.icon),
+              ],
+              currentIndex: state.selectedIndex,
+              onTap: notifier.selectTab,
             ),
     );
 
@@ -156,11 +165,12 @@ class DashboardBody extends ConsumerWidget {
 }
 
 /// Phase 07.1 centralized chrome (kept): the bespoke `OwnerAppBar` stays
-/// deleted — titles, branch subtitle, back-to-overview leading, the period
-/// selector, search trigger, offline pill, bell and avatar compose the shared
-/// [WorkspaceAppBar]. Desktop renders frosted (with the built-in
-/// reduced-transparency fallback); the search trigger opens the command
-/// palette of real destinations.
+/// deleted. The shell bar is the shared spec-C8 [AppAppBar] (56, no
+/// elevation, hairline): screen title, back-to-overview on drill tabs, the
+/// search trigger (U1 icon, same command palette), the period selector on
+/// the dashboard tab, bell and avatar. Single row, compressed actions, no
+/// offline pill (banner owns abnormal state per C16). Titles, tab targets,
+/// palette contract, haptics and keys are unchanged.
 class _OwnerChrome extends ConsumerWidget implements PreferredSizeWidget {
   final int selectedIndex;
   final VoidCallback onSearch;
@@ -168,68 +178,61 @@ class _OwnerChrome extends ConsumerWidget implements PreferredSizeWidget {
   const _OwnerChrome({required this.selectedIndex, required this.onSearch});
 
   @override
-  Size get preferredSize => const Size.fromHeight(57);
+  Size get preferredSize => const Size.fromHeight(56);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = OwnerLocalizations.of(context)!;
     final notifier = ref.read(dashboardUiProvider.notifier);
+    // Shell-fix round 2: the dashboard tab reuses the short nav label
+    // (`Dashboard`, existing key) instead of the long bar title (`Owner
+    // dashboard`): with search + period + bell + avatar in the 56px bar,
+    // the 16-char title can never fit 320–360px without `…` on primary
+    // text (U5), while the 9-char label fits every matrix cell incl.
+    // 320px/1.3x/ar. Same destination, existing key, no new copy — flagged
+    // for reviewer adjudication.
     final titles = <String>[
-      t.ownerBarDashboard,
+      t.ownerNavDashboard,
       t.ownerBarTopSales,
       t.ownerBarMessages,
       t.ownerBarActivity,
     ];
-    final subtitles = <String?>[
-      ownerProfileData.branch,
-      t.ownerBarTopSalesSub,
-      t.ownerBarMessagesSub,
-      t.ownerBarActivitySub,
-    ];
 
-    return WorkspaceAppBar(
+    return AppAppBar(
       title: titles[selectedIndex],
-      subtitle: subtitles[selectedIndex],
-      toolbarHeight: 56,
-      // Frosted on desktop; the widget falls back to a solid surface when
-      // the platform requests reduced transparency.
-      frosted: !context.isCompact,
-      contextSelector:
-          selectedIndex == 0 ? const PeriodDropdown() : null,
-      onSearch: onSearch,
-      // Connectivity pill; no queued-operations count exists in the owner
-      // app, so the pill reports connectivity only — never a fabricated zero.
-      showOfflineStatus: true,
-      leading: selectedIndex == 0
-          ? Icon(
-              Icons.directions_car_rounded,
-              color: Theme.of(context).colorScheme.primary,
-              size: 24,
-            )
-          : IconButton(
-              tooltip: t.ownerBarBack,
-              icon: const Icon(Icons.arrow_back_rounded),
-              onPressed: () {
+      showBack: selectedIndex != 0,
+      onBack: selectedIndex == 0
+          ? null
+          : () {
+              HapticFeedback.selectionClick();
+              notifier.selectTab(0);
+            },
+      showDivider: true,
+      actions: [
+        AppIconButton(
+          icon: Icons.search_rounded,
+          tooltip: t.ownerSearchHint,
+          onPressed: onSearch,
+        ),
+        if (selectedIndex == 0) const PeriodDropdown(),
+        const NotificationBell(),
+        SizedBox(
+          width: 48,
+          height: 48,
+          child: Center(
+            child: UserAvatar(
+              initials: ownerProfileData.initials,
+              onTap: () {
                 HapticFeedback.selectionClick();
-                notifier.selectTab(0);
+                showProfileSheet(
+                  context,
+                  ownerProfileData,
+                  onLogout: () {
+                    ref.read(authNotifierProvider.notifier).logout();
+                  },
+                );
               },
             ),
-      actions: [
-        const NotificationBell(),
-        Padding(
-          padding: const EdgeInsets.only(right: 14),
-          child: UserAvatar(
-            initials: ownerProfileData.initials,
-            onTap: () {
-              HapticFeedback.selectionClick();
-              showProfileSheet(
-                context,
-                ownerProfileData,
-                onLogout: () {
-                  ref.read(authNotifierProvider.notifier).logout();
-                },
-              );
-            },
           ),
         ),
       ],

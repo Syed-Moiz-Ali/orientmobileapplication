@@ -10,6 +10,7 @@ import 'package:staff_app/features/common/presentation/profile_screen.dart';
 import 'package:staff_app/features/technician/domain/entities/technician_entities.dart';
 import 'package:staff_app/features/technician/presentation/providers/technician_providers.dart';
 import 'package:staff_app/features/technician/presentation/widgets/technician_today_view.dart';
+import 'package:staff_app/features/technician/presentation/widgets/technician_today_search.dart';
 import 'package:staff_app/features/technician/presentation/widgets/technician_jobs_view.dart';
 import 'package:staff_app/features/technician/presentation/widgets/technician_productivity_view.dart';
 import 'package:staff_app/features/technician/presentation/widgets/technician_components.dart';
@@ -74,6 +75,34 @@ class _TechnicianDashboardViewState
     _profilePage,
   ];
 
+  void _openSearch() {
+    HapticFeedback.selectionClick();
+    final notifier = ref.read(technicianDashboardProvider.notifier);
+    showTechnicianTodaySearch(
+      context,
+      jobs: notifier.allJobs,
+      onSelect: (job) => _openJobDetail(job),
+    );
+  }
+
+  void _openNotifications() {
+    HapticFeedback.selectionClick();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => const AdvisorNotificationSheet(),
+    );
+  }
+
+  void _openProfile() {
+    showProfileSheet(
+      context,
+      _technicianProfileSheetData(context, ref),
+      onLogout: () => ref.read(authNotifierProvider.notifier).logout(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = StaffLocalizations.of(context)!;
@@ -84,8 +113,6 @@ class _TechnicianDashboardViewState
     final effectiveIndex = state.selectedTab < _pages.length
         ? state.selectedTab
         : 0;
-    final pendingSync =
-        ref.watch(technicianPendingSyncCountProvider).valueOrNull ?? 0;
 
     final activeJob = _activeJob(notifier.allJobs);
     final bannerKey = activeJob == null
@@ -93,9 +120,26 @@ class _TechnicianDashboardViewState
         : 'job:${activeJob.jobCardNo}:${activeJob.status.name}';
     final showBanner = _dismissedKey != bannerKey;
 
+    // Owner-grade shell (shell-fix round 2): shared spec-C8 [AppAppBar]
+    // (56, hairline, per-tab title, U1 search, bell, avatar) + abnormal-only
+    // [OfflineBanner] (C16: no permanent "Synced" pill) + [AppBottomNav]
+    // (labels wrap to 2 lines and grow the bar at 1.3x instead of the old
+    // `Producti…` ellipsis). Same 4 destinations, same tab targets, same
+    // search sheet, same notification/profile sheets, same pinned banner —
+    // only the chrome changes. The bespoke greeting header is deleted: its
+    // bell/avatar/search move to the bar (U7 one path) and its
+    // branch · shift + attendance readout already lives on the Today page
+    // header, so no information leaves the surface.
     return DashboardShell(
-      showOfflineBanner: false,
-      appBar: null,
+      // C16: connectivity announces only when abnormal via the banner — no
+      // permanent pill, never duplicated state.
+      showOfflineBanner: true,
+      appBar: _TechChrome(
+        selectedIndex: effectiveIndex,
+        onSearch: _openSearch,
+        onNotifications: _openNotifications,
+        onProfile: _openProfile,
+      ),
       body: AppAdaptiveNavigationFrame(
         items: items,
         selectedIndex: effectiveIndex,
@@ -152,26 +196,6 @@ class _TechnicianDashboardViewState
         ),
         child: Column(
           children: [
-            _TechnicianGreetingHeader(
-              pendingSync: pendingSync,
-              onNotifications: () {
-                HapticFeedback.selectionClick();
-                showModalBottomSheet(
-                  context: context,
-                  backgroundColor: Colors.transparent,
-                  isScrollControlled: true,
-                  builder: (_) => const AdvisorNotificationSheet(),
-                );
-              },
-              onProfile: () {
-                showProfileSheet(
-                  context,
-                  _technicianProfileSheetData(context, ref),
-                  onLogout: () =>
-                      ref.read(authNotifierProvider.notifier).logout(),
-                );
-              },
-            ),
             if (showBanner)
               _ActiveJobBanner(
                 job: activeJob,
@@ -184,8 +208,7 @@ class _TechnicianDashboardViewState
                     ? null
                     : () => _pauseOrResume(activeJob),
                 pauseResumeKind: _pauseResumeKind(activeJob),
-                onDismiss: () =>
-                    setState(() => _dismissedKey = bannerKey),
+                onDismiss: () => setState(() => _dismissedKey = bannerKey),
               ),
             Expanded(
               child: IndexedStack(index: effectiveIndex, children: _pages),
@@ -195,10 +218,15 @@ class _TechnicianDashboardViewState
       ),
       bottomNavigationBar: adaptive.useNavigationRail
           ? null
-          : AppBottomNavigation(
-              items: items,
-              selectedIndex: effectiveIndex,
-              onSelected: notifier.selectTab,
+          // Spec-C8 bar: same 4 destinations, same tab targets — only the
+          // bar widget changes (wrapping labels kill the 1.3x truncation).
+          : AppBottomNav(
+              items: [
+                for (final item in items)
+                  AppBottomNavItem(label: item.label, icon: item.icon),
+              ],
+              currentIndex: effectiveIndex,
+              onTap: notifier.selectTab,
             ),
     );
   }
@@ -259,9 +287,11 @@ class _TechnicianDashboardViewState
   void _openJobDetail(TechnicianJobEntity job) {
     HapticFeedback.selectionClick();
     ref.read(technicianDashboardProvider.notifier).openJob(job);
-    context.push(AppRoutes.technicianJobDetail, extra: job).whenComplete(
-      () => ref.read(technicianDashboardProvider.notifier).closeJob(),
-    );
+    context
+        .push(AppRoutes.technicianJobDetail, extra: job)
+        .whenComplete(
+          () => ref.read(technicianDashboardProvider.notifier).closeJob(),
+        );
   }
 }
 
@@ -290,163 +320,69 @@ class _TechAvatar extends StatelessWidget {
   }
 }
 
-// ─── GREETING HEADER ─────────────────────────────────────────────────────────
-// One header row: greeting (22/800) + branch · shift + attendance dot, plus
-// integrated actions (Synced pill, bell, avatar). No WorkspaceAppBar on this
-// tab by product exception — same as the advisor home.
-class _TechnicianGreetingHeader extends ConsumerWidget {
-  final int pendingSync;
+// ─── SHELL BAR ───────────────────────────────────────────────────────────────
+// Owner-grade chrome (shell-fix round 2): the shared spec-C8 [AppAppBar]
+// (56, hairline) with the per-tab title, the U1 search trigger (same
+// full-screen today search over the loaded jobs), the notification bell
+// (same advisor notification sheet) and the avatar (same profile sheet).
+// Single row, no offline pill (the abnormal-only banner owns that state).
+class _TechChrome extends ConsumerWidget implements PreferredSizeWidget {
+  final int selectedIndex;
+  final VoidCallback onSearch;
   final VoidCallback onNotifications;
   final VoidCallback onProfile;
 
-  const _TechnicianGreetingHeader({
-    required this.pendingSync,
+  const _TechChrome({
+    required this.selectedIndex,
+    required this.onSearch,
     required this.onNotifications,
     required this.onProfile,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final t = StaffLocalizations.of(context)!;
-    final notifier = ref.read(technicianDashboardProvider.notifier);
-    final state = ref.watch(technicianDashboardProvider);
-    final profile = notifier.profile;
-    final name = profile.name.isNotEmpty ? profile.name : t.techWorkspaceName;
-    final contextLine = [
-      profile.branch,
-      profile.shift,
-    ].where((s) => s.trim().isNotEmpty).join(' · ');
-
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        context.pagePadding.left,
-        AppDimensions.s16,
-        context.pagePadding.right,
-        0,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  t.techGreeting(name),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: colors.onSurface,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-                if (contextLine.isNotEmpty) ...[
-                  const SizedBox(height: AppDimensions.s4),
-                  Text(
-                    contextLine,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: AppDimensions.s6),
-                _AttendanceDot(status: state.attendanceStatus),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppDimensions.s8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              OfflineStatusPill(pendingSyncCount: pendingSync),
-              const SizedBox(height: AppDimensions.s8),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    onPressed: onNotifications,
-                    tooltip: StaffLocalizations.of(
-                      context,
-                    )!.advisorNotificationsTitle,
-                    icon: const Icon(Icons.notifications_none_rounded),
-                    color: colors.onSurfaceVariant,
-                  ),
-                  InkWell(
-                    onTap: onProfile,
-                    borderRadius: BorderRadius.circular(
-                      AppDimensions.radiusPill,
-                    ),
-                    child: Tooltip(
-                      message: t.techProfileLabel,
-                      child: Padding(
-                        padding: const EdgeInsets.all(AppDimensions.s8),
-                        child: _TechAvatar(
-                          radius: 16,
-                          initials: profile.avatarInitials.isNotEmpty
-                              ? profile.avatarInitials
-                              : 'T',
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AttendanceDot extends StatelessWidget {
-  final AttendanceStatus status;
-  const _AttendanceDot({required this.status});
+  Size get preferredSize => const Size.fromHeight(56);
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = StaffLocalizations.of(context)!;
-    final dot = techAttendanceColor(context, status);
-    final label = switch (status) {
-      AttendanceStatus.working => t.techAttendanceWorking,
-      AttendanceStatus.onBreak => t.techAttendanceOnBreak,
-      AttendanceStatus.notPunchedIn => t.techAttendanceNotPunchedIn,
-      AttendanceStatus.punchedOut => t.techAttendancePunchedOut,
-    };
-    return Semantics(
-      container: true,
-      label: label,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: AppDimensions.s6),
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: colors.onSurfaceVariant,
-                fontWeight: FontWeight.w700,
-              ),
+    final notifier = ref.read(technicianDashboardProvider.notifier);
+    final titles = <String>[
+      t.techNavToday,
+      t.techNavJobs,
+      t.techNavProductivity,
+      t.techNavProfile,
+    ];
+
+    return AppAppBar(
+      title: titles[selectedIndex],
+      showDivider: true,
+      actions: [
+        AppIconButton(
+          icon: Icons.search_rounded,
+          tooltip: t.techJobsSearch,
+          onPressed: onSearch,
+        ),
+        AppIconButton(
+          icon: Icons.notifications_none_rounded,
+          tooltip: t.advisorNotificationsTitle,
+          onPressed: onNotifications,
+        ),
+        SizedBox(
+          width: 48,
+          height: 48,
+          child: Center(
+            child: UserAvatar(
+              initials: notifier.profile.avatarInitials.isNotEmpty
+                  ? notifier.profile.avatarInitials
+                  : 'T',
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onProfile();
+              },
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -494,7 +430,8 @@ class _ActiveJobBanner extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
           side: BorderSide(
-            color: current != null &&
+            color:
+                current != null &&
                     current.tasks.any(
                       (task) => task.status == TaskStatus.inProgress,
                     )
@@ -598,8 +535,7 @@ class _JobContent extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final t = StaffLocalizations.of(context)!;
-    final vehicle =
-        '${job.vehicleBrand} ${job.vehicleModel}'.trim().isEmpty
+    final vehicle = '${job.vehicleBrand} ${job.vehicleModel}'.trim().isEmpty
         ? t.techVehicleFallback
         : '${job.vehicleBrand} ${job.vehicleModel}'.trim();
     final running = job.tasks
@@ -609,9 +545,7 @@ class _JobContent extends StatelessWidget {
     // pause instant is recorded, so nothing ticks).
     final stopTask =
         running ??
-        job.tasks
-            .where((task) => task.status == TaskStatus.onHold)
-            .firstOrNull;
+        job.tasks.where((task) => task.status == TaskStatus.onHold).firstOrNull;
     final action = pauseResumeKind;
     final actionIcon = switch (action) {
       _BannerAction.pause => Icons.pause_rounded,
@@ -633,7 +567,8 @@ class _JobContent extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                t.techBannerActive.toUpperCase(),
+                // C16: sentence-case ARB copy verbatim — never uppercased.
+                t.techBannerActive,
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: colors.primary,
                   fontWeight: FontWeight.w800,

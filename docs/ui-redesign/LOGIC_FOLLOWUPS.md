@@ -97,3 +97,36 @@ owner. No silent filtering.
 - Proposed owner: shared-grammar owning phase (this session, §4) —
   sentence-case shared pills/overlines with ARB-safe copy.
 - Status: in progress (integration session, §4).
+
+## 8. Supervisor keeps 7 bottom-nav destinations vs spec max-5 (More-slot STOP)
+
+- Feed/contract: the phase-5 supervisor brief keeps `bottom nav (7 items)`
+  as a KEPT surface contract; spec C16 and the new `AppBottomNav` cap the
+  bar at 5 (`assert(items.length <= 5)`), so 7 destinations cannot move to
+  the new bar presentation-only. Consolidating to 5 is a product IA
+  decision (which tabs merge, tap-count impact on dispatch/queue/review),
+  not presentation.
+- Evidence: shell-fix round 2 (`ui/integration-1`):
+  `supervisor_scaffold.dart` keeps the shared 7-slot `AppBottomNavigation`
+  (More overflow) with a STOP comment; only the `AppAppBar` half migrated.
+  Reviewer adjudicates the IA.
+- Proposed owner: product/design — either confirm the 7-tab IA (then the
+  More overflow is the specified pattern for >5) or consolidate to 5 named
+  destinations; frontend migrates the bar only then.
+- Status: open. Shell AppBar migrated; nav intentionally unchanged.
+
+## 9. Server/entity labels render English inside the ar locale (no ARB key to use)
+
+- Feed/copy: owner KPI overlines/deltas (`KpiCardResponse.label/sub`:
+  "Revenue", "Bay occupancy", "+1.2% vs last week") and technician status
+  pill labels (`TechJobStatus.label`: "In Progress", "Delayed") arrive from
+  the server/entities without localized variants, so the ar captures render
+  English labels with correct RTL mirroring. Translating them in
+  presentation would invent copy — same family as entry 2 (advisor
+  branch/shift).
+- Evidence: shell-fix round 2 ar captures
+  (`docs/ui-redesign/baseline/after-shell-fix/owner_home_ar_1.0_360x800.png`,
+  `tech_today_ar_1.0_360x800.png`): layout clean, labels English.
+- Proposed owner: backend/product — return locale-aware labels (or confirm
+  English-codes acceptable, e.g. "AED", plate numbers stay LTR by design).
+- Status: open. Presentation renders the feed verbatim; no invented copy.

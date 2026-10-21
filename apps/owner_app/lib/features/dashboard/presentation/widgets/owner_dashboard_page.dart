@@ -348,15 +348,24 @@ class _MicroPods extends StatelessWidget {
     // short cards on compact phones (single column only below 360px), and
     // the cell aspect relaxes with the system text scale so tiles grow
     // instead of clipping at 1.3x+. Medium+ keep one row per pod family.
-    // Compact base 1.1: at 360px the 158px cell is ~144px tall against
-    // ~94px of tile content (verified in widget tests), so the 2-col tiles
-    // fit with no overflow and no dead square space; hero + pod row +
-    // banner stay above the fold.
+    // Compact base 1.0: at 360px the 154px cell is ~154px tall against
+    // ~148px of wrapped tile content (overline + delta wrap to 2 lines —
+    // verified in the shell-fix captures), so the 2-col tiles fit with no
+    // overflow and no dead square space; hero + pod row + banner stay
+    // above the fold (U2: the first pod row never moves).
     final textScale =
         MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 2.0);
-    final compactAspect = (adaptive.isSmallMobile ? 2.15 : 1.1) / textScale;
+    // R1 (U5/U14): at 1.3x the 2-col cell (~88px label slot after the icon)
+    // cannot fit the verbatim server word "occupancy" even on 2 lines, so
+    // the overline cut mid-word ("occupan…"). On compact phones fall to a
+    // single column once the system scale grows: full-width tiles fit "Bay
+    // occupancy" + delta whole. 1.0x keeps 2 columns so the U2 fold is
+    // byte-identical; medium+ keep one row per pod family.
+    final scaledUp = textScale > 1.0 && adaptive.isCompact;
+    final singleColumn = adaptive.isSmallMobile || scaledUp;
+    final compactAspect = (singleColumn ? 2.15 : 1.0) / textScale;
     return AppAdaptiveGrid(
-      columns: adaptive.isSmallMobile
+      columns: singleColumn
           ? 1
           : adaptive.pick(
               compact: pods.length == 1 ? 1 : 2,
@@ -372,6 +381,12 @@ class _MicroPods extends StatelessWidget {
         for (final pod in pods)
           Directionality(
             textDirection: TextDirection.ltr,
+            // U5: overline + delta wrap to 2 lines instead of `…` on the
+            // 2-col phone grid (`Bay occupancy`, `Pending approvals`,
+            // `+1.2% vs last week`). Server copy verbatim — no shorter key
+            // exists. Tile geometry holds with the 1.0 compact aspect
+            // (~154px tile vs ~148px wrapped content), so the fold is
+            // unchanged.
             child: AppKpiCard(
               label: pod.label,
               value: pod.value,
@@ -385,6 +400,8 @@ class _MicroPods extends StatelessWidget {
                     ),
               icon: pod.icon,
               semanticState: pod.state,
+              labelMaxLines: 2,
+              trendMaxLines: 2,
             ),
           ),
       ],

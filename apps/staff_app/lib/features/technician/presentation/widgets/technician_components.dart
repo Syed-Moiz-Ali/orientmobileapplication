@@ -20,10 +20,13 @@ import 'package:staff_app/features/technician/domain/entities/technician_entitie
 
 /// Canonical Technician job status as a shared pill.
 ///
+/// Sentence-case caller labels verbatim (C16) — the frozen `TechJobStatus.label`
+/// values (`Delayed`, `Pending`, …) render as-is, never uppercased.
+///
 /// The status is always written as text as well as tinted, so the state never
 /// depends on colour alone — a requirement for bright workshop environments.
 StatusPill technicianStatusPill(TechJobStatus status) {
-  final label = status.label.toUpperCase();
+  final label = status.label;
   return switch (status) {
     TechJobStatus.inProgress => StatusPill.inProgress(label),
     TechJobStatus.completed => StatusPill.success(label, showDot: true),
@@ -502,8 +505,9 @@ class _TechnicianStopwatchState extends State<TechnicianStopwatch> {
             const SizedBox(width: AppDimensions.s6),
           ],
           if (stateLabel.isNotEmpty) ...[
+            // C16: localized "Elapsed"/"Paused" verbatim — never uppercased.
             Text(
-              stateLabel.toUpperCase(),
+              stateLabel,
               style: theme.textTheme.labelSmall?.copyWith(
                 color: tone,
                 fontWeight: FontWeight.w800,

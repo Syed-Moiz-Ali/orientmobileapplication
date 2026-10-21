@@ -124,19 +124,24 @@ class _BarItem extends StatelessWidget {
                     badgeCount: item.badgeCount,
                   ),
                   const SizedBox(height: AppSpacing.xxs),
-                  Text(
-                    item.label,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    // Spec-conformant reflow: at large text scales a long
-                    // label may wrap mid-word and grow the bar rather than
-                    // clip — this is the specified wrapping behavior.
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: ink,
-                          fontWeight:
-                              selected ? FontWeight.w600 : FontWeight.w400,
-                        ),
+                  // U5/U14: never break a nav label mid-glyph at 1.3x
+                  // ("Productivit y", "Dashboar d"). Single line, word-boundary
+                  // only, auto-shrinks to fit the cell instead of wrapping or
+                  // ellipsizing mid-word. Bar still grows with text scale;
+                  // tap targets (>=48dp, minHeight 64) unchanged.
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      item.label,
+                      maxLines: 1,
+                      softWrap: false,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: ink,
+                            fontWeight:
+                                selected ? FontWeight.w600 : FontWeight.w400,
+                          ),
+                    ),
                   ),
                 ],
               ),

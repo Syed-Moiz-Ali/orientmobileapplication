@@ -36,6 +36,14 @@ class AppKpiCard extends StatelessWidget {
   final KpiSemanticState semanticState;
   final VoidCallback? onTap;
 
+  /// Overline + delta wrap budget (U5: never `…` on primary text — wrap ≤ 2
+  /// lines or fit). Defaults keep single-line ellipsis; 2-col phone grids
+  /// with long server labels opt into 2. Callers must confirm the tile
+  /// geometry still fits (the 156px minimum covers one extra line; the
+  /// above-the-fold cap is verified in the shell-fix captures).
+  final int labelMaxLines;
+  final int trendMaxLines;
+
   /// Wide layout: icon block on the leading edge, value + label stacked, trend
   /// trailing. Suitable for a single hero row on tablet/desktop.
   final bool isWide;
@@ -50,6 +58,8 @@ class AppKpiCard extends StatelessWidget {
     this.semanticState = KpiSemanticState.neutral,
     this.onTap,
     this.isWide = false,
+    this.labelMaxLines = 1,
+    this.trendMaxLines = 1,
   });
 
   const AppKpiCard.compact({
@@ -60,6 +70,8 @@ class AppKpiCard extends StatelessWidget {
     this.icon,
     this.semanticState = KpiSemanticState.neutral,
     this.onTap,
+    this.labelMaxLines = 1,
+    this.trendMaxLines = 1,
   }) : trend = null,
        isWide = false;
 
@@ -73,6 +85,8 @@ class AppKpiCard extends StatelessWidget {
     this.icon,
     this.semanticState = KpiSemanticState.neutral,
     this.onTap,
+    this.labelMaxLines = 1,
+    this.trendMaxLines = 1,
   }) : isWide = true;
 
   @override
@@ -110,9 +124,11 @@ class AppKpiCard extends StatelessWidget {
                 : semanticColor.withValues(alpha: 0.12),
           );
 
+    // C16: overline labels render caller sentence case verbatim — never an
+    // uppercase transform (server/ARB copy such as "Revenue" stays as-is).
     final labelText = Text(
-      label.toUpperCase(),
-      maxLines: 1,
+      label,
+      maxLines: labelMaxLines,
       overflow: TextOverflow.ellipsis,
       style: textTheme.labelSmall?.copyWith(
         color: colors.onSurfaceVariant,
@@ -129,7 +145,13 @@ class AppKpiCard extends StatelessWidget {
         style: AppTextStyles.metric(color: colors.onSurface),
       ),
     );
-    final trendRow = _buildTrendRow(context, textTheme, colors, arabic);
+    final trendRow = _buildTrendRow(
+      context,
+      textTheme,
+      colors,
+      arabic,
+      trendMaxLines,
+    );
 
     if (isWide) {
       return AppCard.standard(
@@ -228,6 +250,7 @@ class AppKpiCard extends StatelessWidget {
     TextTheme textTheme,
     ColorScheme colors,
     bool arabic,
+    int trendMaxLines,
   ) {
     final t = trend;
     if (t == null) return null;
@@ -251,7 +274,7 @@ class AppKpiCard extends StatelessWidget {
         Flexible(
           child: Text(
             t.label,
-            maxLines: 1,
+            maxLines: trendMaxLines,
             overflow: TextOverflow.ellipsis,
             style: textTheme.labelSmall?.copyWith(
               color: color,

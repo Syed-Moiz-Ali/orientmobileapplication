@@ -424,13 +424,13 @@ class _StatusTonePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = StaffLocalizations.of(context)!;
+    // C16: sentence-case ARB copy verbatim — never uppercased.
     final label = switch (status) {
       StaffAttendanceStatus.notPunchedIn => t.staffAttNotPunched,
       StaffAttendanceStatus.working => t.staffAttWorking,
       StaffAttendanceStatus.onBreak => t.staffAttOnBreak,
       StaffAttendanceStatus.punchedOut => t.staffAttShiftComplete,
-    }
-        .toUpperCase();
+    };
     return switch (status) {
       StaffAttendanceStatus.working ||
       StaffAttendanceStatus.punchedOut =>

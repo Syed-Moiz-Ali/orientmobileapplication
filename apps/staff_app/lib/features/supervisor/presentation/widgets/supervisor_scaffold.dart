@@ -12,6 +12,7 @@ import 'package:staff_app/features/supervisor/presentation/widgets/staff_notific
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_assign_sheet.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_components.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_dashboard_tab.dart';
+import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_floor_search.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_jobs_tab.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_queue_tab.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_reports_tab.dart';
@@ -85,6 +86,24 @@ class _SupervisorScaffoldState extends ConsumerState<SupervisorScaffold> {
 
   void _openAssign() => showSupervisorAssignSheet(context);
 
+  /// Bar search (U1): floor-wide bay lookup over the same derived board data
+  /// the floor tab renders — no new routes, no logic changes. A result opens
+  /// the same assign sheet a bay tap opens.
+  void _openSearch() {
+    HapticFeedback.selectionClick();
+    final notifier = ref.read(supervisorDashboardProvider.notifier);
+    final bays = buildSupervisorBays(
+      awaiting: notifier.awaitingCompletions,
+      jobs: notifier.jobs,
+      bookings: notifier.bookings,
+    );
+    showSupervisorFloorSearch(
+      context,
+      bays: bays,
+      onSelect: (_) => showSupervisorAssignSheet(context),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = StaffLocalizations.of(context)!;
@@ -92,8 +111,14 @@ class _SupervisorScaffoldState extends ConsumerState<SupervisorScaffold> {
     final items = _items(t);
 
     return DashboardShell(
-      showOfflineBanner: false,
-      appBar: null,
+      // C16: connectivity announces only when abnormal via the banner — no
+      // permanent "Synced" pill, never duplicated state.
+      showOfflineBanner: true,
+      appBar: _SupervisorChrome(
+        selectedIndex: _navIndex,
+        onSearch: _openSearch,
+        onProfile: _showProfile,
+      ),
       body: AppAdaptiveNavigationFrame(
         items: items,
         selectedIndex: _navIndex,
@@ -141,7 +166,6 @@ class _SupervisorScaffoldState extends ConsumerState<SupervisorScaffold> {
         child: Column(
           children: [
             _SupervisorGreetingHeader(
-              onProfile: _showProfile,
               onOpenFloor: () => setState(() => _navIndex = 0),
             ),
             Expanded(
@@ -167,6 +191,11 @@ class _SupervisorScaffoldState extends ConsumerState<SupervisorScaffold> {
           ],
         ),
       ),
+      // STOP (shell-fix round 2): the 7-destination IA is a KEPT contract
+      // (phase-5 brief flow: "bottom nav (7 items)") and spec C16 caps the
+      // new AppBottomNav at 5 (asserts 1–5). Consolidating to 5 is a product
+      // IA decision, not presentation — so the shared overflow bar stays
+      // until the reviewer adjudicates. The AppBar above is migrated.
       bottomNavigationBar: adaptive.useNavigationRail
           ? null
           : AppBottomNavigation(
@@ -180,17 +209,75 @@ class _SupervisorScaffoldState extends ConsumerState<SupervisorScaffold> {
   void _openQueueFromSchedule() => setState(() => _navIndex = 2);
 }
 
-/// Greeting header: eyebrow date, greeting title, branch · shift context and a
-/// live floor-status pill on the leading column; Synced pill, notifications and
-/// avatar on the trailing column.
-class _SupervisorGreetingHeader extends ConsumerWidget {
+/// Shell bar (shell-fix round 2): the shared spec-C8 [AppAppBar] (56,
+/// hairline) with the per-tab title, the U1 search trigger (same floor-wide
+/// bay lookup), the floor notification bell and the avatar (same profile
+/// sheet). Single row, no offline pill (the abnormal-only banner owns it).
+class _SupervisorChrome extends ConsumerWidget implements PreferredSizeWidget {
+  final int selectedIndex;
+  final VoidCallback onSearch;
   final VoidCallback onProfile;
+
+  const _SupervisorChrome({
+    required this.selectedIndex,
+    required this.onSearch,
+    required this.onProfile,
+  });
+
+  @override
+  Size get preferredSize => const Size.fromHeight(56);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = StaffLocalizations.of(context)!;
+    final profile = _profile(ref);
+    final titles = <String>[
+      t.svNavFloor,
+      t.svNavJobs,
+      t.svNavQueue,
+      t.svNavReview,
+      t.svNavReports,
+      t.svNavStaff,
+      t.svNavSchedule,
+    ];
+
+    return AppAppBar(
+      title: titles[selectedIndex],
+      showDivider: true,
+      actions: [
+        AppIconButton(
+          icon: Icons.search_rounded,
+          tooltip: t.svSearchTitle,
+          onPressed: onSearch,
+        ),
+        const StaffNotificationBell(),
+        SizedBox(
+          width: 48,
+          height: 48,
+          child: Center(
+            child: UserAvatar(
+              initials: profile?.initials ?? 'S',
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onProfile();
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Greeting header: eyebrow date, greeting title, branch · shift context and
+/// a live floor-status pill, full width. The bell/avatar/search moved to the
+/// shell bar (U7 one path) and the permanent Synced pill is deleted (the
+/// abnormal-only banner owns offline state) — which also cures the 320/1.3x
+/// greeting + floor-pill truncation (the squeeze is gone, not the copy).
+class _SupervisorGreetingHeader extends ConsumerWidget {
   final VoidCallback onOpenFloor;
 
-  const _SupervisorGreetingHeader({
-    required this.onProfile,
-    required this.onOpenFloor,
-  });
+  const _SupervisorGreetingHeader({required this.onOpenFloor});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -223,77 +310,49 @@ class _SupervisorGreetingHeader extends ConsumerWidget {
         AppDimensions.s20,
         AppDimensions.s12,
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  date,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: AppTypography.tracking(context, 0.8),
-                  ),
-                ),
-                const SizedBox(height: AppDimensions.s4),
-                Text(
-                  t.svGreeting(name),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: colors.onSurface,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-                if (contextLine.isNotEmpty) ...[
-                  const SizedBox(height: AppDimensions.s4),
-                  Text(
-                    contextLine,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: AppDimensions.s8),
-                _FloorStatusPill(
-                  occupied: occupied,
-                  totalBays: kSupervisorBayCount,
-                  hasError: hasError,
-                  onTap: onOpenFloor,
-                ),
-              ],
+          Text(
+            date,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: colors.onSurfaceVariant,
+              fontWeight: FontWeight.w800,
+              letterSpacing: AppTypography.tracking(context, 0.8),
             ),
           ),
-          const SizedBox(width: AppDimensions.s8),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const OfflineStatusPill(),
-              const SizedBox(width: AppDimensions.s4),
-              const StaffNotificationBell(),
-              const SizedBox(width: AppDimensions.s4),
-              InkWell(
-                onTap: onProfile,
-                borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-                child: Tooltip(
-                  message: t.svProfileLabel,
-                  child: _SupervisorAvatar(
-                    radius: 16,
-                    initials: profile?.initials ?? 'S',
-                  ),
-                ),
+          const SizedBox(height: AppDimensions.s4),
+          Text(
+            t.svGreeting(name),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: colors.onSurface,
+              letterSpacing: -0.2,
+            ),
+          ),
+          if (contextLine.isNotEmpty) ...[
+            const SizedBox(height: AppDimensions.s4),
+            Text(
+              contextLine,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
               ),
-            ],
+            ),
+          ],
+          const SizedBox(height: AppDimensions.s8),
+          _FloorStatusPill(
+            occupied: occupied,
+            totalBays: kSupervisorBayCount,
+            hasError: hasError,
+            onTap: onOpenFloor,
           ),
         ],
       ),

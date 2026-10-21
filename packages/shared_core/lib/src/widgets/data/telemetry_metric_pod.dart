@@ -11,7 +11,7 @@ enum TelemetryTrend { up, down, flat }
 
 /// **Telemetry metric pod (Phase 03, Concept A).**
 ///
-/// High-contrast numeric display: an uppercase cobalt overline label, a
+/// High-contrast numeric display: a sentence-case cobalt overline label, a
 /// prominent tabular value, an optional delta badge (`+18.4% vs Target`) and a
 /// live-data indicator. It replaces the "generic statistic box" with a single
 /// deliberate data instrument.
@@ -20,7 +20,7 @@ enum TelemetryTrend { up, down, flat }
 /// trends. Colours resolve through the active theme; the delta badge borrows
 /// the semantic success / danger / neutral families.
 class TelemetryMetricPod extends StatelessWidget {
-  /// Uppercase overline label (e.g. "Revenue velocity").
+  /// Sentence-case overline label (e.g. "Revenue velocity").
   final String label;
 
   /// The prominent metric value (e.g. "AED 48,250.00").
@@ -96,7 +96,8 @@ class TelemetryMetricPod extends StatelessWidget {
               ],
               Expanded(
                 child: Text(
-                  label.toUpperCase(),
+                  // C16: caller sentence case verbatim — never uppercased.
+                  label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: textTheme.labelSmall?.copyWith(
@@ -243,7 +244,8 @@ class _LiveBadge extends StatelessWidget {
         ),
         const SizedBox(width: AppDimensions.s4),
         Text(
-          label.toUpperCase(),
+          // C16: localized "Live" verbatim — never uppercased.
+          label,
           style: AppTextStyles.telemetry(
             color: semantic.success.ink,
             arabic: arabic,

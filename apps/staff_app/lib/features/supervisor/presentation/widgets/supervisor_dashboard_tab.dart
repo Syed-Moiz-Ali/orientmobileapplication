@@ -1,4 +1,3 @@
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -69,9 +68,6 @@ class _SupervisorDashboardTabState
     );
     final isEmpty =
         jobs.isEmpty && bookings.isEmpty && awaiting.isEmpty;
-    final offline =
-        ref.watch(connectivityStatusProvider).value ==
-        ConnectivityResult.none;
 
     final wide = !context.isCompact;
     final active = bays.where((b) => b.hasJob).length;
@@ -91,13 +87,8 @@ class _SupervisorDashboardTabState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (offline) ...[
-              AppBanner(
-                kind: AppBannerKind.warning,
-                message: coreT.offlineBannerMessage,
-              ),
-              const SizedBox(height: AppDimensions.s16),
-            ],
+            // No local offline banner: the shell owns the abnormal-only
+            // [OfflineBanner] (C16 — announced once, never duplicated).
             if (state.dashboardError.isNotEmpty)
               AppErrorState(
                 title: t.svFloorErrorTitle,

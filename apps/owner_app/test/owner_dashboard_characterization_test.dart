@@ -327,13 +327,12 @@ void main() {
     );
 
     // BEFORE: hero + first pods above the fold at launch — no interaction.
-    // HARNESS: the legacy pods render the overline uppercase ('REVENUE',
-    // 'MARGIN'); the recomposition keeps that casing via AppKpiCard, which
-    // uppercases non-Arabic labels the same way.
-    expect(find.text('REVENUE'), findsWidgets);
+    // SHELL FIX (C16 hard-reject): pod overlines render sentence case
+    // (`Revenue`, `Margin`) — the shared AppKpiCard no longer uppercases.
+    expect(find.text('Revenue'), findsWidgets);
     expect(find.text('AED 84K'), findsOneWidget);
     expect(find.text('+2.1% Ahead'), findsOneWidget);
-    expect(find.text('MARGIN'), findsOneWidget);
+    expect(find.text('Margin'), findsOneWidget);
     expect(find.text('Live operations'), findsOneWidget);
     // BEFORE-QUIRK (pinned, not fixed — logic untouchable): the header is a
     // `const _CockpitHeader()` reading KPIs via `ref.read`, so it freezes at
@@ -411,9 +410,9 @@ void main() {
     // Tap 1: shell search trigger opens the existing command palette.
     // FORWARD PIN: scoped to the app bar — the recomposition adds a second
     // search action on the home header opening the same palette, so a bare
-    // icon finder would turn ambiguous.
+    // icon finder would turn ambiguous. SHELL FIX: the bar is now AppAppBar.
     final shellSearch = find.descendant(
-      of: find.byType(WorkspaceAppBar),
+      of: find.byType(AppAppBar),
       matching: find.byIcon(Icons.search_rounded),
     );
     expect(shellSearch, findsOneWidget);
@@ -535,7 +534,7 @@ void main() {
     expect(find.textContaining('No register rows.'), findsOneWidget);
     expect(find.text('No trend data yet.'), findsWidgets);
     expect(find.text('AED 84K'), findsNothing);
-    expect(find.text('MARGIN'), findsNothing);
+    expect(find.text('Margin'), findsNothing);
     expect(find.text('Live operations'), findsOneWidget);
   });
 
