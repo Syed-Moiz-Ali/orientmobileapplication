@@ -985,6 +985,8 @@
   "svFloorEmpty": "لا أعمال نشطة على الأرضية",
   "svFloorEmptyMessage": "تظهر الأعمال الجديدة فور إسنادها.",
   "svFloorNoMatch": "لا منصات مطابقة لهذه التصفية",
+  "svFloorNoMatchHint": "جرّب مرشحًا مختلفًا، أو امسحه لرؤية كل المنصات.",
+  "svFloorHeroSentence": "وجّه مهمة العمل التالية إلى منصة متاحة.",
   "svFloorErrorTitle": "الأرضية غير متاحة",
   "svFloorError": "تعذّر تحميل الأرضية. اسحب للتحديث.",
   "svFloorQueueTitle": "الطابور الوارد",

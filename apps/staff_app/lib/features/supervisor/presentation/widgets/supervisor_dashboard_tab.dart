@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,15 +6,18 @@ import 'package:shared_core/shared_core.dart';
 
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_components.dart';
+import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_floor_search.dart';
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
-/// Floor command board (Phase 11, Archetype 4 — Tactical Operations Radar).
+/// Floor command board (Phase 11, Archetype 4 — Tactical Operations Radar;
+/// phase-5 recomposition onto App* pattern widgets).
 ///
 /// A spatial 16-bay workshop map coloured by bay state (occupied / idle / parts
 /// delay / QC), not a KPI grid. Each tile carries the bay id, technician
 /// initials when known, the job and its real meta; tapping a bay opens the
 /// dispatch sheet. On wide viewports the rail beside the board previews the
-/// incoming queue / selected bay.
+/// incoming queue / selected bay. Presentation only: providers, routes, sync,
+/// selection state and the bay derivation are untouched.
 class SupervisorDashboardTab extends ConsumerStatefulWidget {
   final VoidCallback onOpenAssign;
   final VoidCallback onOpenQueue;
@@ -42,9 +46,15 @@ class _SupervisorDashboardTabState
     widget.onOpenAssign();
   }
 
+  void _openFloorSearch(List<SupervisorBay> bays) {
+    HapticFeedback.selectionClick();
+    showSupervisorFloorSearch(context, bays: bays, onSelect: _onBayTap);
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = StaffLocalizations.of(context)!;
+    final coreT = SharedCoreL10n.of(context);
     final state = ref.watch(supervisorDashboardProvider);
     final notifier = ref.read(supervisorDashboardProvider.notifier);
     final awaiting = notifier.awaitingCompletions;
@@ -59,8 +69,12 @@ class _SupervisorDashboardTabState
     );
     final isEmpty =
         jobs.isEmpty && bookings.isEmpty && awaiting.isEmpty;
+    final offline =
+        ref.watch(connectivityStatusProvider).value ==
+        ConnectivityResult.none;
 
     final wide = !context.isCompact;
+    final active = bays.where((b) => b.hasJob).length;
 
     return RefreshIndicator(
       onRefresh: notifier.refreshDashboard,
@@ -77,21 +91,36 @@ class _SupervisorDashboardTabState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (state.dashboardError.isNotEmpty) ...[
-              AppInfoPanel.danger(
-                message: t.svFloorError,
-                action: TextButton(
-                  onPressed: notifier.refreshDashboard,
-                  child: Text(SharedCoreL10n.of(context).commonRetry),
-                ),
+            if (offline) ...[
+              AppBanner(
+                kind: AppBannerKind.warning,
+                message: coreT.offlineBannerMessage,
               ),
               const SizedBox(height: AppDimensions.s16),
             ],
-            if (state.isDashboardLoading && isEmpty)
+            if (state.dashboardError.isNotEmpty)
+              AppErrorState(
+                title: t.svFloorErrorTitle,
+                message: t.svFloorError,
+                retryLabel: coreT.commonRetry,
+                onRetry: notifier.refreshDashboard,
+              )
+            else if (state.isDashboardLoading && isEmpty)
               const _FloorSkeleton()
             else ...[
-              _FloorMasthead(
-                active: bays.where((b) => b.hasJob).length,
+              _FloorHeader(
+                title: t.svFloorTitle,
+                subtitle: t.svFloorSubtitle(active, kSupervisorBayCount),
+                searchTooltip: t.svSearchTitle,
+                onSearch: () => _openFloorSearch(bays),
+              ),
+              const SizedBox(height: AppDimensions.s16),
+              _FloorHero(
+                active: active,
+                onDispatch: widget.onOpenAssign,
+              ),
+              const SizedBox(height: AppDimensions.s16),
+              _FloorFilter(
                 filter: _filter,
                 onFilter: (v) => setState(() => _filter = v),
               ),
@@ -102,13 +131,16 @@ class _SupervisorDashboardTabState
                   children: [
                     Expanded(
                       flex: 3,
-                      child: _FloorBoard(
-                        bays: _filteredBays(t, bays),
-                        selected: _selected,
-                        isNoMatch: _isNoMatch(t, bays),
-                        onTap: _onBayTap,
-                        onClearFilter: () => setState(() => _filter = null),
-                      ),
+                      child: isEmpty
+                          ? _FloorEmpty(onDispatch: widget.onOpenAssign)
+                          : _FloorBoard(
+                              bays: _filteredBays(t, bays),
+                              selected: _selected,
+                              isNoMatch: _isNoMatch(t, bays),
+                              onTap: _onBayTap,
+                              onClearFilter: () =>
+                                  setState(() => _filter = null),
+                            ),
                     ),
                     const SizedBox(width: AppDimensions.s24),
                     Expanded(
@@ -125,13 +157,16 @@ class _SupervisorDashboardTabState
                   ],
                 )
               else ...[
-                _FloorBoard(
-                  bays: _filteredBays(t, bays),
-                  selected: _selected,
-                  isNoMatch: _isNoMatch(t, bays),
-                  onTap: _onBayTap,
-                  onClearFilter: () => setState(() => _filter = null),
-                ),
+                if (isEmpty)
+                  _FloorEmpty(onDispatch: widget.onOpenAssign)
+                else
+                  _FloorBoard(
+                    bays: _filteredBays(t, bays),
+                    selected: _selected,
+                    isNoMatch: _isNoMatch(t, bays),
+                    onTap: _onBayTap,
+                    onClearFilter: () => setState(() => _filter = null),
+                  ),
                 const SizedBox(height: AppDimensions.s24),
                 _FloorRail(
                   selected: _selected,
@@ -167,18 +202,104 @@ class _SupervisorDashboardTabState
       _filter != null && _filteredBays(t, bays).isEmpty;
 }
 
-// ─── MASTHEAD ────────────────────────────────────────────────────────────────
+// ─── HEADER + HERO + FILTER ──────────────────────────────────────────────────
 
-class _FloorMasthead extends StatelessWidget {
+/// Floor header: title + occupancy sentence with the search glyph pinned to
+/// the end side of the SAME row on every breakpoint (compact included), so
+/// phones mirror the tablet placement. Plain Row (not AppPageHeader, whose
+/// compact layout stacks actions below the subtitle) — same strings, same
+/// text styles, same AppIconButton contract.
+class _FloorHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String searchTooltip;
+  final VoidCallback onSearch;
+
+  const _FloorHeader({
+    required this.title,
+    required this.subtitle,
+    required this.searchTooltip,
+    required this.onSearch,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: context.colors.onSurface,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const SizedBox(height: AppDimensions.s4),
+              Text(
+                subtitle,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: context.colors.onSurfaceVariant,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: AppDimensions.s8),
+        AppIconButton(
+          icon: Icons.search_rounded,
+          tooltip: searchTooltip,
+          onPressed: onSearch,
+        ),
+      ],
+    );
+  }
+}
+
+/// ONE hero summary: plain dispatch sentence + the single primary Dispatch
+/// CTA. No decorative media panel or card chrome — the occupancy count
+/// already lives in the header subtitle, so the hero stays one sentence.
+class _FloorHero extends StatelessWidget {
   final int active;
+  final VoidCallback onDispatch;
+
+  const _FloorHero({required this.active, required this.onDispatch});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          t.svFloorHeroSentence,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: context.colors.onSurface,
+            height: 1.35,
+          ),
+        ),
+        const SizedBox(height: AppDimensions.s12),
+        AppPillButton.primary(
+          label: t.svAssignTitle,
+          icon: Icons.engineering_rounded,
+          onPressed: onDispatch,
+        ),
+      ],
+    );
+  }
+}
+
+class _FloorFilter extends StatelessWidget {
   final String? filter;
   final ValueChanged<String?> onFilter;
 
-  const _FloorMasthead({
-    required this.active,
-    required this.filter,
-    required this.onFilter,
-  });
+  const _FloorFilter({required this.filter, required this.onFilter});
 
   @override
   Widget build(BuildContext context) {
@@ -186,11 +307,6 @@ class _FloorMasthead extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionHeader(
-          title: t.svFloorTitle,
-          subtitle: t.svFloorSubtitle(active, kSupervisorBayCount),
-          leadingIcon: Icons.grid_view_rounded,
-        ),
         const _BayLegend(),
         const SizedBox(height: AppDimensions.s8),
         AppFilterBar(
@@ -254,6 +370,25 @@ class _BayLegend extends StatelessWidget {
   }
 }
 
+/// Empty floor: the hero above already owns the single primary Dispatch CTA,
+/// so the board slot carries the friendly empty state with NO action —
+//  exactly one filled Dispatch per screen (U7 / one-primary-per-screen).
+class _FloorEmpty extends StatelessWidget {
+  final VoidCallback onDispatch;
+
+  const _FloorEmpty({required this.onDispatch});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    return AppEmptyState(
+      icon: Icons.grid_view_rounded,
+      title: t.svFloorEmpty,
+      message: t.svFloorEmptyMessage,
+    );
+  }
+}
+
 // ─── FLOOR BOARD ─────────────────────────────────────────────────────────────
 
 class _FloorBoard extends StatelessWidget {
@@ -275,13 +410,22 @@ class _FloorBoard extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = StaffLocalizations.of(context)!;
     if (isNoMatch) {
-      return AppCard.standard(
-        padding: const EdgeInsets.symmetric(vertical: AppDimensions.s32),
-        child: EmptyState.noMatch(
-          message: t.svFloorNoMatch,
-          actionLabel: SharedCoreL10n.of(context).filterBarClear,
-          onAction: onClearFilter,
-        ),
+      // ONE filled CTA per screen: the hero Dispatch above stays primary, so
+      // the no-match Clear is a secondary action (never a second filled CTA).
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppEmptyState(
+            icon: Icons.search_off_rounded,
+            title: t.svFloorNoMatch,
+            message: t.svFloorNoMatchHint,
+          ),
+          const SizedBox(height: AppDimensions.s12),
+          AppPillButton.secondary(
+            label: SharedCoreL10n.of(context).filterBarClear,
+            onPressed: onClearFilter,
+          ),
+        ],
       );
     }
     final columns = context.adaptive.pick(
@@ -361,6 +505,10 @@ class _BayTile extends StatelessWidget {
     final colors = theme.colorScheme;
     final tone = supervisorBayTone(context, bay.state);
     final idle = bay.isIdle;
+    // C5 border-OR-shadow: light tiles are borderless with a soft shadow
+    // (selected keeps the functional primary ring); dark keeps the border
+    // and never a shadow.
+    final dark = theme.brightness == Brightness.dark;
 
     return Semantics(
       button: true,
@@ -370,12 +518,15 @@ class _BayTile extends StatelessWidget {
           '${bay.hasJob ? ', ${bay.ref}' : ''}',
       child: Material(
         color: idle ? context.semanticColors.surfaceSubtle : tone.subtle,
+        elevation: !dark && !selected ? 2 : 0,
+        shadowColor: !dark ? colors.shadow.withValues(alpha: 0.14) : null,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-          side: BorderSide(
-            color: selected ? colors.primary : tone.border,
-            width: selected ? 1.6 : 1,
-          ),
+          side: selected
+              ? BorderSide(color: colors.primary, width: 1.6)
+              : (dark
+                    ? BorderSide(color: tone.border, width: 1)
+                    : BorderSide.none),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -561,16 +712,18 @@ class _FloorRail extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (bay != null && bay.hasJob) ...[
-          AppCard.standard(
+          AppSurfaceCard(
+            headerTitle: bay.title,
+            headerTrailing: Directionality(
+              textDirection: TextDirection.ltr,
+              child: Text(
+                bayCode(bay.number),
+                style: supervisorMono(context),
+              ),
+            ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SectionHeader(
-                  title: bay.title,
-                  leadingIcon: Icons.place_outlined,
-                  count: bay.number,
-                  padding: const EdgeInsets.only(bottom: AppDimensions.s8),
-                ),
                 Text(
                   bay.subtitle,
                   maxLines: 1,
@@ -580,7 +733,7 @@ class _FloorRail extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: AppDimensions.s12),
-                PrimaryButton(
+                AppPillButton.secondary(
                   label: t.svAssignTitle,
                   icon: Icons.engineering_rounded,
                   onPressed: onDispatch,
@@ -590,19 +743,22 @@ class _FloorRail extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.s16),
         ],
-        AppCard.standard(
+        AppSurfaceCard(
+          headerTitle: t.svFloorQueueTitle,
+          headerTrailing: Text(
+            '${breakdowns.length + bookings.length}',
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: context.colors.onSurfaceVariant,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              SectionHeader(
-                title: t.svFloorQueueTitle,
-                count: breakdowns.length + bookings.length,
-                leadingIcon: Icons.inbox_outlined,
-                padding: const EdgeInsets.only(bottom: AppDimensions.s4),
-              ),
               if (pending.isEmpty)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: AppDimensions.s16),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: AppDimensions.s16),
                   child: Text(
                     t.svFloorQueueEmpty,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -629,30 +785,21 @@ class _FloorRail extends StatelessWidget {
                   ),
               ],
               const SizedBox(height: AppDimensions.s4),
-              SecondaryButton(
+              AppPillButton.secondary(
                 label: t.svQueueTitle,
-                leadingIcon: Icons.arrow_forward_rounded,
+                icon: Icons.arrow_forward_rounded,
                 onPressed: onOpenQueue,
               ),
             ],
           ),
         ),
         const SizedBox(height: AppDimensions.s16),
-        AppCard.standard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SectionHeader(
-                title: t.svReviewTitle,
-                leadingIcon: Icons.verified_outlined,
-                padding: const EdgeInsets.only(bottom: AppDimensions.s4),
-              ),
-              SecondaryButton(
-                label: t.svNavReview,
-                leadingIcon: Icons.fact_check_outlined,
-                onPressed: onOpenReview,
-              ),
-            ],
+        AppSurfaceCard(
+          headerTitle: t.svReviewTitle,
+          child: AppPillButton.secondary(
+            label: t.svNavReview,
+            icon: Icons.fact_check_outlined,
+            onPressed: onOpenReview,
           ),
         ),
       ],
@@ -735,15 +882,38 @@ class _FloorSkeleton extends StatelessWidget {
       expanded: 4,
       large: 4,
     );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const AppSkeleton(width: 160, height: 20),
-        const SizedBox(height: AppDimensions.s8),
-        const AppSkeleton(width: 220, height: 14),
-        const SizedBox(height: AppDimensions.s16),
-        AppSkeleton.grid(columns: columns, rows: 4, itemHeight: 104),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = AppDimensions.s10;
+        final width = constraints.maxWidth;
+        final tileWidth = (width - spacing * (columns - 1)) / columns;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const AppShimmerSkeleton(width: 160, height: 20),
+            const SizedBox(height: AppDimensions.s8),
+            const AppShimmerSkeleton(width: 220, height: 14),
+            const SizedBox(height: AppDimensions.s16),
+            const AppShimmerSkeleton.card(height: 120),
+            const SizedBox(height: AppDimensions.s16),
+            Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: [
+                for (var i = 0; i < 8; i++)
+                  SizedBox(
+                    width: tileWidth,
+                    child: const AppShimmerSkeleton.card(height: 104),
+                  ),
+              ],
+            ),
+            const SizedBox(height: AppDimensions.s16),
+            const AppShimmerSkeleton.card(height: 148),
+            const SizedBox(height: AppDimensions.s16),
+            const AppShimmerSkeleton.card(height: 96),
+          ],
+        );
+      },
     );
   }
 }

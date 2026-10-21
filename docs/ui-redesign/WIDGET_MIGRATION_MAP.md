@@ -91,3 +91,29 @@ once the legacy widget hits zero usages.
 | `AppDataTable` (+ `AppDataTableHeader`) | `AppTable` | legacy `AppTable` (`app_table.dart`) |
 | `AppNavRail` | `AppNavigationRail` | legacy `AppNavigationRail` (shells) |
 | `AppBottomSheet` file move | `app_bottom_sheet.dart` | legacy `showAppModalSheet` (`app_bottom_sheet.dart`) |
+
+## Phase 5 supervisor-home recomposition (branch `ui/dashboards-2`)
+
+Floor tab (`supervisor_dashboard_tab.dart`) recomposed presentation-only onto
+1P pattern widgets; new `supervisor_floor_search.dart` (floor-data search
+sheet). Legacy usages below drop to zero on the floor tab (verified by grep;
+the shared classes themselves are kept — still used by the supervisor
+queue/review/jobs/staff/schedule tabs):
+
+| Deleted legacy widget | Homes before | Replaced by | Notes |
+|---|---|---|---|
+| bespoke `_FloorMasthead` (`SectionHeader` floor title + subtitle) | floor tab (1) | `AppPageHeader` (title `svFloorTitle` + subtitle `svFloorSubtitle`, trailing search `AppIconButton` per U1) | Same title/copy; occupancy sentence kept verbatim; no eyebrow (C3 no-ALL-CAPS) |
+| bespoke hero (none — masthead only) | floor tab (1) | ONE `AppMediaCard` (active-bay count + `svFloorHeroSentence` + `Bays` unit chip) + ONE `AppPillButton.primary` Dispatch (`svAssignTitle`, existing assign entry) | New key `svFloorHeroSentence` only for the sentence; count is the bare number (`0` never `-`) |
+| `AppInfoPanel.danger` floor error | floor tab (1) | `AppErrorState` (`svFloorErrorTitle`/`svFloorError` + `commonRetry` label kept) + same `refreshDashboard` retry | Same copy/retry; offline gets `AppBanner` (shared `offlineBannerMessage`) + stale board |
+| `AppSkeleton` floor skeleton | floor tab (1) | `AppShimmerSkeleton` mirroring header + hero + grid + rail | Same loading contract (`isDashboardLoading && isEmpty`) |
+| `AppCard.standard` no-match card + `EmptyState.noMatch` | floor tab (1) | `AppEmptyState` (`svFloorNoMatch` + new `svFloorNoMatchHint` + shared `Clear`) | Same predicate/clear contract |
+| `AppCard.standard` rail cards + `PrimaryButton`/`SecondaryButton` CTAs | floor tab (3 cards) | `AppSurfaceCard` (header + count trailing + rows + `AppPillButton.secondary` CTAs, verbatim labels/routes) | Row mapping verbatim; selected-bay card keeps code/title/subtitle + dispatch |
+| (no search affordance) | floor tab (0) | `SupervisorFloorSearchSheet`: `showAppModalSheet` + `AppSearchField` over derived bays, result tap = tile contract | Permitted "search over floor data"; no new routes/logic |
+
+Kept verbatim (shared tile grammar — `supervisor_components.dart` untouched):
+`_BayTile` (state dot + LTR `B-01` + tech-initials slot + title/ref/meta +
+selection ring), `_BayLegend`, `_RailRow`, `_TechSlot`, `buildSupervisorBays`
+derivation, `SupervisorBayState` filter predicate, selection state,
+pull-to-refresh, bottom nav, scaffold. Floor tab now contributes zero
+`SectionHeader`/`AppCard`/`AppInfoPanel`/`AppSkeleton`/legacy-button call
+sites on its own surfaces.
