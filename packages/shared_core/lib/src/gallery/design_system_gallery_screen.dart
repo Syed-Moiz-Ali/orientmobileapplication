@@ -21,8 +21,20 @@ import 'package:shared_core/src/widgets/app_dropdown.dart';
 import 'package:shared_core/src/widgets/app_info_tooltip.dart';
 import 'package:shared_core/src/widgets/app_list_tile.dart';
 import 'package:shared_core/src/widgets/app_loader.dart';
+import 'package:shared_core/src/widgets/app_alt_auth_row.dart';
+import 'package:shared_core/src/widgets/app_carousel.dart';
+import 'package:shared_core/src/widgets/app_list_group.dart';
+import 'package:shared_core/src/widgets/app_media_card.dart';
 import 'package:shared_core/src/widgets/app_modal_sheet.dart';
 import 'package:shared_core/src/widgets/app_network_image.dart';
+import 'package:shared_core/src/widgets/app_or_divider.dart';
+import 'package:shared_core/src/widgets/app_page_header.dart';
+import 'package:shared_core/src/widgets/app_profile_header.dart';
+import 'package:shared_core/src/widgets/app_search_pill.dart';
+import 'package:shared_core/src/widgets/app_sheet_picker.dart';
+import 'package:shared_core/src/widgets/app_step_scaffold.dart';
+import 'package:shared_core/src/widgets/app_sticky_action_bar.dart';
+import 'package:shared_core/src/widgets/app_summary_row.dart';
 import 'package:shared_core/src/widgets/app_progress_bar.dart';
 import 'package:shared_core/src/widgets/app_section.dart';
 import 'package:shared_core/src/widgets/app_shimmer_skeleton.dart';
@@ -72,6 +84,8 @@ class DesignSystemGalleryScreen extends StatelessWidget {
           OverlaysGallerySection(),
           GallerySectionTitle('Tables (1f)'),
           TableGallerySection(),
+          GallerySectionTitle('Patterns (1P)'),
+          PatternsGallerySection(),
         ],
       ),
     );
@@ -1442,6 +1456,306 @@ class _TableGallerySectionState extends State<TableGallerySection> {
                 onSort: _onSort,
               ),
             ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Patterns (1P): the C16 composition grammar — step scaffold (2 steps with
+/// working Continue/back), sticky action bar, the reused page header,
+/// search pill, peeking carousel, media cards, list group, profile header,
+/// sheet picker trigger (opens the real route), summary rows, or-divider
+/// and alt-auth rows.
+///
+/// The step scaffold owns a [Scaffold] (progress + sticky CTA), so it
+/// renders in a fixed-height clipped box like the frame scaffold demo —
+/// an unbounded gallery column cannot host its internal [Expanded].
+/// The sheet picker static chrome would hit the same [Flexible] problem,
+/// so the gallery shows the trigger button (tap opens the real route).
+class PatternsGallerySection extends StatefulWidget {
+  const PatternsGallerySection({super.key});
+
+  @override
+  State<PatternsGallerySection> createState() => _PatternsGallerySectionState();
+}
+
+class _PatternsGallerySectionState extends State<PatternsGallerySection> {
+  int _step = 0;
+  bool _notify = true;
+  int _picked = 0;
+
+  static const _statuses = ['Open', 'Delayed', 'Done'];
+
+  void _openPicker(BuildContext context) {
+    showAppSheetPicker<void>(
+      context,
+      title: 'Filter by status',
+      searchHint: 'Search statuses',
+      options: [
+        for (var i = 0; i < _statuses.length; i++)
+          AppSheetPickerOption(title: _statuses[i], selected: i == _picked),
+      ],
+      resultCount: _statuses.length,
+      onSelected: (i) => setState(() => _picked = i),
+      onShowResults: () => Navigator.of(context).pop(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    Widget row(String label, Widget child) => Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                '\u2066$label\u2069',
+                textAlign: TextAlign.start,
+                style: textTheme.labelMedium,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              child,
+            ],
+          ),
+        );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        row(
+          'Step scaffold (2 steps, Continue advances, back returns)',
+          SizedBox(
+            height: 560,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              child: AppStepScaffold(
+                step: _step + 1,
+                totalSteps: 2,
+                backLabel: 'Back',
+                onBack: _step == 0 ? null : () => setState(() => _step = 0),
+                title: _step == 0
+                    ? "What's your phone number?"
+                    : 'Check your messages',
+                subtitle: _step == 0
+                    ? 'We will send a confirmation code.'
+                    : 'Enter the 6-digit code we just sent.',
+                ctaLabel: _step == 0 ? 'Continue' : 'Confirm',
+                onCta: _step == 0 ? () => setState(() => _step = 1) : () {},
+                child: _step == 0
+                    ? const AppInputField(
+                        label: 'Phone number',
+                        hint: '5X XXX XXXX',
+                        keyboardType: TextInputType.phone,
+                        forceLtr: true,
+                      )
+                    : Text(
+                        '\u2066A 6-digit code is on its way. It expires in '
+                        '10 minutes.\u2069',
+                        style: textTheme.bodyMedium,
+                      ),
+              ),
+            ),
+          ),
+        ),
+        row(
+          'Sticky action bar (summary start, single CTA end)',
+          // Short caller string per the bar contract (one line each): the
+          // full-width summary rows below show the canonical 'AED 240.00'.
+          AppStickyActionBar(
+            summary: const AppSummaryRow(
+              label: 'Total',
+              value: 'AED 240',
+            ),
+            ctaLabel: 'Continue',
+            onCta: () {},
+          ),
+        ),
+        row(
+          'Page header (reused C16 header: eyebrow + title + actions)',
+          AppPageHeader(
+            eyebrow: 'Bookings',
+            title: 'Book a service',
+            subtitle: 'Choose a time that works for you.',
+            secondaryAction: AppTextButton(label: 'Help', onPressed: () {}),
+            primaryAction: AppPillButton.primary(
+              label: 'Continue',
+              size: AppPillButtonSize.small,
+              isExpanded: false,
+              onPressed: () {},
+            ),
+          ),
+        ),
+        row(
+          'Search pill (hint, then query with clear)',
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AppSearchPill(hint: 'Search bookings', onTap: () {}),
+              const SizedBox(height: AppSpacing.sm),
+              AppSearchPill(
+                hint: 'Search bookings',
+                query: 'Oil change',
+                onTap: () {},
+                onClear: () {},
+              ),
+            ],
+          ),
+        ),
+        row(
+          'Carousel with peek (header + Show all, next card visible)',
+          AppCarousel(
+            title: 'Recent bookings',
+            subtitle: 'Your latest visits',
+            seeAllLabel: 'Show all',
+            onSeeAll: () {},
+            cardExtent: 220,
+            children: const [
+              AppMediaCard(
+                icon: Icons.build_outlined,
+                title: 'Oil change',
+                meta: 'Deira, Today 18:00',
+                status: AppStatusChip(
+                  label: 'Open now',
+                  kind: AppStatusKind.success,
+                ),
+              ),
+              AppMediaCard(
+                icon: Icons.battery_charging_full_outlined,
+                title: 'Battery check',
+                meta: 'Sharjah, Tomorrow',
+                status: AppStatusChip(
+                  label: 'Delayed',
+                  kind: AppStatusKind.warning,
+                ),
+              ),
+              AppMediaCard(
+                icon: Icons.search_rounded,
+                title: 'Inspection',
+                meta: 'Ajman, Friday',
+              ),
+            ],
+          ),
+        ),
+        row(
+          'Media cards (icon slot, meta, one status pill)',
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AppMediaCard(
+                icon: Icons.build_outlined,
+                title: 'Downtown service center',
+                meta: '2.4 km away',
+                status: const AppStatusChip(
+                  label: 'Open now',
+                  kind: AppStatusKind.success,
+                ),
+                onTap: () {},
+              ),
+              const SizedBox(height: AppSpacing.md),
+              const AppMediaCard(
+                icon: Icons.battery_charging_full_outlined,
+                title: 'Battery check',
+                meta: 'Sharjah, Tomorrow',
+              ),
+            ],
+          ),
+        ),
+        row(
+          'List group (value row, switch row, inert row)',
+          AppListGroup(
+            title: 'Preferences',
+            items: [
+              AppListGroupItem(
+                leadingIcon: Icons.language_rounded,
+                title: 'Language',
+                valueText: 'English',
+                onTap: () {},
+              ),
+              AppListGroupItem(
+                leadingIcon: Icons.notifications_outlined,
+                title: 'Push notifications',
+                switchValue: _notify,
+                onChanged: (v) => setState(() => _notify = v),
+              ),
+              const AppListGroupItem(
+                leadingIcon: Icons.info_outline_rounded,
+                title: 'Version',
+                valueText: '1.0.0',
+              ),
+            ],
+          ),
+        ),
+        row(
+          'Profile header (avatar + name + action)',
+          AppProfileHeader(
+            name: 'Layla Haddad',
+            subtitle: 'layla@example.com',
+            trailing: AppTextButton(label: 'Edit', onPressed: () {}),
+          ),
+        ),
+        row(
+          'Sheet picker (button opens the real route)',
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Builder(
+                builder: (ctx) => AppPillButton.secondary(
+                  label: 'Choose status',
+                  onPressed: () => _openPicker(ctx),
+                  isExpanded: false,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                '\u2066Picked: ${_statuses[_picked]}\u2069',
+                textAlign: TextAlign.start,
+                style: textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+        row(
+          'Summary rows (muted label, tabular LTR value)',
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AppSummaryRow(label: 'Total', value: 'AED 240.00'),
+              SizedBox(height: AppSpacing.sm),
+              AppSummaryRow(label: 'Status', value: 'Active'),
+            ],
+          ),
+        ),
+        row(
+          'Or-divider (hairline, label, hairline)',
+          const AppOrDivider(label: 'or'),
+        ),
+        row(
+          'Alt-auth rows (outlined, chevron mirrors, one disabled)',
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AppAltAuthRow(
+                label: 'Continue with Google',
+                icon: Icons.g_mobiledata_rounded,
+                onTap: () {},
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              AppAltAuthRow(
+                label: 'Use password instead',
+                icon: Icons.password_rounded,
+                onTap: () {},
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              const AppAltAuthRow(
+                label: 'Continue with fingerprint',
+                icon: Icons.fingerprint_rounded,
+                onTap: null,
+              ),
+            ],
           ),
         ),
       ],

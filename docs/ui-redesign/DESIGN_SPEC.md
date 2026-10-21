@@ -453,3 +453,41 @@ Record answers in `docs/ui-redesign/l10n/DECISIONS.md` and in PROGRESS.md before
   context for a native speaker. Never claim translations are verified.
 - Tests: locale-switch widget test, plural/format unit tests for each language, and golden coverage for
   every supported language + RTL (C14 LOCALE matrix).
+
+## C16. Airbnb UX playbook (this is what "identical to Airbnb" means)
+
+STRUCTURE
+- One task per screen. Long forms and auth are STEP FLOWS: one question per step, a thin progress bar on top,
+  back arrow, big left-aligned question headline (headlineLarge, bold, short, e.g. "What's your phone number?"),
+  one supporting line, the input, and a STICKY bottom action bar with one full-width primary button
+  ("Continue"/"Next"). Steps animate with a subtle horizontal slide + fade.
+- Every screen starts with a big bold headline, left-aligned, then short subtitle, then content. No dense
+  toolbars. Top-level screens use a large title instead of a cluttered app bar.
+- Auth (Airbnb-style): step 1 "Log in or sign up" with country code + phone (or email toggle), Continue,
+  an "or" divider, alternative paths as outlined full-width rows with icons, small muted legal/security line.
+  Step 2 "Confirm your number": 6-digit code, "Resend" link with countdown, back arrow. Password is a
+  secondary path ("Use password instead"). Register = step flow (one field group per step).
+  Present the existing LoginNotifier modes/state as steps in the UI; if a step flow would need a logic
+  change, STOP and ask.
+- Content is cards with big rounded corners (20), generous padding, soft shadow, NO borders on cards; separate
+  with whitespace and hairline dividers. NEVER card-inside-card or boxed grids of tiny stats.
+- Collections are horizontal carousels with a peeking next card (about 2.2 visible), section header bold with
+  "Show all". Dashboards = one hero summary + carousels + a few sections, not a dense widget grid.
+- Secondary actions (filters, pickers, confirmations, share, options) are modal BOTTOM SHEETS with a handle,
+  not dialogs or new pages. Dialogs only for destructive confirmations.
+- Detail and checkout screens have a sticky bottom bar: summary/price/status on the left, primary CTA on
+  the right.
+- Search-first screens (lists, jobs, vehicles, leads): a rounded pill search bar at the top, filter chips under
+  it, results as large cards. Filters open in a bottom sheet with a "Show N results" button.
+- Navigation: bottom tab bar (max 5, outlined icons, active = accent), large titles, minimal chrome.
+- Profile/settings: large avatar header, then icon rows grouped by section with inset hairline dividers; no
+  cards-in-cards.
+- Max ONE primary CTA per screen. Move secondary controls into a sheet or overflow.
+UX
+- Progressive disclosure: show only what is needed now; details behind "Show more"/sheets.
+- Friendly, short, second-person copy; question headlines; a muted trust/safety line under CTAs.
+- Plain-language status: one colored dot/pill + one sentence, one status per card.
+- Skeletons mirror the final layout; optimistic transitions; press feedback scale 0.98; smooth step and sheet
+  motion (200-300ms ease-out).
+- Empty states: one icon, one sentence, one action.
+- Text hierarchy: max 3 levels per card; numbers big and tabular.

@@ -249,12 +249,17 @@ class _AppPillButtonState extends State<AppPillButton> {
     );
 
     // Transparent 48 dp hit box around smaller visuals (look unchanged).
+    // Fixed height (never expands): a bare Center fills bounded loose
+    // vertical space (e.g. a Scaffold bottom bar), starving sibling content.
+    final hitHeight = widget.size.height >= 48 ? widget.size.height.toDouble() : 48.0;
     final hitBox = ConstrainedBox(
       constraints: const BoxConstraints(
-        minHeight: 48,
         minWidth: 88,
       ),
-      child: Center(child: pill),
+      child: SizedBox(
+        height: hitHeight,
+        child: Center(child: pill),
+      ),
     );
 
     final button = Opacity(
