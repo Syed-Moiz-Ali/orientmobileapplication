@@ -3,7 +3,7 @@
 > How to resume: Read `DESIGN_SPEC.md`, `PROGRESS.md` and the "Next session starts here" note, then open the next unchecked phase file, summarize in 5 lines, show a short plan, and wait for my go.
 
 ## Next session starts here
-- **Phase:** phase-2 login step-flow brief (first family under the mandate — STOP for go after brief)
+- **Phase:** phase-6 customer dashboard home brief (first screen of the dashboard family — STOP for go after brief)
 - **Before starting:** read DESIGN_SPEC.md (C8/C9/C10/C16), this file, phases/phase-2-shared-auth.md, phase-2-auth-notes.md and docs/ui-redesign/briefs/phase-2-login.md (to be written)
 - **Files in scope (NEW only):** `docs/ui-redesign/briefs/phase-2-login.md`
   - **Must do at the end:** login UX brief + ASCII wireframe shown to user, WAIT for go — no code until approved
@@ -45,7 +45,7 @@
   - [ ] 1d: AppStatTile, AppProgressBar, AppEmptyState, AppErrorState, AppBanner, AppSkeleton/AppShimmer, AppLoader, AppNetworkImage (ask before shimmer/image-cache pubspec changes)
   - [ ] 1e: AppScaffold, AppAppBar, AppBottomNav, AppSegmentedControl/AppPillTabs, AppBottomSheet, AppDialog, AppSnackBar/AppToast
   - [ ] 1f: AppTable (responsive) + FULL gallery matrix pass + evaluation report
-- [ ] `phases/phase-2-shared-auth.md`
+- [x] `phases/phase-2-shared-auth.md` (step-flow rebuilt + rubric-reviewed 179/179 pass, tag ui-phase-2-login-done; supervisor slice ui-phase-2-supervisor)
 - [ ] `phases/phase-3-staff-advisor-core.md` (split, confirm the real grouping from actual screens before starting)
   - [ ] 3a: home + jobs list
   - [ ] 3b: job detail + check-in + assign
@@ -141,3 +141,4 @@
 | 2026-10-20 | phase-1f | Table + full evaluation done: AppDataTable (+Header; spec AppTable taken) with surface-width breakpoints, sticky sunken header, sortable columns, LTR-locked tabular numerals, compact AppSurfaceCard rows. WIDGET_MIGRATION_MAP.md written (every legacy widget grounded by app counts). DESIGN_SYSTEM component catalog added (�8b). Full evaluation by fresh reviewer: 82 PNGs viewed (all 76 gallery + 6 contact sheets), 198/198 tests green, verdict 0 blocking + 2 minor bidi (badge 99+, tooltip period � fixed + re-verified with new tests) + DESIGN_SPEC stale #FF385C note (adjudicated: spec stays verbatim, decision lives in PROGRESS/DESIGN_SYSTEM). Contact sheets for 1d-ii/1e-i/1e-ii/1f built. All 5 logins byte-identical. Scripts ALL GREEN (142 shared_core tests). | 1b gallery drift re-blessed with eyes open (0.03%, no render-path change, immediate compare green � watching in 13/14); round-2 fixer broke a 1e-i test via badge isolates (caught by suite, fixed) | Commit 1f (= phase-1 DONE), tag ui-phase-1f-done + suggest ui-phase-1-done, then start phase-2 (shared auth) |
 | 2026-10-20 | phase-1-merge + 2a | Merged phase-1 tag into airbnb_style (acc8a645, tag ui-phase-1-done); branched ui/phase-2-auth. 71983229 left out (unrecognized parallel staff work, reported). 2a analysis done: auth already rebuilt (Archetype 1) so phase-2 is swap+gap-fix+evaluation; inventory + per-app embeds + do-not-touch list + C9 layout proposal written in phase-2-auth-notes.md. No .dart touched. | 71983229 unreviewed on old branch tip; phase-2 file premise stale (noted, not edited) | Wait for go to start 2b |
 | 2026-10-20 | phase-2a-rewrite | Adopted REDESIGN MANDATE (rule 13): full Airbnb look every screen, extend-App*-don't-keep, legacy removal at zero usages, visible before/after or reviewer FAIL. Rewrote phase-2-auth-notes.md to mandate plan (2b safety net / 2c redesign / 2d evaluate); updated phase-2-shared-auth.md (§5 four-part plan, §10 done); added DESIGN_SPEC C10 terminal-flow exception; next-session note now points at 2b. Docs only, no .dart touched. | None (docs only) | Commit 2a, tag ui-phase-2a-done, start 2b builder |
+| 2026-10-20 | phase-2-login-done | Step-flow auth built (login steps 1/2, code confirm, register R1-R3, forgot 3 stages, supervisor 2-step): migration table 134->164 expects (V1 fixed), AppStepScaffold family, trust line per-app verified, 174 new goldens stable, per-app baselines repointed, analyze+test_all green, rubric reviewer 179/179 pass (lowest 15/16). Committed 1686fa34, tag ui-phase-2-login-done. Wrote phase-6 customer-home dashboard brief. | Stale after-phase-2 goldens replaced; failures/ debris deleted; 71983229 still out | Approve dashboard brief to start build (no code yet) |
