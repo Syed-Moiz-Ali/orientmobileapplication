@@ -11,16 +11,19 @@ import 'package:staff_app/features/technician/presentation/providers/technician_
 import 'package:staff_app/features/technician/presentation/widgets/escalation_sheet.dart';
 import 'package:staff_app/features/technician/presentation/widgets/parts_request_sheet.dart';
 import 'package:staff_app/features/technician/presentation/widgets/technician_components.dart';
+import 'package:staff_app/features/technician/presentation/widgets/technician_today_search.dart';
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
 /// Today — "what needs my hands during this shift?".
 ///
-/// Phase 10 execution surface: the shell banner owns the active-job identity
-/// (vehicle + plate + stage + elapsed), so this tab leads with the shift
-/// punch strip, then the one task that moves the bay forward (with its live
-/// stopwatch), then the urgent-first queue in 72px high-touch rows, closing
-/// with a slim shift strip and freshness. Every value shown comes from real
-/// workshop state; nothing (progress, ETA, priority) is invented.
+/// Phase 5 recomposition onto App* pattern widgets: a same-row header (day
+/// title + shift/attendance + end-side search opening a full-screen sheet
+/// over technician jobs) owns the greeting, then the hero current-work card
+/// (vehicle + ref + task + progress + ONE primary Start/Complete CTA), the
+/// quick-action tile row, the "Up next" queue with Show-all, the task-step
+/// list and freshness. Presentation only: providers/routes/sync/task state
+/// machine (start/pause/complete/resume), progress math, filter predicates,
+/// bottom nav + rail, pull-to-refresh, haptics and keys are untouched.
 class TechnicianTodayView extends ConsumerStatefulWidget {
   /// Fixed freshness instant for deterministic golden stills. Production
   /// passes nothing and the footer reads the live clock.
@@ -80,47 +83,89 @@ class _TechnicianTodayViewState extends ConsumerState<TechnicianTodayView> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (firstLoadError)
-              EmptyState.error(
-                message: t.techTodayLoadError,
+              AppErrorState(
+                title: t.techTodayLoadError,
+                message: t.techTodayErrorHint,
+                retryLabel: t.techTodayRetry,
                 onRetry: () => _refresh(notifier),
               )
             else if (showSkeleton)
               const _TodaySkeleton()
-            else if (noJobs)
-              EmptyState(
+            else if (noJobs) ...[
+              _TodayHeader(
+                state: state,
+                notifier: notifier,
+                onSearch: () => _openTodaySearch(notifier),
+              ),
+              SizedBox(height: AppSpacing.lg),
+              AppEmptyState(
                 icon: Icons.assignment_outlined,
                 title: t.techTodayEmpty,
                 message: t.techTodayEmptyHint,
                 actionLabel: t.techTodayRefresh,
                 onAction: () => _refresh(notifier),
-              )
-            else ...[
+              ),
+            ] else ...[
+              _TodayHeader(
+                state: state,
+                notifier: notifier,
+                onSearch: () => _openTodaySearch(notifier),
+              ),
               if (state.dashboardError.isNotEmpty) ...[
-                _ConnectionNotice(
+                SizedBox(height: AppSpacing.lg),
+                AppBanner(
+                  kind: AppBannerKind.warning,
                   message: state.dashboardError,
-                  onRetry: () => _refresh(notifier),
+                  actionLabel: t.techTodayRetry,
+                  onAction: () => _refresh(notifier),
                 ),
-                const SizedBox(height: AppDimensions.s16),
               ],
+              SizedBox(height: AppSpacing.lg),
               AppSplitView(
                 primaryFlex: 3,
                 secondaryFlex: 2,
-                spacing: AppDimensions.s24,
-                primary: _ExecutionColumn(
-                  state: state,
-                  notifier: notifier,
-                  activeJob: activeJob,
-                  onOpenJob: (job) => _openJob(job),
-                  onPrimaryAction: (job) => _primaryAction(job),
-                  onPartRequest: (job) =>
-                      _openPartRequest(notifier, job),
-                  onEscalate: (job) => _openEscalation(notifier, job),
+                primary: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (activeJob == null)
+                      AppEmptyState(
+                        icon: Icons.task_alt_rounded,
+                        title: t.techTodayNoActive,
+                        message: t.techTodayNoActiveHint,
+                        actionLabel: t.techTodayOpenJobs,
+                        onAction: () => notifier.selectTab(1),
+                      )
+                    else ...[
+                      _TodayHero(
+                        job: activeJob,
+                        onOpen: () => _openJob(activeJob),
+                        onPrimaryAction: () => _primaryAction(activeJob),
+                      ),
+                      SizedBox(height: AppSpacing.md),
+                      _TodayQuickActions(
+                        onDetails: () => _openJob(activeJob),
+                        onPart: () => _openPartRequest(notifier, activeJob),
+                        onEscalate: () =>
+                            _openEscalation(notifier, activeJob),
+                      ),
+                    ],
+                  ],
                 ),
-                secondary: _QueueColumn(
-                  upcoming: upcoming,
-                  notifier: notifier,
-                  onOpenJob: (job) => _openJob(job),
-                  lastRefresh: _lastRefresh,
+                secondary: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _TodayQueue(
+                      upcoming: upcoming,
+                      notifier: notifier,
+                      onOpenJob: (job) => _openJob(job),
+                    ),
+                    if (activeJob != null) ...[
+                      SizedBox(height: AppSpacing.xl),
+                      _TodayTaskSteps(job: activeJob),
+                    ],
+                    SizedBox(height: AppSpacing.lg),
+                    _FreshnessFooter(lastRefresh: _lastRefresh),
+                  ],
                 ),
               ),
             ],
@@ -171,12 +216,27 @@ class _TechnicianTodayViewState extends ConsumerState<TechnicianTodayView> {
     final running = job.tasks
         .where((task) => task.status == TaskStatus.inProgress)
         .firstOrNull;
+    final held = job.tasks
+        .where((task) => task.status == TaskStatus.onHold)
+        .firstOrNull;
     HapticFeedback.mediumImpact();
     if (running != null) {
       notifier.completeTask(job, running);
+    } else if (held != null) {
+      // A held task resumes before the next pending one starts.
+      notifier.startTask(job, held);
     } else if (pending != null) {
       notifier.startTask(job, pending);
     }
+  }
+
+  void _openTodaySearch(TechnicianNotifier notifier) {
+    HapticFeedback.selectionClick();
+    showTechnicianTodaySearch(
+      context,
+      jobs: notifier.allJobs,
+      onSelect: (job) => _openJob(job),
+    );
   }
 
   void _openJob(TechnicianJobEntity job) {
@@ -218,226 +278,72 @@ class _TechnicianTodayViewState extends ConsumerState<TechnicianTodayView> {
   }
 }
 
-// ─── EXECUTION COLUMN ────────────────────────────────────────────────────────
-// Punch strip → current-task card (stopwatch + one primary action) → grease
-// quick actions. The banner above already identifies the job, so this card
-// spends its pixels on the task, not the vehicle.
-class _ExecutionColumn extends StatelessWidget {
+// ─── HEADER ──────────────────────────────────────────────────────────────────
+// Day title + shift/attendance subtitle with the search glyph pinned to the
+// end side of the SAME row on every breakpoint (phones mirror tablets). A
+// plain Row, not AppPageHeader, whose compact layout stacks actions below
+// the subtitle — same lesson as the supervisor floor header.
+class _TodayHeader extends StatelessWidget {
   final TechnicianState state;
   final TechnicianNotifier notifier;
-  final TechnicianJobEntity? activeJob;
-  final void Function(TechnicianJobEntity) onOpenJob;
-  final void Function(TechnicianJobEntity) onPrimaryAction;
-  final void Function(TechnicianJobEntity) onPartRequest;
-  final void Function(TechnicianJobEntity) onEscalate;
+  final VoidCallback onSearch;
 
-  const _ExecutionColumn({
+  const _TodayHeader({
     required this.state,
     required this.notifier,
-    required this.activeJob,
-    required this.onOpenJob,
-    required this.onPrimaryAction,
-    required this.onPartRequest,
-    required this.onEscalate,
+    required this.onSearch,
   });
 
   @override
   Widget build(BuildContext context) {
     final t = StaffLocalizations.of(context)!;
-    final job = activeJob;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _ShiftStrip(state: state, notifier: notifier),
-        const SizedBox(height: AppDimensions.s20),
-        SectionHeader(
-          title: job == null ? t.techTodayReady : t.techTodayOnBay,
-          subtitle: t.techTodayCurrentWork,
-        ),
-        const SizedBox(height: AppDimensions.s12),
-        if (job == null)
-          EmptyState(
-            icon: Icons.task_alt_rounded,
-            title: t.techTodayNoActive,
-            message: t.techTodayNoActiveHint,
-            actionLabel: t.techTodayOpenJobs,
-            onAction: () => notifier.selectTab(1),
-          )
-        else ...[
-          _TaskFocusCard(
-            job: job,
-            onOpen: () => onOpenJob(job),
-            onPrimaryAction: () => onPrimaryAction(job),
-          ),
-          const SizedBox(height: AppDimensions.s12),
-          _QuickActions(
-            onDetails: () => onOpenJob(job),
-            onPart: () => onPartRequest(job),
-            onEscalate: () => onEscalate(job),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-// ─── QUEUE COLUMN ────────────────────────────────────────────────────────────
-// Urgent-first 72px rows, then the slim shift strip and freshness. Matches
-// the home grammar: assigned work owns the viewport, summary stays last.
-class _QueueColumn extends StatelessWidget {
-  final List<TechnicianJobEntity> upcoming;
-  final TechnicianNotifier notifier;
-  final void Function(TechnicianJobEntity) onOpenJob;
-  final DateTime lastRefresh;
-
-  const _QueueColumn({
-    required this.upcoming,
-    required this.notifier,
-    required this.onOpenJob,
-    required this.lastRefresh,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final t = StaffLocalizations.of(context)!;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SectionHeader(
-          title: t.techTodayQueue,
-          subtitle: t.techTodayUpNext,
-          action: upcoming.isEmpty ? null : t.techTodayViewAll,
-          onAction: () => notifier.selectTab(1),
-        ),
-        const SizedBox(height: AppDimensions.s12),
-        if (upcoming.isEmpty)
-          EmptyState(
-            icon: Icons.check_circle_outline_rounded,
-            title: t.techTodayQueueClear,
-            message: t.techTodayQueueClearHint,
-          )
-        else
-          for (var i = 0; i < upcoming.length; i++) ...[
-            if (i > 0) Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
-            TechnicianJobSummary(
-              job: upcoming[i],
-              emphasised: i == 0,
-              onTap: () => onOpenJob(upcoming[i]),
-            ),
-          ],
-        const SizedBox(height: AppDimensions.s20),
-        _ShiftSlimStrip(notifier: notifier),
-        const SizedBox(height: AppDimensions.s8),
-        _FreshnessFooter(lastRefresh: lastRefresh),
-      ],
-    );
-  }
-}
-
-/// Compact shift/attendance strip with the real punch state.
-class _ShiftStrip extends StatelessWidget {
-  final TechnicianState state;
-  final TechnicianNotifier notifier;
-
-  const _ShiftStrip({required this.state, required this.notifier});
-
-  @override
-  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final t = StaffLocalizations.of(context)!;
-    final status = state.attendanceStatus;
-    final summary = state.attendanceSummary;
-    final action = switch (status) {
-      AttendanceStatus.notPunchedIn => (t.techShiftStart, Icons.login_rounded),
-      AttendanceStatus.working => (t.techShiftBreak, Icons.coffee_rounded),
-      AttendanceStatus.onBreak => (
-        t.techShiftResume,
-        Icons.play_arrow_rounded,
-      ),
-      AttendanceStatus.punchedOut => (t.techShiftDone, Icons.check_rounded),
-    };
-    final VoidCallback? callback = switch (status) {
-      AttendanceStatus.notPunchedIn => notifier.punchIn,
-      AttendanceStatus.working => notifier.startBreak,
-      AttendanceStatus.onBreak => notifier.endBreak,
-      AttendanceStatus.punchedOut => null,
-    };
+    final profile = notifier.profile;
+    final attendance = _attendanceLabel(t, state.attendanceStatus);
+    final subtitle = [
+      profile.shift.trim(),
+      attendance,
+    ].where((s) => s.isNotEmpty).join(' · ');
 
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.s14),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-        border: Border.all(color: colors.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: techAttendanceColor(
-                context,
-                status,
-              ).withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
-            ),
-            child: Icon(
-              Icons.schedule_rounded,
-              color: techAttendanceColor(context, status),
-            ),
-          ),
-          const SizedBox(width: AppDimensions.s12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _attendanceLabel(t, status),
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: colors.onSurface,
-                    fontWeight: FontWeight.w800,
-                  ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                t.techNavToday,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: colors.onSurface,
+                  letterSpacing: -0.2,
                 ),
-                const SizedBox(height: 2),
+              ),
+              if (subtitle.isNotEmpty) ...[
+                SizedBox(height: AppSpacing.xs),
                 Text(
-                  status == AttendanceStatus.notPunchedIn
-                      ? t.techShiftClockInHint
-                      : t.techShiftWorked(
-                          summary.workHours,
-                          summary.breakTime,
-                        ),
-                  maxLines: 1,
+                  subtitle,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
+                  style: theme.textTheme.bodyMedium?.copyWith(
                     color: colors.onSurfaceVariant,
+                    height: 1.35,
                   ),
                 ),
               ],
-            ),
+            ],
           ),
-          const SizedBox(width: AppDimensions.s10),
-          FilledButton.tonalIcon(
-            onPressed: callback == null
-                ? null
-                : () {
-                    HapticFeedback.mediumImpact();
-                    callback();
-                  },
-            icon: Icon(action.$2, size: 18),
-            label: Text(action.$1),
-            style: FilledButton.styleFrom(
-              minimumSize: const Size(0, AppDimensions.touchTarget),
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.s10,
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+        SizedBox(width: AppSpacing.sm),
+        AppIconButton(
+          icon: Icons.search_rounded,
+          tooltip: t.techJobsSearch,
+          onPressed: onSearch,
+        ),
+      ],
     );
   }
 }
@@ -450,15 +356,16 @@ String _attendanceLabel(StaffLocalizations t, AttendanceStatus status) =>
       AttendanceStatus.punchedOut => t.techAttendancePunchedOut,
     };
 
-/// The one task that moves the bay forward: live stopwatch, struck-safe
-/// title and exactly one primary action. Vehicle identity lives in the
-/// shell banner, so no plate/customer repetition here.
-class _TaskFocusCard extends StatelessWidget {
+// ─── HERO ────────────────────────────────────────────────────────────────────
+// The one task that moves the bay forward: vehicle + job ref + live task +
+// progress + exactly one primary action. Borderless in light mode (shadow,
+// no border); dark takes the tone border, never a shadow (C5).
+class _TodayHero extends StatelessWidget {
   final TechnicianJobEntity job;
   final VoidCallback onOpen;
   final VoidCallback onPrimaryAction;
 
-  const _TaskFocusCard({
+  const _TodayHero({
     required this.job,
     required this.onOpen,
     required this.onPrimaryAction,
@@ -469,6 +376,9 @@ class _TaskFocusCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final t = StaffLocalizations.of(context)!;
+    final vehicle = '${job.vehicleBrand} ${job.vehicleModel}'.trim().isEmpty
+        ? t.techVehicleFallback
+        : '${job.vehicleBrand} ${job.vehicleModel}'.trim();
     final running = job.tasks
         .where((task) => task.status == TaskStatus.inProgress)
         .firstOrNull;
@@ -478,7 +388,7 @@ class _TaskFocusCard extends StatelessWidget {
     final held = job.tasks
         .where((task) => task.status == TaskStatus.onHold)
         .firstOrNull;
-    final nextTask = running ?? pending ?? held;
+    final nextTask = running ?? held ?? pending;
     final onHold = job.status == TechJobStatus.delayed;
 
     final primaryLabel = nextTask == null
@@ -490,28 +400,48 @@ class _TaskFocusCard extends StatelessWidget {
         ? Icons.visibility_outlined
         : (running != null ? Icons.check_rounded : Icons.play_arrow_rounded);
 
-    return AppCard.standard(
+    final progress = job.tasks.isEmpty
+        ? 0.0
+        : job.completedTasks / job.tasks.length;
+
+    return AppSurfaceCard(
+      outlined: false,
+      headerTitle: vehicle,
+      headerTrailing: AppStatusChip(
+        label: job.status.label,
+        kind: switch (job.status) {
+          TechJobStatus.inProgress => AppStatusKind.accent,
+          TechJobStatus.completed => AppStatusKind.success,
+          TechJobStatus.qcReview => AppStatusKind.info,
+          TechJobStatus.delayed => AppStatusKind.error,
+          TechJobStatus.pending => AppStatusKind.warning,
+        },
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Expanded(
-                child: Text(
-                  running != null
-                      ? t.techTodayInProgress
-                      : t.techTodayNextTask,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: colors.primary,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.8,
+                child: Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Text(
+                    job.jobCardNo,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.mono(
+                      color: colors.onSurfaceVariant,
+                    ).copyWith(fontSize: 12, fontWeight: FontWeight.w800),
                   ),
                 ),
               ),
-              technicianStatusPill(job.status),
+              if (job.plateNumber.isNotEmpty) ...[
+                SizedBox(width: AppSpacing.sm),
+                TechnicianPlateChip(plate: job.plateNumber),
+              ],
             ],
           ),
-          const SizedBox(height: AppDimensions.s8),
+          SizedBox(height: AppSpacing.sm),
           Text(
             nextTask?.description ??
                 (job.tasks.isEmpty
@@ -526,52 +456,69 @@ class _TaskFocusCard extends StatelessWidget {
             ),
           ),
           if (running != null && running.startTime != null) ...[
-            const SizedBox(height: AppDimensions.s8),
+            SizedBox(height: AppSpacing.sm),
             TechnicianStopwatch(task: running),
           ],
           if (job.tasks.isNotEmpty) ...[
-            const SizedBox(height: AppDimensions.s12),
-            AppLinearProgress(
-              value: job.completedTasks / job.tasks.length,
+            SizedBox(height: AppSpacing.md),
+            Text(
+              t.techTodayProgress(job.completedTasks, job.tasks.length),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(height: AppSpacing.xs),
+            Semantics(
               label: t.techTodayProgress(
                 job.completedTasks,
                 job.tasks.length,
               ),
+              value: '${(progress * 100).round()} percent',
+              child: ExcludeSemantics(
+                child: AppProgressBar(value: progress),
+              ),
             ),
           ],
           if (onHold) ...[
-            const SizedBox(height: AppDimensions.s12),
-            _BlockerNotice(),
+            SizedBox(height: AppSpacing.md),
+            AppBanner(
+              kind: AppBannerKind.error,
+              message:
+                  '${t.techTodayJobOnHold}. ${t.techTodayDelayedHint}',
+            ),
           ],
-          const SizedBox(height: AppDimensions.s16),
-          Row(
+          SizedBox(height: AppSpacing.lg),
+          // U5 fix: CTA pair stacks vertically at full width so both
+          // labels render in full at 320px and 1.3x text scale. The
+          // side-by-side Row (flex 1 vs 2) squeezed the secondary to
+          // `Jo…` at 360 and even the primary to `Complete ta…` at 1.3x.
+          // Exactly one filled primary CTA is kept; order (primary
+          // first), routes, haptics and callbacks are unchanged.
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: SecondaryButton(
-                  label: t.techTodayJobDetails,
-                  leadingIcon: Icons.visibility_outlined,
-                  onPressed: () {
-                    HapticFeedback.selectionClick();
-                    onOpen();
-                  },
-                ),
+              AppPillButton.primary(
+                label: primaryLabel,
+                icon: primaryIcon,
+                onPressed: nextTask == null
+                    ? () {
+                        HapticFeedback.selectionClick();
+                        onOpen();
+                      }
+                    : () {
+                        HapticFeedback.mediumImpact();
+                        onPrimaryAction();
+                      },
               ),
-              const SizedBox(width: AppDimensions.s10),
-              Expanded(
-                flex: 2,
-                child: PrimaryButton(
-                  label: primaryLabel,
-                  icon: primaryIcon,
-                  onPressed: nextTask == null
-                      ? () {
-                          HapticFeedback.selectionClick();
-                          onOpen();
-                        }
-                      : () {
-                          HapticFeedback.mediumImpact();
-                          onPrimaryAction();
-                        },
-                ),
+              SizedBox(height: AppSpacing.sm),
+              AppPillButton.secondary(
+                label: t.techTodayJobDetails,
+                icon: Icons.visibility_outlined,
+                onPressed: () {
+                  HapticFeedback.selectionClick();
+                  onOpen();
+                },
               ),
             ],
           ),
@@ -581,76 +528,15 @@ class _TaskFocusCard extends StatelessWidget {
   }
 }
 
-/// Real blocker state derived from the job's own status.
-class _BlockerNotice extends StatelessWidget {
-  const _BlockerNotice();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final t = StaffLocalizations.of(context)!;
-
-    return Semantics(
-      liveRegion: true,
-      container: true,
-      label: '${t.techTodayJobOnHold}. ${t.techTodayDelayedHint}',
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.s12,
-          vertical: AppDimensions.s10,
-        ),
-        decoration: BoxDecoration(
-          color: colors.error.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
-          border: Border.all(color: colors.error.withValues(alpha: 0.22)),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              Icons.pause_circle_outline_rounded,
-              size: AppDimensions.iconSm,
-              color: colors.error,
-            ),
-            const SizedBox(width: AppDimensions.s6),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    t.techTodayJobOnHold,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colors.onSurface,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    t.techTodayDelayedHint,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                      height: 1.35,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Secondary contextual actions for the active job. These are the real
-/// workshop actions — nothing here is decorative.
-class _QuickActions extends StatelessWidget {
+// ─── QUICK ACTIONS ────────────────────────────────────────────────────────────
+// The real workshop actions for the active job, one tap each. Borderless in
+// light mode (soft shadow, no outline); dark keeps the tone border.
+class _TodayQuickActions extends StatelessWidget {
   final VoidCallback onDetails;
   final VoidCallback onPart;
   final VoidCallback onEscalate;
 
-  const _QuickActions({
+  const _TodayQuickActions({
     required this.onDetails,
     required this.onPart,
     required this.onEscalate,
@@ -660,25 +546,26 @@ class _QuickActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = StaffLocalizations.of(context)!;
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: _QuickAction(
+          child: _TodayQuickTile(
             icon: Icons.checklist_rounded,
             label: t.techTodayTasks,
             onTap: onDetails,
           ),
         ),
-        const SizedBox(width: AppDimensions.s10),
+        SizedBox(width: AppSpacing.sm),
         Expanded(
-          child: _QuickAction(
+          child: _TodayQuickTile(
             icon: Icons.inventory_2_outlined,
             label: t.techTodayRequestPart,
             onTap: onPart,
           ),
         ),
-        const SizedBox(width: AppDimensions.s10),
+        SizedBox(width: AppSpacing.sm),
         Expanded(
-          child: _QuickAction(
+          child: _TodayQuickTile(
             icon: Icons.report_problem_outlined,
             label: t.techTodayEscalate,
             isCritical: true,
@@ -690,13 +577,13 @@ class _QuickActions extends StatelessWidget {
   }
 }
 
-class _QuickAction extends StatelessWidget {
+class _TodayQuickTile extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool isCritical;
   final VoidCallback? onTap;
 
-  const _QuickAction({
+  const _TodayQuickTile({
     required this.icon,
     required this.label,
     this.isCritical = false,
@@ -705,7 +592,9 @@ class _QuickAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final dark = theme.brightness == Brightness.dark;
     final color = isCritical ? colors.error : colors.primary;
 
     return Semantics(
@@ -713,41 +602,53 @@ class _QuickAction extends StatelessWidget {
       enabled: onTap != null,
       label: label,
       child: Material(
-        color: Colors.transparent,
+        color: colors.surface,
+        elevation: !dark && onTap != null ? 2 : 0,
+        shadowColor: !dark ? colors.shadow.withValues(alpha: 0.14) : null,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          side: dark
+              ? BorderSide(color: colors.outline)
+              : BorderSide.none,
+        ),
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: () {
-            if (onTap == null) return;
-            HapticFeedback.selectionClick();
-            onTap!();
-          },
-          borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-          child: Ink(
-            height: 76,
-            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s8),
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-              border: Border.all(color: colors.outlineVariant),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  color: onTap == null ? colors.outline : color,
-                  size: 22,
-                ),
-                const SizedBox(height: AppDimensions.s6),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: onTap == null ? colors.outline : colors.onSurface,
-                    fontWeight: FontWeight.w700,
+          onTap: onTap == null
+              ? null
+              : () {
+                  HapticFeedback.selectionClick();
+                  onTap!();
+                },
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 72),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.sm,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    icon,
+                    color: onTap == null ? colors.outline : color,
+                    size: 22,
                   ),
-                ),
-              ],
+                  SizedBox(height: AppSpacing.xs),
+                  Text(
+                    label,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: onTap == null ? colors.outline : colors.onSurface,
+                      fontWeight: FontWeight.w700,
+                      height: 1.25,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -756,132 +657,175 @@ class _QuickAction extends StatelessWidget {
   }
 }
 
-/// Slim inline shift metrics (home summary grammar): three real counts in one
-/// quiet row, last on the page.
-class _ShiftSlimStrip extends StatelessWidget {
+// ─── QUEUE ───────────────────────────────────────────────────────────────────
+// Urgent-first assigned rows in the shared queue grammar (status bar +
+// vehicle + LTR identifiers + status pill + chevron, hairline dividers —
+// never cards-in-cards), with Show-all switching to the Jobs tab.
+class _TodayQueue extends StatelessWidget {
+  final List<TechnicianJobEntity> upcoming;
   final TechnicianNotifier notifier;
+  final void Function(TechnicianJobEntity) onOpenJob;
 
-  const _ShiftSlimStrip({required this.notifier});
+  const _TodayQueue({
+    required this.upcoming,
+    required this.notifier,
+    required this.onOpenJob,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+
+    return AppSection(
+      title: t.techTodayQueue,
+      seeAllLabel: upcoming.isEmpty ? null : t.techTodayViewAll,
+      onSeeAll: upcoming.isEmpty ? null : () => notifier.selectTab(1),
+      child: upcoming.isEmpty
+          ? AppEmptyState(
+              icon: Icons.check_circle_outline_rounded,
+              title: t.techTodayQueueClear,
+              message: t.techTodayQueueClearHint,
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (var i = 0; i < upcoming.length; i++) ...[
+                  if (i > 0)
+                    Divider(
+                      height: 1,
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                  TechnicianJobSummary(
+                    job: upcoming[i],
+                    emphasised: i == 0,
+                    onTap: () => onOpenJob(upcoming[i]),
+                  ),
+                ],
+              ],
+            ),
+    );
+  }
+}
+
+// ─── TASK STEPS ──────────────────────────────────────────────────────────────
+// The active job's checklist, display only (no step flow): every step with
+// its honest status, using the job-detail step grammar. Tapping a step opens
+// the job dossier through the existing Job details entry.
+class _TodayTaskSteps extends StatelessWidget {
+  final TechnicianJobEntity job;
+
+  const _TodayTaskSteps({required this.job});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final semantic = context.semanticColors;
     final t = StaffLocalizations.of(context)!;
-    final active = notifier.inProgressJobs;
-    final totalTasks = notifier.allTasks.length;
-    final completedTasks = notifier.allTasks
-        .where((entry) => entry.task.status == TaskStatus.completed)
-        .length;
-    final repairs = notifier.completedJobs;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          t.techTodaySummary,
+          t.techTodayTasks,
           style: theme.textTheme.titleSmall?.copyWith(
             color: colors.onSurface,
             fontWeight: FontWeight.w800,
           ),
         ),
-        const SizedBox(height: AppDimensions.s8),
-        Row(
-          children: [
-            _SlimMetric(value: '$active', label: t.techTodayActiveBay),
-            _SlimMetric(
-              value: '$completedTasks/$totalTasks',
-              label: t.techTodayTasksDone,
+        SizedBox(height: AppSpacing.sm),
+        for (var i = 0; i < job.tasks.length; i++) ...[
+          if (i > 0)
+            Divider(
+              height: 1,
+              color: colors.outlineVariant,
             ),
-            _SlimMetric(value: '$repairs', label: t.techTodayRepairsDone),
-          ],
-        ),
+          _StepRow(
+            label: t.techDetailTaskLabel(
+              i + 1,
+              job.tasks[i].description,
+              job.tasks[i].status.label,
+            ),
+            status: job.tasks[i].status,
+            doneColor: semantic.success.base,
+            runningColor: colors.primary,
+            heldColor: semantic.warning.base,
+            idleColor: colors.onSurfaceVariant,
+          ),
+        ],
       ],
     );
   }
 }
 
-class _SlimMetric extends StatelessWidget {
-  final String value;
+class _StepRow extends StatelessWidget {
   final String label;
+  final TaskStatus status;
+  final Color doneColor;
+  final Color runningColor;
+  final Color heldColor;
+  final Color idleColor;
 
-  const _SlimMetric({required this.value, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Directionality(
-            textDirection: TextDirection.ltr,
-            child: Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: colors.onSurface,
-                fontWeight: FontWeight.w900,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: colors.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ConnectionNotice extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-
-  const _ConnectionNotice({required this.message, required this.onRetry});
+  const _StepRow({
+    required this.label,
+    required this.status,
+    required this.doneColor,
+    required this.runningColor,
+    required this.heldColor,
+    required this.idleColor,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final done = status == TaskStatus.completed;
+    final running = status == TaskStatus.inProgress;
+    final held = status == TaskStatus.onHold;
+    final tone = done
+        ? doneColor
+        : running
+        ? runningColor
+        : held
+        ? heldColor
+        : idleColor;
+    final icon = done
+        ? Icons.check_circle_rounded
+        : running
+        ? Icons.timelapse_rounded
+        : held
+        ? Icons.pause_circle_rounded
+        : Icons.radio_button_unchecked_rounded;
 
     return Semantics(
-      liveRegion: true,
-      child: Material(
-        color: colors.errorContainer,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-        child: InkWell(
-          onTap: onRetry,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-          child: Padding(
-            padding: const EdgeInsets.all(AppDimensions.s14),
-            child: Row(
-              children: [
-                Icon(Icons.cloud_off_rounded, color: colors.onErrorContainer),
-                const SizedBox(width: AppDimensions.s10),
-                Expanded(
-                  child: Text(
-                    message,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colors.onErrorContainer,
-                      fontWeight: FontWeight.w600,
-                    ),
+      label: label,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 48),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Icon(icon, size: 20, color: tone),
+              ),
+              SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: done ? colors.onSurfaceVariant : colors.onSurface,
+                    fontWeight: done ? FontWeight.w600 : FontWeight.w700,
+                    height: 1.35,
                   ),
                 ),
-                Icon(Icons.refresh_rounded, color: colors.onErrorContainer),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -918,18 +862,26 @@ class _TodaySkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AppSkeleton.card(height: 76),
-        SizedBox(height: AppDimensions.s20),
-        AppSkeleton.text(width: 120),
-        SizedBox(height: AppDimensions.s10),
-        AppSkeleton.card(height: 280),
-        SizedBox(height: AppDimensions.s12),
-        AppSkeleton.card(height: 76),
-        SizedBox(height: AppDimensions.s20),
-        AppSkeleton.listRows(rows: 3),
+        const AppShimmerSkeleton(width: 160, height: 20),
+        const SizedBox(height: AppSpacing.sm),
+        const AppShimmerSkeleton(width: 220, height: 14),
+        const SizedBox(height: AppSpacing.lg),
+        const AppShimmerSkeleton.card(height: 240),
+        const SizedBox(height: AppSpacing.md),
+        const Row(
+          children: [
+            Expanded(child: AppShimmerSkeleton.card(height: 72)),
+            SizedBox(width: AppSpacing.sm),
+            Expanded(child: AppShimmerSkeleton.card(height: 72)),
+            SizedBox(width: AppSpacing.sm),
+            Expanded(child: AppShimmerSkeleton.card(height: 72)),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        const AppShimmerSkeleton.listRows(rows: 3),
       ],
     );
   }

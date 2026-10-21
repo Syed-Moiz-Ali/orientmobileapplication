@@ -117,3 +117,32 @@ derivation, `SupervisorBayState` filter predicate, selection state,
 pull-to-refresh, bottom nav, scaffold. Floor tab now contributes zero
 `SectionHeader`/`AppCard`/`AppInfoPanel`/`AppSkeleton`/legacy-button call
 sites on its own surfaces.
+
+## Phase 5 technician-home recomposition (branch `ui/dashboards-2`)
+
+Today tab (`technician_today_view.dart`) recomposed presentation-only onto
+1P pattern widgets; new `technician_today_search.dart` (loaded-jobs search
+sheet). Legacy usages below drop to zero on the Today tab (verified by grep;
+the shared classes themselves are kept — still used by the Jobs /
+productivity / detail / sheet surfaces):
+
+| Deleted legacy widget | Homes before | Replaced by | Notes |
+|---|---|---|---|
+| bespoke `_ShiftStrip` + `_ShiftSlimStrip` (punch/summary strips) | today tab (2) | Header subtitle (shift + attendance, real state) | No invented data; punch actions stay on attendance surfaces; providers/routes untouched |
+| `SectionHeader` titles + ALL-CAPS eyebrows (`CURRENT WORK`/`UP NEXT`/`NEXT TASK`/`IN PROGRESS`) | today tab (2) | `_TodayHeader` Row (title `techNavToday` + subtitle, same-row end-side `AppIconButton` search per U1) + `AppSection` (`techTodayQueue` + `View all`) + `Tasks` heading | Plain Row, not `AppPageHeader` (compact stacks actions below subtitle — supervisor round-2 lesson) |
+| bespoke `_TaskFocusCard` (`AppCard.standard` + `PrimaryButton`/`SecondaryButton` + `AppLinearProgress`) | today tab (1) | `_TodayHero` (`AppSurfaceCard(outlined: false)` borderless-light + `AppPillButton.primary`/`secondary` + labelless `AppProgressBar` + plain progress text) | ONE filled CTA; job ref line added (hero identity); view-level resume prefers held over pending (provider state machine untouched) |
+| bespoke `_QuickAction` tiles (bordered, 1-line labels) | today tab (3) | `_TodayQuickTile` (borderless-light + e1 shadow, 72 min-height, ≤2-line wrap labels) | 1-tap each preserved; icons/labels/destinations verbatim |
+| bespoke `_BlockerNotice` (error-tinted container) | today tab (1) | `AppBanner(error)` (`techTodayJobOnHold` + `techTodayDelayedHint`) | Same copy/condition (delayed status) |
+| bespoke `_ConnectionNotice` (errorContainer + tap) | today tab (1) | `AppBanner(warning)` (`dashboardError` verbatim + `Retry` action) + stale board | Same message/contract; stale jobs kept |
+| `EmptyState.error` first-load error | today tab (1) | `AppErrorState` (`techTodayLoadError` + `techTodayErrorHint` + `techTodayRetry`) | Same copy/retry |
+| `EmptyState` no-jobs / no-active / queue-clear | today tab (3) | `AppEmptyState` (same keys; `Refresh` / `Open my jobs` actions kept; queue-clear action-less) | Same copy/destinations |
+| `AppSkeleton` today skeleton | today tab (1) | `AppShimmerSkeleton` mirroring header + hero + tiles + queue rows | Same loading contract (`isLoading && isEmpty`) |
+| `technicianStatusPill` (ALL-CAPS label) on this tab | today tab (1) | `AppStatusChip` (sentence-case `TechJobStatus.label`) | Shared component kept (Jobs/detail sheets still use it); this tab drops the uppercase |
+| (no search affordance) | today tab (0) | `TechnicianTodaySearchSheet`: `showAppModalSheet` + `AppSearchField` over loaded jobs, result tap = dossier contract | Permitted "full-screen search over technician jobs"; no new routes/logic |
+
+Kept verbatim (shared tile grammar — `technician_components.dart`
+untouched): `TechnicianJobSummary` (queue + search rows, emphasised first
+row, hairline dividers), `TechnicianStopwatch`, `TechnicianPlateChip`,
+`_activeJob` / `_urgentFirst` derivation, `take(5)` queue window, View-all
+visibility + `selectTab(1)` destination, progress math, pull-to-refresh,
+freshness footer, haptics. Zero new ARB keys (all copy reused).
