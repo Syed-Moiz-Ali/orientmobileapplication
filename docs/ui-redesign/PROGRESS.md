@@ -3,13 +3,10 @@
 > How to resume: Read `DESIGN_SPEC.md`, `PROGRESS.md` and the "Next session starts here" note, then open the next unchecked phase file, summarize in 5 lines, show a short plan, and wait for my go.
 
 ## Next session starts here
-- **Phase:** phase-1P pattern widgets (Airbnb building blocks in shared_core, then login step-flow brief)
-- **Before starting:** read DESIGN_SPEC.md (C8/C9/C16), this file, phases/phase-1P-pattern-widgets.md; confirm airbnb_style @ acc8a645 + ui-phase-1-done
-- **Files in scope (NEW only):** `packages/shared_core/lib/src/widgets/app_*.dart` pattern widgets + barrel + gallery section + capture tests + unit tests
-  - **Must do at the end:** 12 pattern widgets + gallery PNGs + reviewer pass, tool scripts green, commit message, tag ui-phase-1P-done (old login/auth phases proceed only after the login brief is approved)
-- **Before starting:** read DESIGN_SPEC.md, this file and phases/phase-2-shared-auth.md; confirm the 7 baselines + 72 gallery PNGs and evaluation/phase-1-widgets.md are on disk
-- **Files in scope (NEW only):** `packages/shared_core/lib/src/widgets/` additions + gallery section + capture test + unit tests per widget
-  - **Must do at the end:** auth redesigned (shared login/forgot-password), light+dark, all C10 states, 5 login PNGs RE-BLESSED after review (they change in this phase by design), tool scripts green, PROGRESS + next-session note (phase-3a: advisor home + jobs), commit message, tag suggestion ui-phase-2-done
+- **Phase:** dashboard family continued (supervisor home brief + build next, then technician, owner — phase order 5, 7; LIST family brief needs approval before starting it)
+- **Before starting:** read DESIGN_SPEC.md (C8/C9/C10/C16), this file, the family brief pattern in docs/ui-redesign/briefs/phase-3-advisor-home.md; confirm branch ui/phase-6-customer is clean
+- **Files in scope:** `apps/staff_app/lib/features/supervisor/` (then technician, `apps/owner_app/lib/features/dashboard/`) + tests + captures
+  - **Must do at the end (each dashboard):** brief, migration table, build, captures + side-by-sides, rubric reviewer ≥12/16, fix loop, tool scripts green, commit + tag
 - **Open questions:** none
 
 ## Working rules (follow every session)
