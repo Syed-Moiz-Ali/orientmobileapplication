@@ -1,10 +1,11 @@
-// Phase-2b characterization: login local validation (migrated to the step flow).
+// Phase-2b characterization: login local validation (migrated to the
+// one-screen form).
 //
 // Guards the CURRENT inline-error copy + routing so the redesign preserves
 // them: empty identifier, invalid email, short phone, empty password, short
-// create-password, and empty name in register mode. Step mapping: Step 1
-// validates the identifier (Continue advances with ZERO API calls); the
-// password step validates the password; R1 validates the name and R3 the
+// create-password, and empty name in register mode. One-screen mapping: a
+// single Continue validates the identifier AND the password together (fires
+// ZERO API calls on any invalid input); R1 validates the name and R3 the
 // created password.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,7 +23,9 @@ void main() {
       final repo = FakeAuthRepository();
       await pumpLoginView(tester, repo: repo);
 
-      expect(find.text(t.loginStepIdentifierTitle), findsOneWidget);
+      expect(find.text(t.loginTitle), findsOneWidget);
+      // Both fields share the single screen.
+      expect(find.byType(AppInputField), findsNWidgets(2));
       await tester.tap(find.text(t.loginActionContinue));
       await tester.pump();
 
@@ -46,6 +49,8 @@ void main() {
 
       expect(find.text(t.validationEnterValidEmail), findsOneWidget);
       expect(repo.loginCalls, 0);
+      expect(repo.sendOtpCalls, 0);
+      expect(repo.sendEmailOtpCalls, 0);
       expect(tester.takeException(), isNull);
     });
 
@@ -69,19 +74,14 @@ void main() {
       final repo = FakeAuthRepository();
       await pumpLoginView(tester, repo: repo);
 
+      // One screen: a valid identifier alone still submits nothing until the
+      // password is filled — a single tap validates both fields together.
+      expect(find.text(t.loginTitle), findsOneWidget);
       await tester.enterText(
         find.byType(TextField).first,
         'user@example.com',
       );
       await tester.pump();
-      await tapAndSettleStep(tester, find.text(t.loginActionContinue));
-
-      // Step 1 accepted the identifier with no API call and advanced.
-      expect(find.text(t.loginStepPasswordTitle), findsOneWidget);
-      expect(repo.loginCalls, 0);
-      expect(repo.sendOtpCalls, 0);
-      expect(repo.sendEmailOtpCalls, 0);
-
       await tester.tap(find.text(t.loginActionContinue));
       await tester.pump();
 
@@ -94,6 +94,8 @@ void main() {
           .firstWhere((f) => f.label == t.loginFieldPassword);
       expect(passwordField.error, t.validationEnterPassword);
       expect(repo.loginCalls, 0);
+      expect(repo.sendOtpCalls, 0);
+      expect(repo.sendEmailOtpCalls, 0);
       expect(tester.takeException(), isNull);
     });
   });
@@ -163,6 +165,7 @@ void main() {
       final t = arAuthL10n();
       await pumpLoginView(tester, locale: const Locale('ar'));
 
+      expect(find.text(t.loginTitle), findsOneWidget);
       await tester.tap(find.text(t.loginActionContinue));
       await tester.pump();
 

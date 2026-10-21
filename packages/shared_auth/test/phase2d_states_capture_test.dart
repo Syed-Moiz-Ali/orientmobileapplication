@@ -1,20 +1,19 @@
 // Phase-2d AFTER captures: error/busy states + small + tablet
 // (capture-only, no app code).
 //
-// States (customer light, en, 1.0, 360x800 unless noted): login step 1 field
-// error; login step 2 ("Welcome back") field error, form error with retryable
-// offline snackbar, busy CTA; login code-confirm invalid-code inline error;
-// register R1/R2/R3 empty-submit field errors; register R3 busy + offline
-// form error; forgot identifier field error + offline snackbar; forgot reset
-// field errors + expired-code inline error; plus one RTL/1.3 field-error
-// variant and one dark busy variant.
-// Small (320x568): login step 1 idle for all five app/theme combos +
-// customer RTL + customer 1.3, plus login step 2 idle (customer LTR + RTL).
-// Tablet portrait (768x1024): customer login step 1 idle LTR + RTL.
+// States (customer light, en, 1.0, 360x800 unless noted): one-screen password
+// field error (both inline errors, zero API), form error with retryable
+// offline snackbar, busy CTA (loading); login code-confirm invalid-code
+// inline error; register R1/R2/R3 empty-submit field errors; register R3
+// busy + offline form error; forgot identifier field error + offline
+// snackbar; forgot reset field errors + expired-code inline error; plus one
+// RTL/1.3 field-error variant and one dark busy (loading) variant.
+// Small (320x568): one-screen idle for all five app/theme combos + customer
+// RTL + customer 1.3. Tablet portrait (768x1024): customer one-screen idle
+// LTR + RTL.
 //
-// Step 1 fires ZERO API calls by construction, so it has no busy/form-error
-// states; login success auto-advances off the flow, so it has no golden
-// (covered by the step-flow unit tests instead).
+// Login success auto-advances off the flow, so it has no golden (covered by
+// the one-screen unit tests instead).
 //
 // Tagged baseline: excluded from `melos run test` (see melos.yaml).
 // Generate: flutter test --tags baseline --update-goldens
@@ -39,19 +38,22 @@ const _ar = Locale('ar');
 void main() {
   setUpAll(loadCaptureFonts);
 
-  group('login step1 states 360x800', () {
-    testWidgets('customer login step1 field-error light 1.0 en 360x800',
+  group('login one-screen states 360x800', () {
+    testWidgets('customer login one-screen field-error light 1.0 en 360x800',
         (tester) async {
       const locale = _en;
       final t = bundleFor(locale);
       await pumpCaptureLogin(tester, app: captureCustomer);
+      // Empty submit: both fields validate inline, zero API calls.
+      // (The password hint shares the error copy, so it appears twice.)
       await revealTapSettle(tester, find.text(t.loginActionContinue));
       expect(find.text(t.validationEnterIdentifier), findsOneWidget);
+      expect(find.text(t.validationEnterPassword), findsWidgets);
       await captureAfter(
         tester,
         afterName(
           app: 'customer',
-          screen: 'login_step1',
+          screen: 'login_one_screen',
           state: 'field_error',
           dark: false,
           textScale: 1.0,
@@ -62,7 +64,7 @@ void main() {
       );
     });
 
-    testWidgets('customer login step1 field-error light 1.3 ar 360x800',
+    testWidgets('customer login one-screen field-error light 1.3 ar 360x800',
         (tester) async {
       const locale = _ar;
       final t = bundleFor(locale);
@@ -78,63 +80,7 @@ void main() {
         tester,
         afterName(
           app: 'customer',
-          screen: 'login_step1',
-          state: 'field_error',
-          dark: false,
-          textScale: 1.3,
-          locale: locale,
-          w: 360,
-          h: 800,
-        ),
-      );
-    });
-  });
-
-  group('login step2 password states 360x800', () {
-    testWidgets('customer login step2 field-error light 1.0 en 360x800',
-        (tester) async {
-      const locale = _en;
-      final t = bundleFor(locale);
-      await pumpCaptureLogin(tester, app: captureCustomer);
-      await reachStep2Password(tester, locale);
-      // Password left empty: local validation lands inline, no API call.
-      // (The hint shares the error copy, so it appears twice: hint + error.)
-      await revealTapSettle(tester, find.text(t.loginActionContinue));
-      expect(find.text(t.validationEnterPassword), findsWidgets);
-      await captureAfter(
-        tester,
-        afterName(
-          app: 'customer',
-          screen: 'login_step2',
-          state: 'field_error',
-          dark: false,
-          textScale: 1.0,
-          locale: locale,
-          w: 360,
-          h: 800,
-        ),
-      );
-    });
-
-    testWidgets('customer login step2 field-error light 1.3 ar 360x800',
-        (tester) async {
-      const locale = _ar;
-      final t = bundleFor(locale);
-      await pumpCaptureLogin(
-        tester,
-        app: captureCustomer,
-        locale: locale,
-        textScale: 1.3,
-      );
-      await reachStep2Password(tester, locale);
-      // (The hint shares the error copy, so it appears twice: hint + error.)
-      await revealTapSettle(tester, find.text(t.loginActionContinue));
-      expect(find.text(t.validationEnterPassword), findsWidgets);
-      await captureAfter(
-        tester,
-        afterName(
-          app: 'customer',
-          screen: 'login_step2',
+          screen: 'login_one_screen',
           state: 'field_error',
           dark: false,
           textScale: 1.3,
@@ -145,7 +91,7 @@ void main() {
       );
     });
 
-    testWidgets('customer login step2 form-error light 1.0 en 360x800',
+    testWidgets('customer login one-screen form-error light 1.0 en 360x800',
         (tester) async {
       const locale = _en;
       final t = bundleFor(locale);
@@ -154,9 +100,7 @@ void main() {
               NetworkException('socket failed host lookup'),
             );
       await pumpCaptureLogin(tester, app: captureCustomer, repo: repo);
-      await reachStep2Password(tester, locale);
-      await tester.enterText(find.byType(TextField).first, 'secret123');
-      await tester.pump();
+      await fillLoginForm(tester, '501234567', 'secret123');
       final cta = find.text(t.loginActionContinue);
       await reveal(tester, cta);
       await tester.tap(cta);
@@ -168,7 +112,7 @@ void main() {
         tester,
         afterName(
           app: 'customer',
-          screen: 'login_step2',
+          screen: 'login_one_screen',
           state: 'form_error',
           dark: false,
           textScale: 1.0,
@@ -179,7 +123,7 @@ void main() {
       );
     });
 
-    testWidgets('customer login step2 busy light 1.0 en 360x800',
+    testWidgets('customer login one-screen loading light 1.0 en 360x800',
         (tester) async {
       const locale = _en;
       final t = bundleFor(locale);
@@ -187,9 +131,7 @@ void main() {
       final repo = FakeAuthRepository()
         ..loginHandler = (_, __, ___) => gate.future;
       await pumpCaptureLogin(tester, app: captureCustomer, repo: repo);
-      await reachStep2Password(tester, locale);
-      await tester.enterText(find.byType(TextField).first, 'secret123');
-      await tester.pump();
+      await fillLoginForm(tester, '501234567', 'secret123');
       final cta = find.text(t.loginActionContinue);
       await reveal(tester, cta);
       await tester.tap(cta);
@@ -198,8 +140,8 @@ void main() {
         tester,
         afterName(
           app: 'customer',
-          screen: 'login_step2',
-          state: 'busy',
+          screen: 'login_one_screen',
+          state: 'loading',
           dark: false,
           textScale: 1.0,
           locale: locale,
@@ -214,7 +156,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
     });
 
-    testWidgets('customer login step2 busy dark 1.0 en 360x800',
+    testWidgets('customer login one-screen loading dark 1.0 en 360x800',
         (tester) async {
       const locale = _en;
       final t = bundleFor(locale);
@@ -227,9 +169,7 @@ void main() {
         dark: true,
         repo: repo,
       );
-      await reachStep2Password(tester, locale);
-      await tester.enterText(find.byType(TextField).first, 'secret123');
-      await tester.pump();
+      await fillLoginForm(tester, '501234567', 'secret123');
       final cta = find.text(t.loginActionContinue);
       await reveal(tester, cta);
       await tester.tap(cta);
@@ -238,8 +178,8 @@ void main() {
         tester,
         afterName(
           app: 'customer',
-          screen: 'login_step2',
-          state: 'busy',
+          screen: 'login_one_screen',
+          state: 'loading',
           dark: true,
           textScale: 1.0,
           locale: locale,
@@ -557,7 +497,7 @@ void main() {
     });
   });
 
-  group('small 320x568 login step1 idle', () {
+  group('small 320x568 login one-screen idle', () {
     for (final entry in [
       (app: captureCustomer, dark: false, locale: _en, scale: 1.0),
       (app: captureStaff, dark: false, locale: _en, scale: 1.0),
@@ -568,7 +508,7 @@ void main() {
       (app: captureCustomer, dark: false, locale: _en, scale: 1.3),
     ]) {
       testWidgets(
-        '${entry.app.id} login step1 idle ${entry.dark ? 'dark' : 'light'} ${entry.scale} ${entry.locale.languageCode} 320x568',
+        '${entry.app.id} login one-screen idle ${entry.dark ? 'dark' : 'light'} ${entry.scale} ${entry.locale.languageCode} 320x568',
         (tester) async {
           await pumpCaptureLogin(
             tester,
@@ -583,7 +523,7 @@ void main() {
             tester,
             afterName(
               app: entry.app.id,
-              screen: 'login_step1',
+              screen: 'login_one_screen',
               state: 'idle',
               dark: entry.dark,
               textScale: entry.scale,
@@ -597,41 +537,10 @@ void main() {
     }
   });
 
-  group('small 320x568 login step2 idle', () {
+  group('tablet portrait 768x1024 login one-screen idle', () {
     for (final locale in [_en, _ar]) {
       testWidgets(
-        'customer login step2 idle light 1.0 ${locale.languageCode} 320x568',
-        (tester) async {
-          await pumpCaptureLogin(
-            tester,
-            app: captureCustomer,
-            locale: locale,
-            physical: smallSize,
-            dpr: smallDpr,
-          );
-          await reachStep2Password(tester, locale);
-          await captureAfter(
-            tester,
-            afterName(
-              app: 'customer',
-              screen: 'login_step2',
-              state: 'idle',
-              dark: false,
-              textScale: 1.0,
-              locale: locale,
-              w: 320,
-              h: 568,
-            ),
-          );
-        },
-      );
-    }
-  });
-
-  group('tablet portrait 768x1024 login step1 idle', () {
-    for (final locale in [_en, _ar]) {
-      testWidgets(
-        'customer login step1 idle light 1.0 ${locale.languageCode} 768x1024',
+        'customer login one-screen idle light 1.0 ${locale.languageCode} 768x1024',
         (tester) async {
           await pumpCaptureLogin(
             tester,
@@ -644,7 +553,7 @@ void main() {
             tester,
             afterName(
               app: 'customer',
-              screen: 'login_step1',
+              screen: 'login_one_screen',
               state: 'idle',
               dark: false,
               textScale: 1.0,

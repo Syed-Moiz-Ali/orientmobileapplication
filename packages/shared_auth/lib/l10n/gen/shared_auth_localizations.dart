@@ -377,6 +377,18 @@ abstract class SharedAuthLocalizations {
   /// **'Code sent to {target}.'**
   String loginCodeSent(String target);
 
+  /// One-screen password login headline (superseding one-screen rule)
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back'**
+  String get loginTitle;
+
+  /// One-screen password login supporting line
+  ///
+  /// In en, this message translates to:
+  /// **'Log in to continue.'**
+  String get loginSubtitle;
+
   /// Step 1 headline of the sign-in step flow
   ///
   /// In en, this message translates to:

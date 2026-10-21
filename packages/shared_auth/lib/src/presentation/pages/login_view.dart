@@ -12,21 +12,21 @@ import 'package:shared_auth/src/presentation/widgets/phone_country.dart';
 import 'package:shared_auth/src/presentation/widgets/security_badge.dart';
 import 'package:shared_core/shared_core.dart';
 
-/// View-level steps of the sign-in step flow. UI state only — every
+/// View-level steps of the sign-in flow. UI state only — every
 /// transition maps onto existing [LoginNotifier] calls; no logic change.
 ///
-/// * [identifier] ("Log in or sign up"): identifier field only. Continue
-///   advances with NO API call (local validation + setter sync only).
-/// * [password] ("Welcome back", password-first for all apps): password field
-///   + Continue → [LoginNotifier.loginWithPassword].
+/// * [password] (DEFAULT, all apps, ONE screen): identifier field + password
+///   field + Continue → [LoginNotifier.loginWithPassword]. The superseding
+///   one-screen rule keeps the frequent task on a single submit: no
+///   no-API advance step exists anymore.
 /// * [code] ("Confirm your number"): token-styled Pinput, masked destination,
-///   resend link + countdown, Back. Reached by sending a code; Verify (plus
-///   auto-verify on complete) → verify methods.
+///   resend link + countdown, Back. Reached by sending a code from the
+///   one-screen alt row; Verify (plus auto-verify on complete) → verify
+///   methods. Back returns to the one-screen form with values intact.
 /// * [registerName]/[registerContact]/[registerPassword] (R1/R2/R3,
-///   customer only): one field group per step; final CTA → single
-///   [LoginNotifier.register] with all fields.
+///   customer only, documented one-time exemption): one field group per step;
+///   final CTA → single [LoginNotifier.register] with all fields.
 enum _LoginStep {
-  identifier,
   password,
   code,
   registerName,
@@ -41,13 +41,14 @@ enum _LoginStep {
 /// Business logic lives in [LoginNotifier] and is never duplicated here - this
 /// widget only decides how the authentication task is presented.
 ///
-/// Composition (C16 step flow): one question per step in [AppStepScaffold]
-/// (thin progress, back arrow, headlineLarge question, supporting line,
-/// input, sticky full-width CTA), `AppOrDivider` + `AppAltAuthRow` on Step 1
-/// for alternative paths, muted trust line under the Step 1 CTAs. Password is
-/// the default second step for ALL apps; the code path is the secondary
-/// alternative. Registration is its own 3-step flow behind
-/// "New here? Create account".
+/// Composition (C16 one-screen for password): the single password screen in
+/// [AppStepScaffold] (thin full progress, no back arrow, headlineLarge
+/// headline + supporting line, identifier + password inputs, sticky
+/// full-width CTA), `AppOrDivider` + `AppAltAuthRow` under the fields for
+/// alternative paths, muted trust line at the bottom. Password is the
+/// DEFAULT single screen for ALL apps; the code path is the secondary
+/// alternative (confirm step, reached from the alt row). Registration is its
+/// own 3-step flow behind "New here? Create account" (one-time exemption).
 class LoginView extends ConsumerStatefulWidget {
   final VoidCallback onLoginSuccess;
   final VoidCallback? onForgotPassword;
@@ -80,7 +81,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
   final _passwordFocus = FocusNode();
   final _nameFocus = FocusNode();
 
-  _LoginStep _step = _LoginStep.identifier;
+  _LoginStep _step = _LoginStep.password;
 
   String? _identifierError;
   String? _passwordError;
@@ -251,27 +252,12 @@ class _LoginViewState extends ConsumerState<LoginView> {
   // -------------------------------------------------------------------------
   // Step transitions (view-level UI state only).
   //
-  // Step 1 / R1 / R2 Continue handlers perform LOCAL validation (+ setter
-  // sync) and advance with ZERO API calls. The notifier's send/verify/login/
-  // register methods are called only from the password step, the code step,
-  // and the final register step.
+  // R1 / R2 Continue handlers perform LOCAL validation (+ setter sync) and
+  // advance with ZERO API calls. The notifier's send/verify/login/register
+  // methods are called only from the one-screen password submit, the code
+  // step, and the final register step. The password screen itself has no
+  // advance step: Continue IS the login call.
   // -------------------------------------------------------------------------
-
-  /// Step 1 Continue: local identifier validation only, then setter sync and
-  /// advance to the password step. Fires ZERO API calls by construction.
-  void _continueFromIdentifier(LoginNotifier notifier) {
-    if (ref.read(loginProvider).isLoading) return;
-    if (_validateIdentifier()) {
-      _focusFor(AuthErrorField.identifier, includeName: false);
-      return;
-    }
-    _syncIdentifier(notifier);
-    _dismissSnack();
-    setState(() {
-      _step = _LoginStep.password;
-      _passwordError = null;
-    });
-  }
 
   /// R1 Continue: local name validation only, no API call.
   void _continueFromName() {
@@ -310,34 +296,32 @@ class _LoginViewState extends ConsumerState<LoginView> {
     });
   }
 
-  void _exitRegisterToIdentifier(LoginNotifier notifier) {
+  void _exitRegisterToPassword(LoginNotifier notifier) {
     if (ref.read(loginProvider).isRegistering) {
       notifier.toggleRegister();
     }
     _dismissSnack();
     setState(() {
-      _step = _LoginStep.identifier;
+      _step = _LoginStep.password;
       _identifierError = null;
       _passwordError = null;
       _nameError = null;
     });
   }
 
-  /// View-level back: step change only. Controllers + notifier values are
-  /// preserved — nothing is cleared or re-fetched.
+  /// View-level back: step change only (code + register steps). The
+  /// one-screen password form has no back target. Controllers + notifier
+  /// values are preserved — nothing is cleared or re-fetched.
   void _goBack(LoginNotifier notifier) {
     _dismissSnack();
     setState(() {
       switch (_step) {
-        case _LoginStep.identifier:
-          break;
         case _LoginStep.password:
-          _step = _LoginStep.identifier;
-          _passwordError = null;
+          break;
         case _LoginStep.code:
           _step = _LoginStep.password;
         case _LoginStep.registerName:
-          _exitRegisterToIdentifier(notifier);
+          _exitRegisterToPassword(notifier);
           return;
         case _LoginStep.registerContact:
           _step = _LoginStep.registerName;
@@ -415,13 +399,11 @@ class _LoginViewState extends ConsumerState<LoginView> {
       onRetry: () => _submitPassword(ref.read(loginProvider), notifier),
     );
     // A field-mapped failure belongs to the step that owns its field. The
-    // password step and R3 carry no identifier/name fields, so route there —
-    // view state only, controllers + notifier values preserved — instead of
-    // letting the copy reach nowhere. Everything else stays put.
+    // one-screen password form carries both fields, so its failures stay
+    // put; only R3 routes back (identifier → R2, name → R1) — view state
+    // only, controllers + notifier values preserved.
     if (display != null && mounted) {
       final _LoginStep? target = switch (display.field) {
-        AuthErrorField.identifier when _step == _LoginStep.password =>
-          _LoginStep.identifier,
         AuthErrorField.identifier when _step == _LoginStep.registerPassword =>
           _LoginStep.registerContact,
         AuthErrorField.name when _step == _LoginStep.registerPassword =>
@@ -502,27 +484,15 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
     final (title, subtitle, ctaLabel, busyLabel, step, total, onCta, onBack) =
         switch (_step) {
-      _LoginStep.identifier => (
-        t.loginStepIdentifierTitle,
-        t.loginStepIdentifierSubtitle,
-        t.loginActionContinue,
-        t.authActionSending,
-        1,
-        2,
-        () => _continueFromIdentifier(notifier),
-        null as VoidCallback?,
-      ),
       _LoginStep.password => (
-        t.loginStepPasswordTitle,
-        t.loginStepPasswordSubtitle(
-          identifierValue.isEmpty ? t.loginFieldIdentifier : identifierValue,
-        ),
+        t.loginTitle,
+        t.loginSubtitle,
         t.loginActionContinue,
         t.authActionSigningIn,
-        2,
-        2,
+        1,
+        1,
         () => _submitPassword(ref.read(loginProvider), notifier),
-        () => _goBack(notifier),
+        null as VoidCallback?,
       ),
       _LoginStep.code => (
         t.loginStepCodeTitle,
@@ -567,39 +537,33 @@ class _LoginViewState extends ConsumerState<LoginView> {
     };
 
     final content = switch (_step) {
-      _LoginStep.identifier => _IdentifierStepContent(
+      _LoginStep.password => _PasswordScreenContent(
         identifierCtrl: _identifierCtrl,
         countryCode: countryCode,
         identifierError: _identifierError,
+        passwordCtrl: _passwordCtrl,
+        passwordError: _passwordError,
         enabled: !isLoading,
         identifierFocus: _identifierFocus,
+        passwordFocus: _passwordFocus,
         allowRegistration: widget.allowRegistration && isRegistering == false,
+        onForgotPassword: widget.onForgotPassword,
         onIdentifierChanged: (v) {
           _dismissSnack();
           setState(() => _identifierError = null);
           _syncIdentifier(notifier);
         },
-        onCountryChanged: notifier.setCountryCode,
-        onSubmitted: () => _continueFromIdentifier(notifier),
-        onUseCode: () => _sendCode(notifier),
-        onCreateAccount: () => _enterRegister(notifier),
-        securityNotice: widget.securityNotice,
-      ),
-      _LoginStep.password => _PasswordStepContent(
-        identifierRecap: identifierValue,
-        passwordCtrl: _passwordCtrl,
-        passwordError: _passwordError,
-        enabled: !isLoading,
-        passwordFocus: _passwordFocus,
-        onForgotPassword: widget.onForgotPassword,
         onPasswordChanged: (v) {
           _dismissSnack();
           notifier.setPassword(v);
           setState(() => _passwordError = null);
         },
+        onCountryChanged: notifier.setCountryCode,
         onSubmitted: () =>
             _submitPassword(ref.read(loginProvider), notifier),
         onUseCode: () => _sendCode(notifier),
+        onCreateAccount: () => _enterRegister(notifier),
+        securityNotice: widget.securityNotice,
       ),
       _LoginStep.code => _CodeStepContent(
         isEmail: method == AuthMethod.email,
@@ -827,30 +791,47 @@ class _IdentifierRow extends StatelessWidget {
   }
 }
 
-/// Step 1 content: identifier field + sticky-CTA-adjacent alternative paths
-/// (code row, register row) + muted trust line.
-class _IdentifierStepContent extends StatelessWidget {
+/// One-screen password content (DEFAULT for all apps): identifier field +
+/// password field (toggle) + "Forgot password?" link + sticky-CTA-adjacent
+/// alternative paths (code row, register row) + muted trust line.
+///
+/// A SINGLE [AutofillGroup] wraps both fields (username + password hints
+/// together) so password managers fill the pair. Focus order is
+/// identifier → password (`next` moves focus); the password field's `done`
+/// action submits. Continue fires the EXISTING login call with the same
+/// args/timing as the old single screen.
+class _PasswordScreenContent extends StatelessWidget {
   final TextEditingController identifierCtrl;
   final String countryCode;
   final String? identifierError;
+  final TextEditingController passwordCtrl;
+  final String? passwordError;
   final bool enabled;
   final FocusNode? identifierFocus;
+  final FocusNode? passwordFocus;
   final bool allowRegistration;
+  final VoidCallback? onForgotPassword;
   final ValueChanged<String> onIdentifierChanged;
+  final ValueChanged<String> onPasswordChanged;
   final ValueChanged<String> onCountryChanged;
   final VoidCallback onSubmitted;
   final VoidCallback onUseCode;
   final VoidCallback onCreateAccount;
   final String? securityNotice;
 
-  const _IdentifierStepContent({
+  const _PasswordScreenContent({
     required this.identifierCtrl,
     required this.countryCode,
     required this.identifierError,
+    required this.passwordCtrl,
+    required this.passwordError,
     required this.enabled,
     required this.identifierFocus,
+    required this.passwordFocus,
     required this.allowRegistration,
+    required this.onForgotPassword,
     required this.onIdentifierChanged,
+    required this.onPasswordChanged,
     required this.onCountryChanged,
     required this.onSubmitted,
     required this.onUseCode,
@@ -873,62 +854,11 @@ class _IdentifierStepContent extends StatelessWidget {
             focusNode: identifierFocus,
             onChanged: onIdentifierChanged,
             onCountryChanged: onCountryChanged,
-            onSubmitted: (_) => onSubmitted(),
+            // Identifier keyboard action moves focus to the password field;
+            // only the password action submits.
+            onSubmitted: (_) => passwordFocus?.requestFocus(),
           ),
-          const SizedBox(height: AppDimensions.s20),
-          AppOrDivider(label: t.loginStepOr),
-          const SizedBox(height: AppDimensions.s12),
-          AppAltAuthRow(
-            label: t.loginStepUseCodeInstead,
-            icon: Icons.sms_outlined,
-            onTap: enabled ? onUseCode : null,
-          ),
-          if (allowRegistration) ...[
-            const SizedBox(height: AppDimensions.s8),
-            AppAltAuthRow(
-              label: t.loginStepCreateAccountRow,
-              icon: Icons.person_add_alt_rounded,
-              onTap: enabled ? onCreateAccount : null,
-            ),
-          ],
-          const SizedBox(height: AppDimensions.s20),
-          SecurityBadge(text: securityNotice),
-        ],
-      ),
-    );
-  }
-}
-
-class _PasswordStepContent extends StatelessWidget {
-  final String identifierRecap;
-  final TextEditingController passwordCtrl;
-  final String? passwordError;
-  final bool enabled;
-  final FocusNode? passwordFocus;
-  final VoidCallback? onForgotPassword;
-  final ValueChanged<String> onPasswordChanged;
-  final VoidCallback onSubmitted;
-  final VoidCallback onUseCode;
-
-  const _PasswordStepContent({
-    required this.identifierRecap,
-    required this.passwordCtrl,
-    required this.passwordError,
-    required this.enabled,
-    required this.passwordFocus,
-    required this.onForgotPassword,
-    required this.onPasswordChanged,
-    required this.onSubmitted,
-    required this.onUseCode,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final t = SharedAuthL10n.of(context);
-    return AutofillGroup(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+          const SizedBox(height: AppDimensions.s16),
           AppInputField(
             label: t.loginFieldPassword,
             hint: t.loginFieldPasswordHint,
@@ -964,11 +894,23 @@ class _PasswordStepContent extends StatelessWidget {
             ),
           ],
           const SizedBox(height: AppDimensions.s12),
+          AppOrDivider(label: t.loginStepOr),
+          const SizedBox(height: AppDimensions.s12),
           AppAltAuthRow(
             label: t.loginStepUseCodeInstead,
             icon: Icons.sms_outlined,
             onTap: enabled ? onUseCode : null,
           ),
+          if (allowRegistration) ...[
+            const SizedBox(height: AppDimensions.s8),
+            AppAltAuthRow(
+              label: t.loginStepCreateAccountRow,
+              icon: Icons.person_add_alt_rounded,
+              onTap: enabled ? onCreateAccount : null,
+            ),
+          ],
+          const SizedBox(height: AppDimensions.s20),
+          SecurityBadge(text: securityNotice),
         ],
       ),
     );

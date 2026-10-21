@@ -161,6 +161,12 @@ class SharedAuthLocalizationsEn extends SharedAuthLocalizations {
   }
 
   @override
+  String get loginTitle => 'Welcome back';
+
+  @override
+  String get loginSubtitle => 'Log in to continue.';
+
+  @override
   String get loginStepIdentifierTitle => 'Log in or sign up';
 
   @override

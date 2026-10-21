@@ -162,6 +162,12 @@ class SharedAuthLocalizationsAr extends SharedAuthLocalizations {
   }
 
   @override
+  String get loginTitle => 'مرحباً بعودتك';
+
+  @override
+  String get loginSubtitle => 'سجّل الدخول للمتابعة.';
+
+  @override
   String get loginStepIdentifierTitle => 'سجّل الدخول أو أنشئ حساباً';
 
   @override

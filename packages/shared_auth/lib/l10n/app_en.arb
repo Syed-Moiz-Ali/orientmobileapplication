@@ -100,6 +100,10 @@
     "description": "Confirmation that a code was sent",
     "placeholders": { "target": { "type": "String" } }
   },
+  "loginTitle": "Welcome back",
+  "@loginTitle": { "description": "One-screen password login headline (superseding one-screen rule)" },
+  "loginSubtitle": "Log in to continue.",
+  "@loginSubtitle": { "description": "One-screen password login supporting line" },
   "loginStepIdentifierTitle": "Log in or sign up",
   "@loginStepIdentifierTitle": { "description": "Step 1 headline of the sign-in step flow" },
   "loginStepIdentifierSubtitle": "Enter your email or mobile number to continue.",

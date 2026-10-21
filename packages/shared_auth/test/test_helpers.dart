@@ -250,23 +250,23 @@ Future<void> tapAndSettleStep(WidgetTester tester, Finder finder) async {
   await tester.pump(const Duration(milliseconds: 500));
 }
 
-/// Enters [identifier] on Step 1 ("Log in or sign up") and taps Continue.
-/// Ends on the password step ("Welcome back"). Fires ZERO API calls — the
-/// transition is local validation + setter sync only.
-Future<void> reachPasswordStep(
+/// Enters [identifier] + [password] on the one-screen password form (field 0
+/// is the identifier, field 1 the password). Fires ZERO API calls by itself
+/// — the submit happens when the caller taps Continue.
+Future<void> fillLoginForm(
   WidgetTester tester,
-  String identifier, {
-  SharedAuthLocalizations? l10n,
-}) async {
-  final t = l10n ?? enAuthL10n();
-  await tester.enterText(find.byType(TextField).first, identifier);
+  String identifier,
+  String password,
+) async {
+  await tester.enterText(find.byType(TextField).at(0), identifier);
   await tester.pump();
-  await tapAndSettleStep(tester, find.text(t.loginActionContinue));
+  await tester.enterText(find.byType(TextField).at(1), password);
+  await tester.pump();
 }
 
-/// Enters [identifier] on Step 1 and taps the "Send me a code instead" alt
-/// row. Ends on the code-confirm step (default send handlers succeed, 30s
-/// cooldown running).
+/// Enters [identifier] on the one-screen form and taps the "Send me a code
+/// instead" alt row. Ends on the code-confirm step (default send handlers
+/// succeed, 30s cooldown running).
 Future<void> reachCodeConfirm(
   WidgetTester tester,
   String identifier, {

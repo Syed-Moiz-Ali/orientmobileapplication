@@ -123,6 +123,29 @@ once the legacy widget hits zero usages.
 | `SecurityBadge` | `AuthShell` footer (all auth screens) | none | KEPT: app-aware legal composite, token-only |
 | `AuthShell` / `AuthSurface` internals | login, forgot, supervisor | none (layout authority) | KEPT per plan (already C9) |
 
+## Auth one-screen collapse (phase-2 one-screen, 2026-10-20 superseding rule)
+
+Password + supervisor collapsed from step flows to the single-screen pattern
+(identifier + password + Continue → existing `login()`; code/register/forgot
+steps unchanged). Local scaffolding deleted at zero usages:
+
+| Removed (auth-local) | Was used by | Replacement | Notes |
+|---|---|---|---|
+| `_LoginStep.identifier` step | login (step-1 advance) | one-screen `_LoginStep.password` (1 of 1, no back) | The no-API advance step is gone by design; Continue IS the login call |
+| `_IdentifierStepContent` | login step 1 | `_PasswordScreenContent` (both fields + forgot + alt rows + trust line in one `AutofillGroup`) | Single username+password group, focus identifier → password, `done` submits |
+| `_PasswordStepContent` (recap variant) | login step 2 | same `_PasswordScreenContent` | Identifier recap deleted (both fields visible, nothing to recap) |
+| `_continueFromIdentifier` (+ step-1 advance path) | login | `_submitPassword` directly on Continue | Same validation + same notifier calls, one tap |
+| supervisor `_step` state + `_continueFromIdentifier` + `_backToIdentifier` | supervisor 2-step flow | single-screen build (no step state, `onBack: null`) | Same `_login` byte-for-byte; forgot link + banner + retry kept |
+| test helpers `reachPasswordStep`, `continueToPasswordStep`, `submitPasswordStep`, `settleStepTransition` | shared/staff tests | `fillLoginForm` / `fillSupervisorForm` + `submitSupervisorForm` (same screens, no nav) | `reachCodeConfirm` / `reachRegisterR3` kept verbatim (entry screen only changed) |
+
+KEPT with written reason: Pinput (`AuthOtpField`, third-party concession),
+`AuthCountryCodeButton` (domain dial-code picker), `AuthPasswordStrength`
+(auth-scoped scoring UI), `AuthShell` (still the exported layout authority +
+still pinned by the supervisor negative assertion `findsNothing(AuthShell)`),
+`AuthStepBrandPanel` + `LoginResendRow`/`ForgotResendRow` (untouched steps),
+`AppStepScaffold` (extended additively before; one-screen uses step 1 of 1,
+code step 2 of 2, register 1–3 of 3 — no shared_core change).
+
 ## Rename paths to spec names (polish phase, one codemod each at zero usages)
 
 | Interim (built) | Spec name | Blocked by |

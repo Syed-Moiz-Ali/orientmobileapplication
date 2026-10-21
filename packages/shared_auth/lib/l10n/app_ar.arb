@@ -48,6 +48,8 @@
   "loginNewCustomer": "عميل جديد؟ أنشئ حساباً",
   "loginAlreadyHaveAccount": "لديك حساب بالفعل؟ سجّل الدخول",
   "loginCodeSent": "أُرسل الرمز إلى {target}.",
+  "loginTitle": "مرحباً بعودتك",
+  "loginSubtitle": "سجّل الدخول للمتابعة.",
   "loginStepIdentifierTitle": "سجّل الدخول أو أنشئ حساباً",
   "loginStepIdentifierSubtitle": "أدخل بريدك الإلكتروني أو رقم جوالك للمتابعة.",
   "loginStepPasswordTitle": "مرحباً بعودتك",

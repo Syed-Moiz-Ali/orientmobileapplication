@@ -1,10 +1,11 @@
 // Phase-2b characterization: field-vs-form error routing on login (migrated
-// to the step flow).
+// to the one-screen form).
 //
 // Field-mapped backend failures render INLINE on their field (no snackbar);
 // form-level failures (offline / 500) render as a snackbar WITH a retry
-// action. The step flow preserves this split: identifier failures surface on
-// the password step's recap path, code failures on the confirm step.
+// action. The one-screen form preserves this split: identifier/password
+// failures stay inline on the single screen, code failures on the confirm
+// step.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_auth/shared_auth.dart';
@@ -12,15 +13,12 @@ import 'package:shared_core/shared_core.dart';
 
 import 'test_helpers.dart';
 
-/// Fills a valid identifier on Step 1, advances, fills a valid password on
-/// Step 2, then submits.
+/// Fills a valid identifier + password on the one-screen form, then submits.
 Future<void> submitValidCredentials(
   WidgetTester tester,
   SharedAuthLocalizations t,
 ) async {
-  await reachPasswordStep(tester, 'user@example.com', l10n: t);
-  await tester.enterText(find.byType(TextField).first, 'secret123');
-  await tester.pump();
+  await fillLoginForm(tester, 'user@example.com', 'secret123');
   await tester.tap(find.text(t.loginActionContinue));
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 300));
@@ -69,7 +67,7 @@ void main() {
             const Failure(ValidationException('that otp is invalid'));
       final container = await pumpLoginView(tester, repo: repo);
 
-      // Step 1 alt row sends the code (default success handler).
+      // One-screen alt row sends the code (default success handler).
       await reachCodeConfirm(tester, '501234567');
       expect(find.text(t.loginActionVerifyCode), findsOneWidget);
 

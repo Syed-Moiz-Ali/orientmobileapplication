@@ -1,10 +1,11 @@
-// Phase-2c verification (migrated to the step flow): the C16 step
+// Phase-2c verification (migrated to the one-screen rule): the C16
 // recomposition uses App* widgets everywhere, the legacy auth controls are
 // gone from the tree (segmented switcher + cooldown ring removed by design),
 // contrast pairs measure AA, and 320px + 1.3x text scale stay overflow-free.
 //
 // Behavior assertions live in the 2b characterization files; this file pins
-// the step-flow structure itself (steps, tokens, states, small screens).
+// the one-screen structure itself (single password screen, code/register
+// steps kept, tokens, states, small screens).
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -126,45 +127,45 @@ Future<void> tapSettleVisible(WidgetTester tester, Finder finder) async {
 void main() {
   setUpAll(loadAuthTestFonts);
 
-  group('App* composition (login steps)', () {
-    testWidgets('step 1 renders App* step controls only', (tester) async {
+  group('App* composition (login one-screen)', () {
+    testWidgets('one screen renders App* controls only', (tester) async {
       final t = enAuthL10n();
       await pumpLoginView(tester, onForgotPassword: () {});
 
-      // One step scaffold, step-1 headline, no segmented switcher anywhere.
+      // One scaffold, one-screen headline, no segmented switcher anywhere.
       expect(find.byType(AppStepScaffold), findsOneWidget);
-      expect(find.text(t.loginStepIdentifierTitle), findsOneWidget);
+      expect(find.text(t.loginTitle), findsOneWidget);
+      expect(find.text(t.loginSubtitle), findsOneWidget);
       final segmented = find.byWidgetPredicate(
         (w) => w is AppSegmentedControl<dynamic>,
       );
       expect(segmented, findsNothing);
-      // Identifier-only: a single shared input on step 1.
-      expect(find.byType(AppInputField), findsOneWidget);
+      // Identifier + password share the single screen.
+      expect(find.byType(AppInputField), findsNWidgets(2));
       expect(find.byType(AppPillButton), findsOneWidget);
       expect(
         find.widgetWithText(AppPillButton, t.loginActionContinue),
         findsOneWidget,
       );
-      // Alternative paths are outlined rows behind an "or" divider.
-      // (Step 1 carries no text-button links; the forgot link lives on the
-      // password step and resend on the confirm step.)
+      // The forgot link lives on the single screen (an AppTextButton);
+      // alternative paths are outlined rows behind an "or" divider.
+      expect(find.text(t.loginActionForgotPassword), findsOneWidget);
+      expect(find.byType(AppTextButton), findsWidgets);
       expect(find.byType(AppOrDivider), findsOneWidget);
       expect(find.byType(AppAltAuthRow), findsWidgets);
       expect(find.text(t.loginStepUseCodeInstead), findsOneWidget);
-      expect(find.byType(AppTextButton), findsNothing);
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('password step keeps forgot link + password field',
+    testWidgets('one screen keeps both fields + forgot link + code row',
         (tester) async {
       final t = enAuthL10n();
       await pumpLoginView(tester, onForgotPassword: () {});
-      await reachPasswordStep(tester, 'user@example.com');
 
-      expect(find.text(t.loginStepPasswordTitle), findsOneWidget);
-      expect(find.byType(AppInputField), findsOneWidget);
+      expect(find.text(t.loginTitle), findsOneWidget);
+      expect(find.text(t.loginFieldIdentifier), findsOneWidget);
+      expect(find.text(t.loginFieldPassword), findsOneWidget);
       expect(find.text(t.loginActionForgotPassword), findsOneWidget);
-      expect(find.byType(AppTextButton), findsWidgets);
       expect(find.text(t.loginStepUseCodeInstead), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
@@ -391,10 +392,12 @@ void main() {
   });
 
   group('step keys resolve in en + ar with no blanks', () {
-    test('all eighteen step keys resolve with distinct ar copy', () {
+    test('all twenty step keys resolve with distinct ar copy', () {
       final en = lookupSharedAuthLocalizations(const Locale('en'));
       final ar = lookupSharedAuthLocalizations(const Locale('ar'));
       final pairs = <String Function(SharedAuthLocalizations)>[
+        (t) => t.loginTitle,
+        (t) => t.loginSubtitle,
         (t) => t.loginStepIdentifierTitle,
         (t) => t.loginStepIdentifierSubtitle,
         (t) => t.loginStepPasswordTitle,
@@ -423,14 +426,16 @@ void main() {
   });
 
   group('small screens (320px @ 1.3x)', () {
-    testWidgets('step 1 + field errors stay clean', (tester) async {
+    testWidgets('one screen + field errors stay clean', (tester) async {
       final t = enAuthL10n();
       await pumpLoginSmall(tester);
 
-      expect(find.text(t.loginStepIdentifierTitle), findsOneWidget);
+      expect(find.text(t.loginTitle), findsOneWidget);
       await tester.tap(find.text(t.loginActionContinue));
       await tester.pump();
+      // One tap validates both one-screen fields together.
       expect(find.text(t.validationEnterIdentifier), findsOneWidget);
+      expect(find.text(t.validationEnterPassword), findsWidgets);
       expect(tester.takeException(), isNull);
     });
 

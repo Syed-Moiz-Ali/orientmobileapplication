@@ -1,9 +1,9 @@
-// Phase-2b characterization: loading state on login (migrated to the step flow).
+// Phase-2b characterization: loading state on login (migrated to the
+// one-screen form).
 //
-// While a login future is pending the password-step CTA swaps to its busy
+// While a login future is pending the single-screen CTA swaps to its busy
 // label, shows a spinner, is disabled, and a second tap cannot submit twice.
-// Step 1 Continue never loads (it fires zero API calls); loading lives on
-// the password step's submit.
+// Loading lives on the one-screen submit (no separate advance step exists).
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -30,13 +30,13 @@ void main() {
         onLoginSuccess: () => successes++,
       );
 
-      await reachPasswordStep(tester, 'user@example.com');
-      await tester.enterText(find.byType(TextField).first, 'secret123');
-      await tester.pump();
+      await fillLoginForm(tester, 'user@example.com', 'secret123');
       await tester.tap(find.text(t.loginActionContinue));
       await tester.pump();
 
-      // Busy label swap + spinner, rest label retired from the layout.
+      // Busy label swap + spinner, rest label retired from the layout; the
+      // one-screen headline stands still behind the busy CTA.
+      expect(find.text(t.loginTitle), findsOneWidget);
       expect(find.text(t.authActionSigningIn), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       // Disabled while loading: the pill reports busy and ignores taps
@@ -63,9 +63,7 @@ void main() {
         ..loginHandler = (_, __, ___) => gate.future;
       await pumpLoginView(tester, repo: repo);
 
-      await reachPasswordStep(tester, 'user@example.com');
-      await tester.enterText(find.byType(TextField).first, 'secret123');
-      await tester.pump();
+      await fillLoginForm(tester, 'user@example.com', 'secret123');
       await tester.tap(find.text(t.loginActionContinue));
       await tester.pump();
       // Second tap lands on the busy (disabled) CTA.

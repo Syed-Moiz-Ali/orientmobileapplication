@@ -1,11 +1,11 @@
-// Phase-2d AFTER captures: login step idle matrix (capture-only, no app code).
+// Phase-2d AFTER captures: login one-screen idle matrix (capture-only).
 //
-// Covers every login step idle x (customer light+dark, staff/owner/CRM
+// Covers the one-screen password idle x (customer light+dark, staff/owner/CRM
 // light) x (LTR en, RTL ar) x (text scale 1.0, 1.3) on phone 360x800:
-// step 1 ("Log in or sign up"), step 2 password ("Welcome back", reached via
-// Continue with ZERO API calls), step 2 code-confirm ("Confirm your number"
-// post-send with the in-flow sent banner + 30s resend link), register R1/R2/R3
-// (customer only — the only router with allowRegistration: true).
+// one-screen ("Welcome back", identifier + password + Continue IS the login
+// call), code-confirm ("Confirm your number" post-send with the in-flow sent
+// banner + 30s resend link), register R1/R2/R3 (customer only — the only
+// router with allowRegistration: true).
 //
 // Tagged baseline: excluded from `melos run test` (see melos.yaml).
 // Generate: flutter test --tags baseline --update-goldens
@@ -25,12 +25,12 @@ const _ar = Locale('ar');
 void main() {
   setUpAll(loadCaptureFonts);
 
-  group('login step1 idle 360x800', () {
+  group('login one-screen idle 360x800', () {
     for (final app in [captureCustomer, captureStaff, captureOwner, captureCrm]) {
       for (final locale in [_en, _ar]) {
         for (final scale in [1.0, 1.3]) {
           testWidgets(
-            '${app.id} login step1 idle light $scale ${locale.languageCode} 360x800',
+            '${app.id} login one-screen idle light $scale ${locale.languageCode} 360x800',
             (tester) async {
               await pumpCaptureLogin(
                 tester,
@@ -42,7 +42,7 @@ void main() {
                 tester,
                 afterName(
                   app: app.id,
-                  screen: 'login_step1',
+                  screen: 'login_one_screen',
                   state: 'idle',
                   dark: false,
                   textScale: scale,
@@ -59,7 +59,7 @@ void main() {
     for (final locale in [_en, _ar]) {
       for (final scale in [1.0, 1.3]) {
         testWidgets(
-          'customer login step1 idle dark $scale ${locale.languageCode} 360x800',
+          'customer login one-screen idle dark $scale ${locale.languageCode} 360x800',
           (tester) async {
             await pumpCaptureLogin(
               tester,
@@ -72,71 +72,7 @@ void main() {
               tester,
               afterName(
                 app: 'customer',
-                screen: 'login_step1',
-                state: 'idle',
-                dark: true,
-                textScale: scale,
-                locale: locale,
-                w: 360,
-                h: 800,
-              ),
-            );
-          },
-        );
-      }
-    }
-  });
-
-  group('login step2 password idle 360x800', () {
-    for (final app in [captureCustomer, captureStaff, captureOwner, captureCrm]) {
-      for (final locale in [_en, _ar]) {
-        for (final scale in [1.0, 1.3]) {
-          testWidgets(
-            '${app.id} login step2 idle light $scale ${locale.languageCode} 360x800',
-            (tester) async {
-              await pumpCaptureLogin(
-                tester,
-                app: app,
-                locale: locale,
-                textScale: scale,
-              );
-              await reachStep2Password(tester, locale);
-              await captureAfter(
-                tester,
-                afterName(
-                  app: app.id,
-                  screen: 'login_step2',
-                  state: 'idle',
-                  dark: false,
-                  textScale: scale,
-                  locale: locale,
-                  w: 360,
-                  h: 800,
-                ),
-              );
-            },
-          );
-        }
-      }
-    }
-    for (final locale in [_en, _ar]) {
-      for (final scale in [1.0, 1.3]) {
-        testWidgets(
-          'customer login step2 idle dark $scale ${locale.languageCode} 360x800',
-          (tester) async {
-            await pumpCaptureLogin(
-              tester,
-              app: captureCustomer,
-              dark: true,
-              locale: locale,
-              textScale: scale,
-            );
-            await reachStep2Password(tester, locale);
-            await captureAfter(
-              tester,
-              afterName(
-                app: 'customer',
-                screen: 'login_step2',
+                screen: 'login_one_screen',
                 state: 'idle',
                 dark: true,
                 textScale: scale,

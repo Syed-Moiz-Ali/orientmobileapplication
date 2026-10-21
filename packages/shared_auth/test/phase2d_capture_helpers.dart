@@ -17,18 +17,19 @@
 // - 2b fakes (`FakeAuthRepository` / `FakeTokenStorage`) drive deterministic
 //   states (offline/500 failures, otpSent, cooldown).
 //
-// Step-flow notes (phase-2 recomposition, no switcher anymore):
-// - Step 1 ("Log in or sign up") Continue fires ZERO API calls (local
-//   validation + setter sync); the password step is the default step 2 for
-//   ALL apps; the code-confirm step is the secondary alternative behind the
-//   "Send me a code instead" row; register is its own R1/R2/R3 flow behind
-//   "New here? Create account" (customer only).
+// One-screen notes (phase-2 one-screen, no steps for password):
+// - The password screen is ONE screen (loginTitle/loginSubtitle, identifier
+//   + password + Continue IS the login call); the code-confirm step is the
+//   secondary alternative behind the "Send me a code instead" row; register
+//   is its own R1/R2/R3 flow behind "New here? Create account"
+//   (customer only).
 // - The resend control is a plain link (`loginActionResendCode`) that becomes
 //   a disabled readable countdown (`loginActionResendIn`) while cooling down
 //   (no ring, no spinner) — finders assert the link + countdown text.
-// - Step headlines (`loginStepIdentifierTitle`, `loginStepPasswordTitle`,
-//   `loginStepCodeTitle`, `loginStepRegister*Title`) are the stable finders;
-//   the step dots + back arrow come from `AppStepScaffold`.
+// - One-screen headline (`loginTitle`) + code/register headlines
+//   (`loginStepCodeTitle`, `loginStepRegister*Title`) are the stable finders;
+//   the step dots + back arrow come from `AppStepScaffold` (1 of 1 on the
+//   one-screen, no back arrow).
 //
 // Per-app hook strings are the English fallbacks from each app's router (what
 // the shared views receive when the app localizations are absent); customer
@@ -364,22 +365,10 @@ Future<void> captureAfter(WidgetTester tester, String fileName) async {
   expect(tester.takeException(), isNull);
 }
 
-/// Step 1 -> password step ("Welcome back"): enters [identifier] and taps the
-/// step-1 Continue. Fires ZERO API calls (local validation + setter sync).
-Future<void> reachStep2Password(
-  WidgetTester tester,
-  Locale locale, {
-  String identifier = '501234567',
-}) async {
-  final t = bundleFor(locale);
-  await tester.enterText(find.byType(TextField).first, identifier);
-  await tester.pump();
-  await revealTapSettle(tester, find.text(t.loginActionContinue));
-}
-
-/// Step 1 -> code-confirm step ("Confirm your number"): enters [identifier]
-/// and taps the "Send me a code instead" alt row. Ends on the code step with
-/// the in-flow sent banner up and the resend cooldown at 30s.
+/// One-screen -> code-confirm step ("Confirm your number"): enters
+/// [identifier] on the single password screen and taps the "Send me a code
+/// instead" alt row. Ends on the code step with the in-flow sent banner up
+/// and the resend cooldown at 30s.
 ///
 /// The entrance needs ~800ms of fake time before pixels are fully settled
 /// (finder assertions pass at +300ms, but the golden would catch the
@@ -401,7 +390,7 @@ Future<void> reachCodeStep(
   await tester.pump(const Duration(milliseconds: 500));
 }
 
-/// Opens the register flow from step 1 (ends on R1 "What's your name?").
+/// Opens the register flow from the one-screen (ends on R1 "What's your name?").
 /// Customer builds only.
 Future<void> openCaptureRegister(WidgetTester tester, Locale locale) async {
   final t = bundleFor(locale);

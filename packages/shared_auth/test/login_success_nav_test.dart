@@ -1,12 +1,11 @@
 // Phase-2b characterization: success/failure navigation on login (migrated
-// to the step flow).
+// to the one-screen form).
 //
 // An authenticated session fires onLoginSuccess EXACTLY once per successful
-// submit — never on failures, never twice across extra frames. Step mapping:
-// Step 1 Continue advances with zero API calls; the password step submits via
-// loginWithPassword; the code-confirm step (reached through the
-// "Send me a code instead" alt row) verifies.
-import 'package:flutter/material.dart';
+// submit — never on failures, never twice across extra frames. One-screen
+// mapping: the single Continue submits both fields via loginWithPassword;
+// the code-confirm step (reached through the "Send me a code instead" alt
+// row) verifies.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_core/shared_core.dart';
@@ -28,11 +27,9 @@ void main() {
         onLoginSuccess: () => successes++,
       );
 
-      await reachPasswordStep(tester, 'user@example.com');
-      // Step 1 advanced with no API call.
+      await fillLoginForm(tester, 'user@example.com', 'secret123');
+      // Filling the form fires no API call by itself.
       expect(repo.loginCalls, 0);
-      await tester.enterText(find.byType(TextField).first, 'secret123');
-      await tester.pump();
       await tester.tap(find.text(t.loginActionContinue));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -40,6 +37,7 @@ void main() {
 
       expect(repo.loginCalls, 1);
       expect(successes, 1);
+      expect(find.text(t.loginTitle), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
@@ -81,13 +79,12 @@ void main() {
         onLoginSuccess: () => successes++,
       );
 
-      await reachPasswordStep(tester, 'user@example.com');
-      await tester.enterText(find.byType(TextField).first, 'secret123');
-      await tester.pump();
+      await fillLoginForm(tester, 'user@example.com', 'secret123');
       await tester.tap(find.text(t.loginActionContinue));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
+      expect(repo.loginCalls, 1);
       expect(successes, 0);
       expect(tester.takeException(), isNull);
     });

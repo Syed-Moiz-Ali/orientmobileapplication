@@ -11,7 +11,7 @@ import 'package:shared_core/shared_core.dart';
 
 import 'test_helpers.dart';
 
-/// Sends a code to a valid phone number via the Step 1 alt row.
+/// Sends a code to a valid phone number via the one-screen alt row.
 /// Ends on the code-confirm step (default send handlers succeed).
 Future<void> reachVerifyStep(WidgetTester tester) async {
   await reachCodeConfirm(tester, '501234567');
