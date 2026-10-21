@@ -320,6 +320,12 @@ abstract class StaffLocalizations {
   /// **'Assigned work orders'**
   String get advisorAssignedWorkOrders;
 
+  /// Neutral section title: the work-orders feed is status-agnostic (U8), so Assigned would over-promise
+  ///
+  /// In en, this message translates to:
+  /// **'Work orders'**
+  String get advisorWorkOrdersTitle;
+
   /// Section action opening the full jobs list
   ///
   /// In en, this message translates to:

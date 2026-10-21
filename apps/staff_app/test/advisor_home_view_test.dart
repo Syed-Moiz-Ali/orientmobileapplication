@@ -355,7 +355,7 @@ void main() {
     // medium test viewport), no legacy divider rows.
     expect(find.byType(AppStatusChip), findsNWidgets(4));
     // Count inline on the header line (never on its own line).
-    expect(find.text('Assigned work orders (3)'), findsOneWidget);
+    expect(find.text('Work orders (3)'), findsOneWidget);
     // U7: all 3 fit the cap of 6, so no See-all — the hero View jobs is
     // the one path into Jobs.
     expect(find.text('See all'), findsNothing);
@@ -400,7 +400,7 @@ void main() {
     await _pumpHome(tester, jobs: const [...extra, _done, _urgent, _active]);
 
     // 7 > cap of 6: the count stays honest and See-all appears once.
-    expect(find.text('Assigned work orders (7)'), findsOneWidget);
+    expect(find.text('Work orders (7)'), findsOneWidget);
     expect(find.text('See all'), findsOneWidget);
   });
 

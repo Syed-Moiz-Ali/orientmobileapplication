@@ -1198,8 +1198,10 @@ class _AssignedCards extends ConsumerWidget {
     // "View jobs" CTA is the one persistent path into the Jobs tab.
     final showSeeAll = totalCount > jobs.length;
     return AppSection(
-      // Count inline on the header line (never on its own line).
-      title: '${t.advisorAssignedWorkOrders} ($totalCount)',
+      // Count inline on the header line (never on its own line). Neutral
+      // title (U8): the feed is status-agnostic, so "Assigned" would promise
+      // filtering the backend does not do (see LOGIC_FOLLOWUPS.md).
+      title: '${t.advisorWorkOrdersTitle} ($totalCount)',
       seeAllLabel: showSeeAll ? t.advisorSeeAll : null,
       onSeeAll: showSeeAll
           ? () {

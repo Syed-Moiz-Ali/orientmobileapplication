@@ -82,6 +82,8 @@
   "@advisorActionAnalytics": { "description": "Legacy section action (unused on home; retained for parity)" },
   "advisorAssignedWorkOrders": "Assigned work orders",
   "@advisorAssignedWorkOrders": { "description": "Section title for recent job cards" },
+  "advisorWorkOrdersTitle": "Work orders",
+  "@advisorWorkOrdersTitle": { "description": "Neutral section title: the work-orders feed is status-agnostic (U8), so Assigned would over-promise" },
   "advisorViewAll": "View All ({count})",
   "@advisorViewAll": {
     "description": "Section action opening the full jobs list",

@@ -129,6 +129,9 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String get advisorAssignedWorkOrders => 'Assigned work orders';
 
   @override
+  String get advisorWorkOrdersTitle => 'Work orders';
+
+  @override
   String advisorViewAll(int count) {
     return 'View All ($count)';
   }

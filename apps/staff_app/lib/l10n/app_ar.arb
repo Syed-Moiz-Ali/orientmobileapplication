@@ -40,6 +40,8 @@
   "advisorActionAnalytics": "التحليلات",
   "advisorAssignedWorkOrders": "أوامر العمل المسندة",
   "advisorViewAll": "عرض الكل ({count})",
+  "advisorWorkOrdersTitle": "أوامر العمل",
+  "@advisorWorkOrdersTitle": { "description": "Neutral section title (U8)" },
   "advisorNoActiveJobs": "لا توجد بطاقات عمل نشطة مسندة",
   "advisorMetricTotalOrders": "إجمالي الأوامر",
   "advisorMetricInProgress": "قيد التنفيذ",
