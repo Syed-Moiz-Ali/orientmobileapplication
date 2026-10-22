@@ -112,6 +112,15 @@
   },
   "advisorJobsTitle": "Workshop Job Cards",
   "@advisorJobsTitle": { "description": "Jobs tab title" },
+  "advisorJobsCountNone": "No job cards",
+  "@advisorJobsCountNone": { "description": "Jobs header count subtitle: zero" },
+  "advisorJobsCountOne": "1 job card",
+  "@advisorJobsCountOne": { "description": "Jobs header count subtitle: one" },
+  "advisorJobsCountMany": "{count} job cards",
+  "@advisorJobsCountMany": {
+    "description": "Jobs header count subtitle: many",
+    "placeholders": { "count": { "type": "int" } }
+  },
   "advisorJobsSearchHint": "Search by registration, customer, or ID…",
   "@advisorJobsSearchHint": { "description": "Jobs search field hint" },
   "advisorFilterAll": "All",

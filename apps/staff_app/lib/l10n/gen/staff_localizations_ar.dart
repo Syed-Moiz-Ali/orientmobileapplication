@@ -170,6 +170,17 @@ class StaffLocalizationsAr extends StaffLocalizations {
   String get advisorJobsTitle => 'بطاقات عمل الورشة';
 
   @override
+  String get advisorJobsCountNone => 'لا توجد بطاقات عمل';
+
+  @override
+  String get advisorJobsCountOne => 'بطاقة عمل واحدة';
+
+  @override
+  String advisorJobsCountMany(int count) {
+    return '$count بطاقة عمل';
+  }
+
+  @override
   String get advisorJobsSearchHint => 'ابحث باللوحة أو العميل أو المعرّف…';
 
   @override

@@ -360,3 +360,38 @@ provider/sync/predicate/route/handler/Key change (predicates `contextFor` /
 |---|---|---|---|
 | `vhCountMany(0/1)` → `vhCount(n)` ICU plural (`=0{0 …}` / `=1{1 …}` / `other{{count} …}`, en+ar, no renames) | vehicles header subtitle (all + filtered, ≤5 and >5) | `vhCount` | Fixes "1 registered vehicles"; zero renders as `0` (U11); `vhCountNone` kept for truly empty; `gen-l10n` from `apps/customer_app` |
 | Year shown twice (title + specs) → ONCE | record card (`customer_vehicle_record.dart` display only) | title keeps `Make Model · Year`; specs line shows colour + mileage (`White · 45000 km`) | `specs()` untouched; display filters the year token; VIN untouched; search still matches year via `specs()` |
+
+## Advisor jobs register (branch `ui/list-staff-jobs`, GROUP-B screens 1+2)
+
+Jobs list (`advisor_jobs_view.dart` + `advisor_job_card_row.dart` +
+`advisor_job_card_sheet.dart`) recomposed presentation-only onto App* pattern
+widgets; providers/routes/sync logic, `advisorStatusFilterKey` taxonomy,
+search/filter/sort predicates, selection state, sheet contracts and all copy
+semantics untouched (one new count key only, see below). Screen 2
+(inspection / repair-order lists) has no separate surface — the jobs register
+IS the unified surface (see `briefs/advisor-inspection-repairorder-lists.md`
+for the router/grep evidence) — so this single mapping governs both screens.
+No new routes. Filter rail + sort stay inline (top-3 tap budgets forbid a
+filter sheet; see brief deviations 1–2); wide keeps the `AppTable`
+master-detail matrix (C9 responsive rule; deviation 3).
+
+| Deleted legacy widget | Homes (call sites) | App* replacement | Notes |
+|---|---|---|---|
+| bespoke title row (`titleLarge` 800 + `StatusPill.neutral(count)`) | jobs header (1) | `AppPageHeader` (title `advisorJobsTitle` + count subtitle via new `advisorJobsCountNone/One/Many`) + search `AppIconButton` top-right ONLY when loaded `jobCards.length > 5` | Same title/copy; count once in subtitle; U1-exception note as on vehicles-list |
+| inline `AppSearchField` (mid-page) | jobs list (1) | header icon → existing `AdvisorSearchSheet` full-screen (same predicate/recents/scan/Enter/top-hit/result-push; `onScan` → `AppRoutes.scanVehicle` home parity) | Same query state + routes; inline field removed (audit: exactly one visible search icon per screen) |
+| `AppInfoPanel.danger` error styling | jobs list (2: top banner + first-load) | `AppBanner` warning (stale + last data) / `AppErrorState` (first-load + Try again) | Same messages (`advisorDataError` + `advisorOfflineNotice`); same invalidate retry; retry label stays verbatim `advisorActionRefreshJobCard` |
+| `LinearProgressIndicator` thin bar | jobs loading (1) | dropped (skeleton owns loading; no permanent chrome) | C16 no-permanent-status-chrome |
+| `AppSkeleton.listRows` compact skeleton | jobs loading (1) | `AppShimmerSkeleton.card` x3 mirroring the cards | Same loading contract (`isLoading && isEmpty`); wide `AppTable` skeleton kept (already App*) |
+| `EmptyState` / `EmptyState.noMatch` + bespoke buttons | jobs empty/no-match (2) | `AppEmptyState` (1 icon + 1 sentence + 1 New-job-card action → same wizard) / `_JobsNoMatch` (one sentence + shared Clear, vehicles precedent) | Same copy/routes; Clear resets search AND filter verbatim |
+| bordered divider container + `AdvisorJobCardRow` 72px rows | compact list (per card) | same class rewritten as borderless `AppSurfaceCard(outlined: false)` rows (customer·vehicle title → ONE `AppStatusChip` → meta + LTR mono id + chevron/more) | Tap = open preserved; overflow → same quick sheet; fixes 360px pill mid-word truncation |
+| `AppCard.standard` + `PrimaryButton` Check In + `StatusPill.info` | intake-queue section (1 + ≤3 rows) | `AppSurfaceCard(outlined: false)` (header + info `AppStatusChip`) + per-row `_BookingRow` + `AppPillButton.primary` small Check In | Same copy/routes/extras/cap of 3; one filled action per row (vehicles Book-direct precedent) |
+| `showModalBottomSheet` + `AdvisorSheet` chrome | quick preview sheet (1) | `showAppBottomSheet` + `AppBottomSheet` chrome; `AdvisorJobCardSheet` now content-only | Content + Close/Open + handlers byte-identical |
+| `_JobAvatar` bespoke circle | wide preview (1) | `AppAvatar` small | Same identity data |
+| `_JobPreviewTile` bespoke label/value rows + `AppCard.standard` + `PrimaryButton` | wide preview (1) | `AppDataRow` rows (mono `valueWidget` for id/odometer) + `AppSurfaceCard(outlined: false)` + `AppPillButton.primary` Open | Same fields/routes/selection; `_shown()` keeps `--` for blanks; `cellFlex: [3,2,2,4,2]` added (rows ignore column flex — Status owns the widest share so single-word chips never break mid-word) |
+| `PrimaryButton` / `SecondaryButton` / legacy buttons | jobs surfaces (all above) | `AppPillButton` variants (map above) | Same emphasis/routes; module contributes zero legacy-button call sites on its surfaces |
+| `StatusPill` via `advisorStatusPill` | jobs list + preview + table (3 sites) | new additive `advisorStatusChip(t, status)` (same vocabulary, same kind mapping) | `advisorStatusPill` itself untouched (home/detail/sheets still use it) |
+
+New ARB keys (`advisorJobsCountNone/One/Many`, en+ar, `gen-l10n` from
+`apps/staff_app`): header count subtitle (One/Many pair convention, no ICU —
+same as `techProdRepairOne/Many`); `Customer A–Z` keeps its U+2013 en dash
+byte-identical (found during characterization).

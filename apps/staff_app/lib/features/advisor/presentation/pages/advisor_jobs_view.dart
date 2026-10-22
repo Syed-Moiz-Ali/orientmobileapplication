@@ -8,6 +8,7 @@ import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart'
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_job_card_row.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_job_card_sheet.dart';
+import 'package:staff_app/features/advisor/presentation/widgets/advisor_search_sheet.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_status.dart';
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
@@ -24,25 +25,67 @@ class AdvisorJobsListView extends ConsumerStatefulWidget {
 }
 
 class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
-  final _searchCtrl = TextEditingController();
   JobCardEntity? _selected;
 
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    super.dispose();
+  /// Session-only recent searches (presentation state): the header search
+  /// icon opens the shared AdvisorSearchSheet with these recents.
+  final List<String> _searchRecents = <String>[];
+
+  void _rememberSearch(String query) {
+    final q = query.trim();
+    if (q.isEmpty) return;
+    setState(() {
+      _searchRecents.remove(q);
+      _searchRecents.insert(0, q);
+      if (_searchRecents.length > 5) {
+        _searchRecents.removeRange(5, _searchRecents.length);
+      }
+    });
   }
 
-  void _showQuickCard(JobCardEntity jc) {
-    HapticFeedback.mediumImpact();
+  // U1: the header search icon is the ONE search path on this tab. The
+  // existing AdvisorSearchSheet (same id/customer/vehicle predicate, session
+  // recents, scan CTA inside, autofocus, Enter = top hit) presents
+  // full-screen — same pattern as the advisor home header. No new routes.
+  void _showSearch() {
+    HapticFeedback.selectionClick();
+    final size = MediaQuery.sizeOf(context);
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (sheetContext) => AdvisorJobCardSheet(
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
+        ),
+        child: SizedBox.fromSize(
+          size: size,
+          child: ColoredBox(
+            color: Theme.of(sheetContext).colorScheme.surface,
+            child: SingleChildScrollView(
+              child: AdvisorSearchSheet(
+                recents: _searchRecents,
+                onRemember: _rememberSearch,
+                onScan: () {
+                  Navigator.pop(context);
+                  context.push(AppRoutes.scanVehicle);
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showQuickCard(JobCardEntity jc) {
+    HapticFeedback.mediumImpact();
+    showAppBottomSheet<void>(
+      context,
+      child: AdvisorJobCardSheet(
         jc: jc,
         onOpen: () {
-          Navigator.pop(sheetContext);
+          Navigator.pop(context);
           widget.onJobCard(jc);
         },
       ),
@@ -87,15 +130,20 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
   }
 
   void _clearAllFilters() {
-    _searchCtrl.clear();
     ref.read(_jobsSearchProvider.notifier).state = '';
     ref.read(_jobsFilterProvider.notifier).state = null;
   }
 
+  /// Header count subtitle (count once, in the subtitle — never a badge AND a
+  /// label). Zero renders as words (U11: zero shows as 0, never "-").
+  String _countSubtitle(StaffLocalizations t, int count) {
+    if (count == 0) return t.advisorJobsCountNone;
+    if (count == 1) return t.advisorJobsCountOne;
+    return t.advisorJobsCountMany(count);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
     final t = StaffLocalizations.of(context)!;
 
     final jobsAsync = ref.watch(advisorRecentJobCardsProvider);
@@ -141,8 +189,6 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (isLoading && jobCards.isEmpty)
-          const LinearProgressIndicator(minHeight: 3),
         Padding(
           padding: EdgeInsets.fromLTRB(
             context.pagePadding.left,
@@ -153,46 +199,35 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      t.advisorJobsTitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: colors.onSurface,
-                        letterSpacing: -0.2,
-                      ),
-                    ),
-                  ),
-                  if (!isLoading && jobCards.isNotEmpty)
-                    StatusPill.neutral('${visible.length}'),
-                ],
+              // U1: the header search icon is the one search path (shown only
+              // when the register is big enough to need find-aids — the same
+              // progressive-disclosure exception as the vehicles list).
+              AppPageHeader(
+                title: t.advisorJobsTitle,
+                subtitle: _countSubtitle(t, visible.length),
+                trailing: jobCards.length > 5
+                    ? AppIconButton(
+                        icon: Icons.search_rounded,
+                        onPressed: _showSearch,
+                        tooltip: t.advisorSearchTitle,
+                      )
+                    : null,
               ),
               const SizedBox(height: AppDimensions.s8),
-              if (hasError) ...[
-                AppInfoPanel.danger(
+              // Stale-data notice only: first-load failure owns the surface
+              // below (AppErrorState), so the message never appears twice.
+              if (hasError && jobCards.isNotEmpty) ...[
+                AppBanner(
+                  kind: AppBannerKind.warning,
                   message: t.advisorDataError,
-                  action: TextButton(
-                    onPressed: () {
-                      ref.invalidate(advisorRecentJobCardsProvider);
-                      ref.invalidate(advisorAssignedBookingsProvider);
-                    },
-                    child: Text(t.advisorActionRefreshJobCard),
-                  ),
+                  actionLabel: t.advisorActionRefreshJobCard,
+                  onAction: () {
+                    ref.invalidate(advisorRecentJobCardsProvider);
+                    ref.invalidate(advisorAssignedBookingsProvider);
+                  },
                 ),
                 const SizedBox(height: AppDimensions.s12),
               ],
-              AppSearchField(
-                controller: _searchCtrl,
-                hintText: t.advisorJobsSearchHint,
-                onChanged: (v) =>
-                    ref.read(_jobsSearchProvider.notifier).state = v,
-                onClear: () =>
-                    ref.read(_jobsSearchProvider.notifier).state = '',
-              ),
             ],
           ),
         ),
@@ -273,6 +308,9 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
         query.isEmpty && filter == null && bookings.isNotEmpty;
 
     if (isLoading && allCards.isEmpty) {
+      // Skeleton mirrors the final layout (no full-screen spinner for
+      // content areas — C10). The thin progress bar is gone: loading owns
+      // no permanent chrome.
       if (context.isCompact) {
         return ListView(
           padding: EdgeInsets.fromLTRB(
@@ -281,7 +319,13 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
             context.pagePadding.right,
             (AppDimensions.s64 + AppDimensions.s24),
           ),
-          children: const [AppSkeleton.listRows(rows: 4)],
+          children: const [
+            AppShimmerSkeleton.card(height: 168),
+            SizedBox(height: AppDimensions.s12),
+            AppShimmerSkeleton.card(height: 168),
+            SizedBox(height: AppDimensions.s12),
+            AppShimmerSkeleton.card(height: 168),
+          ],
         );
       }
       return Padding(
@@ -306,15 +350,15 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
           AppDimensions.s16,
         ),
         children: [
-          AppInfoPanel.danger(
-            message: t.advisorDataError,
-            action: TextButton(
-              onPressed: () {
-                ref.invalidate(advisorRecentJobCardsProvider);
-                ref.invalidate(advisorAssignedBookingsProvider);
-              },
-              child: Text(t.advisorActionRefreshJobCard),
-            ),
+          AppErrorState(
+            title: t.advisorDataError,
+            message: t.advisorOfflineNotice,
+            onRetry: () {
+              ref.invalidate(advisorRecentJobCardsProvider);
+              ref.invalidate(advisorAssignedBookingsProvider);
+            },
+            // Same retry label as before (verbatim copy, same invalidate).
+            retryLabel: t.advisorActionRefreshJobCard,
           ),
         ],
       );
@@ -330,35 +374,14 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
         ),
         children: [
           if (hasQuery) ...[
-            EmptyState.noMatch(
-              icon: Icons.search_off_rounded,
-              message: t.advisorNoMatchingJobs,
-            ),
-            const SizedBox(height: AppDimensions.s16),
-            Center(
-              child: TextButton(
-                onPressed: _clearAllFilters,
-                style: TextButton.styleFrom(
-                  minimumSize: const Size(0, AppDimensions.touchTarget),
-                ),
-                child: Text(SharedCoreL10n.of(context).filterBarClear),
-              ),
-            ),
+            _JobsNoMatch(onClear: _clearAllFilters),
           ] else ...[
-            EmptyState(
+            AppEmptyState(
               icon: Icons.assignment_outlined,
               title: t.advisorNoJobs,
               message: t.advisorNoJobsHint,
-            ),
-            const SizedBox(height: AppDimensions.s16),
-            Center(
-              child: PrimaryButton(
-                label: t.advisorActionNewJobTitle,
-                icon: Icons.add_rounded,
-                isExpanded: false,
-                onPressed: () =>
-                    context.push(AppRoutes.vehicleCustomer),
-              ),
+              actionLabel: t.advisorActionNewJobTitle,
+              onAction: () => context.push(AppRoutes.vehicleCustomer),
             ),
           ],
         ],
@@ -395,6 +418,9 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
               child: LayoutBuilder(
                 builder: (context, constraints) => AppTable<JobCardEntity>(
                   columns: _columns(t, sortable: true),
+                  // Row flexes mirror the column flexes (column.flex drives
+                  // the header only; rows default to equal shares).
+                  cellFlex: const [3, 2, 2, 4, 2],
                   items: visible,
                   // Sticky header via a bounded body. The 4px guard absorbs
                   // sub-pixel rounding between the expanded pane and the
@@ -449,7 +475,7 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
                     AppTableCell.text(context, jc.vehicleInfo),
                     Align(
                       alignment: AlignmentDirectional.centerStart,
-                      child: advisorStatusPill(t, jc.status),
+                      child: advisorStatusChip(t, jc.status),
                     ),
                     AppTableCell.text(context, jc.time),
                   ],
@@ -468,11 +494,13 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
     );
   }
 
+  // Status owns the widest share: single-word chips must fit on one line
+  // (vehicle wraps at word gaps instead — legal; mid-word breaks are not).
   List<AppTableColumn> _columns(StaffLocalizations t, {bool sortable = false}) => [
     AppTableColumn(label: t.advisorJobsColumnCustomer, flex: 3, sortable: sortable),
     AppTableColumn(label: t.advisorJobsColumnJobCard, flex: 2),
-    AppTableColumn(label: t.advisorFieldVehicle, flex: 3),
-    AppTableColumn(label: t.advisorJobsColumnStatus, flex: 2),
+    AppTableColumn(label: t.advisorFieldVehicle, flex: 2),
+    AppTableColumn(label: t.advisorJobsColumnStatus, flex: 4),
     AppTableColumn(label: t.advisorJobsColumnTime, flex: 2, sortable: sortable),
   ];
 
@@ -482,16 +510,15 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
     List<AdvisorBookingResponse> bookings,
     bool showBookings,
   ) {
-    // Compact: divider rows in the shared grammar (status dot + customer +
-    // plate + job mono LTR + pill + time + overflow → JobCardSheet). No plate
-    // field exists on JobCardEntity, so the row splits local-first
+    // Compact: whitespace-separated borderless cards (C16 — shadow in
+    // light, shared border in dark, never a bordered container). No plate
+    // field exists on JobCardEntity, so the card splits local-first
     // vehicleInfo ("Model · PLATE") and never invents data.
-    final colors = Theme.of(context).colorScheme;
     return RefreshIndicator(
       color: Theme.of(context).colorScheme.primary,
       backgroundColor: Theme.of(context).colorScheme.surface,
       onRefresh: () async => ref.read(advisorRefreshProvider.notifier).state++,
-      child: ListView(
+      child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.fromLTRB(
           context.pagePadding.left,
@@ -499,29 +526,20 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
           context.pagePadding.right,
           (AppDimensions.s64 + AppDimensions.s24),
         ),
-        children: [
-          if (showBookings) _buildAssignedBookingsSection(t, bookings),
-          Container(
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(color: colors.outlineVariant),
-                bottom: BorderSide(color: colors.outlineVariant),
-              ),
-            ),
-            child: Column(
-              children: [
-                for (var i = 0; i < visible.length; i++) ...[
-                  if (i > 0) Divider(height: 1, thickness: 1, color: colors.outlineVariant),
-                  AdvisorJobCardRow(
-                    jc: visible[i],
-                    onTap: widget.onJobCard,
-                    onMore: () => _showQuickCard(visible[i]),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
+        itemCount: visible.length + (showBookings ? 1 : 0),
+        separatorBuilder: (_, __) =>
+            const SizedBox(height: AppDimensions.s12),
+        itemBuilder: (context, index) {
+          if (showBookings && index == 0) {
+            return _buildAssignedBookingsSection(t, bookings);
+          }
+          final jc = visible[showBookings ? index - 1 : index];
+          return AdvisorJobCardRow(
+            jc: jc,
+            onTap: widget.onJobCard,
+            onMore: () => _showQuickCard(jc),
+          );
+        },
       ),
     );
   }
@@ -530,88 +548,139 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
     StaffLocalizations t,
     List<AdvisorBookingResponse> bookings,
   ) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppDimensions.s14),
-      child: AppCard.standard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.event_available_rounded,
-                  size: AppDimensions.iconMd,
-                  color: colors.primary,
+    // Intake queue: borderless card with ONE status chip and a direct
+    // per-row Check In action (the row's frequent action — one filled
+    // action per row, no section-level CTA). Same copy/routes/extras, same
+    // cap of 3 rows.
+    return AppSurfaceCard(
+      outlined: false,
+      headerTitle: t.advisorAssignedIntakeQueue,
+      headerTrailing: AppStatusChip(
+        kind: AppStatusKind.info,
+        label: t.advisorPendingCount(bookings.length),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final b in bookings.take(3))
+            Padding(
+              padding: const EdgeInsets.only(top: AppDimensions.s12),
+              child: _BookingRow(
+                booking: b,
+                onCheckIn: () => context.push(
+                  AppRoutes.advisorCheckIn,
+                  extra: {
+                    'bookingId': '${b.id}',
+                    'customerName': b.customerName,
+                    'vehicleInfo': b.vehicleName,
+                  },
                 ),
-                const SizedBox(width: AppDimensions.s8),
-                Expanded(
-                  child: Text(
-                    t.advisorAssignedIntakeQueue,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: colors.onSurface,
-                    ),
-                  ),
-                ),
-                StatusPill.info(t.advisorPendingCount(bookings.length)),
-              ],
+              ),
             ),
-            const SizedBox(height: AppDimensions.s12),
-            ...bookings
-                .take(3)
-                .map(
-                  (b) => Padding(
-                    padding: const EdgeInsets.only(bottom: AppDimensions.s8),
-                    child: AppRecordRow(
-                      leading: Icon(
-                        Icons.directions_car_rounded,
-                        color: colors.primary,
-                      ),
-                      title: '${b.serviceType} · ${b.vehicleName}',
-                      subtitle: '${b.customerName} · ${b.bookingDate}',
-                      trailing: PrimaryButton(
-                        label: t.advisorActionCheckIn,
-                        isExpanded: false,
-                        height: AppDimensions.touchTarget,
-                        onPressed: () => context.push(
-                          AppRoutes.advisorCheckIn,
-                          extra: {
-                            'bookingId': '${b.id}',
-                            'customerName': b.customerName,
-                            'vehicleInfo': b.vehicleName,
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-          ],
-        ),
+        ],
       ),
     );
   }
 }
 
-class _JobAvatar extends StatelessWidget {
-  final JobCardEntity jc;
-  const _JobAvatar({required this.jc});
+/// One assigned-booking row: car glyph + service/vehicle + customer/date +
+/// the direct Check In action (48dp target, no menu dive).
+class _BookingRow extends StatelessWidget {
+  final AdvisorBookingResponse booking;
+  final VoidCallback onCheckIn;
+
+  const _BookingRow({required this.booking, required this.onCheckIn});
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return CircleAvatar(
-      radius: 15,
-      backgroundColor: colors.primary.withValues(alpha: 0.12),
-      child: Text(
-        jc.customerName.isNotEmpty ? jc.customerName[0] : 'C',
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
+    return Row(
+      children: [
+        Icon(
+          Icons.directions_car_rounded,
+          size: AppDimensions.iconMd,
           color: colors.primary,
-          fontWeight: FontWeight.w800,
+        ),
+        const SizedBox(width: AppDimensions.s12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '${booking.serviceType} · ${booking.vehicleName}',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colors.onSurface,
+                ),
+              ),
+              const SizedBox(height: AppDimensions.s4),
+              Text(
+                '${booking.customerName} · ${booking.bookingDate}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: AppDimensions.s12),
+        AppPillButton.primary(
+          label: t.advisorActionCheckIn,
+          size: AppPillButtonSize.small,
+          isExpanded: false,
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            onCheckIn();
+          },
+        ),
+      ],
+    );
+  }
+}
+
+/// Filter-no-match state (vehicles-list precedent): one sentence + one Clear
+/// control that clears search AND filter. No new keys.
+class _JobsNoMatch extends StatelessWidget {
+  final VoidCallback onClear;
+
+  const _JobsNoMatch({required this.onClear});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final t = StaffLocalizations.of(context)!;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppDimensions.s24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              t.advisorNoMatchingJobs,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s8),
+            TextButton(
+              onPressed: () {
+                HapticFeedback.selectionClick();
+                onClear();
+              },
+              style: TextButton.styleFrom(
+                minimumSize: const Size(0, AppDimensions.touchTarget),
+              ),
+              child: Text(SharedCoreL10n.of(context).filterBarClear),
+            ),
+          ],
         ),
       ),
     );
@@ -672,7 +741,11 @@ class _JobPreviewPane extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _JobAvatar(jc: jc),
+              AppAvatar(
+                name: jc.customerName,
+                size: AppAvatarSize.small,
+                semanticLabel: jc.customerName,
+              ),
               const SizedBox(width: AppDimensions.s12),
               Expanded(
                 child: Column(
@@ -687,50 +760,64 @@ class _JobPreviewPane extends StatelessWidget {
                         color: colors.onSurface,
                       ),
                     ),
-                    Text(
-                      jc.id,
-                      style: AppTextStyles.mono(
-                        color: colors.onSurfaceVariant,
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Text(
+                        jc.id,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.mono(
+                          color: colors.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-              advisorStatusPill(t, jc.status),
+              advisorStatusChip(t, jc.status),
             ],
           ),
           const SizedBox(height: AppDimensions.s20),
-          AppCard.standard(
+          // Same identity fields as verbose rows; mono values stay LTR.
+          AppSurfaceCard(
+            outlined: false,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                _JobPreviewTile(
-                  icon: Icons.directions_car_outlined,
+                AppDataRow(
                   label: t.advisorFieldVehicle,
-                  value: jc.vehicleInfo,
+                  value: _shown(jc.vehicleInfo),
                 ),
-                _JobPreviewTile(
-                  icon: Icons.engineering_outlined,
+                const SizedBox(height: AppDimensions.s12),
+                AppDataRow(
                   label: t.advisorFieldTechnician,
-                  value: jc.technician,
+                  value: _shown(jc.technician),
                 ),
-                _JobPreviewTile(
-                  icon: Icons.schedule_outlined,
+                const SizedBox(height: AppDimensions.s12),
+                AppDataRow(
                   label: t.advisorFieldCreated,
-                  value: jc.time,
+                  value: _shown(jc.time),
                 ),
-                if (jc.odometer != null)
-                  _JobPreviewTile(
-                    icon: Icons.speed_rounded,
+                if (jc.odometer != null) ...[
+                  const SizedBox(height: AppDimensions.s12),
+                  AppDataRow(
                     label: t.advisorFieldOdometer,
-                    value: t.advisorOdometerValue('${jc.odometer}'),
-                    mono: true,
+                    value: '',
+                    valueWidget: Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Text(
+                        t.advisorOdometerValue('${jc.odometer}'),
+                        textAlign: TextAlign.end,
+                        style: AppTextStyles.mono(color: colors.onSurface),
+                      ),
+                    ),
                   ),
+                ],
               ],
             ),
           ),
           const SizedBox(height: AppDimensions.s20),
-          PrimaryButton(
+          AppPillButton.primary(
             label: t.advisorActionOpenJob,
             icon: Icons.open_in_new_rounded,
             onPressed: onOpen,
@@ -741,66 +828,8 @@ class _JobPreviewPane extends StatelessWidget {
   }
 }
 
-/// Compact label/value line used in the master–detail preview pane.
-class _JobPreviewTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final bool mono;
-  const _JobPreviewTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-    this.mono = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final shown = value.trim().isEmpty ? '--' : value;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppDimensions.s12),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: AppDimensions.iconSm,
-            color: colors.onSurfaceVariant,
-          ),
-          const SizedBox(width: AppDimensions.s10),
-          SizedBox(
-            width: 96,
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(width: AppDimensions.s10),
-          Expanded(
-            child: Text(
-              shown,
-              textAlign: TextAlign.end,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: mono
-                  ? AppTextStyles.mono(color: colors.onSurface)
-                  : theme.textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: colors.onSurface,
-                    ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+/// Blank display values stay honest dashes (never invented data).
+String _shown(String value) => value.trim().isEmpty ? '--' : value;
 
 final _jobsSearchProvider = StateProvider<String>((ref) => '');
 final _jobsFilterProvider = StateProvider<String?>((ref) => null);

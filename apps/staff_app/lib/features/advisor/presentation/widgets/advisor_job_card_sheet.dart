@@ -3,7 +3,6 @@ import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_status.dart';
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
-import 'advisor_sheet.dart';
 import 'advisor_divider.dart';
 import 'advisor_detail_line.dart';
 import 'advisor_outline_action.dart';
@@ -12,6 +11,9 @@ import 'advisor_solid_action.dart';
 /// Quick job-card preview sheet (S10). Opened from the jobs list overflow
 /// action so an advisor can scan the essentials without leaving the list. The
 /// full workspace remains a pushed route via [onOpen].
+///
+/// Chrome note (GROUP-B list rebuild): presented via [showAppBottomSheet], so
+/// this widget renders content only — no sheet wrapper of its own.
 class AdvisorJobCardSheet extends StatelessWidget {
   final JobCardEntity jc;
   final VoidCallback onOpen;
@@ -27,8 +29,7 @@ class AdvisorJobCardSheet extends StatelessWidget {
     final colors = theme.colorScheme;
     final t = StaffLocalizations.of(context)!;
 
-    return AdvisorSheet(
-      child: Column(
+    return Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -117,7 +118,6 @@ class AdvisorJobCardSheet extends StatelessWidget {
             ],
           ),
         ],
-      ),
     );
   }
 }

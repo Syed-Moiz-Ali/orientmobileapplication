@@ -4,24 +4,27 @@ import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart'
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_status.dart';
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
-/// A job card rendered in the shared divider-row grammar (home + jobs list):
-/// status dot 8px + customer 15/600 + plate pill + job mono 12 LTR +
-/// status pill right + time muted 12 + chevron. 72px rows with 1px dividers —
-/// never cards-per-row. Identifiers, plates and times stay LTR in both
-/// locales. The urgent microcopy ("Due today") and selection highlight are
-/// opt-in so the home assigned list and the jobs work list share one row.
+/// One job card in the advisor jobs register (GROUP-B list rebuild).
+///
+/// Borderless card grammar (C16): the advisor recognizes customer + vehicle
+/// first (title, wraps to 2 lines, never truncated), then ONE status chip
+/// (sentence-case shared vocabulary), then the meta sentence, with the job id
+/// as small LTR mono meta — never the title. Full labels survive 320px +
+/// 1.3x + ar (the old divider row truncated pills mid-word at 360px).
+/// Identifiers, plates and times stay LTR in both locales. The "Due today"
+/// microcopy and selection treatment are opt-in.
 class AdvisorJobCardRow extends StatelessWidget {
   final JobCardEntity jc;
   final void Function(JobCardEntity) onTap;
 
   /// Optional contextual overflow action (e.g. a quick job-card preview).
-  /// When null the row shows a plain chevron affordance.
+  /// When null the card shows its tappable chevron affordance.
   final VoidCallback? onMore;
 
   /// Shows the localized "Due today" microcopy under the time for urgent rows.
   final bool showDueToday;
 
-  /// Desktop/master-detail selection highlight.
+  /// Master/detail selection highlight (bordered treatment when true).
   final bool selected;
 
   const AdvisorJobCardRow({
@@ -37,223 +40,120 @@ class AdvisorJobCardRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final semantic = context.semanticColors;
     final t = StaffLocalizations.of(context)!;
     final split = _splitVehiclePlate(jc.vehicleInfo);
-    // Compact density exception: StatusPill never truncates its label (shared
-    // widget, frozen), so at 320px/1.3x its intrinsic width overflows. Reclaim
-    // the room here with tighter row padding/gaps on compact only.
-    final compact = context.adaptive.pick(compact: true, medium: false);
-    final hPad = compact ? AppDimensions.s8 : AppDimensions.s16;
-    final dotGap = compact ? AppDimensions.s8 : AppDimensions.s12;
-    final timeGap = compact ? AppDimensions.s8 : AppDimensions.s12;
-    // Small-mobile exception (<360px): the right time column (time + "Due
-    // today") squeezes the pill past overflow, so the meta stacks into a
-    // third line under the texts. 390px+ keeps the spec grammar untouched.
-    final stackMeta =
-        context.deviceClass == AppDeviceClass.smallMobile;
+    final sentence = showDueToday && jc.time.trim().isNotEmpty
+        ? '${t.advisorDueToday} · ${jc.time}'
+        : jc.time;
+    final timeShown = sentence.trim().isEmpty ? '--' : sentence;
 
     return Semantics(
       button: true,
       label: '${jc.customerName}, ${jc.id}',
-      child: Material(
-        color: selected ? semantic.selectedSurface : Colors.transparent,
-        child: InkWell(
-          onTap: () => onTap(jc),
-          splashColor: colors.primary.withValues(alpha: 0.08),
-          highlightColor: colors.primary.withValues(alpha: 0.04),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 72),
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: hPad,
-                vertical: AppDimensions.s12,
-              ),
-              child: Row(
+      child: AppSurfaceCard(
+        outlined: selected,
+        onTap: () => onTap(jc),
+        showChevron: onMore == null,
+        semanticLabel: '${jc.customerName}, ${jc.id}',
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: _statusDotColor(context, jc.status),
-                      shape: BoxShape.circle,
+                  // Recognized name first: customer + vehicle (wraps, never
+                  // amputates a person's name — U5).
+                  Text(
+                    '${jc.customerName} · ${split.vehicle}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colors.onSurface,
                     ),
                   ),
-                  SizedBox(width: dotGap),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                jc.customerName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: AppTextStyles.cardTitle(
-                                  color: colors.onSurface,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: AppDimensions.s8),
-                            Flexible(child: advisorStatusPill(t, jc.status)),
-                          ],
-                        ),
-                        const SizedBox(height: AppDimensions.s4),
-                        Row(
-                          children: [
-                            if (split.plate != null) ...[
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppDimensions.s6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: colors.surfaceContainerHighest,
-                                  borderRadius: BorderRadius.circular(
-                                    AppDimensions.radiusXs,
-                                  ),
-                                ),
-                                child: Directionality(
-                                  textDirection: TextDirection.ltr,
-                                  child: Text(
-                                    split.plate!,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: AppTextStyles.mono(
-                                      color: colors.onSurfaceVariant,
-                                    ).copyWith(fontSize: 10),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: AppDimensions.s6),
-                            ],
-                            Expanded(
-                              child: Text(
-                                split.vehicle,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: colors.onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-                            Flexible(
-                              child: Directionality(
-                                textDirection: TextDirection.ltr,
-                                child: Text(
-                                  jc.id,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AppTextStyles.mono(
-                                    color: colors.onSurfaceVariant,
-                                  ).copyWith(fontSize: 12),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (stackMeta) ...[
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              Flexible(
-                                child: Directionality(
-                                  textDirection: TextDirection.ltr,
-                                  child: Text(
-                                    jc.time,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: colors.onSurfaceVariant,
-                                      fontSize: 12,
-                                      fontFeatures: const [
-                                        FontFeature.tabularFigures(),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              if (showDueToday) ...[
-                                Text(
-                                  ' · ',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: colors.onSurfaceVariant,
-                                  ),
-                                ),
-                                Flexible(
-                                  child: Text(
-                                    t.advisorDueToday,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: theme.textTheme.labelSmall?.copyWith(
-                                      color: semantic.warning.ink,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
+                  const SizedBox(height: AppDimensions.s8),
+                  // ONE status chip from the shared taxonomy (sentence case).
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: advisorStatusChip(t, jc.status),
+                  ),
+                  const SizedBox(height: AppDimensions.s8),
+                  // Meta sentence: time first (secondary text may ellipsize).
+                  Row(
+                    children: [
+                      if (split.plate != null) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppDimensions.s6,
+                            vertical: 2,
                           ),
-                        ],
+                          decoration: BoxDecoration(
+                            color: colors.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(
+                              AppDimensions.radiusXs,
+                            ),
+                          ),
+                          child: Directionality(
+                            textDirection: TextDirection.ltr,
+                            child: Text(
+                              split.plate!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.mono(
+                                color: colors.onSurfaceVariant,
+                              ).copyWith(fontSize: 10),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppDimensions.s6),
                       ],
-                    ),
-                  ),
-                  if (!stackMeta) ...[
-                    SizedBox(width: timeGap),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          jc.time,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colors.onSurfaceVariant,
-                            fontSize: 12,
-                            fontFeatures: const [
-                              FontFeature.tabularFigures(),
-                            ],
-                          ),
-                        ),
-                        if (showDueToday) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            t.advisorDueToday,
+                      Expanded(
+                        child: Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: Text(
+                            timeShown,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: semantic.warning.ink,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 11,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colors.onSurfaceVariant,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
                             ),
                           ),
-                        ],
-                      ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppDimensions.s4),
+                  // Id is small meta (LTR mono, tabular), never the title.
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      jc.id,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.mono(
+                        color: colors.onSurfaceVariant,
+                      ),
                     ),
-                  ],
-                  const SizedBox(width: AppDimensions.s4),
-                  if (onMore == null)
-                    DirectionalIcon(
-                      Icons.chevron_right_rounded,
-                      size: 20,
-                      color: colors.onSurfaceVariant.withValues(alpha: 0.6),
-                    )
-                  else
-                    IconButton(
-                      onPressed: onMore,
-                      tooltip: t.advisorActionMore,
-                      icon: const Icon(Icons.more_horiz_rounded),
-                      color: colors.onSurfaceVariant,
-                    ),
+                  ),
                 ],
               ),
             ),
-          ),
+            if (onMore != null) ...[
+              const SizedBox(width: AppDimensions.s8),
+              IconButton(
+                onPressed: onMore,
+                tooltip: t.advisorActionMore,
+                icon: const Icon(Icons.more_horiz_rounded),
+                color: colors.onSurfaceVariant,
+              ),
+            ],
+          ],
         ),
       ),
     );
@@ -273,28 +173,4 @@ class AdvisorJobCardRow extends StatelessWidget {
     );
   }
   return (vehicle: vehicleInfo, plate: null);
-}
-
-Color _statusDotColor(BuildContext context, JobCardStatus status) {
-  final semantic = context.semanticColors;
-  return switch (status) {
-    JobCardStatus.pending ||
-    JobCardStatus.pendingApproval ||
-    JobCardStatus.awaitingSupervisor ||
-    JobCardStatus.waitingCustomerApproval =>
-      semantic.warning.base,
-    JobCardStatus.waitingParts => semantic.danger.base,
-    JobCardStatus.qualityCheck => semantic.warning.base,
-    JobCardStatus.inProgress => semantic.info.base,
-    JobCardStatus.workAssigned ||
-    JobCardStatus.inspected ||
-    JobCardStatus.vehicleReceived =>
-      semantic.info.base,
-    JobCardStatus.completed ||
-    JobCardStatus.approved ||
-    JobCardStatus.delivered ||
-    JobCardStatus.qualityCheckPassed =>
-      semantic.success.base,
-    JobCardStatus.cancelled => semantic.neutral.base,
-  };
 }
