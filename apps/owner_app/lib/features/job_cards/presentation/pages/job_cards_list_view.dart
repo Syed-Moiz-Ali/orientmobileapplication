@@ -244,7 +244,10 @@ class _JobCardsListViewState extends ConsumerState<JobCardsListView> {
             Center(
               child: Padding(
                 padding: const EdgeInsets.only(right: AppDimensions.s16),
-                child: StatusPill.neutral(t.ownerRegCount(items.length)),
+                child: AppStatusChip(
+                  label: t.ownerRegCount(items.length),
+                  kind: AppStatusKind.neutral,
+                ),
               ),
             ),
           ],
@@ -321,15 +324,16 @@ class _PreviewPane extends StatelessWidget {
     final jc = job;
 
     if (jc == null) {
-      return AppCard.standard(
-        child: EmptyState(
+      return AppSurfaceCard(
+        child: AppEmptyState(
           icon: Icons.preview_outlined,
+          title: t.ownerRegTitle,
           message: t.ownerRegSelectPrompt,
         ),
       );
     }
 
-    return AppCard.standard(
+    return AppSurfaceCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -394,7 +398,7 @@ class _PreviewPane extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppDimensions.s16),
-          PrimaryButton(
+          AppPillButton.primary(
             label: t.ownerRegOpen,
             icon: Icons.arrow_forward_rounded,
             onPressed: onOpen,

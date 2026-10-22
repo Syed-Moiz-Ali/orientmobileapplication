@@ -72,9 +72,10 @@ class _SupervisorJobsTabState extends ConsumerState<SupervisorJobsTab> {
               title: t.svJobsTitle,
               subtitle: t.svJobsSubtitle(allJobs.length),
               leading: const Icon(Icons.assignment_outlined),
-              primaryAction: PrimaryButton(
+              primaryAction: AppPillButton.primary(
                 label: t.svJobsAssign,
                 icon: Icons.engineering_rounded,
+                size: AppPillButtonSize.small,
                 isExpanded: false,
                 onPressed: widget.onOpenAssign,
               ),
@@ -104,12 +105,11 @@ class _SupervisorJobsTabState extends ConsumerState<SupervisorJobsTab> {
             ),
             const SizedBox(height: AppDimensions.s16),
             if (state.dashboardError.isNotEmpty)
-              AppInfoPanel.danger(
+              AppErrorState(
+                title: SharedCoreL10n.of(context).commonErrorTitle,
                 message: t.svJobsError,
-                action: TextButton(
-                  onPressed: notifier.refreshDashboard,
-                  child: Text(SharedCoreL10n.of(context).commonRetry),
-                ),
+                retryLabel: SharedCoreL10n.of(context).commonRetry,
+                onRetry: notifier.refreshDashboard,
               )
             else
               _JobsList(
@@ -230,12 +230,12 @@ class _JobsList extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = StaffLocalizations.of(context)!;
     if (loading) {
-      return const AppSkeleton.listRows(rows: 6);
+      return const AppShimmerSkeleton.listRows(rows: 6);
     }
     if (isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: AppDimensions.s24),
-        child: EmptyState(
+        child: AppEmptyState(
           icon: Icons.checklist_rounded,
           title: t.svJobsEmpty,
           message: t.svJobsEmptyMessage,
@@ -247,7 +247,9 @@ class _JobsList extends StatelessWidget {
     if (isNoMatch) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: AppDimensions.s24),
-        child: EmptyState.noMatch(
+        child: AppEmptyState(
+          icon: Icons.search_off_rounded,
+          title: SharedCoreL10n.of(context).commonNoResults,
           message: t.svJobsNoMatch,
           actionLabel: SharedCoreL10n.of(context).filterBarClear,
           onAction: onClear,
@@ -341,11 +343,7 @@ class _JobRow extends StatelessWidget {
                       Row(
                         children: [
                           Expanded(
-                            child: AppLinearProgress(
-                              value: progress,
-                              color: tone.base,
-                              height: 5,
-                            ),
+                            child: AppProgressBar(value: progress),
                           ),
                           const SizedBox(width: AppDimensions.s10),
                           Text(
@@ -364,7 +362,7 @@ class _JobRow extends StatelessWidget {
             ],
           ),
         ),
-        Divider(height: 1, color: context.colors.outlineVariant),
+        const AppDivider(),
       ],
     );
   }

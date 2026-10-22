@@ -118,22 +118,21 @@ class _TechnicianJobsViewState extends ConsumerState<TechnicianJobsView> {
   }) {
     final t = StaffLocalizations.of(context)!;
     if (showSkeleton) {
-      return _scrollable(const AppSkeleton.listRows(rows: 4));
+      return _scrollable(const AppShimmerSkeleton.listRows(rows: 4));
     }
     if (firstLoadError) {
       return _scrollable(
-        Semantics(
-          liveRegion: true,
-          child: EmptyState.error(
-            message: t.techJobsLoadError,
-            onRetry: () => _refresh(notifier),
-          ),
+        AppErrorState(
+          title: SharedCoreL10n.of(context).commonErrorTitle,
+          message: t.techJobsLoadError,
+          retryLabel: SharedCoreL10n.of(context).commonRetry,
+          onRetry: () => _refresh(notifier),
         ),
       );
     }
     if (!hasJobs) {
       return _scrollable(
-        EmptyState(
+        AppEmptyState(
           icon: Icons.assignment_outlined,
           title: t.techJobsEmpty,
           message: t.techJobsEmptyHint,
@@ -144,11 +143,12 @@ class _TechnicianJobsViewState extends ConsumerState<TechnicianJobsView> {
     }
     if (jobs.isEmpty) {
       return _scrollable(
-        EmptyState.noMatch(
+        AppEmptyState(
+          icon: Icons.search_off_rounded,
+          title: t.techJobsNoMatch,
           message: filtering
               ? t.techJobsNoMatchHint
               : t.techJobsNoMatch,
-          title: t.techJobsNoMatch,
           actionLabel: t.techJobsClearFilters,
           onAction: () {
             notifier.updateSearch('');
@@ -161,10 +161,7 @@ class _TechnicianJobsViewState extends ConsumerState<TechnicianJobsView> {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.only(bottom: AppDimensions.s24),
       itemCount: jobs.length,
-      separatorBuilder: (_, __) => Divider(
-        height: 1,
-        color: Theme.of(context).colorScheme.outlineVariant,
-      ),
+      separatorBuilder: (_, __) => const AppDivider(),
       itemBuilder: (context, index) {
         final job = jobs[index];
         return TechnicianJobSummary(
@@ -243,6 +240,8 @@ class _JobsToolbar extends StatelessWidget {
   }
 }
 
+/// Stale-data notice: the saved queue stays visible while the workshop
+/// service reconnects (abnormal-only banner; no permanent status pill).
 class _SavedDataNotice extends StatelessWidget {
   final String message;
 
@@ -250,33 +249,7 @@ class _SavedDataNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-
-    return Semantics(
-      liveRegion: true,
-      child: Container(
-        padding: const EdgeInsets.all(AppDimensions.s12),
-        decoration: BoxDecoration(
-          color: colors.tertiaryContainer,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.cloud_off_rounded, color: colors.onTertiaryContainer),
-            const SizedBox(width: AppDimensions.s10),
-            Expanded(
-              child: Text(
-                message,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colors.onTertiaryContainer,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return AppBanner(kind: AppBannerKind.warning, message: message);
   }
 }
 

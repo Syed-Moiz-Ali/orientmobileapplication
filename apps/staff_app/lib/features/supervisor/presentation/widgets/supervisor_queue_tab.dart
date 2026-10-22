@@ -97,19 +97,18 @@ class _SupervisorQueueTabState extends ConsumerState<SupervisorQueueTab> {
             ),
             const SizedBox(height: AppDimensions.s16),
             if (state.queueError.isNotEmpty)
-              AppInfoPanel.danger(
+              AppErrorState(
+                title: SharedCoreL10n.of(context).commonErrorTitle,
                 message: t.svQueueError,
-                action: TextButton(
-                  onPressed: notifier.refreshQueue,
-                  child: Text(SharedCoreL10n.of(context).commonRetry),
-                ),
+                retryLabel: SharedCoreL10n.of(context).commonRetry,
+                onRetry: notifier.refreshQueue,
               )
             else if (state.isQueueLoading && isEmpty)
-              const AppSkeleton.listRows(rows: 6)
+              const AppShimmerSkeleton.listRows(rows: 6)
             else if (isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: AppDimensions.s32),
-                child: EmptyState(
+                child: AppEmptyState(
                   icon: Icons.inbox_outlined,
                   title: t.svQueueEmpty,
                   message: t.svQueueEmptyMessage,
@@ -119,7 +118,9 @@ class _SupervisorQueueTabState extends ConsumerState<SupervisorQueueTab> {
               if (isNoMatch && breakdowns.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: AppDimensions.s24),
-                  child: EmptyState.noMatch(
+                  child: AppEmptyState(
+                    icon: Icons.search_off_rounded,
+                    title: SharedCoreL10n.of(context).commonNoResults,
                     message: t.svQueueNoMatch,
                     actionLabel: SharedCoreL10n.of(context).filterBarClear,
                     onAction: () => setState(() => _filter = null),
@@ -142,7 +143,10 @@ class _SupervisorQueueTabState extends ConsumerState<SupervisorQueueTab> {
                       title: b.vehicleName.isNotEmpty ? b.vehicleName : b.issue,
                       detail: b.issue,
                       plate: b.vehiclePlate,
-                      trailing: StatusPill.danger(t.svQueuePriorityEmergency),
+                      trailing: AppStatusChip(
+                      label: t.svQueuePriorityEmergency,
+                      kind: AppStatusKind.error,
+                    ),
                       onAssign: () => _route(
                         isBooking: false,
                         id: b.id,
@@ -191,11 +195,12 @@ class _SupervisorQueueTabState extends ConsumerState<SupervisorQueueTab> {
 
   Widget _priorityPill(StaffLocalizations t, BookingQueueResponse b) =>
       switch (bookingPriority(b)) {
-        SupervisorQueuePriority.vip => StatusPill.warning(t.svQueuePriorityVip),
+        SupervisorQueuePriority.vip =>
+          AppStatusChip(label: t.svQueuePriorityVip, kind: AppStatusKind.warning),
         SupervisorQueuePriority.promisedToday =>
-          StatusPill.info(t.svQueuePriorityPromised),
+          AppStatusChip(label: t.svQueuePriorityPromised, kind: AppStatusKind.info),
         SupervisorQueuePriority.insurance =>
-          StatusPill.neutral(t.svQueuePriorityInsurance),
+          AppStatusChip(label: t.svQueuePriorityInsurance, kind: AppStatusKind.neutral),
         SupervisorQueuePriority.normal => const SizedBox.shrink(),
       };
 
@@ -377,15 +382,15 @@ class _QueueRow extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppDimensions.s10),
-              SecondaryButton(
+              AppPillButton.secondary(
                 label: t.svQueueAssign,
-                leadingIcon: Icons.person_add_alt_1_rounded,
+                icon: Icons.person_add_alt_1_rounded,
                 onPressed: onAssign,
               ),
             ],
           ),
         ),
-        Divider(height: 1, color: context.colors.outlineVariant),
+        const AppDivider(),
       ],
     );
   }
@@ -486,7 +491,7 @@ class _AdvisorPickerState extends State<_AdvisorPicker> {
             ),
           ),
         const SizedBox(height: AppDimensions.s12),
-        PrimaryButton(
+        AppPillButton.primary(
           label: t.svQueueAssign,
           icon: Icons.arrow_forward_rounded,
           onPressed: () => Navigator.of(context).pop(_selected),

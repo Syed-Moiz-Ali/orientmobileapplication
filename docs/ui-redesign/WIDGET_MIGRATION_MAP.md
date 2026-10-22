@@ -360,3 +360,105 @@ provider/sync/predicate/route/handler/Key change (predicates `contextFor` /
 |---|---|---|---|
 | `vhCountMany(0/1)` → `vhCount(n)` ICU plural (`=0{0 …}` / `=1{1 …}` / `other{{count} …}`, en+ar, no renames) | vehicles header subtitle (all + filtered, ≤5 and >5) | `vhCount` | Fixes "1 registered vehicles"; zero renders as `0` (U11); `vhCountNone` kept for truly empty; `gen-l10n` from `apps/customer_app` |
 | Year shown twice (title + specs) → ONCE | record card (`customer_vehicle_record.dart` display only) | title keeps `Make Model · Year`; specs line shows colour + mileage (`White · 45000 km`) | `specs()` untouched; display filters the year token; VIN untouched; search still matches year via `specs()` |
+
+## GROUP-C supervisor Jobs list (branch `ui/list-ops`, screen 1)
+
+`supervisor_jobs_tab.dart` recomposed presentation-only onto App* pattern
+widgets; providers/predicates/buckets/progress math/routes/sheets/copy/keys
+untouched (zero new ARB keys); scaffold bar guard + compact 4+More + expanded
+7-rail untouched; STOP honored (inline register filter + bar bay-search kept:
+different entity/fields/scope/contract, see
+`evaluation/phase-jobs-search-audit-review.md` §2).
+
+| Deleted legacy widget | Surface | Replaced by | Notes |
+|---|---|---|---|
+| `PrimaryButton(` (Jobs header Assign, 1 site) | supervisor Jobs tab | `AppPillButton.primary` (small, non-expanded, same label/icon/handler) | One filled accent per section kept (Assign only) |
+| `EmptyState(` + `EmptyState.noMatch(` (2 sites) | supervisor Jobs tab empty + no-match | `AppEmptyState` (icon/title/message/action 1:1; no-match title reuses shared `commonNoResults`, zero new keys) | Bidi-isolated title/message; tests match by containment |
+| `AppSkeleton.listRows(` (1 site) | supervisor Jobs tab loading | `AppShimmerSkeleton.listRows(rows: 6)` (row-mirroring) | Same row count |
+| `AppInfoPanel.danger(` (1 site) | supervisor Jobs tab error | `AppErrorState` (title reuses shared `commonErrorTitle`, message `svJobsError` verbatim, retry `commonRetry` → same refresh) | Live-region kept |
+| `AppLinearProgress(` (1 site) | supervisor Jobs tab row meter | `AppProgressBar(value:)` (auto tone; status meaning stays on rail + pill) | Progress math byte-identical |
+| `Divider(` (1 site) | supervisor Jobs tab row separator | `AppDivider()` (spec hairline) | Full-bleed kept |
+| KEPT (STOP/pinned, not legacy) | supervisor Jobs tab | `AppSearchField` + `AppFilterBar` + `AppPageHeader` + `supervisorStatusPill/Tone/Mono` | Inline filter predicate + bucket predicate byte-identical |
+
+## GROUP-C supervisor Queue list (branch `ui/list-ops`, screen 2)
+
+`supervisor_queue_tab.dart` recomposed presentation-only onto App* pattern
+widgets: providers/sort/buckets/refresh/picker-sheet/toast contracts/copy/keys
+untouched (zero new ARB keys); scaffold bar guard + compact 4+More + expanded
+7-rail untouched; no list-scoped search icon added (brief deviation B: the
+bar bay-search is this surface's single search path); header subtitle stays
+static with counts on the section labels (deviation A).
+
+| Deleted legacy widget | Surface | Replaced by | Notes |
+|---|---|---|---|
+| `SecondaryButton(` (row Assign) | supervisor Queue rows | `AppPillButton.secondary` (full-width, same label/icon/handler) | Frequent action stays directly on each card |
+| `PrimaryButton(` (picker confirm) | supervisor Queue advisor picker | `AppPillButton.primary` (same label/icon/handler) | Same sheet, same notifier, same toasts |
+| `StatusPill.danger/warning/info/neutral` (priority pills) | supervisor Queue rows | `AppStatusChip` (error/warning/info/neutral, same labels; normal renders no pill) | Dot + label, meaning never color-alone |
+| `EmptyState(` + `EmptyState.noMatch(` | supervisor Queue empty + no-match | `AppEmptyState` (1:1 copy; no-match title reuses shared `commonNoResults`) | Honest empty carries NO action (nothing to create); tests match copy by containment (bidi isolation) |
+| `AppSkeleton.listRows(` | supervisor Queue loading | `AppShimmerSkeleton.listRows(rows: 6)` | Row-mirroring |
+| `AppInfoPanel.danger(` | supervisor Queue error | `AppErrorState` (title `commonErrorTitle`, message `svQueueError` verbatim, retry `commonRetry`) | Error/skeleton are refresh-driven (provider-owned quirk pinned: first load surfaces empty; untouched) |
+| `Divider(` | supervisor Queue row separators | `AppDivider()` | Full-bleed kept |
+| KEPT (pinned/not legacy) | supervisor Queue | `AppPageHeader` + header refresh + `AppFilterBar` + `showAppModalSheet` picker + `showSupervisorToast` + `_SectionLabel` badge layout + `_EmptyLine` | Badge stays token-only layout (accent `AppBadge` would add a second filled accent per section — C16); scaffold bar + nav untouched |
+
+## GROUP-C supervisor Review list (branch `ui/list-ops`, screen 3)
+
+`supervisor_review_tab.dart` recomposed presentation-only onto App* pattern
+widgets: providers/awaiting derivation/progress math/refresh/sheet-entry
+contracts/copy/keys untouched (zero new ARB keys); scaffold bar guard +
+compact 4+More + expanded 7-rail untouched; no list-scoped search icon, no
+filter rail (brief deviations B/C: bar bay-search — which covers awaiting
+records via `buildSupervisorBays(awaiting: ...)` — is the single search path;
+nothing honest to facet); header subtitle stays static (deviation A: no
+honest existing count key).
+
+| Deleted legacy widget | Surface | Replaced by | Notes |
+|---|---|---|---|
+| `PrimaryButton(` (row Start QC) | supervisor Review rows | `AppPillButton.primary` (full-width, same label/icon/handler) | Frequent action stays directly on each card; sheet entry verbatim (sheet internals untouched) |
+| `StatusPill.info(` (progress pill) | supervisor Review rows | `AppStatusChip` (info, same `svReviewProgress(done,total)` label) | Dot + label, meaning never color-alone |
+| `EmptyState(` (no action) | supervisor Review empty | `AppEmptyState` (1:1 copy, no action — honest empty) | Tests match copy by containment (bidi isolation) |
+| `AppSkeleton.listRows(` | supervisor Review loading | `AppShimmerSkeleton.listRows(rows: 5)` | Row-mirroring |
+| `AppInfoPanel.danger(` | supervisor Review error | `AppErrorState` (title `commonErrorTitle`, message `svReviewError` verbatim, retry `commonRetry`) | Error/skeleton are refresh-driven (provider-owned quirk pinned: first load surfaces empty; untouched) |
+| `AppLinearProgress(` | supervisor Review row meter | `AppProgressBar(value:)` (auto tone) | Progress math byte-identical |
+| `Divider(` | supervisor Review row separator | `AppDivider()` | Full-bleed kept |
+| KEPT (pinned/not legacy) | supervisor Review | `AppPageHeader` + header refresh + `showQcChecklistSheet` entry + sheet/toast contracts + mono/initials helpers | No filter rail (U3: inventing one would be a fake control); scaffold bar + nav untouched |
+
+## GROUP-C technician jobs list (branch `ui/list-ops`, screen 4)
+
+`technician_jobs_view.dart` recomposed presentation-only onto App* pattern
+widgets: providers/order/predicates/refresh/routing/dossier/sheet contracts,
+copy/keys untouched (zero new ARB keys); shell `_TechChrome` guard + tab
+targets + search sheet untouched; no inline search re-added (blessed STOP);
+no in-body header (shell owns the title — deviation A); no > 5 gate on the
+blessed shell icon (deviation B); no per-row buttons (would duplicate dossier
+actions — deviation C); shared rows untouched (deviation D: STOP boundary —
+`TechnicianJobSummary` is shared with Today + the search sheet).
+
+| Deleted legacy widget | Surface | Replaced by | Notes |
+|---|---|---|---|
+| `EmptyState.error(` | technician Jobs first-load error | `AppErrorState` (title `commonErrorTitle`, message `techJobsLoadError` verbatim, retry `commonRetry` → same refresh) | Live-region kept; tests match copy by containment (bidi isolation) |
+| `EmptyState(` | technician Jobs empty | `AppEmptyState` (same icon/title/message/Refresh → same refresh) | Honest empty, one action |
+| `EmptyState.noMatch(` | technician Jobs no-match | `AppEmptyState` (icon search_off, same title/message/Clear → `updateSearch('')` + `updateFilter('All')`) | Same reset contract |
+| `AppSkeleton.listRows(` | technician Jobs loading | `AppShimmerSkeleton.listRows(rows: 4)` | Row-mirroring |
+| `_SavedDataNotice` bespoke Container | technician Jobs stale notice | `AppBanner` warning (same `dashboardError` copy, live-region) | Abnormal-only banner, no permanent pill |
+| `Divider(` (separator) | technician Jobs row separators | `AppDivider()` | Full-bleed kept |
+| KEPT (STOP/pinned, not legacy) | technician Jobs | `AppFilterBar` rail + `TechnicianJobSummary` rows + `_urgentFirst` + `_FreshnessFooter` + `openJob`/`push`/`closeJob` + shell chrome + search sheet | Zero `AppSearchField` in this file (blessed single-search); shell + sheet + Today untouched |
+
+## GROUP-C owner job-cards register (branch `ui/list-ops`, screen 5)
+
+`job_cards_list_view.dart` recomposed presentation-only onto App* pattern
+widgets: providers/predicate/presentation-sort/selection/open/table/row atoms,
+copy/keys untouched (zero new ARB keys); app bar + nav untouched; no header
+search icon at any size (audited single affordance — deviation B); no
+`AppPageHeader` swap (workspace chrome ownership — deviation A); table kept on
+wide — the homogeneous-audit case (deviation C); shared atoms/helpers kept
+(deviation D: STOP boundaries — `AppTable`/`AppRecordRow` are shared-core
+atoms, `jobStatusPill` is shared with the detail view). Owner dark verified
+with before/after dark frames (no regression).
+
+| Deleted legacy widget | Surface | Replaced by | Notes |
+|---|---|---|---|
+| `StatusPill.neutral(` (bar count) | owner register app bar | `AppStatusChip` neutral (same `ownerRegCount` label) | Header with count kept; still zero header search icons |
+| `AppCard.standard(` (preview prompt + dossier-mini) | owner register wide preview | `AppSurfaceCard` (same padding/body; border-XOR-shadow; dark keeps border) | Same select + Open contracts |
+| `EmptyState(` (select prompt) | owner register wide preview | `AppEmptyState` (title reuses existing `ownerRegTitle`, message `ownerRegSelectPrompt` verbatim, no action) | One icon + one sentence, no action |
+| `PrimaryButton(` (preview Open) | owner register wide preview | `AppPillButton.primary` (same label/handler) | One filled accent per pane |
+| KEPT (STOP/pinned, not legacy) | owner register | `WorkspaceAppBar` + back + shortcut + `AppSearchField` + `AppFilterBar` + milestone mapping + `AppTable` + `compactBuilder` + `AppRecordRow` + pill-block fix + `jobStatusPill` (incl. existing `.toUpperCase()` — shared with detail, byte-identical, none ADDED) + `formatAed2` + providers/sort/selection/open/routes/keys | Pill uppercase is a pinned quirk (C16 bans added caps); detail view + shared atoms untouched; no error panel exists on this surface (provider has no error branch — pinned) |
