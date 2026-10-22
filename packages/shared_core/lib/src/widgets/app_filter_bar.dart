@@ -82,6 +82,11 @@ class AppFilterBar extends StatelessWidget {
           Expanded(
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
+              // Trailing inset keeps the peeking chip off the hard edge so
+              // the cut never lands mid-glyph without breathing room (U5).
+              padding: const EdgeInsetsDirectional.only(
+                end: AppDimensions.s20,
+              ),
               child: Row(
                 children: [
                   for (var i = 0; i < chips.length; i++) ...[
@@ -151,8 +156,10 @@ class _FilterChip extends StatelessWidget {
               minHeight: AppDimensions.touchTarget,
             ),
             alignment: Alignment.center,
+            // Compact horizontal padding (token): narrower chips fit more
+            // of the rail at 320–360px so cuts land in gaps, not mid-word.
             padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.s14,
+              horizontal: AppDimensions.s12,
               vertical: AppDimensions.s8,
             ),
             decoration: BoxDecoration(
