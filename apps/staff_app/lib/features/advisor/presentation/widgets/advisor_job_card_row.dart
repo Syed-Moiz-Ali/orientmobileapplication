@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_status.dart';
+
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
 /// One job card in the advisor jobs register (GROUP-B list rebuild).
@@ -41,11 +42,18 @@ class AdvisorJobCardRow extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final t = StaffLocalizations.of(context)!;
+    final core = SharedCoreL10n.of(context);
     final split = _splitVehiclePlate(jc.vehicleInfo);
-    final sentence = showDueToday && jc.time.trim().isNotEmpty
+    // Local-first cards carry the magic string 'Pending sync' as their time
+    // slot (provider payload, unchanged). Presentation maps it to a localized
+    // sync badge and keeps the time slot honest — never the raw English copy
+    // inside localized UI, never '--'.
+    final isPendingSync = jc.time.trim() == 'Pending sync';
+    final sentence = showDueToday && !isPendingSync && jc.time.trim().isNotEmpty
         ? '${t.advisorDueToday} · ${jc.time}'
-        : jc.time;
-    final timeShown = sentence.trim().isEmpty ? '--' : sentence;
+        : (isPendingSync ? '' : jc.time);
+    final hasTime = sentence.trim().isNotEmpty;
+    final hasMeta = split.plate != null || hasTime;
 
     return Semantics(
       button: true,
@@ -53,8 +61,11 @@ class AdvisorJobCardRow extends StatelessWidget {
       child: AppSurfaceCard(
         outlined: selected,
         onTap: () => onTap(jc),
-        showChevron: onMore == null,
+        showChevron: false,
         semanticLabel: '${jc.customerName}, ${jc.id}',
+        // Compact inner padding keeps the first card above the fold at
+        // 360x800 (tokens only).
+        padding: const EdgeInsets.all(AppDimensions.s16),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -75,59 +86,73 @@ class AdvisorJobCardRow extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: AppDimensions.s8),
-                  // ONE status chip from the shared taxonomy (sentence case).
-                  Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: advisorStatusChip(t, jc.status),
-                  ),
-                  const SizedBox(height: AppDimensions.s8),
-                  // Meta sentence: time first (secondary text may ellipsize).
-                  Row(
+                  // ONE status chip from the shared taxonomy (sentence case),
+                  // then the separate sync state when the card is unsynced.
+                  Wrap(
+                    spacing: AppDimensions.s8,
+                    runSpacing: AppDimensions.s8,
                     children: [
-                      if (split.plate != null) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppDimensions.s6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colors.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(
-                              AppDimensions.radiusXs,
-                            ),
-                          ),
-                          child: Directionality(
-                            textDirection: TextDirection.ltr,
-                            child: Text(
-                              split.plate!,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTextStyles.mono(
-                                color: colors.onSurfaceVariant,
-                              ).copyWith(fontSize: 10),
-                            ),
-                          ),
+                      advisorStatusChip(t, jc.status),
+                      if (isPendingSync)
+                        AppStatusChip(
+                          kind: AppStatusKind.warning,
+                          label: core.pendingSyncNotSent,
                         ),
-                        const SizedBox(width: AppDimensions.s6),
-                      ],
-                      Expanded(
-                        child: Directionality(
-                          textDirection: TextDirection.ltr,
-                          child: Text(
-                            timeShown,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: colors.onSurfaceVariant,
-                              fontFeatures: const [
-                                FontFeature.tabularFigures(),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
                     ],
                   ),
+                  if (hasMeta) ...[
+                    const SizedBox(height: AppDimensions.s8),
+                    // Meta sentence: plate + time (secondary text may
+                    // ellipsize; time never carries the sync copy).
+                    Row(
+                      children: [
+                        if (split.plate != null) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppDimensions.s6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: colors.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.radiusXs,
+                              ),
+                            ),
+                            child: Directionality(
+                              textDirection: TextDirection.ltr,
+                              child: Text(
+                                split.plate!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTextStyles.mono(
+                                  color: colors.onSurfaceVariant,
+                                ).copyWith(fontSize: 10),
+                              ),
+                            ),
+                          ),
+                          if (hasTime)
+                            const SizedBox(width: AppDimensions.s6),
+                        ],
+                        if (hasTime)
+                          Expanded(
+                            child: Directionality(
+                              textDirection: TextDirection.ltr,
+                              child: Text(
+                                sentence,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: colors.onSurfaceVariant,
+                                  fontFeatures: const [
+                                    FontFeature.tabularFigures(),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: AppDimensions.s4),
                   // Id is small meta (LTR mono, tabular), never the title.
                   Directionality(
@@ -144,15 +169,32 @@ class AdvisorJobCardRow extends StatelessWidget {
                 ],
               ),
             ),
-            if (onMore != null) ...[
-              const SizedBox(width: AppDimensions.s8),
-              IconButton(
-                onPressed: onMore,
-                tooltip: t.advisorActionMore,
-                icon: const Icon(Icons.more_horiz_rounded),
-                color: colors.onSurfaceVariant,
+            const SizedBox(width: AppDimensions.s8),
+            // Trailing affordances: 48dp overflow opens the quick preview
+            // sheet; the directional chevron marks the card tap target.
+            // Both mirror in RTL; taps never regress.
+            if (onMore != null)
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AppIconButton(
+                    icon: Icons.more_vert_rounded,
+                    onPressed: onMore,
+                    tooltip: t.advisorActionMore,
+                  ),
+                  DirectionalIcon(
+                    Icons.chevron_right_rounded,
+                    size: AppDimensions.iconMd,
+                    color: colors.onSurfaceVariant.withValues(alpha: 0.6),
+                  ),
+                ],
+              )
+            else
+              DirectionalIcon(
+                Icons.chevron_right_rounded,
+                size: AppDimensions.iconMd,
+                color: colors.onSurfaceVariant.withValues(alpha: 0.6),
               ),
-            ],
           ],
         ),
       ),

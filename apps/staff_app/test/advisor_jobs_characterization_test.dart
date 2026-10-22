@@ -25,6 +25,7 @@ import 'package:staff_app/core/router/app_router.dart';
 import 'package:staff_app/features/advisor/domain/entities/job_card_entity.dart';
 import 'package:staff_app/features/advisor/presentation/pages/advisor_jobs_view.dart';
 import 'package:staff_app/features/advisor/presentation/widgets/advisor_job_card_row.dart';
+import 'package:staff_app/features/advisor/presentation/widgets/advisor_search_sheet.dart';
 import 'package:staff_app/features/advisor/presentation/providers/advisor_providers.dart';
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
@@ -252,10 +253,18 @@ void main() {
     await tester.enterText(find.byType(TextField), 'ahmed');
     await tester.pump();
 
-    // Sheet result row only (register cards carry combined titles, so the
-    // exact name matches the sheet row alone).
-    expect(find.text('Ahmed'), findsOneWidget);
-    expect(find.text('Zara'), findsNothing);
+    // Sheet result rows carry customer + vehicle titles (card-hierarchy
+    // binding); scope to the sheet since the register behind keeps its own
+    // identical card title.
+    final sheet = find.byType(AdvisorSearchSheet);
+    expect(
+      find.descendant(of: sheet, matching: find.text('Ahmed · Camry')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.textContaining('Zara')),
+      findsNothing,
+    );
     expect(pump.opened, isEmpty);
     expect(tester.takeException(), isNull);
   });

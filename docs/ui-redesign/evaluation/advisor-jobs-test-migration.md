@@ -75,6 +75,7 @@ Bottom nav / rail untouched; no new routes.
 | overflow quick preview | Ancestor on exact name | Ancestor on combined title; pumpAndSettle for sheet entrance | structural + harness |
 | loading progress | `LinearProgressIndicator` | `AppShimmerSkeleton` findsWidgets + `LinearProgressIndicator` findsNothing (bar dropped) | structural (brief-mandated skeleton-only loading) |
 | wide matrix | (unchanged) | Verbatim (exact customer names still render in table cells) | behavioral (unchanged) |
+| ADVERSARIAL FIX 2026-10-22 — search sheet row title | Exact name `Ahmed` (sheet-only match) | Combined `Ahmed · Camry` scoped to `AdvisorSearchSheet` via `find.descendant` (register behind keeps its identical card title; `textContaining('Zara')` finds nothing under the sheet) | structural (D7 card-hierarchy binding; same predicate, same taps) |
 
 Harness lessons (test-only, no production impact): (1) a second `pumpWidget`
 with a new `ProviderScope` does NOT refresh Riverpod overrides in the same
@@ -124,6 +125,14 @@ string before pinning it.
   Replaces the bare-number `StatusPill.neutral('${visible.length}')` (count
   once, in the subtitle — no badge/label duplication).
 - `flutter gen-l10n` rerun from `apps/staff_app`; ARB byte-safe only.
+- ADVERSARIAL FIX 2026-10-22 — ZERO new ARB keys. The local-first magic
+  time `'Pending sync'` (provider payload, unchanged) maps in presentation to
+  the EXISTING shared key `pendingSyncNotSent` (`Not sent yet` /
+  `لم يُرسل بعد` — `SharedCoreL10n`, already localized en+ar): compact card
+  sync chip, wide table Time cell, wide preview Created row. Blank display
+  values map to the EXISTING shared `commonNoData` (`No data yet` /
+  `لا توجد بيانات بعد`) — wide preview `Technician --` is now that copy,
+  never `--`. No ARB edits, no `gen-l10n` needed; byte-safe by construction.
 
 ## Hero / CTA / empty decisions (with evidence)
 
@@ -143,11 +152,76 @@ string before pinning it.
 - Empty (no cards): `AppEmptyState` (`advisorNoJobs`/`advisorNoJobsHint` + New
   job card → same wizard). No-match: no-match + shared Clear (clears both).
   Error: `AppErrorState` + Try again; stale: `AppBanner` warning + last data.
+- ADVERSARIAL FIX 2026-10-22 — calm empty: when the register is truly empty
+  (loaded, no error, zero cards, zero bookings, no query/filter), the
+  decorative filter rail + sort row collapse — the empty frame is exactly one
+  icon + one sentence + one New-job-card action (same `vehicleCustomer`
+  route). The no-match branch keeps its rail + Clear. Verified in
+  `jobs_empty_en_360x800.png`.
 - Wide keeps the `AppTable` master-detail matrix (C9 responsive rule; the
   matrix is homogeneous sortable rows, not heterogeneous record cards).
+
+## Adversarial fixes 2026-10-22 (all presentation-only, law wins over sanction)
+
+Prior sanction overridden (recorded per instruction): the brief-mandated
+`AppPageHeader` + `trailing` search icon stacks the action BELOW the title on
+compact (`Column` + `Align centerLeft` in `app_page_header.dart`), which
+produced the mid-page-left orphan icon and the dead band that broke U1/U2/U9.
+Law (U1 same-row top-right, U2 fold) wins — the header is now a plain `Row`
+(title + subtitle `Expanded`, search `AppIconButton` top-right, RTL-mirrored
+by `Row` directionality). Same `> 5` condition, same `_showSearch` sheet,
+same tooltip/route/predicate — single path kept.
+
+1. D1 search placement — header-icon top-right same-row (plain `Row`,
+   RTL-mirrored) opening the same `AdvisorSearchSheet`; single path kept
+   (`advisor_jobs_view.dart` header block). Verified en + ar frames.
+2. D2 fold — first card above fold at 360x800: dead search band gone (D1),
+   compact sort row (label inline + control, saves ~22px), intake card
+   compact padding 16 + row gap 8, header/list gaps 8→4/8 (tokens only).
+   `jobs_1.0_en_360x800.png`: intake + Zara + Ahmed + Layla peeking.
+3. D3 rail peek — `AppFilterBar` chip horizontal padding 14→12 (token) +
+   scroll-view trailing inset `s20`: 360px idle now shows the full `Approved`
+   label (count peeks as the scroll hint) instead of the mid-word `Approve`
+   cut. 320px stress still scrolls with the cut chip's label start visible
+   and zero `RenderFlex` overflows.
+4. D4 1.3x date — intake `_BookingRow` customer·date wraps to 2 lines
+   (wrap-aware, tokens): `jobs_1.3_en_360x800.png` shows the whole
+   `2026-10-21`, never `2026-1…`.
+5. D5 card hierarchy — `AdvisorJobCardRow`: 48dp `AppIconButton`
+   (`more_vert`) overflow + directional chevron affordance; unsynced cards
+   show the localized `pendingSyncNotSent` chip SEPARATE from the time slot
+   (plate-only meta, no raw `Pending sync` in the time position);
+   customer·vehicle-first titles; empty times render nothing (never `--`).
+6. D6 calm empty — rail + sort collapse when truly empty (see above);
+   honest `New job card` action kept (2 taps).
+7. D7 search sheet + wide — sheet rows borderless (custom whitespace rows,
+   no `AppRecordRow` border) with customer·vehicle titles + plate·id
+   subtitles; wide Time/Created map the magic string to `pendingSyncNotSent`;
+   wide `Technician --` → `commonNoData` empty-state copy. Zero `--`
+   anywhere on the surface.
+
+Tap counts AFTER (verified from code + 13 GREEN tests): open 2, search 3 +
+typing, triage 2, check-in 2, preview 2 + sheet, sort 3, new 2, retry 1 —
+never regress vs BEFORE budgets.
+
+Cross-screen pin (shared `AdvisorSearchSheet` + shared `AppFilterBar` live in
+`packages/shared_core`): `test/advisor_home_view_test.dart` search-sheet pins
+updated structurally — job-card result `Layla` → `Layla · Yaris` (hierarchy
+binding), approval result stays exact `Layla`; same predicate, same taps, test
+count unchanged. Technician/supervisor suites re-run GREEN (chip padding
+14→12 is visual-only; 48dp targets + counts + labels untouched).
+
+Frames recaptured 2026-10-22 in `docs/ui-redesign/baseline/after-advisor-jobs/`:
+`jobs_1.0_en_360x800`, `jobs_empty_en_360x800`, `jobs_search_en_360x800`,
+`jobs_filter_en_360x800`, `jobs_1.0_ar_360x800`, `jobs_1.3_en_360x800`,
+`jobs_1.0_en_320x568`, `jobs_1.0_en_1280x800` — compared back-to-back
+against the cited defect frames; green.
 
 ## STOPs
 
 - None. No logic change is needed for this rebuild (predicates, providers,
   routes, sync, payloads all stay byte-identical). If a future step requires a
   logic change, STOP that piece and report instead of inventing.
+- ADVERSARIAL FIX 2026-10-22 — no STOPs: every defect was fixable in
+  presentation (same data/predicates/routes/sheets). No new routes, no
+  predicate/taxonomy/sort changes, no invented jobs/statuses/counts.

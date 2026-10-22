@@ -155,6 +155,19 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
     final hasError = jobsAsync.hasError || bookingsAsync.hasError;
 
     final query = ref.watch(_jobsSearchProvider).toLowerCase();
+    final bookingsForChrome =
+        ref.watch(advisorAssignedBookingsProvider).valueOrNull ??
+        const <AdvisorBookingResponse>[];
+    // Calm empty: collapse decorative rail + sort only when the register is
+    // truly empty (loaded, no error, no cards, no bookings, no filter). The
+    // no-match branch keeps its rail + Clear affordance.
+    final collapseChrome =
+        !isLoading &&
+        !hasError &&
+        jobCards.isEmpty &&
+        bookingsForChrome.isEmpty &&
+        query.isEmpty &&
+        selectedFilter == null;
     final visible = _sorted(
       jobCards.where((jc) {
         final matchesFilter =
@@ -194,29 +207,63 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
             context.pagePadding.left,
             context.pagePadding.top,
             context.pagePadding.right,
-            AppDimensions.s12,
+            AppDimensions.s8,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // U1: the header search icon is the one search path (shown only
-              // when the register is big enough to need find-aids — the same
-              // progressive-disclosure exception as the vehicles list).
-              AppPageHeader(
-                title: t.advisorJobsTitle,
-                subtitle: _countSubtitle(t, visible.length),
-                trailing: jobCards.length > 5
-                    ? AppIconButton(
-                        icon: Icons.search_rounded,
-                        onPressed: _showSearch,
-                        tooltip: t.advisorSearchTitle,
-                      )
-                    : null,
+              // U1: the header search icon is the one search path, top-right
+              // on the same row (plain Row, RTL-mirrored). Shown only when
+              // the register is big enough to need find-aids — the one
+              // sanctioned progressive-disclosure exception (> 5).
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          t.advisorJobsTitle,
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface,
+                                letterSpacing: -0.2,
+                              ),
+                        ),
+                        const SizedBox(height: AppDimensions.s4),
+                        Text(
+                          _countSubtitle(t, visible.length),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                                height: 1.35,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (jobCards.length > 5) ...[
+                    const SizedBox(width: AppDimensions.s8),
+                    AppIconButton(
+                      icon: Icons.search_rounded,
+                      onPressed: _showSearch,
+                      tooltip: t.advisorSearchTitle,
+                    ),
+                  ],
+                ],
               ),
-              const SizedBox(height: AppDimensions.s8),
               // Stale-data notice only: first-load failure owns the surface
               // below (AppErrorState), so the message never appears twice.
               if (hasError && jobCards.isNotEmpty) ...[
+                const SizedBox(height: AppDimensions.s8),
                 AppBanner(
                   kind: AppBannerKind.warning,
                   message: t.advisorDataError,
@@ -226,55 +273,77 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
                     ref.invalidate(advisorAssignedBookingsProvider);
                   },
                 ),
-                const SizedBox(height: AppDimensions.s12),
               ],
             ],
           ),
         ),
-        Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: context.pagePadding.left,
+        if (!collapseChrome) ...[
+          const SizedBox(height: AppDimensions.s8),
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: context.pagePadding.left,
+            ),
+            child: AppFilterBar(
+              options: [for (final key in _filterKeys(t)) _filterLabel(t, key)],
+              selected: selectedFilter == null
+                  ? null
+                  : _filterLabel(t, selectedFilter),
+              counts: counts,
+              onSelected: (label) {
+                HapticFeedback.selectionClick();
+                if (label == null) {
+                  ref.read(_jobsFilterProvider.notifier).state = null;
+                  return;
+                }
+                final hit = _filterKeys(
+                  t,
+                ).where((k) => _filterLabel(t, k) == label).firstOrNull;
+                ref.read(_jobsFilterProvider.notifier).state = hit;
+              },
+            ),
           ),
-          child: AppFilterBar(
-            options: [for (final key in _filterKeys(t)) _filterLabel(t, key)],
-            selected: selectedFilter == null
-                ? null
-                : _filterLabel(t, selectedFilter),
-            counts: counts,
-            onSelected: (label) {
-              HapticFeedback.selectionClick();
-              if (label == null) {
-                ref.read(_jobsFilterProvider.notifier).state = null;
-                return;
-              }
-              final hit = _filterKeys(
-                t,
-              ).where((k) => _filterLabel(t, k) == label).firstOrNull;
-              ref.read(_jobsFilterProvider.notifier).state = hit;
-            },
+          const SizedBox(height: AppDimensions.s8),
+          // Compact sort row: label inline + control on one line (saves the
+          // label-above height so the first card sits above the fold).
+          // Same options, same behavior, same 3-tap budget.
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: context.pagePadding.left,
+            ),
+            child: Row(
+              children: [
+                Text(
+                  t.advisorSortLabel,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(width: AppDimensions.s8),
+                Expanded(
+                  child: AppDropdownButton(
+                    value: sortLabel,
+                    items: sortLabels,
+                    isExpanded: true,
+                    onChanged: (label) {
+                      HapticFeedback.selectionClick();
+                      ref
+                          .read(_jobsSortProvider.notifier)
+                          .state = switch (label) {
+                        _ when label == t.advisorSortOldest => 'oldest',
+                        _ when label == t.advisorSortCustomer => 'customer',
+                        _ => 'newest',
+                      };
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: AppDimensions.s8),
-        Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: context.pagePadding.left,
-          ),
-          child: AppDropdownButton(
-            label: t.advisorSortLabel,
-            value: sortLabel,
-            items: sortLabels,
-            isExpanded: true,
-            onChanged: (label) {
-              HapticFeedback.selectionClick();
-              ref.read(_jobsSortProvider.notifier).state = switch (label) {
-                _ when label == t.advisorSortOldest => 'oldest',
-                _ when label == t.advisorSortCustomer => 'customer',
-                _ => 'newest',
-              };
-            },
-          ),
-        ),
-        const SizedBox(height: AppDimensions.s8),
+          const SizedBox(height: AppDimensions.s8),
+        ] else ...[
+          const SizedBox(height: AppDimensions.s8),
+        ],
         Expanded(
           child: _buildSurface(
             t,
@@ -422,13 +491,13 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
                   // the header only; rows default to equal shares).
                   cellFlex: const [3, 2, 2, 4, 2],
                   items: visible,
-                  // Sticky header via a bounded body. The 4px guard absorbs
-                  // sub-pixel rounding between the expanded pane and the
-                  // table's internal header so the fit never overflows.
-                  maxHeight: (constraints.maxHeight - 4).clamp(
-                    200.0,
-                    constraints.maxHeight,
-                  ),
+                    // Sticky header via a bounded body. The 4px guard absorbs
+                    // sub-pixel rounding between the expanded pane and the
+                    // table's internal header so the fit never overflows.
+                    maxHeight: (constraints.maxHeight - 4).clamp(
+                      200.0,
+                      constraints.maxHeight,
+                    ),
                   sortIndex: switch (sort) {
                     'customer' => 0,
                     'oldest' || 'newest' => 4,
@@ -454,8 +523,8 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
                   // No kebab either: tap selects into the preview pane with
                   // its Open CTA, and the compact list keeps the sheet
                   // overflow. Both buy room for identifiers and pills.
-                  cells: (context, jc) => [
-                    AppTableCell.text(context, jc.customerName),
+                    cells: (context, jc) => [
+                      AppTableCell.text(context, jc.customerName),
                     Align(
                       alignment: AlignmentDirectional.centerStart,
                       child: Directionality(
@@ -477,7 +546,15 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
                       alignment: AlignmentDirectional.centerStart,
                       child: advisorStatusChip(t, jc.status),
                     ),
-                    AppTableCell.text(context, jc.time),
+                    // Local-first cards carry the magic string 'Pending sync'
+                    // as time (provider payload, unchanged): present the
+                    // localized sync copy, never raw English, never '--'.
+                    AppTableCell.text(
+                      context,
+                      jc.time.trim() == 'Pending sync'
+                          ? SharedCoreL10n.of(context).pendingSyncNotSent
+                          : jc.time,
+                    ),
                   ],
                 ),
               ),
@@ -522,7 +599,7 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.fromLTRB(
           context.pagePadding.left,
-          AppDimensions.s8,
+          AppDimensions.s4,
           context.pagePadding.right,
           (AppDimensions.s64 + AppDimensions.s24),
         ),
@@ -551,9 +628,11 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
     // Intake queue: borderless card with ONE status chip and a direct
     // per-row Check In action (the row's frequent action — one filled
     // action per row, no section-level CTA). Same copy/routes/extras, same
-    // cap of 3 rows.
+    // cap of 3 rows. Compact padding keeps the first job card above the
+    // fold at 360x800 (tokens only).
     return AppSurfaceCard(
       outlined: false,
+      padding: const EdgeInsets.all(AppDimensions.s16),
       headerTitle: t.advisorAssignedIntakeQueue,
       headerTrailing: AppStatusChip(
         kind: AppStatusKind.info,
@@ -564,7 +643,7 @@ class _AdvisorJobsListViewState extends ConsumerState<AdvisorJobsListView> {
         children: [
           for (final b in bookings.take(3))
             Padding(
-              padding: const EdgeInsets.only(top: AppDimensions.s12),
+              padding: const EdgeInsets.only(top: AppDimensions.s8),
               child: _BookingRow(
                 booking: b,
                 onCheckIn: () => context.push(
@@ -619,10 +698,13 @@ class _BookingRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppDimensions.s4),
+              // Wrap-aware at 1.3x: the whole date stays visible (never
+              // `2026-1…` truncation). Wraps to 2 lines instead of clipping.
               Text(
                 '${booking.customerName} · ${booking.bookingDate}',
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
+                softWrap: true,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: colors.onSurfaceVariant,
                 ),
@@ -779,6 +861,8 @@ class _JobPreviewPane extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.s20),
           // Same identity fields as verbose rows; mono values stay LTR.
+          // Blank values use honest empty-state copy (never '--'); the
+          // local-first magic time maps to the localized sync copy.
           AppSurfaceCard(
             outlined: false,
             child: Column(
@@ -786,17 +870,25 @@ class _JobPreviewPane extends StatelessWidget {
               children: [
                 AppDataRow(
                   label: t.advisorFieldVehicle,
-                  value: _shown(jc.vehicleInfo),
+                  value: _shownValue(
+                    context,
+                    jc.vehicleInfo,
+                  ),
                 ),
                 const SizedBox(height: AppDimensions.s12),
                 AppDataRow(
                   label: t.advisorFieldTechnician,
-                  value: _shown(jc.technician),
+                  value: _shownValue(
+                    context,
+                    jc.technician,
+                  ),
                 ),
                 const SizedBox(height: AppDimensions.s12),
                 AppDataRow(
                   label: t.advisorFieldCreated,
-                  value: _shown(jc.time),
+                  value: jc.time.trim() == 'Pending sync'
+                      ? SharedCoreL10n.of(context).pendingSyncNotSent
+                      : _shownValue(context, jc.time),
                 ),
                 if (jc.odometer != null) ...[
                   const SizedBox(height: AppDimensions.s12),
@@ -828,8 +920,10 @@ class _JobPreviewPane extends StatelessWidget {
   }
 }
 
-/// Blank display values stay honest dashes (never invented data).
-String _shown(String value) => value.trim().isEmpty ? '--' : value;
+/// Blank display values use honest empty-state copy (never '--', never
+/// invented data). Existing shared `commonNoData` covers the empty case.
+String _shownValue(BuildContext context, String value) =>
+    value.trim().isEmpty ? SharedCoreL10n.of(context).commonNoData : value;
 
 final _jobsSearchProvider = StateProvider<String>((ref) => '');
 final _jobsFilterProvider = StateProvider<String?>((ref) => null);
