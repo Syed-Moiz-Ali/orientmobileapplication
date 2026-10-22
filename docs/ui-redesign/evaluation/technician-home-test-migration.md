@@ -183,3 +183,32 @@ logic untouched):
   `AIRBNB_PATTERNS.md`, `references/` dir does not exist — proceeded from
   the brief + DESIGN_SPEC/DESIGN_SYSTEM + the supervisor-home precedent
   (migration doc + U-review), noted here per instructions.
+
+## Addendum — ui/integration-1 Jobs-tab single-search audit (2026-10-22)
+
+- Finding: `TechnicianJobsView` showed an inline `AppSearchField`
+  (`_JobsToolbar`, hint `techJobsSearch`) on the page IN ADDITION TO the
+  shell header search icon (`_TechChrome` `AppIconButton`
+  `Icons.search_rounded`, visible on the Jobs tab since `selectedIndex != 0`)
+  opening `showTechnicianTodaySearch` over `notifier.allJobs`. Same target:
+  inline provider predicate (`technician_providers.dart` `filteredJobs`:
+  `jobCardNo` / `vehicleBrand` / `vehicleModel` / `customerName` /
+  normalized plate, case-insensitive) is identical to the sheet predicate
+  (`technician_today_search.dart` `_results`: same five fields, same
+  normalization). Same scope (`allJobs`), same sheet/route — only which
+  affordance is visible. Verdict: violation of U1/U7 (one search path).
+- Fix (presentation-only, no logic): hid/removed the inline `AppSearchField`
+  (+ its `SizedBox`) from `_JobsToolbar`; the toolbar keeps only the
+  `AppFilterBar` rail with identical options/counts/selection. Kept the
+  header-icon + full-screen search pattern. Untouched: `technician_providers.dart`
+  (`updateSearch`/`filteredJobs` frozen), `technician_today_search.dart`
+  sheet/route/predicate, `technician_dashboard_view.dart` chrome, filter
+  predicates, sort/order, counts, copy/keys.
+- Behavior assertions (verbatim, unchanged): tap counts in §Behavior
+  assertions above hold (hero primary CTA 1/0; tiles 1/0; search result tap =
+  same job-dossier contract; nothing moved behind an extra step); provider
+  reads identical (`technicianDashboardProvider` + notifier surface untouched);
+  urgent-first derivation identical; progress math identical; no new routes,
+  no dropped routes; copy identical, zero new keys.
+- Counts: characterization file still 11 tests, 11 assertions — counts did
+  not go down (no test edits needed; no test pins the Jobs inline field).

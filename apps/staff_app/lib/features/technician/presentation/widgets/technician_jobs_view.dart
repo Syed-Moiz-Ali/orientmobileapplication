@@ -194,7 +194,12 @@ class _TechnicianJobsViewState extends ConsumerState<TechnicianJobsView> {
   }
 }
 
-/// Search + canonical status filters with live counts from the loaded queue.
+/// Canonical status filters with live counts from the loaded queue.
+///
+/// U1 single-search path (ui/integration-1 audit): the header search icon +
+/// full-screen today sheet own search over the same loaded jobs (same
+/// predicate); this toolbar keeps only the filter rail. Route/sheet/logic
+/// untouched — the provider `updateSearch` stays frozen.
 class _JobsToolbar extends StatelessWidget {
   final TechnicianState state;
   final TechnicianNotifier notifier;
@@ -220,12 +225,6 @@ class _JobsToolbar extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AppSearchField(
-          hintText: t.techJobsSearch,
-          onChanged: notifier.updateSearch,
-          onClear: () => notifier.updateSearch(''),
-        ),
-        const SizedBox(height: AppDimensions.s12),
         AppFilterBar(
           options: options,
           selected: state.selectedFilter == 'All'

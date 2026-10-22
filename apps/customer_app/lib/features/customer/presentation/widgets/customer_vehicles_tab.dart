@@ -361,12 +361,19 @@ class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                plate.isEmpty
-                    ? t.vhRemoveBodyNoPlate
-                    : t.vhRemoveBody(plate),
-                style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(sheetContext).colorScheme.onSurfaceVariant,
+              Padding(
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: AppSpacing.xl,
+                ),
+                child: Text(
+                  plate.isEmpty
+                      ? t.vhRemoveBodyNoPlate
+                      : t.vhRemoveBody(plate),
+                  style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(
+                      sheetContext,
+                    ).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
               const SizedBox(height: AppDimensions.s16),
