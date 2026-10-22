@@ -905,6 +905,114 @@ abstract class CustomerLocalizations {
   /// **'In the workshop now'**
   String get vhInService;
 
+  /// Vehicle context pill: confirmed upcoming booking
+  ///
+  /// In en, this message translates to:
+  /// **'Booked'**
+  String get vhStatusBooked;
+
+  /// Vehicle context pill: unconfirmed booking request
+  ///
+  /// In en, this message translates to:
+  /// **'Requested'**
+  String get vhStatusRequested;
+
+  /// Vehicle context pill: most recent finished service
+  ///
+  /// In en, this message translates to:
+  /// **'Last service'**
+  String get vhStatusLastService;
+
+  /// Vehicle context fallback detail when stage is unknown
+  ///
+  /// In en, this message translates to:
+  /// **'Service in progress'**
+  String get vhStatusInProgress;
+
+  /// Short weekday for date label
+  ///
+  /// In en, this message translates to:
+  /// **'Mon'**
+  String get bkWeekdayMon;
+
+  /// Short weekday for date label
+  ///
+  /// In en, this message translates to:
+  /// **'Tue'**
+  String get bkWeekdayTue;
+
+  /// Short weekday for date label
+  ///
+  /// In en, this message translates to:
+  /// **'Wed'**
+  String get bkWeekdayWed;
+
+  /// Short weekday for date label
+  ///
+  /// In en, this message translates to:
+  /// **'Thu'**
+  String get bkWeekdayThu;
+
+  /// Short weekday for date label
+  ///
+  /// In en, this message translates to:
+  /// **'Fri'**
+  String get bkWeekdayFri;
+
+  /// Short weekday for date label
+  ///
+  /// In en, this message translates to:
+  /// **'Sat'**
+  String get bkWeekdaySat;
+
+  /// Short weekday for date label
+  ///
+  /// In en, this message translates to:
+  /// **'Sun'**
+  String get bkWeekdaySun;
+
+  /// Long weekday for date label
+  ///
+  /// In en, this message translates to:
+  /// **'Monday'**
+  String get bkWeekdayMonday;
+
+  /// Long weekday for date label
+  ///
+  /// In en, this message translates to:
+  /// **'Tuesday'**
+  String get bkWeekdayTuesday;
+
+  /// Long weekday for date label
+  ///
+  /// In en, this message translates to:
+  /// **'Wednesday'**
+  String get bkWeekdayWednesday;
+
+  /// Long weekday for date label
+  ///
+  /// In en, this message translates to:
+  /// **'Thursday'**
+  String get bkWeekdayThursday;
+
+  /// Long weekday for date label
+  ///
+  /// In en, this message translates to:
+  /// **'Friday'**
+  String get bkWeekdayFriday;
+
+  /// Long weekday for date label
+  ///
+  /// In en, this message translates to:
+  /// **'Saturday'**
+  String get bkWeekdaySaturday;
+
+  /// Long weekday for date label
+  ///
+  /// In en, this message translates to:
+  /// **'Sunday'**
+  String get bkWeekdaySunday;
+
   /// Unnamed fallback
   ///
   /// In en, this message translates to:

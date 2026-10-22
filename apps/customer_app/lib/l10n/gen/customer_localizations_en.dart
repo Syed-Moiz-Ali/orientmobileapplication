@@ -450,6 +450,60 @@ class CustomerLocalizationsEn extends CustomerLocalizations {
   String get vhInService => 'In the workshop now';
 
   @override
+  String get vhStatusBooked => 'Booked';
+
+  @override
+  String get vhStatusRequested => 'Requested';
+
+  @override
+  String get vhStatusLastService => 'Last service';
+
+  @override
+  String get vhStatusInProgress => 'Service in progress';
+
+  @override
+  String get bkWeekdayMon => 'Mon';
+
+  @override
+  String get bkWeekdayTue => 'Tue';
+
+  @override
+  String get bkWeekdayWed => 'Wed';
+
+  @override
+  String get bkWeekdayThu => 'Thu';
+
+  @override
+  String get bkWeekdayFri => 'Fri';
+
+  @override
+  String get bkWeekdaySat => 'Sat';
+
+  @override
+  String get bkWeekdaySun => 'Sun';
+
+  @override
+  String get bkWeekdayMonday => 'Monday';
+
+  @override
+  String get bkWeekdayTuesday => 'Tuesday';
+
+  @override
+  String get bkWeekdayWednesday => 'Wednesday';
+
+  @override
+  String get bkWeekdayThursday => 'Thursday';
+
+  @override
+  String get bkWeekdayFriday => 'Friday';
+
+  @override
+  String get bkWeekdaySaturday => 'Saturday';
+
+  @override
+  String get bkWeekdaySunday => 'Sunday';
+
+  @override
   String get vhFallbackName => 'Vehicle';
 
   @override

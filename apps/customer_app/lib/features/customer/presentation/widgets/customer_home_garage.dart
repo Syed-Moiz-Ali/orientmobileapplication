@@ -42,6 +42,8 @@ class CustomerHomeGarage extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final locale = Localizations.localeOf(context);
+        final l10n = context.cx;
         // ~2.2 cards visible in the compact viewport; wider canvases cap the
         // extent so cards stay readable instead of stretching. One vehicle is
         // fully shown (nothing to peek at), so it takes the available width
@@ -71,6 +73,8 @@ class CustomerHomeGarage extends StatelessWidget {
                   vehicle: vehicle,
                   bookings: bookings,
                   liveService: liveService,
+                  l10n: l10n,
+                  locale: locale,
                 ),
                 onTap: () {
                   HapticFeedback.selectionClick();

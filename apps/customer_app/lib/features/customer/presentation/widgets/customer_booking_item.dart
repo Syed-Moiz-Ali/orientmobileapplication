@@ -55,6 +55,7 @@ class CustomerBookingItem extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final locale = Localizations.localeOf(context);
 
     final group = CustomerBookingsPresentation.groupOf(booking.status);
     final tone = CustomerServiceTracking.bookingTone(colors, booking.status);
@@ -67,12 +68,19 @@ class CustomerBookingItem extends StatelessWidget {
     final plate = booking.plateNumber.trim();
     final vehicle = booking.vehicleName.trim();
     final reference = CustomerBookingsPresentation.referenceOf(booking);
+    // Locale-aware schedule date part (ARB weekdays + central months in ar);
+    // time stays LTR-locked Latin per frozen policy. Same data/predicates.
     final schedule = CustomerBookingsPresentation.scheduleLabel(
       booking.date,
       booking.time,
+      locale: locale,
+      l10n: t,
     );
     final day = CustomerBookingsPresentation.dayOfMonthLabel(booking.date);
-    final month = CustomerBookingsPresentation.monthLabel(booking.date);
+    final month = CustomerBookingsPresentation.monthLabel(
+      booking.date,
+      locale: locale,
+    );
     final hasDateBlock = day.isNotEmpty && month.isNotEmpty;
     // A time the parser cannot read is shown as the backend sent it on the
     // metadata line instead of being squeezed into the date block.
@@ -93,9 +101,15 @@ class CustomerBookingItem extends StatelessWidget {
         ? CustomerServiceTracking.humanize(liveService?.currentStage ?? '')
         : '';
 
+    // Locale-aware pill copy: shared-core already ships Arabic status labels,
+    // so the pill renders via AppStatusLabels.of(context) (English fallback
+    // when the delegate is absent, Arabic in production). Same status, tone.
+    final statusText =
+        AppStatusLabels.of(context).booking(booking.status.name);
+
     final semantics = [
       title,
-      booking.statusLabel,
+      statusText,
       if (vehicle.isNotEmpty || plate.isNotEmpty) '$vehicle $plate'.trim(),
       if (hasDateBlock) '${booking.date.trim()} ${booking.time.trim()}'.trim(),
       if (!hasDateBlock && schedule.isNotEmpty) schedule,
@@ -158,9 +172,10 @@ class CustomerBookingItem extends StatelessWidget {
                             ),
                           ),
                           AppStatusChip(
-                            // Sentence case via theme (C17): the canonical
-                            // label verbatim, no .toUpperCase() anywhere.
-                            label: booking.statusLabel,
+                            // Sentence case via theme (C17): locale-aware label
+                            // (shared-core ARB in ar, canonical shim in EN
+                            // fallback), no .toUpperCase() anywhere.
+                            label: statusText,
                             kind: _kindFor(booking.status),
                           ),
                         ],
@@ -177,7 +192,12 @@ class CustomerBookingItem extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   vehicle,
-                                  maxLines: 1,
+                                  // U5: vehicle is primary text alongside the
+                                  // service — wrap to 2 lines at word boundary
+                                  // at 1.3x instead of mid-word `Toyota Cam…`.
+                                  // Title (service) stays maxLines 2 untouched.
+                                  maxLines: 2,
+                                  softWrap: true,
                                   overflow: TextOverflow.ellipsis,
                                   style: textTheme.bodySmall?.copyWith(
                                     color: colors.onSurfaceVariant,
@@ -347,15 +367,20 @@ class _DateBlock extends StatelessWidget {
           ),
           if (time.isNotEmpty) ...[
             const SizedBox(height: AppDimensions.s4),
-            Text(
-              time,
-              maxLines: 2,
-              textAlign: TextAlign.center,
-              softWrap: true,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: colors.onSurfaceVariant,
-                fontWeight: FontWeight.w700,
+            // LTR-locked (U10): the `9:00 AM`-style token keeps its order
+            // inside RTL layouts instead of reordering to `AM 9:00`.
+            Directionality(
+              textDirection: TextDirection.ltr,
+              child: Text(
+                time,
+                maxLines: 2,
+                textAlign: TextAlign.center,
+                softWrap: true,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],

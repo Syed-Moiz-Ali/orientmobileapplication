@@ -127,7 +127,10 @@ const _liveService = CustomerServiceEntity(
   started: '',
   estCompletion: '',
   progressPercent: 40,
-  currentStage: 'In progress',
+  // Test-data only: deliberately differs from the booking status
+  // (`In Service`) so the pill and the stage line prove both signals
+  // independently (F3). Production predicate unchanged.
+  currentStage: 'Quality check',
   technicianName: '',
   stages: [],
 );

@@ -56,6 +56,24 @@ const _approval = CustomerNotificationEntity(
   type: NotifType.approvalNeeded,
 );
 
+const _service2 = CustomerNotificationEntity(
+  id: 'n5',
+  title: 'Technician assigned',
+  body: 'Ali will handle your Camry service today.',
+  time: '5h ago',
+  type: NotifType.bookingAssigned,
+  isRead: true,
+);
+
+const _approval2 = CustomerNotificationEntity(
+  id: 'n6',
+  title: 'Estimate approved',
+  body: 'The brake estimate was approved. Work resumes today.',
+  time: '8h ago',
+  type: NotifType.estimateApproved,
+  isRead: true,
+);
+
 const _invoice = CustomerNotificationEntity(
   id: 'n3',
   title: 'Invoice ready',
@@ -264,7 +282,10 @@ void main() {
     debugPrint('notifications-list after capture: fonts ready');
   });
 
-  const inbox = [_service, _approval, _invoice, _general];
+  // Grouped inbox: Service updates x2 (bookingReceived + bookingAssigned),
+  // Approvals x2 (approvalNeeded + estimateApproved), Invoices x1, General x1.
+  // Original 4 fixtures kept verbatim; 2 read extras keep unread at 2.
+  const inbox = [_service, _service2, _approval, _approval2, _invoice, _general];
 
   group('after matrix @360x800', () {
     testWidgets('idle inbox light en 1.0 (mark-all row visible)', (

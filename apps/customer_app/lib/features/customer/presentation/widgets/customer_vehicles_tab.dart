@@ -93,12 +93,16 @@ class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
     // One derivation per build (same predicate the records use): the filter
     // sheet and the rendered list read the same map, so the filter can never
     // promise a vehicle the list does not show.
+    final t = context.cx;
+    final locale = Localizations.localeOf(context);
     final contexts = <String, CustomerVehicleContext?>{
       for (final vehicle in vehicles)
         vehicle.id: CustomerVehiclePresentation.contextFor(
           vehicle: vehicle,
           bookings: bookings,
           liveService: liveService,
+          l10n: t,
+          locale: locale,
         ),
     };
     bool matchesFilter(CustomerVehicleContext? serviceContext) =>
@@ -125,7 +129,6 @@ class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
     // screen): the search + filter find-aids appear ONLY when the loaded list
     // has MORE THAN 5 items; with ≤ 5 items the cards stand alone.
     final showFindAids = vehicles.length > 5;
-    final t = context.cx;
     final subtitle = _filter == CustomerVehicleFilter.all
         ? (vehicles.isEmpty ? t.vhCountNone : t.vhCount(vehicles.length))
         : t.vhCount(visible.length);
@@ -152,30 +155,22 @@ class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
                 ],
               )
             else ...[
-              AppPageHeader(
+              // Plain Row header (not AppPageHeader, whose compact layout
+              // stacks actions below the subtitle): title+subtitle expanded
+              // start-side, search/filter/Add actions end-side on the SAME row
+              // on every breakpoint. Row mirrors in RTL so actions stay
+              // end-side. Same >5 condition, same sheets/targets.
+              _VehiclesHeader(
                 title: t.vhTitle,
                 subtitle: subtitle,
-                actions: [
-                  if (showFindAids) ...[
-                    AppIconButton(
-                      icon: Icons.search_rounded,
-                      tooltip: t.vhSearchTitle,
-                      onPressed: () => _openSearch(vehicles),
-                    ),
-                    AppIconButton(
-                      icon: Icons.filter_list_rounded,
-                      tooltip: t.vhFilterTitle,
-                      onPressed: _openFilter,
-                    ),
-                  ],
-                  if (vehicles.isNotEmpty)
-                    TextButton.icon(
-                      onPressed: () =>
-                          context.push(AppRoutes.customerAddVehicle),
-                      icon: const Icon(Icons.add_rounded, size: 18),
-                      label: Text(t.vhAdd),
-                    ),
-                ],
+                showFindAids: showFindAids,
+                showAdd: vehicles.isNotEmpty,
+                searchTooltip: t.vhSearchTitle,
+                filterTooltip: t.vhFilterTitle,
+                addLabel: t.vhAdd,
+                onSearch: () => _openSearch(vehicles),
+                onFilter: _openFilter,
+                onAdd: () => context.push(AppRoutes.customerAddVehicle),
               ),
               if (dash.loadError.isNotEmpty && vehicles.isNotEmpty) ...[
                 const SizedBox(height: AppDimensions.s16),
@@ -479,6 +474,106 @@ class _FilterNoMatch extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// List header: title + count subtitle start-side, find-aids + Add end-side
+/// on the SAME row (plain Row, not AppPageHeader whose compact layout stacks
+/// actions below the subtitle). Technician-today / supervisor-floor precedent:
+/// Expanded(title+subtitle) + end-side actions, RTL-mirrored. Same strings,
+/// same text styles, same AppIconButton contract. Presentation only.
+class _VehiclesHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final bool showFindAids;
+  final bool showAdd;
+  final String searchTooltip;
+  final String filterTooltip;
+  final String addLabel;
+  final VoidCallback onSearch;
+  final VoidCallback onFilter;
+  final VoidCallback onAdd;
+
+  const _VehiclesHeader({
+    required this.title,
+    required this.subtitle,
+    required this.showFindAids,
+    required this.showAdd,
+    required this.searchTooltip,
+    required this.filterTooltip,
+    required this.addLabel,
+    required this.onSearch,
+    required this.onFilter,
+    required this.onAdd,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    // Title row keeps the find-aids top-right on the SAME row (U1 fix);
+    // subtitle spans full width below so it never squeezes the title (U5);
+    // Add stays end-side below (same route, ≤2 taps). RTL-mirrored via
+    // direction-aware Row/AlignmentDirectional.
+    return Semantics(
+      header: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colors.onSurface,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ),
+              if (showFindAids) ...[
+                const SizedBox(width: AppDimensions.s8),
+                AppIconButton(
+                  icon: Icons.search_rounded,
+                  tooltip: searchTooltip,
+                  onPressed: onSearch,
+                ),
+                const SizedBox(width: AppDimensions.s8),
+                AppIconButton(
+                  icon: Icons.filter_list_rounded,
+                  tooltip: filterTooltip,
+                  onPressed: onFilter,
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s4),
+          Text(
+            subtitle,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colors.onSurfaceVariant,
+              height: 1.35,
+            ),
+          ),
+          if (showAdd) ...[
+            const SizedBox(height: AppDimensions.s4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  onPressed: onAdd,
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: Text(addLabel),
+                ),
+              ],
+            ),
+          ],
+        ],
       ),
     );
   }

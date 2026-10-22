@@ -219,33 +219,24 @@ class _CustomerBookingsTabState extends ConsumerState<CustomerBookingsTab> {
         // A single group keeps a comfortable reading width; two groups share
         // the wider canvas instead of stretching one phone-wide column.
         maxContentWidth: sections.length == 2 ? 1080 : 760,
-        child: Column(
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            AppPageHeader(
+            // Plain Row header (not AppPageHeader, whose compact layout stacks
+            // actions below the subtitle): title+subtitle expanded start-side,
+            // search/filter/Book actions end-side on the SAME row. Same >5
+            // condition, same sheets/targets. RTL-mirrored.
+            _BookingsHeader(
               title: t.bkTitle,
               subtitle: subtitle,
-              actions: [
-                if (showFindAids) ...[
-                  AppIconButton(
-                    icon: Icons.search_rounded,
-                    tooltip: t.bkSearchTitle,
-                    onPressed: () => _openSearch(bookings),
-                  ),
-                  AppIconButton(
-                    icon: Icons.filter_list_rounded,
-                    tooltip: t.bkFilterTitle,
-                    onPressed: _openFilter,
-                  ),
-                ],
-                if (bookings.isNotEmpty)
-                  TextButton.icon(
-                    onPressed: () =>
-                        context.push(AppRoutes.customerBookService),
-                    icon: const Icon(Icons.add_rounded, size: 18),
-                    label: Text(t.bkBookCta),
-                  ),
-              ],
+              showFindAids: showFindAids,
+              showBook: bookings.isNotEmpty,
+              searchTooltip: t.bkSearchTitle,
+              filterTooltip: t.bkFilterTitle,
+              bookLabel: t.bkBookCta,
+              onSearch: () => _openSearch(bookings),
+              onFilter: _openFilter,
+              onBook: () => context.push(AppRoutes.customerBookService),
             ),
             if (dash.loadError.isNotEmpty && bookings.isNotEmpty) ...[
               const SizedBox(height: AppDimensions.s16),
@@ -463,6 +454,103 @@ class _FilterNoMatch extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// List header: title + count subtitle start-side, find-aids + Book end-side
+/// on the SAME row (plain Row, not AppPageHeader whose compact layout stacks
+/// actions below the subtitle). Same strings, styles, AppIconButton contract.
+/// Presentation only.
+class _BookingsHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final bool showFindAids;
+  final bool showBook;
+  final String searchTooltip;
+  final String filterTooltip;
+  final String bookLabel;
+  final VoidCallback onSearch;
+  final VoidCallback onFilter;
+  final VoidCallback onBook;
+
+  const _BookingsHeader({
+    required this.title,
+    required this.subtitle,
+    required this.showFindAids,
+    required this.showBook,
+    required this.searchTooltip,
+    required this.filterTooltip,
+    required this.bookLabel,
+    required this.onSearch,
+    required this.onFilter,
+    required this.onBook,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    // Same pattern as vehicles: title row keeps search/filter top-right
+    // (U1 fix); subtitle full width (U5); Book end-side below (same route).
+    return Semantics(
+      header: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colors.onSurface,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ),
+              if (showFindAids) ...[
+                const SizedBox(width: AppDimensions.s8),
+                AppIconButton(
+                  icon: Icons.search_rounded,
+                  tooltip: searchTooltip,
+                  onPressed: onSearch,
+                ),
+                const SizedBox(width: AppDimensions.s8),
+                AppIconButton(
+                  icon: Icons.filter_list_rounded,
+                  tooltip: filterTooltip,
+                  onPressed: onFilter,
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: AppDimensions.s4),
+          Text(
+            subtitle,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colors.onSurfaceVariant,
+              height: 1.35,
+            ),
+          ),
+          if (showBook) ...[
+            const SizedBox(height: AppDimensions.s4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  onPressed: onBook,
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: Text(bookLabel),
+                ),
+              ],
+            ),
+          ],
+        ],
       ),
     );
   }

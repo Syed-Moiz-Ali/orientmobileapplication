@@ -75,6 +75,11 @@ Counts never down (0 -> 11 -> 11).
   exists to create; adding a CTA would be a fake action).
 - No `ValueKey` added to rows (notifications rows never had a key contract;
   Keys untouchable — tests find by type + text).
+- Adversarial review (2026-10-22): zero code changes — all 7 claims rebutted
+  as fixture/feed-owned or brief-contract (EN titles/bodies/times are verbatim
+  stored-field fixtures per brief Truth rules; 1:1 grouping is the 4-fixture
+  composition over sanctioned sections; chevron/banner grammar is the shared-
+  atom contract); 11 testWidgets unchanged (counts 0 -> 11 -> 11, never down).
 
 ## Tap table (AFTER ≤ BEFORE — no regression; EXACT counts)
 
@@ -84,6 +89,55 @@ Counts never down (0 -> 11 -> 11).
 | Open notification destination | 2 taps + scroll (bell + row tap) | ≤ 1 tap from list, ≤ 2 from launch (row tap, same `destination()` mapping) |
 | Mark all read | 2 taps (bell + `Mark all read`) | ≤ 1 tap from list, ≤ 2 from launch (summary row, no scroll) |
 | Mark one read | 2 taps (bell + row tap) | ≤ 2 taps (row tap, background persist) |
+
+## Wave-2 fixer notes (2026-10-22 — investigate, no code change)
+
+- F4 investigated: notification EN titles/bodies/times in ar are
+  backend-stored fields, NOT hardcoded EN templates in UI code. Evidence:
+  `_NotificationRow` renders `Text(notification.title)` /
+  `Text(notification.body)` / `label · time` meta verbatim
+  (`customer_notifications_view.dart:408-409,419-430,432-443`); only the
+  category label is ARB-localized (`labelOf`/`groupOf` → `ntType*`/`ntGroup*`
+  keys). Fixtures carry EN stored-field copy
+  (`customer_notifications_list_after_capture_test.dart` `_service`,
+  `_approval`, `_invoice`, `_general`). Per brief Truth rules
+  (title/body/time/category only from stored fields) and governance
+  (backend-stored/feed strings stay verbatim; translation would be data
+  invention), the ar inbox correctly keeps EN content rows inside otherwise-RTL
+  chrome — no ARB keys added, no copy invented. Logged as
+  `LOGIC_FOLLOWUPS.md` entry 11 (same format) instead.
+- Notifications has NO search by sanctioned design (brief deviation 1) —
+  touched nothing there (F1 explicitly excludes notifications).
+- Counts: 11 testWidgets unchanged (0 -> 11 -> 11, never down). No
+  notifications frames recaptured (no code change); bookings + vehicles
+  after-dirs recaptured and compared back-to-back GREEN (see sibling docs).
+
+## Fixture grouping diversification (2026-10-22 — test-data only, no code change)
+
+- Capture inbox was 1:1 (4 fixtures → 4 groups), understating grouping.
+  Diversified FIXTURE content only in
+  `customer_notifications_list_after_capture_test.dart`: kept original 4
+  fixtures verbatim (`_service` bookingReceived `Booking confirmed` /
+  `Your Camry is booked for Saturday at 10:00.` / `2h ago`; `_approval`
+  approvalNeeded `Estimate needs approval` /
+  `Review the brake estimate before work continues.` / `3h ago`; `_invoice`
+  invoiceReady read; `_general` general read) and added 2 read extras in the
+  same EN stored-copy style (no Arabic invented): `_service2`
+  bookingAssigned `Technician assigned` /
+  `Ali will handle your Camry service today.` / `5h ago` (Service updates);
+  `_approval2` estimateApproved `Estimate approved` /
+  `The brake estimate was approved. Work resumes today.` / `8h ago`
+  (Approvals). Inbox is now 6 (Service x2, Approvals x2, Invoices x1,
+  General x1) with unread still 2, so the Mark-all summary row is unchanged.
+- Behavior kept verbatim: same providers/sync/predicates/routes/handlers
+  (see above); only stored-field feed rows changed. No pinned text/count
+  changed in characterization (11 testWidgets unchanged, 0 -> 11 -> 11,
+  never down); capture has no text/count pins (PNGs only). Counts never
+  down (capture fixtures 4 -> 6).
+- Frames recaptured: `after-customer-notifications/` idle variants
+  (light/dark/ar/1.3x/320px/tablet + stale which shares the inbox) via
+  `--update-goldens` limited to the after-capture test, then compared
+  back-to-back GREEN.
 
 ## New ARB keys (en+ar, `flutter gen-l10n` from `apps/customer_app`)
 

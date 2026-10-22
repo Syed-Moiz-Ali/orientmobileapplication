@@ -474,9 +474,10 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text('Toyota Camry · 2021'), findsOneWidget);
       expect(find.text('ABC 1234'), findsOneWidget);
-      // Year lives ONCE in the title; specs line is colour + mileage only.
-      expect(find.text('White · 45000 km'), findsOneWidget);
-      expect(find.text('2021 · White · 45000 km'), findsNothing);
+      // Year lives ONCE in the title; specs line is colour + mileage only,
+      // mileage grouped via central formatters (C11: `45,000 km`).
+      expect(find.text('White · 45,000 km'), findsOneWidget);
+      expect(find.text('2021 · White · 45,000 km'), findsNothing);
       expect(find.textContaining('VIN'), findsOneWidget);
       expect(find.byType(AppStatusChip), findsNothing);
       expect(find.text('Book service'), findsOneWidget);

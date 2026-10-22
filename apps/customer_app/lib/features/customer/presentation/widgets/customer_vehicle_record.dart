@@ -62,7 +62,6 @@ class CustomerVehicleRecord extends StatelessWidget {
     final colors = theme.colorScheme;
     final name = vehicle.displayName.trim();
     final plate = CustomerVehiclePresentation.plateLabel(vehicle.plateNumber);
-    final specs = CustomerVehiclePresentation.specs(vehicle);
     final vin = vehicle.vin.trim();
 
     // Card hierarchy (brief U0 binding): title = make/model/year (the thing
@@ -70,14 +69,17 @@ class CustomerVehicleRecord extends StatelessWidget {
     // existing contextFor() data — never invented, none when absent.
     // Year lives ONCE in the title (brief hierarchy: title carries identity);
     // the specs line shows colour + mileage only (specs() stays verbatim,
-    // filtered here for display so the predicate is untouched).
+    // rebuilt here for display so the predicate is untouched; mileage uses
+    // the shared displayMileage grouping via central formatters, C11).
     final title = name.isEmpty
         ? t.vhFallbackName
         : (vehicle.year > 0 ? '$name \u00b7 ${vehicle.year}' : name);
-    final yearToken = vehicle.year > 0 ? '${vehicle.year}' : '';
+    final groupedMileage = CustomerVehiclePresentation.displayMileage(
+      vehicle.mileage,
+    );
     final displaySpecs = [
-      for (final part in specs)
-        if (part != yearToken) part,
+      if (vehicle.color.trim().isNotEmpty) vehicle.color.trim(),
+      if (groupedMileage.isNotEmpty) groupedMileage,
     ];
 
     return Semantics(
@@ -265,13 +267,25 @@ class _ContextLine extends StatelessWidget {
               ),
               if (serviceContext.detail.isNotEmpty) ...[
                 const SizedBox(height: AppDimensions.s6),
-                Text(
-                  serviceContext.detail,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colors.onSurface,
-                    fontWeight: FontWeight.w600,
+                // LTR-locked (U10): the detail mixes Latin service/time tokens
+                // with a localized month; an ambient RTL paragraph would
+                // reorder it to `AM 10:00`. Forcing LTR order keeps
+                // `10:00 AM` intact while alignment follows the ambient
+                // direction (end in RTL, start in LTR). Same data/predicates.
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Text(
+                    serviceContext.detail,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: Directionality.of(context) ==
+                            TextDirection.rtl
+                        ? TextAlign.end
+                        : TextAlign.start,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colors.onSurface,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -280,15 +294,22 @@ class _ContextLine extends StatelessWidget {
         ),
         if (open != null) ...[
           const SizedBox(width: AppDimensions.s8),
-          TextButton(
-            onPressed: open,
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.s8,
+          // 48dp target like the bookings row action (U5/U14): the card's
+          // context affordance keeps its own line with a full-height target.
+          SizedBox(
+            height: AppDimensions.touchTarget,
+            child: TextButton(
+              onPressed: open,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.s8,
+                ),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
-            ),
-            child: Text(
-              live ? context.cx.vhTrack : context.cx.vhView,
+              child: Text(
+                live ? context.cx.vhTrack : context.cx.vhView,
+              ),
             ),
           ),
         ],

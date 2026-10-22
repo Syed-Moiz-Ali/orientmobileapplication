@@ -446,6 +446,60 @@ class CustomerLocalizationsAr extends CustomerLocalizations {
   String get vhInService => 'في الورشة الآن';
 
   @override
+  String get vhStatusBooked => 'محجوز';
+
+  @override
+  String get vhStatusRequested => 'مطلوب';
+
+  @override
+  String get vhStatusLastService => 'آخر صيانة';
+
+  @override
+  String get vhStatusInProgress => 'الصيانة جارية';
+
+  @override
+  String get bkWeekdayMon => 'الاثنين';
+
+  @override
+  String get bkWeekdayTue => 'الثلاثاء';
+
+  @override
+  String get bkWeekdayWed => 'الأربعاء';
+
+  @override
+  String get bkWeekdayThu => 'الخميس';
+
+  @override
+  String get bkWeekdayFri => 'الجمعة';
+
+  @override
+  String get bkWeekdaySat => 'السبت';
+
+  @override
+  String get bkWeekdaySun => 'الأحد';
+
+  @override
+  String get bkWeekdayMonday => 'الاثنين';
+
+  @override
+  String get bkWeekdayTuesday => 'الثلاثاء';
+
+  @override
+  String get bkWeekdayWednesday => 'الأربعاء';
+
+  @override
+  String get bkWeekdayThursday => 'الخميس';
+
+  @override
+  String get bkWeekdayFriday => 'الجمعة';
+
+  @override
+  String get bkWeekdaySaturday => 'السبت';
+
+  @override
+  String get bkWeekdaySunday => 'الأحد';
+
+  @override
   String get vhFallbackName => 'مركبة';
 
   @override

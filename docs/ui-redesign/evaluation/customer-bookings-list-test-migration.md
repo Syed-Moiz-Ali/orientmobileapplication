@@ -74,6 +74,10 @@ Counts never down (0 -> 12 -> 16).
   one tap closes the sheet and reveals the record via `ensureVisible`.
 - No `ValueKey` added to rows (bookings rows never had a key contract; Keys
   untouchable — tests find by type + text).
+- Adversarial fix (2026-10-22, presentation only): date-block time wrapped in
+  `Directionality(ltr)` (U10 — the `9:00 AM`-style token keeps its order in
+  RTL instead of rendering `AM 9:00`); same text/data/predicates/routes, 16
+  testWidgets unchanged (counts 0 -> 12 -> 16, never down).
 
 ## Tap table (AFTER ≤ BEFORE — no regression; EXACT counts)
 
@@ -86,6 +90,56 @@ Counts never down (0 -> 12 -> 16).
 | Book service | 2 taps (tab + header/empty Book) | ≤ 2 taps (same entries, same flow) |
 | Retry failed booking | 1 tap inline | ≤ 1 tap inline (same retry + snackbar contracts) |
 | Remove failed booking | 1 tap + 1 confirm from list (tab + Remove + dialog confirm button) | 1 tap + 1 confirm from list (inline Remove + sheet confirm, destructive, no undo), same `failedBookingSync.remove` contracts |
+
+## Wave-2 fixer notes (2026-10-22, presentation only — same data/predicates/routes/sheets)
+
+- F1 header: `AppPageHeader` replaced by a plain-Row header (`_BookingsHeader`
+  in `customer_bookings_tab.dart`): title row keeps search/filter icons
+  top-right on the SAME row (vehicles `_VehiclesHeader` + technician/
+  supervisor/owner precedent, RTL-mirrored); subtitle spans full width below
+  (no mid-word `Bookin/gs` squeeze at 1.0x/1.3x/320px); Book stays end-side
+  below (same `customerBookService` push, ≤ 2 taps). Same > 5-item
+  `showFindAids` condition, same sheets/targets. Verified in
+  `idle_light_1.0_en_360x800.png` (icons top-right, `Bookings` whole),
+  `idle_light_1.3_en_360x800.png` (header intact, no mid-word cut),
+  `idle_light_1.0_en_320x568.png` (single column, header + first card intact).
+- F2 vehicle wrap: `CustomerBookingItem` vehicle `Text` changed
+  `maxLines: 1` → `2` (`softWrap: true`, ellipsis) so the vehicle meta wraps
+  at word boundary (`Toyota` / `Camry`) instead of mid-word `Toyota Cam…`;
+  service title stays `maxLines: 2` untouched. Verified in
+  `idle_light_1.3_en_360x800.png` card 2 (`ABC 1234` + `Toyota`/`Camry` whole).
+- F3 fixture: `customer_bookings_list_after_capture_test.dart` (and the
+  characterization twin) `_liveService.currentStage` changed
+  `'In progress'` → `'Quality check'` (test data only) so the pill
+  (`In Service`, from `inProgress` status) differs from the stage line
+  (`Current stage · Quality check`), proving both signals independently.
+  Production predicate (`groupOf`, `liveServiceFor`, `humanize`) unchanged.
+  Verified in `idle_light_1.0_en_360x800.png` card 1 (pill `In Service` +
+  `Current stage · Quality check`, no duplication).
+- F5 status pills: `CustomerBookingItem` pill label now renders via
+  `AppStatusLabels.of(context).booking(status.name)` (shared-core ARB:
+  `statusConfirmed`/`statusInService`/`statusApprovalRequired`/…,
+  ar `مؤكد`/`قيد الخدمة`/`بانتظار الموافقة`) instead of the legacy
+  English-only `statusLabel` shim; same status, same tone, English fallback
+  when the delegate is absent (tests stay green). Verified in
+  `idle_light_1.0_ar_360x800.png` (pills `قيد الخدمة`, `مؤكد`,
+  `بانتظار الموافقة`).
+- F5 months/weekdays: `CustomerBookingsPresentation.dateLabel/longDateLabel/
+  compactDateLabel/monthLabel/scheduleLabel` now accept `{Locale, l10n}` —
+  Arabic renders ARB weekdays (`bkWeekdayMon…Sun`, `bkWeekdayMonday…Sunday`,
+  new keys en+ar) + central-formatter months (`AppFormatters.monthName`,
+  ar `يونيو`…, Latin digits per frozen policy); time stays LTR-locked
+  (`9:00 AM`, `Directionality(ltr)` in `_DateBlock`, unchanged). Verified in
+  `idle_light_1.0_ar_360x800.png` (date-blocks `10/12/15 يونيو`, times
+  `9:00/10:00/11:00 AM` ordered, chevron mirrored, search/filter top-left).
+- New ARB keys (en+ar, `flutter gen-l10n` from `apps/customer_app`):
+  `vhStatusBooked`, `vhStatusRequested`, `vhStatusLastService`,
+  `vhStatusInProgress`, `bkWeekdayMon/Tue/Wed/Thu/Fri/Sat/Sun`,
+  `bkWeekdayMonday/Tuesday/Wednesday/Thursday/Friday/Saturday/Sunday`.
+  Reused verbatim: all prior `bk*`/`jsStage`/`vh*`/`st*` keys; booking status
+  uses existing shared-core `status*` ARB (no duplication).
+- Counts: 16 testWidgets unchanged (0 -> 12 -> 16, never down). After-frames
+  recaptured in `after-customer-bookings/` and compared back-to-back GREEN.
 
 ## New ARB keys (en+ar, `flutter gen-l10n` from `apps/customer_app`)
 

@@ -65,9 +65,15 @@ class _VehiclesSearchSheetState extends State<_VehiclesSearchSheet> {
       final specs = CustomerVehiclePresentation.specs(
         vehicle,
       ).join(' ').toLowerCase();
+      // Grouped display form mirrors the record line, so `45,000` matches
+      // what the card shows (same data, presentation only).
+      final grouped = CustomerVehiclePresentation.displayMileage(
+        vehicle.mileage,
+      ).toLowerCase();
       return name.contains(q) ||
           plate.contains(q) ||
           specs.contains(q) ||
+          (grouped.isNotEmpty && grouped.contains(q)) ||
           (normalizedQuery.isNotEmpty &&
               _normalizedPlate(vehicle.plateNumber).contains(normalizedQuery));
     }).toList();

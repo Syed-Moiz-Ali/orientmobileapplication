@@ -43,9 +43,12 @@ class CustomerFailedBookingItem extends StatelessWidget {
     final title = service.isEmpty ? t.bkServiceAppt : service;
     final plate = booking.plateNumber.trim();
     final vehicle = booking.vehicleName.trim();
+    final locale = Localizations.localeOf(context);
     final schedule = CustomerBookingsPresentation.scheduleLabel(
       booking.date,
       booking.time,
+      locale: locale,
+      l10n: t,
     );
 
     return Semantics(
