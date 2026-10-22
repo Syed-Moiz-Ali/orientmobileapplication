@@ -238,9 +238,9 @@
   "@ownerRegTotal": { "description": "Table column" },
   "ownerRegStatus": "Status",
   "@ownerRegStatus": { "description": "Table column" },
-  "ownerRegCount": "{count} jobs",
+  "ownerRegCount": "{count, plural, =0{0 jobs} =1{1 job} other{{count} jobs}}",
   "@ownerRegCount": {
-    "description": "Register count pill",
+    "description": "Register count pill (ICU plural 0/1/many)",
     "placeholders": { "count": { "type": "int" } }
   },
   "ownerRegSelectPrompt": "Select a job to preview.",
@@ -249,8 +249,8 @@
   "@ownerRegEmpty": { "description": "Register empty state" },
   "ownerRegNoMatch": "No jobs match this search.",
   "@ownerRegNoMatch": { "description": "Register no-match state" },
-  "ownerRegOpen": "Open register",
-  "@ownerRegOpen": { "description": "Preview pane open action" },
+  "ownerRegOpen": "Open job",
+  "@ownerRegOpen": { "description": "Preview pane open action (opens the job audit)" },
 
   "ownerJsReceived": "Intake",
   "@ownerJsReceived": { "description": "Status pill" },

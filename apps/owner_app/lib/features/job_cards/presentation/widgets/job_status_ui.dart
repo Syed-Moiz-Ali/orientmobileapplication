@@ -2,19 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:owner_app/l10n/gen/owner_localizations.dart';
 
-/// Fixed-decimal tabular AED (`AED 2,450.00` / `2,450.00 د.إ`, Latin digits
-/// both locales). The shared `moneyAED` trims whole amounts to `AED 2,450`;
+/// Fixed-decimal tabular AED (`AED 2,450.00`, Latin digits + Latin code both
+/// locales). The shared `moneyAED` trims whole amounts to `AED 2,450`;
 /// the register acceptance demands fixed cents, so this display-only helper
 /// groups through the shared formatter and appends the exact cents. No
 /// rounding policy beyond half-cent display rounding; never feeds payloads.
+///
+/// U10: the code stays Latin `AED` in BOTH locales (same family as LOGIC
+/// entry #9 — server codes like `AED` and plates stay LTR by design). The
+/// Arabic-script `د.إ` run broke under bidi mirroring (rendered `E.E` with
+/// the order flipped to number-first in ar goldens), so it is not used here.
+/// Call sites keep the value inside an LTR `Directionality` with tabular
+/// figures so ar renders `AED 2,450.00` LTR-intact.
 String formatAed2(AppFormatters f, double amount) {
   final cents = (amount * 100).round();
   final sign = cents < 0 ? '-' : '';
   final abs = cents.abs();
   final head = f.group(abs ~/ 100);
   final tail = (abs % 100).toString().padLeft(2, '0');
-  final number = '$sign$head.$tail';
-  return f.isArabic ? '$number د.إ' : 'AED $number';
+  return 'AED $sign$head.$tail';
 }
 
 /// Lifecycle position for the six-step dossier stepper
@@ -63,7 +69,7 @@ Widget jobStatusPill(
   JobCardStatus status, {
   bool showDot = true,
 }) {
-  final label = jobStatusLabel(t, status).toUpperCase();
+  final label = jobStatusLabel(t, status);
   return switch (status) {
     JobCardStatus.completed ||
     JobCardStatus.delivered ||

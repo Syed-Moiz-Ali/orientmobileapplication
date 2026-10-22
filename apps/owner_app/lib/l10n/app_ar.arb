@@ -115,11 +115,11 @@
   "ownerRegCustomer": "العميل",
   "ownerRegTotal": "الإجمالي",
   "ownerRegStatus": "الحالة",
-  "ownerRegCount": "{count} وظائف",
+  "ownerRegCount": "{count, plural, =0{0 وظائف} =1{وظيفة واحدة} other{{count} وظائف}}",
   "ownerRegSelectPrompt": "اختر عملًا للمعاينة.",
   "ownerRegEmpty": "لا توجد بطاقات عمل.",
   "ownerRegNoMatch": "لا وظائف تطابق هذا البحث.",
-  "ownerRegOpen": "فتح السجل",
+  "ownerRegOpen": "فتح العمل",
 
   "ownerJsReceived": "الاستلام",
   "ownerJsInspected": "الفحص",

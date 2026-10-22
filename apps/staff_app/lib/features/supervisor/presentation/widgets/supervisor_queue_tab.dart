@@ -34,15 +34,13 @@ class _SupervisorQueueTabState extends ConsumerState<SupervisorQueueTab> {
 
     final sortedBookings = [...bookings]
       ..sort(
-        (a, b) => queuePriorityRank(bookingPriority(a)).compareTo(
-          queuePriorityRank(bookingPriority(b)),
-        ),
+        (a, b) => queuePriorityRank(
+          bookingPriority(a),
+        ).compareTo(queuePriorityRank(bookingPriority(b))),
       );
     final visibleBookings = _filter == null
         ? sortedBookings
-        : sortedBookings
-              .where((b) => _priorityLabel(t, b) == _filter)
-              .toList();
+        : sortedBookings.where((b) => _priorityLabel(t, b) == _filter).toList();
 
     final counts = {
       vip: bookings.where((b) => _priorityLabel(t, b) == vip).length,
@@ -54,9 +52,13 @@ class _SupervisorQueueTabState extends ConsumerState<SupervisorQueueTab> {
 
     final isEmpty =
         bookings.isEmpty && breakdowns.isEmpty && !state.isQueueLoading;
-    final isNoMatch = _filter != null &&
-        visibleBookings.isEmpty &&
-        breakdowns.isEmpty;
+    // Skeleton owns the no-cached-data load (jobs/review pattern): the
+    // provider never writes isQueueLoading on a warm tab with rows, so a
+    // loading flag with rows still renders stale lists + spinner below.
+    final isLoadingNoData =
+        state.isQueueLoading && bookings.isEmpty && breakdowns.isEmpty;
+    final isNoMatch =
+        _filter != null && visibleBookings.isEmpty && breakdowns.isEmpty;
 
     return RefreshIndicator(
       onRefresh: notifier.refreshQueue,
@@ -94,22 +96,26 @@ class _SupervisorQueueTabState extends ConsumerState<SupervisorQueueTab> {
               selected: _filter,
               counts: counts,
               onSelected: (v) => setState(() => _filter = v),
+              // U5: chips flow at chip boundaries on narrow viewports — the
+              // trailing facet is never cut mid-word. Same options/counts.
+              wrap: true,
             ),
             const SizedBox(height: AppDimensions.s16),
             if (state.queueError.isNotEmpty)
-              AppInfoPanel.danger(
+              AppErrorState(
+                title: SharedCoreL10n.of(context).commonErrorTitle,
                 message: t.svQueueError,
-                action: TextButton(
-                  onPressed: notifier.refreshQueue,
-                  child: Text(SharedCoreL10n.of(context).commonRetry),
-                ),
+                retryLabel: SharedCoreL10n.of(context).commonRetry,
+                onRetry: notifier.refreshQueue,
               )
-            else if (state.isQueueLoading && isEmpty)
-              const AppSkeleton.listRows(rows: 6)
+            else if (isLoadingNoData)
+              const AppShimmerSkeleton.listRows(rows: 6)
             else if (isEmpty)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppDimensions.s32),
-                child: EmptyState(
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppDimensions.s32,
+                ),
+                child: AppEmptyState(
                   icon: Icons.inbox_outlined,
                   title: t.svQueueEmpty,
                   message: t.svQueueEmptyMessage,
@@ -118,8 +124,12 @@ class _SupervisorQueueTabState extends ConsumerState<SupervisorQueueTab> {
             else ...[
               if (isNoMatch && breakdowns.isEmpty)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: AppDimensions.s24),
-                  child: EmptyState.noMatch(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: AppDimensions.s24,
+                  ),
+                  child: AppEmptyState(
+                    icon: Icons.search_off_rounded,
+                    title: SharedCoreL10n.of(context).commonNoResults,
                     message: t.svQueueNoMatch,
                     actionLabel: SharedCoreL10n.of(context).filterBarClear,
                     onAction: () => setState(() => _filter = null),
@@ -142,7 +152,10 @@ class _SupervisorQueueTabState extends ConsumerState<SupervisorQueueTab> {
                       title: b.vehicleName.isNotEmpty ? b.vehicleName : b.issue,
                       detail: b.issue,
                       plate: b.vehiclePlate,
-                      trailing: StatusPill.danger(t.svQueuePriorityEmergency),
+                      trailing: AppStatusChip(
+                        label: t.svQueuePriorityEmergency,
+                        kind: AppStatusKind.error,
+                      ),
                       onAssign: () => _route(
                         isBooking: false,
                         id: b.id,
@@ -163,7 +176,9 @@ class _SupervisorQueueTabState extends ConsumerState<SupervisorQueueTab> {
                     _QueueRow(
                       icon: Icons.event_rounded,
                       tone: context.semanticColors.info,
-                      title: b.vehicleName.isNotEmpty ? b.vehicleName : b.serviceType,
+                      title: b.vehicleName.isNotEmpty
+                          ? b.vehicleName
+                          : b.serviceType,
                       detail: b.serviceType,
                       plate: b.plateNumber,
                       trailing: _priorityPill(t, b),
@@ -191,11 +206,18 @@ class _SupervisorQueueTabState extends ConsumerState<SupervisorQueueTab> {
 
   Widget _priorityPill(StaffLocalizations t, BookingQueueResponse b) =>
       switch (bookingPriority(b)) {
-        SupervisorQueuePriority.vip => StatusPill.warning(t.svQueuePriorityVip),
-        SupervisorQueuePriority.promisedToday =>
-          StatusPill.info(t.svQueuePriorityPromised),
-        SupervisorQueuePriority.insurance =>
-          StatusPill.neutral(t.svQueuePriorityInsurance),
+        SupervisorQueuePriority.vip => AppStatusChip(
+          label: t.svQueuePriorityVip,
+          kind: AppStatusKind.warning,
+        ),
+        SupervisorQueuePriority.promisedToday => AppStatusChip(
+          label: t.svQueuePriorityPromised,
+          kind: AppStatusKind.info,
+        ),
+        SupervisorQueuePriority.insurance => AppStatusChip(
+          label: t.svQueuePriorityInsurance,
+          kind: AppStatusKind.neutral,
+        ),
         SupervisorQueuePriority.normal => const SizedBox.shrink(),
       };
 
@@ -208,9 +230,12 @@ class _SupervisorQueueTabState extends ConsumerState<SupervisorQueueTab> {
     final notifier = ref.read(supervisorDashboardProvider.notifier);
     final advisors = notifier.advisors;
     if (advisors.isEmpty) {
-      showSupervisorToast(context, t.svQueueNoAdvisors,
-          icon: Icons.info_outline_rounded,
-          color: context.semanticColors.warning.base);
+      showSupervisorToast(
+        context,
+        t.svQueueNoAdvisors,
+        icon: Icons.info_outline_rounded,
+        color: context.semanticColors.warning.base,
+      );
       return;
     }
     final selected = await showAppModalSheet<int>(
@@ -232,7 +257,9 @@ class _SupervisorQueueTabState extends ConsumerState<SupervisorQueueTab> {
           ? (isBooking ? t.svQueueAssigned : t.svQueueDispatched)
           : t.svQueueAssignFailed,
       icon: ok ? Icons.check_circle_outline : Icons.error_outline,
-      color: ok ? context.semanticColors.success.base : context.semanticColors.danger.base,
+      color: ok
+          ? context.semanticColors.success.base
+          : context.semanticColors.danger.base,
     );
   }
 }
@@ -377,15 +404,15 @@ class _QueueRow extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppDimensions.s10),
-              SecondaryButton(
+              AppPillButton.secondary(
                 label: t.svQueueAssign,
-                leadingIcon: Icons.person_add_alt_1_rounded,
+                icon: Icons.person_add_alt_1_rounded,
                 onPressed: onAssign,
               ),
             ],
           ),
         ),
-        Divider(height: 1, color: context.colors.outlineVariant),
+        const AppDivider(),
       ],
     );
   }
@@ -401,9 +428,9 @@ class _EmptyLine extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppDimensions.s16),
       child: Text(
         message,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: context.colors.onSurfaceVariant,
-        ),
+        style: Theme.of(
+          context,
+        ).textTheme.bodySmall?.copyWith(color: context.colors.onSurfaceVariant),
       ),
     );
   }
@@ -486,7 +513,7 @@ class _AdvisorPickerState extends State<_AdvisorPicker> {
             ),
           ),
         const SizedBox(height: AppDimensions.s12),
-        PrimaryButton(
+        AppPillButton.primary(
           label: t.svQueueAssign,
           icon: Icons.arrow_forward_rounded,
           onPressed: () => Navigator.of(context).pop(_selected),

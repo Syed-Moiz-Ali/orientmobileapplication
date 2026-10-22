@@ -349,7 +349,14 @@ class OwnerLocalizationsAr extends OwnerLocalizations {
 
   @override
   String ownerRegCount(int count) {
-    return '$count وظائف';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count وظائف',
+      one: 'وظيفة واحدة',
+      zero: '0 وظائف',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -362,7 +369,7 @@ class OwnerLocalizationsAr extends OwnerLocalizations {
   String get ownerRegNoMatch => 'لا وظائف تطابق هذا البحث.';
 
   @override
-  String get ownerRegOpen => 'فتح السجل';
+  String get ownerRegOpen => 'فتح العمل';
 
   @override
   String get ownerJsReceived => 'الاستلام';

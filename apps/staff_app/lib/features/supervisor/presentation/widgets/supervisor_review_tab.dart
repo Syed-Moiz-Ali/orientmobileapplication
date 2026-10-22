@@ -53,19 +53,20 @@ class SupervisorReviewTab extends ConsumerWidget {
             ),
             const SizedBox(height: AppDimensions.s16),
             if (state.reviewError.isNotEmpty)
-              AppInfoPanel.danger(
+              AppErrorState(
+                title: SharedCoreL10n.of(context).commonErrorTitle,
                 message: t.svReviewError,
-                action: TextButton(
-                  onPressed: notifier.refreshReview,
-                  child: Text(SharedCoreL10n.of(context).commonRetry),
-                ),
+                retryLabel: SharedCoreL10n.of(context).commonRetry,
+                onRetry: notifier.refreshReview,
               )
             else if (loading)
-              const AppSkeleton.listRows(rows: 5)
+              const AppShimmerSkeleton.listRows(rows: 5)
             else if (awaiting.isEmpty)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppDimensions.s40),
-                child: EmptyState(
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppDimensions.s40,
+                ),
+                child: AppEmptyState(
                   icon: Icons.verified_outlined,
                   title: t.svReviewEmpty,
                   message: t.svReviewEmptyMessage,
@@ -145,7 +146,10 @@ class _QcRow extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: AppDimensions.s8),
-                  StatusPill.info(t.svReviewProgress(done, total)),
+                  AppStatusChip(
+                    label: t.svReviewProgress(done, total),
+                    kind: AppStatusKind.info,
+                  ),
                 ],
               ),
               const SizedBox(height: 2),
@@ -163,20 +167,34 @@ class _QcRow extends StatelessWidget {
                   ),
                   if (technician.isNotEmpty) ...[
                     const SizedBox(width: AppDimensions.s8),
-                    Text(
-                      initialsOf(technician),
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: context.colors.onSurfaceVariant,
-                        fontWeight: FontWeight.w800,
+                    // U13: initials stay compact by design (brief-kept), but
+                    // the feed's full technician name is one long-press away
+                    // and exposed to screen readers. Zero new copy.
+                    Tooltip(
+                      message: technician,
+                      child: Text(
+                        initialsOf(technician),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: context.colors.onSurfaceVariant,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ],
                 ],
               ),
               const SizedBox(height: AppDimensions.s10),
-              AppLinearProgress(value: progress, height: 5),
+              // C2: complete pins success (never the auto error red), partial
+              // pins neutral accent — the meter never contradicts the pill.
+              // Same progress value, token only.
+              AppProgressBar(
+                value: progress,
+                tone: total > 0 && done >= total
+                    ? AppProgressTone.success
+                    : AppProgressTone.accent,
+              ),
               const SizedBox(height: AppDimensions.s12),
-              PrimaryButton(
+              AppPillButton.primary(
                 label: t.svReviewStart,
                 icon: Icons.fact_check_rounded,
                 onPressed: () {
@@ -194,7 +212,7 @@ class _QcRow extends StatelessWidget {
             ],
           ),
         ),
-        Divider(height: 1, color: context.colors.outlineVariant),
+        const AppDivider(),
       ],
     );
   }
