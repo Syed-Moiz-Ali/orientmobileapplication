@@ -746,10 +746,10 @@ abstract class OwnerLocalizations {
   /// **'Status'**
   String get ownerRegStatus;
 
-  /// Register count pill
+  /// Register count pill (ICU plural 0/1/many)
   ///
   /// In en, this message translates to:
-  /// **'{count} jobs'**
+  /// **'{count, plural, =0{0 jobs} =1{1 job} other{{count} jobs}}'**
   String ownerRegCount(int count);
 
   /// Preview pane placeholder
@@ -770,10 +770,10 @@ abstract class OwnerLocalizations {
   /// **'No jobs match this search.'**
   String get ownerRegNoMatch;
 
-  /// Preview pane open action
+  /// Preview pane open action (opens the job audit)
   ///
   /// In en, this message translates to:
-  /// **'Open register'**
+  /// **'Open job'**
   String get ownerRegOpen;
 
   /// Status pill

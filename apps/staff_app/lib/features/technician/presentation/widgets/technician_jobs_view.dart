@@ -25,8 +25,7 @@ class TechnicianJobsView extends ConsumerStatefulWidget {
   const TechnicianJobsView({super.key, this.fixedRefreshAt});
 
   @override
-  ConsumerState<TechnicianJobsView> createState() =>
-      _TechnicianJobsViewState();
+  ConsumerState<TechnicianJobsView> createState() => _TechnicianJobsViewState();
 }
 
 class _TechnicianJobsViewState extends ConsumerState<TechnicianJobsView> {
@@ -146,9 +145,7 @@ class _TechnicianJobsViewState extends ConsumerState<TechnicianJobsView> {
         AppEmptyState(
           icon: Icons.search_off_rounded,
           title: t.techJobsNoMatch,
-          message: filtering
-              ? t.techJobsNoMatchHint
-              : t.techJobsNoMatch,
+          message: filtering ? t.techJobsNoMatchHint : t.techJobsNoMatch,
           actionLabel: t.techJobsClearFilters,
           onAction: () {
             notifier.updateSearch('');
@@ -224,9 +221,7 @@ class _JobsToolbar extends StatelessWidget {
       children: [
         AppFilterBar(
           options: options,
-          selected: state.selectedFilter == 'All'
-              ? null
-              : state.selectedFilter,
+          selected: state.selectedFilter == 'All' ? null : state.selectedFilter,
           counts: counts,
           countSemantics: (label, count) =>
               t.techJobsFilterSemantics(label, count),
@@ -234,6 +229,10 @@ class _JobsToolbar extends StatelessWidget {
             HapticFeedback.selectionClick();
             notifier.updateFilter(value ?? 'All');
           },
+          // U5: chips flow at chip boundaries on narrow viewports — the
+          // trailing status is never cut mid-word and Clear flows inline
+          // last. Same options/counts/seats, layout only.
+          wrap: true,
         ),
       ],
     );

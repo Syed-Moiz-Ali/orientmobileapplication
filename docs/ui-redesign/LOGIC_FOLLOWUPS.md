@@ -139,3 +139,48 @@ owner. No silent filtering.
 - Proposed owner: backend/product — return locale-aware labels (or confirm
   English-codes acceptable, e.g. "AED", plate numbers stay LTR by design).
 - Status: open. Presentation renders the feed verbatim; no invented copy.
+
+## 12. Owner register feed returns terminal statuses under "All active workshop jobs"
+
+- Feed: `jobCardsProvider`
+  (`apps/owner_app/lib/features/job_cards/presentation/providers/job_card_providers.dart`)
+  returns the status-agnostic server list with no terminal-status exclusion,
+  so a terminal card ("JC-1044 · Khalid · Hilux · Completed") renders at the
+  bottom of the "All active workshop jobs" register. Ordering is correct
+  (WIP → QC → Completed); inclusion without disclosure is the issue — either
+  the feed is wrong or the subtitle is wrong ("active" plainly excludes
+  "completed").
+- Evidence: adversarial owner-cards review D6 (2026-10-22), verified in
+  `docs/ui-redesign/baseline/after-owner-job-cards/idle_light_1.0_en_360x800.png`
+  (card 3 `Completed` under the `All active workshop jobs` subtitle; same in
+  dark, 320, 1.3x and wide-table row 3). Prior entries log advisor
+  completed-under-assigned (#1) but nothing for this owner register feed.
+- Proposed owner: backend/product — either exclude terminal statuses from the
+  register feed (or add an `activeOnly` flag / dedicated active endpoint), or
+  confirm that the register is meant to include recently completed work and
+  rename the subtitle. Frontend takes no silent-filter action until then.
+- Status: open. Register behavior intentionally unchanged.
+
+## 13. Supervisor Jobs register feed returns a terminal status under "Active jobs"
+
+- Feed: `supervisorDashboardProvider`
+  (`apps/staff_app/lib/features/supervisor/presentation/providers/supervisor_providers.dart:386-399`)
+  returns the status-agnostic server assigned-jobs list with no terminal-status
+  exclusion, so a terminal job ("JC-102 · Sara · Civic DEF 9012 · Completed ·
+  4/4 tasks") renders inside the "Active jobs / N on the floor" register.
+  Ordering is correct (running → completed → waiting), but inclusion without
+  disclosure is the issue — either the feed is wrong or the headline is wrong
+  ("active" plainly excludes "completed").
+- Evidence: adversarial sv-jobs review D2 (2026-10-22), verified in
+  `docs/ui-redesign/baseline/after-supervisor-jobs/idle_light_1.0_en_360x800.png`
+  (row 2 `Completed` pill under the `Active jobs` header; same in 320, 1.3x,
+  ar, tablet). The capture fixture itself carries the terminal job
+  (`supervisor_jobs_list_after_capture_test.dart:47-55` `_doneJob`), so sort
+  and fixture are verified innocent — the feed is responsible, same family as
+  #1 (advisor completed-under-assigned) and #12 (owner completed-under-active).
+- Proposed owner: backend/product — either exclude terminal statuses from the
+  assigned-jobs feed (or add an `activeOnly` flag / dedicated active endpoint),
+  or confirm that the register is meant to include recently completed work and
+  rename the subtitle. Frontend takes no silent-filter action until then.
+- Status: open. Register behavior intentionally unchanged (presentation keeps
+  the pill + meter + summary exactly as the feed reports them).

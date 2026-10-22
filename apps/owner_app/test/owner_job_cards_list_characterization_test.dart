@@ -1,11 +1,10 @@
 // Characterization baseline for the owner job-cards register (GROUP-C list-ops).
 //
 // Behavior pins against the CURRENT register UI. These tests assert behavior
-// only (header count with no header search, inline search predicate,
-// milestone filter, presentation sort, compact open + wide select/preview/open
-// contracts, empty/no-match/loading affordances, tabular money) — never
-// legacy widget types — so they stay green across the App* recomposition and
-// become the migration baseline. Do NOT modify these tests after the
+// only (header search-sheet predicate, milestone filter, presentation sort,
+// compact open + wide select/preview/open contracts, empty/no-match/loading
+// affordances, tabular money) — never legacy widget types — so they stay
+// green across the App* recomposition and become the migration baseline. Do NOT modify these tests after the
 // recomposition (see
 // docs/ui-redesign/evaluation/owner-job-cards-list-test-migration.md).
 
@@ -149,25 +148,30 @@ Finder _searchBox() => find.descendant(
   matching: find.byType(TextField),
 );
 
-/// Taps a milestone chip inside the shared filter bar (the table header and
-/// the preview pane never repeat these labels, so the bar scope keeps the
-/// finder unambiguous).
+/// Header search affordance (U1/C16 search-first): the app-bar icon opens the
+/// register filter as a full sheet over the same predicate.
+Finder _headerSearchIcon() => find.descendant(
+  of: find.byType(WorkspaceAppBar),
+  matching: find.byIcon(Icons.search_rounded),
+);
+
+Future<void> _openSearchSheet(WidgetTester tester) async {
+  expect(_headerSearchIcon(), findsOneWidget);
+  await tester.tap(_headerSearchIcon());
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 300));
+  expect(find.byType(AppSearchField), findsOneWidget);
+}
+
+/// Taps a milestone chip inside the shared filter bar. The bar wraps on
+/// compact/medium (U5 word-boundary fix), so chips are always in view — no
+/// harness drag needed.
 Future<void> _tapFilter(WidgetTester tester, String label) async {
   final chip = find.descendant(
     of: find.byType(AppFilterBar),
     matching: find.text(label),
   );
   expect(chip, findsOneWidget);
-  // The six-chip rail scrolls horizontally: one drag reveals the later chips
-  // (the `findsOneWidget` passes while the chip is still off-screen, so the
-  // assertion after the tap is what proves the tap landed).
-  final rail = find.descendant(
-    of: find.byType(AppFilterBar),
-    matching: find.byType(Scrollable),
-  );
-  await tester.drag(rail.first, const Offset(-300, 0));
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 100));
   await tester.tap(chip, warnIfMissed: false);
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 100));
@@ -195,7 +199,7 @@ void main() {
     );
   });
 
-  testWidgets('header shows title, subtitle and live count, no header search', (
+  testWidgets('header shows title, subtitle and live count, header search', (
     tester,
   ) async {
     await _pumpRegister(tester, const [_wipJob, _qcJob, _readyJob]);
@@ -203,16 +207,11 @@ void main() {
     expect(find.text('Job register'), findsWidgets);
     expect(find.text('All active workshop jobs'), findsOneWidget);
     expect(find.text('3 jobs'), findsOneWidget);
-    // Audited single affordance: the inline field below owns search; the app
-    // bar carries no search entry point at any size.
-    expect(find.byType(AppSearchField), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byType(WorkspaceAppBar),
-        matching: find.byIcon(Icons.search_rounded),
-      ),
-      findsNothing,
-    );
+    // U1/C16 search-first: the header icon opens the register filter as a
+    // full sheet over the same predicate; no inline field lives in the page
+    // at any size.
+    expect(_headerSearchIcon(), findsOneWidget);
+    expect(find.byType(AppSearchField), findsNothing);
   });
 
   testWidgets('compact rows render identity, tabular money and status', (
@@ -234,10 +233,13 @@ void main() {
     expect(find.text('Completed'), findsWidgets);
   });
 
-  testWidgets('inline search narrows by customer, plate and job ref', (
+  testWidgets('sheet search narrows by customer, plate and job ref', (
     tester,
   ) async {
     await _pumpRegister(tester, const [_wipJob, _qcJob, _readyJob]);
+
+    // Header icon opens the full search sheet over the same predicate.
+    await _openSearchSheet(tester);
 
     await tester.enterText(_searchBox(), 'sara');
     await tester.pump();
@@ -245,6 +247,8 @@ void main() {
     expect(find.text('JC-1043'), findsWidgets);
     expect(find.text('JC-1042'), findsNothing);
     expect(find.text('JC-1044'), findsNothing);
+    // ICU plural: a single match reads `1 job` (was `1 jobs`).
+    expect(find.text('1 job'), findsWidgets);
 
     await tester.enterText(_searchBox(), 'XYZ 1111');
     await tester.pump();
@@ -305,7 +309,7 @@ void main() {
     // Preview carries the same dossier-mini (pill + tabular total).
     expect(find.textContaining('AED 899.50'), findsWidgets);
 
-    await tester.tap(find.text('Open register'));
+    await tester.tap(find.text('Open job'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(tester.takeException(), isNull);
@@ -322,17 +326,40 @@ void main() {
   testWidgets('no match shows the no-match state and clears', (tester) async {
     await _pumpRegister(tester, const [_wipJob]);
 
+    await _openSearchSheet(tester);
     await tester.enterText(_searchBox(), 'zzz-no-such-job');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
+    // Sheet and register render the same predicate: both show no-match.
+    final sheet = find.byType(BottomSheet);
+    expect(sheet, findsOneWidget);
     expect(
-      find.textContaining('No jobs match this search.'),
+      find.descendant(
+        of: sheet,
+        matching: find.textContaining('No jobs match this search.'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(JobCardsListView),
+        matching: find.textContaining('No jobs match this search.'),
+      ),
       findsOneWidget,
     );
 
-    await tester.enterText(_searchBox(), '');
+    // 1-tap clear from the sheet restores the register list.
+    await tester.tap(
+      find.descendant(of: sheet, matching: find.text('Clear')),
+    );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('JC-1042'), findsWidgets);
+
+    // Dismiss the sheet; the register behind is intact.
+    Navigator.of(tester.element(sheet)).pop();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('JC-1042'), findsWidgets);
   });
 

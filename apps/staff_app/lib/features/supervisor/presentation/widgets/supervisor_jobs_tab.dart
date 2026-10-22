@@ -44,14 +44,27 @@ class _SupervisorJobsTabState extends ConsumerState<SupervisorJobsTab> {
         ? searched
         : searched.where((j) => _bucket(j.status) == _filter).toList();
 
-    final inProgress = allJobs.where((j) => _bucket(j.status) == t.svJobsInProgress).length;
-    final completed = allJobs.where((j) => _bucket(j.status) == t.svJobsCompleted).length;
-    final waiting = allJobs.where((j) => _bucket(j.status) == t.svBayPartsDelay).length;
+    final inProgress = allJobs
+        .where((j) => _bucket(j.status) == t.svJobsInProgress)
+        .length;
+    final completed = allJobs
+        .where((j) => _bucket(j.status) == t.svJobsCompleted)
+        .length;
+    final waiting = allJobs
+        .where((j) => _bucket(j.status) == t.svBayPartsDelay)
+        .length;
 
     final loading = state.isDashboardLoading && allJobs.isEmpty;
-    final isNoMatch = (_query.trim().isNotEmpty || _filter != null) &&
+    final isNoMatch =
+        (_query.trim().isNotEmpty || _filter != null) &&
         filtered.isEmpty &&
         allJobs.isNotEmpty;
+    // U6/C16 one-primary-CTA: when the register is confirmed empty the
+    // empty-state Assign is the single entry point (the brief's "never both
+    // at once") — the header action is shown only while jobs may exist.
+    // Same sheet, same handler; presentation seat only, no logic change.
+    final isEmptyRegister =
+        !loading && allJobs.isEmpty && state.dashboardError.isEmpty;
 
     return RefreshIndicator(
       onRefresh: notifier.refreshDashboard,
@@ -72,13 +85,15 @@ class _SupervisorJobsTabState extends ConsumerState<SupervisorJobsTab> {
               title: t.svJobsTitle,
               subtitle: t.svJobsSubtitle(allJobs.length),
               leading: const Icon(Icons.assignment_outlined),
-              primaryAction: AppPillButton.primary(
-                label: t.svJobsAssign,
-                icon: Icons.engineering_rounded,
-                size: AppPillButtonSize.small,
-                isExpanded: false,
-                onPressed: widget.onOpenAssign,
-              ),
+              primaryAction: isEmptyRegister
+                  ? null
+                  : AppPillButton.primary(
+                      label: t.svJobsAssign,
+                      icon: Icons.engineering_rounded,
+                      size: AppPillButtonSize.small,
+                      isExpanded: false,
+                      onPressed: widget.onOpenAssign,
+                    ),
             ),
             const SizedBox(height: AppDimensions.s16),
             _JobsSummary(
@@ -94,7 +109,11 @@ class _SupervisorJobsTabState extends ConsumerState<SupervisorJobsTab> {
             ),
             const SizedBox(height: AppDimensions.s12),
             AppFilterBar(
-              options: [t.svJobsInProgress, t.svJobsCompleted, t.svBayPartsDelay],
+              options: [
+                t.svJobsInProgress,
+                t.svJobsCompleted,
+                t.svBayPartsDelay,
+              ],
               selected: _filter,
               counts: {
                 t.svJobsInProgress: inProgress,
@@ -102,6 +121,10 @@ class _SupervisorJobsTabState extends ConsumerState<SupervisorJobsTab> {
                 t.svBayPartsDelay: waiting,
               },
               onSelected: (v) => setState(() => _filter = v),
+              // U5: chips flow at chip boundaries on narrow viewports — the
+              // trailing bucket is never cut mid-word and Clear flows inline
+              // last. Same options/counts/seats, layout only.
+              wrap: true,
             ),
             const SizedBox(height: AppDimensions.s16),
             if (state.dashboardError.isNotEmpty)
@@ -160,9 +183,21 @@ class _JobsSummary extends StatelessWidget {
       runSpacing: AppDimensions.s8,
       children: [
         _Stat(label: t.svJobsTotal, value: total, tone: null),
-        _Stat(label: t.svJobsInProgress, value: inProgress, tone: context.semanticColors.info),
-        _Stat(label: t.svJobsCompleted, value: completed, tone: context.semanticColors.success),
-        _Stat(label: t.svBayPartsDelay, value: waiting, tone: context.semanticColors.warning),
+        _Stat(
+          label: t.svJobsInProgress,
+          value: inProgress,
+          tone: context.semanticColors.info,
+        ),
+        _Stat(
+          label: t.svJobsCompleted,
+          value: completed,
+          tone: context.semanticColors.success,
+        ),
+        _Stat(
+          label: t.svBayPartsDelay,
+          value: waiting,
+          tone: context.semanticColors.warning,
+        ),
       ],
     );
   }
@@ -285,7 +320,9 @@ class _JobRow extends StatelessWidget {
               Container(
                 width: 3,
                 height: 44,
-                margin: const EdgeInsetsDirectional.only(end: AppDimensions.s12),
+                margin: const EdgeInsetsDirectional.only(
+                  end: AppDimensions.s12,
+                ),
                 decoration: BoxDecoration(
                   color: tone.base,
                   borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
@@ -343,7 +380,16 @@ class _JobRow extends StatelessWidget {
                       Row(
                         children: [
                           Expanded(
-                            child: AppProgressBar(value: progress),
+                            // C2: the meter never carries status — rail + pill own
+                            // it. Complete pins success (never the auto error
+                            // red), partial pins neutral accent (never premature
+                            // success/error). Same progress value, token only.
+                            child: AppProgressBar(
+                              value: progress,
+                              tone: job.total > 0 && job.done >= job.total
+                                  ? AppProgressTone.success
+                                  : AppProgressTone.accent,
+                            ),
                           ),
                           const SizedBox(width: AppDimensions.s10),
                           Text(

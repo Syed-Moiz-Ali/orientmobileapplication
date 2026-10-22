@@ -95,3 +95,59 @@ routes, no new ARB keys.
   `IconButton`, `_SectionLabel` badge layout (accent-filled `AppBadge` would
   add a second filled accent per section — C16; kept token-only layout),
   `_EmptyLine`, scaffold bar + nav (untouched files).
+
+## Adversarial-fix pass (ui/list-ops, 2026-10-22 — presentation only)
+
+Verified every D1–D8 claim in `adversarial-sv-queue-review.md` against the
+full widget tree (tab + `supervisor_scaffold.dart` shell) + code. Fixed 2,
+rebutted 6 with file+line evidence. Zero new ARB keys; predicates, routes,
+sheets, providers untouched; characterization counts 10 -> 10.
+
+FIXED (code + recaptured `after-supervisor-queue/` all 10 frames, 38/38
+back-to-back green with the other three screens):
+- D2-rail (U5): `Insura…` mid-word rail cut on every frame.
+  `AppFilterBar(wrap: true)` (call-site only; shared atom untouched):
+  `All / VIP / Promised today / Insurance` all whole at 360/320/1.3x/ar.
+- D5-real (U8/U6 dead load state): `state.isQueueLoading && isEmpty` was a
+  DEAD condition (`isEmpty` contains `!state.isQueueLoading`), so a
+  no-cached-data load rendered section `[0]` badges + the generic line twice
+  instead of a skeleton. Split into `isEmpty` (settled) + `isLoadingNoData`
+  (`isQueueLoading && lists empty`) → skeleton, matching the jobs/review
+  pattern. Stale-with-rows still renders lists + spinner. Same flags, same
+  lists; presentation branching only. AFTER `loading_360`: skeleton + whole
+  zero-chips, no duplicated text.
+
+REBUTTED (no code change; evidence):
+- D1 (U1 no search): CAPTURE-FRAMING artifact — harness pumps the tab in a
+  bare `Scaffold`, cropping the shell `_SupervisorChrome` search icon that
+  renders on this tab (`supervisor_scaffold.dart:401-406`,
+  `selectedIndex != 0`). Single search path is sanctioned (brief deviation B
+  + blessed `phase-jobs-search-audit-review.md` 16/16: bar bay-search covers
+  bookings/breakdowns scope via `buildSupervisorBays`). Taps unchanged.
+- D2-row (U5 `Engine overh…` at 320): sanctioned 1-line ellipsis (brief U5,
+  line 111: "detail ellipsizes (1 line) at 320px / 1.3x"). Secondary-text
+  ellipsis is U5-compliant; full row context rides the Assign flow.
+- D3 (C16/U11 duplicated numbers): rail chips count PRIORITY facets over all
+  bookings; section badges count VISIBLE rows per section (result count when
+  filtered) — different measures, not label+badge duplication. Zero-chips
+  (`Promised today 0`) are honest buckets (brief-kept), not decoration.
+- D4 (U4/U9 orphan refresh): shared-atom responsive contract —
+  `AppPageHeader` stacks actions below identity on compact
+  (`app_page_header.dart:113-123`), same on all staff tabs (U9); tablet
+  docks same-row via the same atom. Refresh is above-fold, 48dp, tooltip'd
+  (`commonRetry`), 1 tap — reachable, not misplaced.
+- D5-loaded-states: with settled data the double-`_EmptyLine` state is
+  UNREACHABLE (code path analysis: both-empty → `AppEmptyState`; mismatch →
+  no-match/Clear; single-empty section → one `_EmptyLine` under its named
+  `_SectionLabel`). See FIXED above for the real load-state pixel.
+- D6 (U0 normal row, no pill): sanctioned (brief U0, line 99: "normal renders
+  NO pill — never invented"). Adding a pill needs new copy → STOP if pursued.
+  Triage signal rides title/detail/plate + row Assign (1 tap).
+- D7 (pre-select + dup CTA): pre-selected first advisor is PINNED behavior
+  (brief tap counts, line 46); the dimmed row button behind the modal scrim
+  is inert, not a second live CTA. No code change.
+- D8 (skeleton/AR): skeleton = shared harness atom (non-gating, owning-phase
+  STOP); AR mirrors with plates LTR-locked (pass).
+
+Tap walk AFTER-fix: open ≤1 ✓ · route 3 ✓ · filter 1 ✓ · clear 1 ✓ ·
+retry 1 / pull ✓. No budget regresses.

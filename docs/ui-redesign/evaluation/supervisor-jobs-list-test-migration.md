@@ -34,7 +34,7 @@ compact 4+More nav + expanded 7-rail untouched; no new routes, no new ARB keys.
 | Test | Old | New | Kind |
 |---|---|---|---|
 | header shows title, live count and the assign action | `PrimaryButton` header Assign | `AppPillButton.primary` header Assign (same label/icon/handler) | structural (rendering-identical: same finders, still green) |
-| rows render identity, progress math and status copy | `AppLinearProgress` bar + `Divider` | `AppProgressBar` bar (auto tone; status stays on rail+pill) + `AppDivider` | structural (same finders, still green) |
+| rows render identity, progress math and status copy | `AppLinearProgress` bar + `Divider` | `AppProgressBar` (pinned tone: success-when-complete else accent — C2 fix, same value; status stays on rail+pill) + `AppDivider` | structural (same finders, still green) |
 | inline search narrows by job card, customer, vehicle, status | `AppSearchField` + 4-field predicate | verbatim (STOP: inline kept, predicate untouched) | behavioral (unchanged) |
 | status rail filters by bucket and re-tap clears | `AppFilterBar` + bucket predicate | verbatim | behavioral (unchanged) |
 | no match offers a clear action that resets the list | Legacy `EmptyState.noMatch` | `AppEmptyState` (title `commonNoResults`, message `svJobsNoMatch` verbatim, Clear → same reset) | structural (rendering-identical) |
@@ -74,9 +74,58 @@ compact 4+More nav + expanded 7-rail untouched; no new routes, no new ARB keys.
   No remaining `AppSkeleton` in `supervisor_jobs_tab.dart`.
 - `AppInfoPanel.danger(` (1 site) → `AppErrorState` (title/message/retry 1:1).
   No remaining `AppInfoPanel` in `supervisor_jobs_tab.dart`.
-- `AppLinearProgress(` (1 site) → `AppProgressBar(value:)` (auto tone).
-  No remaining `AppLinearProgress` in `supervisor_jobs_tab.dart`.
+- `AppLinearProgress(` (1 site) → `AppProgressBar(value:, tone:)` (pinned
+  success/accent — C2 fix). No remaining `AppLinearProgress` in
+  `supervisor_jobs_tab.dart`.
 - `Divider(` (1 site) → `AppDivider()`. No remaining raw `Divider` in
   `supervisor_jobs_tab.dart`.
 - KEPT (STOP/pinned): `AppSearchField`, `AppFilterBar`, `AppPageHeader`,
   `supervisorStatusPill/Tone/Mono`, scaffold bar + nav (untouched files).
+
+## Adversarial-fix pass (ui/list-ops, 2026-10-22 — presentation only)
+
+Verified every D1–D8 claim in `adversarial-sv-jobs-review.md` against the
+full widget tree (tab + `supervisor_scaffold.dart` shell) + code. Fixed 3,
+rebutted 5 with file+line evidence. Zero new ARB keys; predicates, routes,
+sheets, providers untouched; characterization counts 8 -> 8.
+
+FIXED (code + recaptured `after-supervisor-jobs/` all 10 frames, 38/38
+back-to-back green with the other three screens):
+- D3 (C2/U10 red-means-done): `_JobRow` `AppProgressBar(value:)` auto tone
+  painted 4/4 FULL RED. Pinned `tone:` success-when-complete else accent
+  (`supervisor_jobs_tab.dart` `_JobRow`); same progress value, token only.
+  AFTER: 4/4 green + green pill; partials neutral blue.
+- D4 (U5 rail + Clear clip): `Par…` mid-word cut + `Complete…` clipped
+  against `Clear`. `AppFilterBar(wrap: true)` (call-site only; shared atom
+  untouched): chips + Clear flow at chip boundaries, nothing cut mid-word.
+- D5 (U6/C16 duplicate Assign): empty frame showed header + body `Assign
+  work`. Header action now suppressed on the confirmed-empty register
+  (`isEmptyRegister`; brief line 49 "never both at once"); body Assign keeps
+  the same sheet/handler. Characterization `empty register` updated to
+  `findsOneWidget` (same 8 tests, same taps: tab + body Assign = 2 taps).
+- D2 (U8 completed-under-Active): feed-owned, NOT filtered (U8 rule).
+  Provider returns the status-agnostic server list
+  (`supervisor_providers.dart:386-399`); capture fixture `_doneJob`
+  (after-capture test `:47-55`) intentionally carries the terminal job — sort
+  and fixture verified innocent. Logged as `LOGIC_FOLLOWUPS.md` entry 13
+  (same family as advisor #1, owner #12). Behavior intentionally unchanged.
+
+REBUTTED (no code change; evidence):
+- D1 (U1/C16 inline search): sanctioned dual-search STOP (brief deviation A +
+  blessed `phase-jobs-search-audit-review.md` §2: register inline filter over
+  `AssignedJobEntity` vs shell bar bay-search over `SupervisorBay` —
+  different entity/fields/scope; scaffold icon exists at
+  `supervisor_scaffold.dart:401-406` but the tab captures crop it).
+  Removing inline = predicate/logic removal → STOP if pursued.
+- D6 (U9 rail grammar/casing): count seats are per-brief sanctioned (strip +
+  rail here, rail-only on tech, deviations A); pill labels render feed status
+  text verbatim (brief U4; server-text family per LOGIC #9). No invention.
+- D7 (U11 triple counts): summary strip is brief-KEPT (same 4 bucket counts);
+  numbers are consistent, not contradictory; strip + subtitle serve scan.
+  Prior rounds passed; no genuine harm.
+- D8 (skeleton/AR/tablet): generic `AppShimmerSkeleton` is the shared
+  harness atom (non-gating; changing it touches every surface → owning-phase
+  STOP); AR mirrors correctly; tablet single-column correct.
+
+Tap walk AFTER-fix: open ≤1 ✓ · find ≤1 + keystrokes ✓ · assign ≤2 ✓ ·
+clear 1 ✓ · retry 1 / pull ✓. No budget regresses.

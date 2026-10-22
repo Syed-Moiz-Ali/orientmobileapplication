@@ -99,8 +99,7 @@ class _FakeSupervisorRemote implements SupervisorRemoteDataSource {
       // throw on any notifier-side removeWhere where production never does.
       _maybeHang(List.of(data.jobs));
   @override
-  Future<List<BookingQueueResponse>> getBookingQueue() =>
-      _maybeHang(const []);
+  Future<List<BookingQueueResponse>> getBookingQueue() => _maybeHang(const []);
   @override
   Future<List<BreakdownQueueResponse>> getBreakdownQueue() =>
       _maybeHang(const []);
@@ -159,7 +158,9 @@ Future<void> _pumpJobs(
         supportedLocales: const [Locale('en')],
         locale: const Locale('en'),
         theme: AppTheme.light(BrandConfig.orient),
-        home: Scaffold(body: SupervisorJobsTab(onOpenAssign: onOpenAssign ?? () {})),
+        home: Scaffold(
+          body: SupervisorJobsTab(onOpenAssign: onOpenAssign ?? () {}),
+        ),
       ),
     ),
   );
@@ -189,7 +190,10 @@ Future<void> _tapFilter(WidgetTester tester, String label) async {
 void main() {
   setUp(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(SystemChannels.platform, (call) async => null);
+        .setMockMethodCallHandler(
+          SystemChannels.platform,
+          (call) async => null,
+        );
   });
 
   testWidgets('header shows title, live count and the assign action', (
@@ -241,7 +245,9 @@ void main() {
     expect(find.text('JC-101'), findsNothing);
   });
 
-  testWidgets('status rail filters by bucket and re-tap clears', (tester) async {
+  testWidgets('status rail filters by bucket and re-tap clears', (
+    tester,
+  ) async {
     await _pumpJobs(tester);
 
     await _tapFilter(tester, 'Completed');
@@ -296,11 +302,12 @@ void main() {
 
     expect(find.textContaining('No active jobs'), findsOneWidget);
     expect(find.textContaining('Assign work to see jobs'), findsOneWidget);
-    // Header and empty state both offer Assign; the empty-state action is the
-    // later one in the tree.
-    expect(find.text('Assign work'), findsWidgets);
+    // U6/C16 one-primary-CTA ("never both at once" per the brief): the header
+    // Assign is suppressed on the confirmed-empty register, so the
+    // empty-state action is the single Assign on screen (same sheet).
+    expect(find.text('Assign work'), findsOneWidget);
 
-    await tester.tap(find.text('Assign work').last);
+    await tester.tap(find.text('Assign work'));
     await tester.pump();
     expect(assigns, 1);
   });
@@ -308,10 +315,7 @@ void main() {
   testWidgets('first-load failure shows the error with retry', (tester) async {
     await _pumpJobs(tester, data: const _JobsData(fail: true));
 
-    expect(
-      find.textContaining('Could not load active jobs.'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('Could not load active jobs.'), findsOneWidget);
     expect(find.text('Retry'), findsWidgets);
     expect(find.text('JC-101'), findsNothing);
   });

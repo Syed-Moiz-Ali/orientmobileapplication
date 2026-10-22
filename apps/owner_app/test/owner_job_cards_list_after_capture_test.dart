@@ -5,10 +5,11 @@
 // docs/ui-redesign/baseline/after-owner-job-cards/ for before/after review.
 // Owner light + dark (dark must not regress), en + ar 360x800, empty/loading
 // 360x800, search + milestone-filter 360x800, 320x568 data, 1.3x data, wide
-// 1280x800 (table + preview pane, incl. selected preview). Single search
-// affordance: the inline field below owns search; the app bar carries no
-// search entry point at any size (audited STOP). No row taps except the wide
-// select (push only fires on tap; wide select is in-place preview).
+// 1280x800 (table + preview pane, incl. selected preview). U1/C16
+// search-first: the header search icon opens the register filter as a full
+// sheet over the same provider predicate; no inline field lives in the page
+// at any size. No row taps except the wide select (push only fires on tap;
+// wide select is in-place preview).
 //
 // Run (from apps/owner_app):
 //   flutter test --tags baseline --update-goldens test/owner_job_cards_list_after_capture_test.dart   (generate)
@@ -255,19 +256,20 @@ Finder _searchBox() => find.descendant(
   matching: find.byType(TextField),
 );
 
+/// Header search icon (U1/C16 search-first): opens the register filter as a
+/// full sheet over the same predicate.
+Finder _headerSearchIcon() => find.descendant(
+  of: find.byType(WorkspaceAppBar),
+  matching: find.byIcon(Icons.search_rounded),
+);
+
 Future<void> _tapMilestone(WidgetTester tester, String label) async {
   final chip = find.descendant(
     of: find.byType(AppFilterBar),
     matching: find.text(label),
   );
   expect(chip, findsOneWidget);
-  final rail = find.descendant(
-    of: find.byType(AppFilterBar),
-    matching: find.byType(Scrollable),
-  );
-  await tester.drag(rail.first, const Offset(-300, 0));
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 100));
+  // Wrap mode (U5): chips flow at word boundaries, always in view.
   await tester.tap(chip, warnIfMissed: false);
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 100));
@@ -344,6 +346,11 @@ void main() {
       tester,
       name: _name('search', 'light', 1.0, 'en', const Size(360, 800)),
       interact: (t) async {
+        // Header icon opens the full search sheet (U1/C16 search-first);
+        // typing filters over the same provider predicate.
+        await t.tap(_headerSearchIcon());
+        await t.pump();
+        await t.pump(const Duration(milliseconds: 300));
         await t.enterText(_searchBox(), 'sara');
         await t.pump();
         await t.pump(const Duration(milliseconds: 100));

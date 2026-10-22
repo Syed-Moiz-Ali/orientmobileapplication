@@ -26,6 +26,13 @@ class AppFilterBar extends StatelessWidget {
   /// Semantics label override for the count badge (`$label, $count jobs`).
   final String Function(String label, int count)? countSemantics;
 
+  /// U5 narrow-viewport mode: when true the chips flow in a [Wrap] (word /
+  /// chip boundaries only — a chip is never cut mid-glyph) instead of a
+  /// horizontal scroll rail, and the Clear action flows inline as the last
+  /// item so it can never overlap a clipped chip. Defaults to false, so
+  /// every existing caller keeps the scroll-rail rendering byte-identical.
+  final bool wrap;
+
   const AppFilterBar({
     super.key,
     required this.options,
@@ -34,6 +41,7 @@ class AppFilterBar extends StatelessWidget {
     this.showAllOption = true,
     this.counts,
     this.countSemantics,
+    this.wrap = false,
   });
 
   @override
@@ -54,7 +62,7 @@ class AppFilterBar extends StatelessWidget {
           semanticsLabel: allCount == null
               ? null
               : (countSemantics?.call(t.filterBarAll, allCount) ??
-                  '${t.filterBarAll}, $allCount'),
+                    '${t.filterBarAll}, $allCount'),
           onTap: () => onSelected(null),
         ),
       );
@@ -70,6 +78,39 @@ class AppFilterBar extends StatelessWidget {
               ? null
               : (countSemantics?.call(option, count) ?? '$option, $count'),
           onTap: () => onSelected(selected == option ? null : option),
+        ),
+      );
+    }
+
+    final clearAction = selected == null
+        ? null
+        : TextButton(
+            onPressed: () => onSelected(null),
+            style: TextButton.styleFrom(
+              foregroundColor: colors.primary,
+              minimumSize: const Size(0, AppDimensions.touchTarget),
+            ),
+            child: Text(t.filterBarClear),
+          );
+
+    // Wrap mode (U5): chips flow onto multiple lines at chip boundaries and
+    // the Clear action is the last flow item — nothing scrolls, nothing is
+    // cut mid-word, and Clear can never sit on top of a clipped chip.
+    // Each chip is shrink-wrapped (the chip Container centers its content,
+    // which would otherwise stretch it to the full line width under Wrap's
+    // bounded max constraints).
+    if (wrap) {
+      return Semantics(
+        container: true,
+        label: t.filterBarAll,
+        child: Wrap(
+          spacing: AppDimensions.s8,
+          runSpacing: AppDimensions.s8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            for (final chip in chips) IntrinsicWidth(child: chip),
+            if (clearAction != null) clearAction,
+          ],
         ),
       );
     }
@@ -92,16 +133,9 @@ class AppFilterBar extends StatelessWidget {
               ),
             ),
           ),
-          if (selected != null) ...[
+          if (clearAction != null) ...[
             const SizedBox(width: AppDimensions.s8),
-            TextButton(
-              onPressed: () => onSelected(null),
-              style: TextButton.styleFrom(
-                foregroundColor: colors.primary,
-                minimumSize: const Size(0, AppDimensions.touchTarget),
-              ),
-              child: Text(t.filterBarClear),
-            ),
+            clearAction,
           ],
         ],
       ),
@@ -160,34 +194,43 @@ class _FilterChip extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
               border: Border.all(color: border),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: fg,
-                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+            // Shrink-wrap horizontally: the Container's `alignment` would
+            // otherwise stretch the chip to the incoming max width (Wrap
+            // mode passes the full line width down; the scroll rail passes
+            // unbounded width, which is why this never showed there).
+            // `Center` with `widthFactor: 1.0` keeps the natural chip width
+            // in both modes while still centering content vertically.
+            child: Center(
+              widthFactor: 1.0,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: fg,
+                        fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                      ),
                     ),
                   ),
-                ),
-                if (count != null) ...[
-                  const SizedBox(width: AppDimensions.s6),
-                  Text(
-                    '$count',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: countInk,
-                      fontWeight:
-                          active ? FontWeight.w800 : FontWeight.w600,
+                  if (count != null) ...[
+                    const SizedBox(width: AppDimensions.s6),
+                    Text(
+                      '$count',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: countInk,
+                        fontWeight:
+                            active ? FontWeight.w800 : FontWeight.w600,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),

@@ -86,3 +86,60 @@ new ARB keys.
   rows (shared with Today + search sheet — STOP boundary), `_urgentFirst`,
   `_FreshnessFooter`, `openJob`/`push`/`closeJob` routing, shell chrome +
   search sheet (untouched files).
+
+## Adversarial-fix pass (ui/list-ops, 2026-10-22 — presentation only)
+
+Verified every D1–D8 claim in `adversarial-tech-jobs-review.md` against the
+full widget tree (view + `technician_dashboard_view.dart` `_TechChrome`
+shell) + code. Fixed 1, rebutted 6 with file+line evidence, escalated 1 STOP.
+Zero new ARB keys; predicates, order, routes, shell untouched;
+characterization counts 9 -> 9.
+
+FIXED (code + recaptured `after-technician-jobs/` 5 rail frames, 38/38
+back-to-back green with the other three screens):
+- D4-rail (U5): `Dela…` mid-word rail cut on every frame + selected chip
+  clipped against `Clear`. `AppFilterBar(wrap: true)` in `_JobsToolbar`
+  (call-site only; shared atom untouched): all six chips whole at
+  360/320/1.3x/ar; Clear flows inline last. Rail grows to ≤3 lines at 360 —
+  first row stays above the fold in-capture and in production arithmetic
+  (~506px incl. shell chrome < 720 fold). Same options/counts/seats.
+
+STOP ESCALATED (genuine U-harm, needs owning phase — NOT fixed):
+- D4-rows (U5 primary-data truncation): `Starts 10:…` cut at BASE 360 width
+  (plates + times truncate at 320/1.3x). The layout is INSIDE the shared
+  `TechnicianJobSummary` (`technician_components.dart:146-211`, brief
+  deviation D STOP boundary: shared with Today view + search sheet). Any
+  layout change (2-line meta, narrower plate chip) restyles out-of-scope
+  surfaces. Owner: shared-component phase. Workaround intact: one row tap
+  opens the dossier with exact times (1 tap, 0 scroll).
+
+REBUTTED (no code change; evidence):
+- D1 (C16/U1 no search): CAPTURE-FRAMING artifact — shell `_TechChrome`
+  renders title + search icon on this tab (`technician_dashboard_view.dart:
+  349-369`, `selectedIndex != 0` guard at 364–366). Single search path is
+  blessed (`phase-jobs-search-audit-review.md` 16/16, brief deviation B).
+- D2 (C16/U0 no headline): CAPTURE-FRAMING artifact (same shell title) +
+  sanctioned (brief deviation A: no in-body header — shell owns the title;
+  adding one duplicates it). Deep-linking still lands through the shell.
+- D3 (U12 blue band): deliberate selected-state, not a stray band —
+  `TechnicianJobSummary` doc: "Slightly stronger emphasis for the active
+  job. Never the only signal" (`technician_components.dart:70-71,97`);
+  Today uses the same language (`technician_today_view.dart:701`). STOP
+  boundary (deviation D). Pill + side-bar + text always co-signal.
+- D5 (U9/U11 rail grammar + casing): sanctioned per-brief seats (tech
+  deviation A: counts live on rail chips); pill labels are frozen
+  entity/server text (`TechJobStatus.label`, supervisor server strings —
+  LOGIC #9 family). Re-casing = copy invention → STOP if pursued.
+- D6 (U6/U9 rail hidden in empty/error/loading): provider RETAINS the filter
+  (`selectedFilter` survives; rail restores with selection) — no amnesia.
+  Empty-calm (U6) wins over chrome-in-empty; rail seats are brief-KEPT
+  ("rail/rows/search/dossier seats unchanged").
+- D7 (U13 task-math + bare time): approved ARB copy (`techJobsProgress`,
+  `techTodayStartsAt`) + real task math (brief-KEPT); 24h `HH:mm` needs no
+  day-part; footer `09:41` pinned LTR. Rewording = new copy → STOP if pursued.
+- D8 (chevron/skeleton/stagnation): chevron + RTL mirror correct (pass);
+  skeleton = shared harness atom (non-gating, owning-phase STOP);
+  BEFORE≈AFTER pixels = honest atom-swap under the deviation-D freeze.
+
+Tap walk AFTER-fix: open ≤1 ✓ · find identical ✓ · open dossier 1 ✓ ·
+clear 1 ✓ · retry 1 / pull ✓. No budget regresses.

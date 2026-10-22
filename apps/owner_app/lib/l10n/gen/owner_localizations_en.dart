@@ -350,7 +350,14 @@ class OwnerLocalizationsEn extends OwnerLocalizations {
 
   @override
   String ownerRegCount(int count) {
-    return '$count jobs';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count jobs',
+      one: '1 job',
+      zero: '0 jobs',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -363,7 +370,7 @@ class OwnerLocalizationsEn extends OwnerLocalizations {
   String get ownerRegNoMatch => 'No jobs match this search.';
 
   @override
-  String get ownerRegOpen => 'Open register';
+  String get ownerRegOpen => 'Open job';
 
   @override
   String get ownerJsReceived => 'Intake';

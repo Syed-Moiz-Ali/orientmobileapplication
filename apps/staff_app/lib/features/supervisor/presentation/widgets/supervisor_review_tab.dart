@@ -63,7 +63,9 @@ class SupervisorReviewTab extends ConsumerWidget {
               const AppShimmerSkeleton.listRows(rows: 5)
             else if (awaiting.isEmpty)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppDimensions.s40),
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppDimensions.s40,
+                ),
                 child: AppEmptyState(
                   icon: Icons.verified_outlined,
                   title: t.svReviewEmpty,
@@ -165,18 +167,32 @@ class _QcRow extends StatelessWidget {
                   ),
                   if (technician.isNotEmpty) ...[
                     const SizedBox(width: AppDimensions.s8),
-                    Text(
-                      initialsOf(technician),
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: context.colors.onSurfaceVariant,
-                        fontWeight: FontWeight.w800,
+                    // U13: initials stay compact by design (brief-kept), but
+                    // the feed's full technician name is one long-press away
+                    // and exposed to screen readers. Zero new copy.
+                    Tooltip(
+                      message: technician,
+                      child: Text(
+                        initialsOf(technician),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: context.colors.onSurfaceVariant,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ],
                 ],
               ),
               const SizedBox(height: AppDimensions.s10),
-              AppProgressBar(value: progress),
+              // C2: complete pins success (never the auto error red), partial
+              // pins neutral accent — the meter never contradicts the pill.
+              // Same progress value, token only.
+              AppProgressBar(
+                value: progress,
+                tone: total > 0 && done >= total
+                    ? AppProgressTone.success
+                    : AppProgressTone.accent,
+              ),
               const SizedBox(height: AppDimensions.s12),
               AppPillButton.primary(
                 label: t.svReviewStart,
