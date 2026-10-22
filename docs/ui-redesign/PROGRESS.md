@@ -87,6 +87,16 @@
     - [ ] Password toggle + OTP inputs work with third-party keyboards (Gboard/Samsung/Arabic keyboards, RTL layout)
     - [ ] `textInputAction` moves focus (next/done/search) instead of dismissing mid-form
     - [ ] Bonus: keyboard-covering scroll (sticky CTA stays reachable when the keyboard is open)
+  - [ ] Real-device checklist (integration session — goldens/Chrome do NOT prove these; do not claim mobile verification without doing it):
+    - [ ] Password manager fill (all 4 apps' login/OTP fields)
+    - [ ] Keyboard over fields AND sticky bars (fields scroll visible, sticky CTA reachable)
+    - [ ] Drag-to-dismiss bottom sheets (search/filter/remove/More sheets)
+    - [ ] Safe areas (notch/gesture bar — header, nav, sticky CTAs clear)
+    - [ ] OS font scaling (largest accessibility size — no clipping beyond the 1.3x golden contract)
+    - [ ] Arabic RTL on device (mirroring, LTR-locked plates/figures, locale fonts)
+    - [ ] Pull-to-refresh on device (all lists)
+    - [ ] Snackbar timing/duration on device (no overlap with nav/sheets)
+  - [x] Emulator boot check (integration session, 2026-10-22): Pixel_9_Pro (API 36) — all 4 apps installed + launched + Hive init, zero Flutter framework exceptions (staff showed only handled backend 401/403s). Chrome first-frame is NOT a mobile check; no physical device used yet.
 
 ## Module table
 
