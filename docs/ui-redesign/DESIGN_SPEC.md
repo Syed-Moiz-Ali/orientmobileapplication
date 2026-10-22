@@ -510,7 +510,7 @@ UX
 - Carousels must show a visible peek of the next card, otherwise use a list.
 
 ## C17. Mandatory usability laws (any violated law caps the screen at 8/16, no exceptions)
-<- U0. The user must never have to think, hunt, scroll or tap more than necessary. When in doubt, fewer steps.
+- U0. The user must never have to think, hunt, scroll or tap more than necessary. When in doubt, fewer steps.
 - U1. SEARCH: a search ICON in the header at the TOP RIGHT (next to notifications and avatar). Tapping opens a
   full-screen search (auto-focused field, recents in normal case, scan inside, results). NEVER an inline search
   field in the page. Same placement on every dashboard/list screen in every app.
