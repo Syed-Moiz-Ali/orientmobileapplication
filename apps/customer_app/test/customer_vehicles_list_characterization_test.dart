@@ -330,11 +330,11 @@ void main() {
       }
 
       // Booked or requested: only the upcoming vehicle stays; the subtitle
-      // updates with the filtered count.
+      // updates with the filtered count (ICU plural: 1 → singular).
       await applyFilter('Booked or requested');
       expect(find.byKey(const ValueKey('vehicle-v0')), findsOneWidget);
       expect(find.byKey(const ValueKey('vehicle-v1')), findsNothing);
-      expect(find.text('1 registered vehicles'), findsOneWidget);
+      expect(find.text('1 registered vehicle'), findsOneWidget);
 
       // Last service: only the completed vehicle stays.
       await applyFilter('Last service');
@@ -350,6 +350,25 @@ void main() {
       for (var i = 0; i < 6; i++) {
         expect(find.byKey(ValueKey('vehicle-v$i')), findsOneWidget);
       }
+    });
+
+    testWidgets('plural count renders 0/1/6 with zero as 0 (U11)', (
+      tester,
+    ) async {
+      // 6 → plural other.
+      await _pumpList(tester, state: _state(vehicles: _six()));
+      expect(find.text('6 registered vehicles'), findsOneWidget);
+      // Filter to zero matches → header shows "0 ..." (zero as 0, not "-").
+      await tester.tap(find.byTooltip('Filter vehicles'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('In the workshop now'));
+      await tester.pump();
+      await tester.tap(find.text('Show results'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('0 registered vehicles'), findsOneWidget);
+      expect(find.text('No vehicles match this filter.'), findsOneWidget);
     });
 
     testWidgets('filter sheet on 6+ list filters + count + no-match', (
@@ -455,7 +474,9 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text('Toyota Camry · 2021'), findsOneWidget);
       expect(find.text('ABC 1234'), findsOneWidget);
-      expect(find.text('2021 · White · 45000 km'), findsOneWidget);
+      // Year lives ONCE in the title; specs line is colour + mileage only.
+      expect(find.text('White · 45000 km'), findsOneWidget);
+      expect(find.text('2021 · White · 45000 km'), findsNothing);
       expect(find.textContaining('VIN'), findsOneWidget);
       expect(find.byType(AppStatusChip), findsNothing);
       expect(find.text('Book service'), findsOneWidget);

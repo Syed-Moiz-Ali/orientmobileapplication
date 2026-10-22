@@ -309,6 +309,18 @@ class CustomerLocalizationsAr extends CustomerLocalizations {
   }
 
   @override
+  String vhCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count مركبات مسجلة',
+      one: 'مركبة واحدة مسجلة',
+      zero: '0 مركبات مسجلة',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get vhAdd => 'إضافة مركبة';
 
   @override

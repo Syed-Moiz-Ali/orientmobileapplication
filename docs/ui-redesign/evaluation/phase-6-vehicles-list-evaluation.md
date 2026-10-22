@@ -139,3 +139,85 @@ BEFORE counts (brief §Top tasks, verified from code per migration doc): open li
 - **What would an Airbnb product designer reject here?** Nothing blocking in list scope. Carry-forwards for system owners only: generate the missing `phase-6-vehicles-light.png` contact sheet; add remove-sheet + filter-sheet PNGs to the capture set; keep the `AppListGroup`-vs-rich-cards tension resolved at the shared-atom level (this screen's `AppSurfaceCard` resolution is sound and documented).
 
 (End of file — round 1, 2026-10-21)
+
+---
+
+# ROUND 2 — Fresh re-review (2026-10-22) — VERDICT: PASS 15/16
+
+**Role:** FRESH re-reviewer, never built/fixed this screen. READ-ONLY except this file. No branch/commit/push. Never touched `7198329`.
+**Scope:** Verify the 3 round-1 fixes + 5 new frames (`remove-sheet en+ar`, `filter-sheet en`, `search-results 6+ en`, `search-open ar`), condensed U0–U14 re-walk, exact tap walk, honest rubric.
+**Images viewed (16/16 AFTER):** all 11 round-1 frames (re-checked where relevant) + 5 new: `remove-sheet_light_1.0_en_360x800`, `remove-sheet_light_1.0_ar_360x800`, `filter-sheet_light_1.0_en_360x800`, `search-results_light_1.0_en_360x800`, `search-open_light_1.0_ar_360x800`.
+**Code read-only (attribution):** `customer_vehicles_tab.dart:124-131` (find-aid threshold + `vhCount` subtitle), `customer_vehicle_record.dart:68-81` (year-once filter), `:340-409` (`_Actions` menu), `customer_localizations_en.dart:313-322` (ICU plural), `app_en.arb:208-218` / `app_ar.arb:97-100` (plural keys).
+
+## R2-1. FIX 1 — ICU plural `vhCount` (en/ar): VERIFIED (code + pixel, one capture gap)
+- Code: en `vhCount` = `=0{0 registered vehicles} =1{1 registered vehicle} other{{count} …}}` (`customer_localizations_en.dart:313-322`, keys `app_en.arb:217-218`); ar `=0{0 مركبات مسجلة} =1{مركبة واحدة مسجلة} other{{count} مركبات مسجلة}}` (`app_ar.arb:100`). Tab uses `vehicles.isEmpty ? vhCountNone : vhCount(n)` / filtered `vhCount(visible.length)` (`customer_vehicles_tab.dart:129-131`). Zero renders as digit `0`, one as singular — no "1 vehicles" in any branch.
+- Pixel: `idle-2 en` → `2 registered vehicles`; `idle-6 en` → `6 registered vehicles`; `idle-2 ar` → `2 مركبات مسجلة`; `search-open ar` dimmed header → `6 مركبات مسجلة`. Correct both directions.
+- Capture gap (not a behavior gap): no PNG renders the 0-case (`vhCount(0)` occurs only with an active filter returning nothing; empty-unfiltered correctly shows sanctioned `vhCountNone` per `empty_light_1.0_en_360x800.png`) or the 1-case. Filed for capture phase, non-gating.
+
+## R2-2. FIX 2 — Year once: VERIFIED (pixel + code)
+- Pixel (`idle-2 en`, `idle-6 en`, both cards): title `Toyota Camry · 2021` keeps year; specs line now `White · 45000 km` / `Silver · 78200 km` — year gone from specs. Same in `idle-2 ar` and all dimmed-card backgrounds of the 4 sheet frames. Round-1 observation #4 closed.
+- Code: title carries year (`customer_vehicle_record.dart:74-76`), specs filtered with `yearToken` removed for display, predicate untouched (`:77-81`).
+
+## R2-3. FIX 3 — Exact tap counts: VERIFIED as builder claims
+- Book: DIRECT `TextButton.icon` on every card (`customer_vehicle_record.dart:371-378`), pixel-confirmed on all idle frames → **≤ 1 tap from list** (frequent action meets budget).
+- Edit: `PopupMenuButton` → `PopupMenuItem('edit')` → same `customerEditVehicle(id)` route (`:379-394`, `customer_vehicles_tab.dart:264`). From launch: tab + ⋮ + Edit = **3 taps** (was 2 direct). +1 menu confirmed.
+- Remove: tab + ⋮ + Remove + confirm SHEET (`_confirmRemove`, `customer_vehicles_tab.dart:348+`) = **3 + confirm** (was 2 + dialog-confirm). +1 menu confirmed; confirmation preserved (sheet, destructive, no undo).
+- Decision (honest): the +1 is BRIEF-SANCTIONED (frequent-action binding reserves the direct slot for Book; Edit/Remove are infrequent, existing routes), so it is **not a U14 fail and triggers no C17 cap** — but it IS a real remaining cost vs before on a shipped path. A screen with a remaining cost cannot keep a perfect merit score. **−1 merit point** (criterion 4, see rubric). This agrees with the builder's 15/16 claim; round-1's 16/16 disclosure is superseded.
+
+## R2-4. New frames — U-law check (esp. U5/U10/U14)
+- **Remove sheet en** (`remove-sheet_light_1.0_en_360x800`): dimmed list behind; sheet has drag handle, title `Remove Toyota Camry?` + ×, body `ABC 1000 will be removed from your vehicles.`, exactly one filled destructive red `Remove vehicle` + `Keep vehicle` text. U7 PASS (destructive confirm sheet, no undo, existing route + snackbar kept per code). U5 PASS. U14 PASS (presentation dialog→sheet only).
+- **Remove sheet ar**: full mirror (title right `حذف Toyota Camry؟`, × left, body right-aligned, plate `ABC 1000` LTR inside RTL sentence, red `حذف المركبة` + `إبقاء المركبة`). U10 PASS. U5/U14 PASS as en.
+- **Filter sheet** (`filter-sheet_light_1.0_en_360x800`): `Filter vehicles` + ×, chips `All` (selected dark w/ check) / `In the workshop now` / `Booked or requested` / `Last service` / `No active context` wrapping cleanly, filled `Show results` + `Clear` text. Context-backed facets only. U5 PASS, U14 PASS (count update + Clear restore, no new destinations).
+- **Search results** (`search-results_light_1.0_en_360x800`): query `ABC 1001` with in-field clear-×, single filtered row `Toyota Camry … ABC 1001`. U1 PASS (compact rows, tap closes + reveals, actions stay on record).
+- **Search-open ar**: title `البحث في المركبات` right + × left, hint `ابحث بالاسم أو اللوحة أو اللون`, 6 rows mirrored (Latin name right, plate `ABC 100x` LTR left). U10 PASS (full mirror, LTR codes locked), U1 PASS (sanctioned exception honored: aids only in 6-item context).
+
+## R2-5. Condensed U0–U14 re-walk (changed areas + new frames; rest unchanged from round-1)
+| Law | Re-check | Result |
+|---|---|---|
+| U0 one-read | Year-once cards: `Toyota Camry · 2021` → `White · 45000 km` → `VIN JT1ABC` → pill + detail → `Book service` + ⋮ (idle + dimmed backgrounds) | PASS |
+| U1 find fast | >5 shows magnifier+funnel (`idle-6`), ≤5 hides (`idle-2`); ar search + filtered search-results correct | PASS (sanctioned exception both directions) |
+| U2/U3/U4 | Single-column cards, no tables; pills only from `contextFor`; plates/specs/VIN verbatim; zero as `0` (code) | PASS |
+| U5 reachable/legible | All 5 new sheets: 48dp+ targets, no clipping @360, chips wrap; remove-body padding nit filed as non-gating obs R2-8.3 | PASS |
+| U6 states | Empty pairs `vhCountNone` subtitle with 1-icon-1-sentence-1-action; loading/error unchanged | PASS |
+| U7 feedback | Remove = destructive confirm SHEET en+ar, no undo; busy disables acting record only (code) | PASS |
+| U8 no dead ends | Every pill card shows View; filter `Clear` restores; empty always offers Add | PASS |
+| U9 consistency | Same `AppPageHeader`/`AppSurfaceCard`/`AppStatusChip`/`AppBanner`/`showAppModalSheet` atoms on all new sheets | PASS |
+| U10 RTL | Remove-sheet ar + search-open ar fully mirrored, plates/VIN/figures/digits LTR | PASS |
+| U11 a11y | Record Semantics kept; sheets use standard modal semantics + × affordance; no overflow evidence | PASS (stills-limited) |
+| U12 density | Unchanged predicate; sheets are single-column overlays | PASS |
+| U13 offline | Untouched pins (banners + inline retries) | PASS |
+| U14 no regression | Book ≤1 from list; Add/View/retry unchanged; Edit/Remove +1 menu SANCTIONED (no cap, −1 merit per R2-3) | PASS (with noted cost) |
+**U-walk fails: 0. Zero owner-file U fails; zero shell/shared fails visible in these 16 frames.**
+
+## R2-6. Tap walk (after, exact)
+Open ≤1 (tab) · Book ≤1 from list (direct) · Add ≤2 · Edit 3 from launch (+1 menu, sanctioned) · Remove 3+confirm (+1 menu, sanctioned, sheet confirm) · View/Track ≤2 · retry 1 inline. Frequent-action budget met; infrequent-action cost disclosed and scored.
+
+## R2-7. Rubric (only after R2-1–R2-6), /16, pass ≥12
+| # | Criterion | Score | Reason |
+|---|---|---|---|
+| 1 | One task per screen | 2/2 | Find vehicle → act; no competing heroes |
+| 2 | Headline-first hierarchy | 2/2 | Title keeps year, specs de-duplicated; empty/error order kept |
+| 3 | Whitespace, no boxes-in-boxes | 2/2 | Borderless light cards; sheets clean |
+| 4 | Sheets for secondary actions | **1/2** | Pattern correct (menu → sheet, brief-sanctioned) but secondary actions measurably less direct than before (+1 menu layer each). The honest −1 lives here. |
+| 5 | Sticky CTA (none) | 2/2 | Correctly absent; Add/Book in-flow; remove sheet exactly one destructive filled + Keep text |
+| 6 | Section structure | 2/2 | Unchanged predicate; filter updates count verbatim, Clear restores |
+| 7 | Plain friendly copy | 2/2 | Sentence-case, no invented claims, ar translated w/ LTR codes, ICU 0/1 correct, zero as `0` |
+| 8 | Single emphasized primary action | 2/2 | One filled per state; no competing CTAs |
+| **Merit** | | **15/16** | Pass on merit (≥12) |
+| C16 hard-reject cap | borderless/one-read/no-duplicate-filled/no-permanent-pills/badges-clear/no-ALL-CAPS/search-sheet/above-fold+peek/hierarchy/zero-as-0 | **No cap** | ALL PASS (year duplication removed; zero `0` in code; search-sheet w/ disclosure) |
+| C17 U-cap | any owner-file U-law fail caps at 8/16 | **No cap** | Zero U fails (R2-5) |
+| **Final** | | **15/16 — PASS** | |
+
+## R2-8. DEFECT LIST (each: evidence · law/criterion · gating?)
+**Gating defects: NONE.** No C16 hit, no owner-file U fail, frequent-action tap budget met.
+**Non-gating (scored or filed, do NOT gate):**
+1. **Edit/Remove +1 menu tap from launch — SCORED (−1, criterion 4).** `idle-2/6` action rows (`Book service` + ⋮) + `customer_vehicle_record.dart:379-405`; `customer_vehicles_tab.dart:264-265,348+`. Brief-sanctioned infrequent-action cost; existing routes. Accounted in 15/16, not a cap.
+2. **No PNG renders `vhCount(0)` (filtered-zero) or `vhCount(1)`.** Code-verified (`customer_localizations_en.dart:313-322`, `app_ar.arb:100`); empty-unfiltered correctly shows `vhCountNone`. Capture-phase gap. Non-gating.
+3. **Remove-sheet description side padding looks tight (en+ar).** `remove-sheet_light_1.0_en/ar_360x800.png`: body line starts at/near sheet edge vs ~24px padding on filter/search sheets. Fully legible, targets fine — cosmetic inconsistency for owning phase, NOT a U5 fail. Non-gating.
+4. Round-1 non-gating obs. #2–#3, #6 carry over unchanged (`AppSurfaceCard`-vs-`AppListGroup` resolution stands; missing contact sheet + `references/` UNMET — process artifacts, not screen defects). Round-1 obs. #4 (year duplication) and #5 (`vhCountMany` for 0/1) are CLOSED by fixes 1–2; obs. #1 (menu indirection) is now scored in R2-8.1.
+
+## The two answers (round-2)
+- **Would a first-time user know what to do in 3 seconds?** Yes. `idle-2_light_1.0_en_360x800.png`: `My vehicles / 2 registered vehicles`, `ABC 1000 · Toyota Camry · 2021`, `Booked — Oil change…` with `View`, direct `Book service`. Year read once; counts grammatical.
+- **What would an Airbnb product designer reject here?** Nothing blocking. One honest nit shipped with the sanctioned pattern: Edit/Remove each cost one extra tap behind ⋮ (−1 merit, criterion 4). Polish carry-forwards: match remove-sheet body padding to filter/search sheets; capture filtered-zero + single-vehicle PNGs and the missing vehicles contact sheet.
+
+(End of file — round 2, 2026-10-22. Round-1 content above preserved verbatim.)

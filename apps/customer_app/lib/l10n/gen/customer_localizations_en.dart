@@ -310,6 +310,18 @@ class CustomerLocalizationsEn extends CustomerLocalizations {
   }
 
   @override
+  String vhCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count registered vehicles',
+      one: '1 registered vehicle',
+      zero: '0 registered vehicles',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get vhAdd => 'Add vehicle';
 
   @override

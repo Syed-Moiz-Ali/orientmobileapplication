@@ -78,25 +78,33 @@ all structural). Counts never down (8 -> 15).
   shared-atom family, borderless in light (shadow) / bordered in dark, with
   the identical chunking predicate (single column compact or < 4; 2-col
   medium, 3-col large at ≥ 4). No dividers (whitespace separation, C16).
-- Filtered subtitle uses `vhCountMany(filtered)` verbatim per the brief,
-  including `0`/`1` filtered counts ("0 registered vehicles" — zero as
-  `0`, never `-`, U11).
+- Filtered subtitle uses `vhCount(visible.length)` (ICU plural, round-1 fix):
+  `=0{0 registered vehicles}` / `=1{1 registered vehicle}` /
+  `other{{count} registered vehicles}` (en); `=0{0 مركبات مسجلة}` /
+  `=1{مركبة واحدة مسجلة}` / `other{{count} مركبات مسجلة}}` (ar). Zero
+  renders as `0`, never `-` (U11). Unfiltered non-empty uses the same
+  `vhCount(vehicles.length)`; truly empty keeps `vhCountNone` sentence.
+  Existing `vhCountNone/One/Many` keys kept untouched (no renames).
 - Search results render as compact name + plate rows (not full records) so
   one tap closes the sheet and reveals the record via `ensureVisible`;
   record actions stay on the record itself (no new destinations).
 - `.toUpperCase()` on context labels removed (sentence case via theme, C17).
-- Card title appends year (`Toyota Camry · 2021`) per the wireframe; the
-  specs line keeps `specs()` verbatim (year · colour · mileage).
+- Card title keeps year (`Toyota Camry · 2021`) per the brief hierarchy
+  (title carries identity); the specs line shows colour + mileage only
+  (`White · 45000 km`) for display — `specs()` itself stays verbatim and
+  untouched (year · colour · mileage), filtered in `customer_vehicle_record.dart`
+  for display so the predicate is unchanged. VIN line untouched. Round-1 fix
+  for the filed year-duplication (was: title + specs both showed year).
 
-## Tap table (AFTER ≤ BEFORE — no regression)
+## Tap table (AFTER ≤ BEFORE — no regression; EXACT counts, round-1)
 
-| Task | Before | After |
+| Task | Before (EXACT) | After (EXACT) |
 |---|---|---|
 | Open list | 1 tap (tab) | ≤ 1 tap (unchanged) |
 | Book service | 2 taps + scroll (tab + record Book) | ≤ 1 tap from list, ≤ 2 from launch (Book direct on card) |
 | Add vehicle | 2 taps (tab + header/empty Add) | ≤ 2 taps (same entries, same wizard) |
-| Edit vehicle | 2 taps + scroll (tab + record Edit) | ≤ 2 taps (menu + Edit item, same route) |
-| Remove vehicle | 2 taps + 1 confirm (tab + Remove + dialog) | ≤ 2 taps + 1 confirm (menu + Remove + bottom sheet, no undo) |
+| Edit vehicle | 2 taps from launch (tab + record Edit) = 1 tap from list + scroll | 3 taps from launch (tab + ⋮ menu open + Edit item) = 2 taps from list + scroll, same `customerEditVehicle(id)` route — +1 menu tap, BRIEF-SANCTIONED (frequent-action binding: Book direct, Edit in menu) |
+| Remove vehicle | 2 taps + 1 confirm from launch (tab + Remove + dialog confirm button) = 1 tap + 1 confirm from list; dialog cancel = 1 tap (keeps car) | 3 taps + 1 confirm from launch (tab + ⋮ menu open + Remove item + sheet `Remove vehicle` FilledButton) = 2 taps + 1 confirm from list; sheet `Keep vehicle` = 1 tap (keeps car, closes sheet+menu), no undo — +1 menu tap, BRIEF-SANCTIONED, same `customerRemoveVehicle` + snackbar contracts |
 | Open booking / track | 2 taps (tab + View/Track) | ≤ 2 taps (same inline actions) |
 | Retry sync / removal | 1 tap inline | ≤ 1 tap inline (same inline banners) |
 
@@ -104,7 +112,8 @@ all structural). Counts never down (8 -> 15).
 
 `vhSearchTitle`, `vhSearchHint`, `vhSearchNoMatch`, `vhFilterTitle`,
 `vhFilterAll`, `vhFilterBooked`, `vhFilterLastService`, `vhFilterNone`,
-`vhFilterShow`, `vhFilterNoMatch`, `vhFilterClear`. Reused verbatim:
+`vhFilterShow`, `vhFilterNoMatch`, `vhFilterClear`, `vhCount` (ICU plural
+`=0/=1/other`, round-1 fix for "1 registered vehicles"). Reused verbatim:
 `vhTitle`, `vhCount*`, `vhAdd`, `vhEmpty*`, `vhLoadFail*`,
 `vhBook/Edit/Remove/Retry/*`, `vhTrack/View`, `vhSyncFail`,
 `vhDeleteFail*`, `vhInService`, `vhFallbackName`, `vhKeepCta`,

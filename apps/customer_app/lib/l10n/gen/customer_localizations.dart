@@ -659,6 +659,12 @@ abstract class CustomerLocalizations {
   /// **'{count} registered vehicles'**
   String vhCountMany(int count);
 
+  /// Registered vehicles count (ICU plural)
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{0 registered vehicles} =1{1 registered vehicle} other{{count} registered vehicles}}'**
+  String vhCount(int count);
+
   /// Add CTA
   ///
   /// In en, this message translates to:

@@ -68,15 +68,23 @@ class CustomerVehicleRecord extends StatelessWidget {
     // Card hierarchy (brief U0 binding): title = make/model/year (the thing
     // the customer recognizes); plate = small meta; status pill ONLY from
     // existing contextFor() data — never invented, none when absent.
+    // Year lives ONCE in the title (brief hierarchy: title carries identity);
+    // the specs line shows colour + mileage only (specs() stays verbatim,
+    // filtered here for display so the predicate is untouched).
     final title = name.isEmpty
         ? t.vhFallbackName
         : (vehicle.year > 0 ? '$name \u00b7 ${vehicle.year}' : name);
+    final yearToken = vehicle.year > 0 ? '${vehicle.year}' : '';
+    final displaySpecs = [
+      for (final part in specs)
+        if (part != yearToken) part,
+    ];
 
     return Semantics(
       label: [
         title,
         if (plate.isNotEmpty) plate,
-        if (specs.isNotEmpty) specs.join(', '),
+        if (displaySpecs.isNotEmpty) displaySpecs.join(', '),
         if (serviceContext != null)
           '${serviceContext!.label}, ${serviceContext!.detail}',
       ].join(', '),
@@ -123,10 +131,10 @@ class CustomerVehicleRecord extends StatelessWidget {
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  if (specs.isNotEmpty) ...[
+                  if (displaySpecs.isNotEmpty) ...[
                     const SizedBox(height: AppDimensions.s4),
                     Text(
-                      specs.join(' \u00b7 '),
+                      displaySpecs.join(' \u00b7 '),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(

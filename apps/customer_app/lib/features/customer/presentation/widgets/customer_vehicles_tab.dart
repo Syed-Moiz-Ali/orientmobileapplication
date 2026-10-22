@@ -127,12 +127,8 @@ class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
     final showFindAids = vehicles.length > 5;
     final t = context.cx;
     final subtitle = _filter == CustomerVehicleFilter.all
-        ? (vehicles.isEmpty
-              ? t.vhCountNone
-              : vehicles.length == 1
-              ? t.vhCountOne
-              : t.vhCountMany(vehicles.length))
-        : t.vhCountMany(visible.length);
+        ? (vehicles.isEmpty ? t.vhCountNone : t.vhCount(vehicles.length))
+        : t.vhCount(visible.length);
 
     return RefreshIndicator(
       onRefresh: () => ref.read(customerDashboardProvider.notifier).refresh(),

@@ -202,6 +202,9 @@ Future<void> _capture(
   Size logicalSize = const Size(360, 800),
   double dpr = 3.0,
   bool openSearch = false,
+  bool openFilter = false,
+  bool openRemove = false,
+  String searchQuery = '',
 }) async {
   final oldShadows = debugDisableShadows;
   debugDisableShadows = false;
@@ -278,7 +281,35 @@ Future<void> _capture(
   await tester.pump(const Duration(milliseconds: 300));
 
   if (openSearch) {
-    await tester.tap(find.byTooltip('Search vehicles'));
+    // Locale-independent: search icon (tooltip is localized in ar).
+    await tester.tap(find.byIcon(Icons.search_rounded));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+    if (searchQuery.isNotEmpty) {
+      await tester.enterText(find.byType(TextField), searchQuery);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+  }
+
+  if (openFilter) {
+    await tester.tap(find.byIcon(Icons.filter_list_rounded));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+  }
+
+  if (openRemove) {
+    await tester.tap(find.byIcon(Icons.more_vert_rounded).first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    // Menu item is localized (en `Remove`, ar `حذف`).
+    if (tester.any(find.text('Remove'))) {
+      await tester.tap(find.text('Remove').first);
+    } else {
+      await tester.tap(find.text('حذف').first);
+    }
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(milliseconds: 300));
@@ -408,6 +439,86 @@ void main() {
         bookings: const [_upcoming, _completed],
         logicalSize: const Size(768, 1024),
         dpr: 2.0,
+      );
+    });
+    testWidgets('remove confirmation sheet open', (tester) async {
+      await _capture(
+        tester,
+        name: _name(
+          'remove-sheet',
+          'light',
+          1.0,
+          'en',
+          const Size(360, 800),
+        ),
+        state: _state(vehicles: two()),
+        bookings: const [_upcoming, _completed],
+        openRemove: true,
+      );
+    });
+    testWidgets('filter sheet open', (tester) async {
+      await _capture(
+        tester,
+        name: _name(
+          'filter-sheet',
+          'light',
+          1.0,
+          'en',
+          const Size(360, 800),
+        ),
+        state: _state(vehicles: six()),
+        bookings: const [_upcoming, _completed],
+        openFilter: true,
+      );
+    });
+    testWidgets('search results with 6+ vehicles (query typed)', (
+      tester,
+    ) async {
+      await _capture(
+        tester,
+        name: _name(
+          'search-results',
+          'light',
+          1.0,
+          'en',
+          const Size(360, 800),
+        ),
+        state: _state(vehicles: six()),
+        bookings: const [_upcoming, _completed],
+        openSearch: true,
+        searchQuery: 'ABC 1001',
+      );
+    });
+    testWidgets('search sheet open ar', (tester) async {
+      await _capture(
+        tester,
+        name: _name(
+          'search-open',
+          'light',
+          1.0,
+          'ar',
+          const Size(360, 800),
+        ),
+        state: _state(vehicles: six()),
+        bookings: const [_upcoming, _completed],
+        openSearch: true,
+        locale: const Locale('ar'),
+      );
+    });
+    testWidgets('remove confirmation sheet open ar', (tester) async {
+      await _capture(
+        tester,
+        name: _name(
+          'remove-sheet',
+          'light',
+          1.0,
+          'ar',
+          const Size(360, 800),
+        ),
+        state: _state(vehicles: two()),
+        bookings: const [_upcoming, _completed],
+        openRemove: true,
+        locale: const Locale('ar'),
       );
     });
   });

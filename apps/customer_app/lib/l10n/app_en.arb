@@ -214,6 +214,11 @@
     "description": "Many subtitle",
     "placeholders": { "count": { "type": "int" } }
   },
+  "vhCount": "{count, plural, =0{0 registered vehicles} =1{1 registered vehicle} other{{count} registered vehicles}}",
+  "@vhCount": {
+    "description": "Registered vehicles count (ICU plural)",
+    "placeholders": { "count": { "type": "int" } }
+  },
   "vhAdd": "Add vehicle",
   "@vhAdd": { "description": "Add CTA" },
   "vhEmptyTitle": "No vehicles added yet",

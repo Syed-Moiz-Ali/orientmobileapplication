@@ -349,3 +349,14 @@ shared `commonMore`); expanded rail keeps all 7 destinations.
 | Deleted legacy widget | Surface | Replaced by | Notes |
 |---|---|---|---|
 | 7-slot `AppBottomNavigation` compact bar (legacy shared overflow) | supervisor shell (1) | `AppBottomNav` (4 primaries: Floor/Jobs/Queue/Review + 5th More slot; outlined glyphs, active = accent, `currentIndex` maps overflow tabs to More) + `showAppBottomSheet`/`AppBottomSheet` More sheet (Reports/Staff/Schedule rows: icon + label, 48dp+ targets, trailing check on active, same tab targets/routes when tapped) | No routes removed, no tab content changed; More carries no badge (no tab wires badge/count state — read existing state only, nothing invented); tap counts: primaries ≤ before, More-moved tasks +1 each (see `evaluation/supervisor-home-test-migration.md` tap table) |
+
+## Phase 6 vehicles-list round-1 fixer (branch `ui/integration-1`, no widget swaps)
+
+Presentation-only copy/display fixes; no legacy widget added/removed, no
+provider/sync/predicate/route/handler/Key change (predicates `contextFor` /
+`specs` / `plateLabel` / `mileageLabel` byte-identical):
+
+| Change | Surface | Replacement | Notes |
+|---|---|---|---|
+| `vhCountMany(0/1)` → `vhCount(n)` ICU plural (`=0{0 …}` / `=1{1 …}` / `other{{count} …}`, en+ar, no renames) | vehicles header subtitle (all + filtered, ≤5 and >5) | `vhCount` | Fixes "1 registered vehicles"; zero renders as `0` (U11); `vhCountNone` kept for truly empty; `gen-l10n` from `apps/customer_app` |
+| Year shown twice (title + specs) → ONCE | record card (`customer_vehicle_record.dart` display only) | title keeps `Make Model · Year`; specs line shows colour + mileage (`White · 45000 km`) | `specs()` untouched; display filters the year token; VIN untouched; search still matches year via `specs()` |
