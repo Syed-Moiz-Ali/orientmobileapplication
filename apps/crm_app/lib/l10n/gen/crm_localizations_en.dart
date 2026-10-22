@@ -864,4 +864,58 @@ class CrmLocalizationsEn extends CrmLocalizations {
   @override
   String get csFail =>
       'Connection failed. Check your credentials and try again.';
+
+  @override
+  String get leadsSearchTitle => 'Search leads';
+
+  @override
+  String get leadsSearchNoMatch => 'No leads match your search.';
+
+  @override
+  String get leadsFilterTitle => 'Filter leads';
+
+  @override
+  String get leadsFilterShow => 'Show results';
+
+  @override
+  String get leadsFilterNoMatch => 'No leads match this filter.';
+
+  @override
+  String get leadsFilterClear => 'Clear';
+
+  @override
+  String leadsCountN(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count leads',
+      one: '1 lead',
+      zero: '0 leads',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get tasksSearchTitle => 'Search tasks';
+
+  @override
+  String get tasksSearchHint => 'Search by title or assignee';
+
+  @override
+  String get tasksSearchNoMatch => 'No tasks match your search.';
+
+  @override
+  String tkCountN(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tasks',
+      one: '1 task',
+      zero: '0 tasks',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get leadsSelectLead => 'Select a lead to view details';
 }

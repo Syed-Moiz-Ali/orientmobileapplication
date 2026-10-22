@@ -588,5 +588,35 @@
     "placeholders": { "platform": { "type": "String" } }
   },
   "csFail": "Connection failed. Check your credentials and try again.",
-  "@csFail": { "description": "Connect error" }
+  "@csFail": { "description": "Connect error" },
+  "leadsSearchTitle": "Search leads",
+  "@leadsSearchTitle": { "description": "Leads search sheet title" },
+  "leadsSearchNoMatch": "No leads match your search.",
+  "@leadsSearchNoMatch": { "description": "Leads search no-match" },
+  "leadsFilterTitle": "Filter leads",
+  "@leadsFilterTitle": { "description": "Leads filter sheet title" },
+  "leadsFilterShow": "Show results",
+  "@leadsFilterShow": { "description": "Filter apply CTA" },
+  "leadsFilterNoMatch": "No leads match this filter.",
+  "@leadsFilterNoMatch": { "description": "Filter no-match" },
+  "leadsFilterClear": "Clear",
+  "@leadsFilterClear": { "description": "Filter/search clear" },
+  "leadsCountN": "{count, plural, =0{0 leads} =1{1 lead} other{{count} leads}}",
+  "@leadsCountN": {
+    "description": "Leads count (ICU plural; zero renders as 0)",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "tasksSearchTitle": "Search tasks",
+  "@tasksSearchTitle": { "description": "Tasks search sheet title" },
+  "tasksSearchHint": "Search by title or assignee",
+  "@tasksSearchHint": { "description": "Tasks search hint" },
+  "tasksSearchNoMatch": "No tasks match your search.",
+  "@tasksSearchNoMatch": { "description": "Tasks search no-match" },
+  "tkCountN": "{count, plural, =0{0 tasks} =1{1 task} other{{count} tasks}}",
+  "@tkCountN": {
+    "description": "Tasks count (ICU plural; zero renders as 0)",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "leadsSelectLead": "Select a lead to view details",
+  "@leadsSelectLead": { "description": "Wide-layout dossier placeholder" }
 }

@@ -1,87 +1,101 @@
+// Follow-up checklist: priority flags, call reminders, overdue badges and
+// the same complete/edit/delete flows. Due badges derive from parseable
+// due dates only — free-text dates that cannot be parsed get no badge
+// rather than a guessed one. There is no snooze endpoint, so none is
+// offered (documented, not improvised).
+//
+// Presentation-only rebuild (brief `docs/ui-redesign/briefs/crm-tasks-list.md`):
+// AppPageHeader + header find-aid (search icon only when > 5 loaded
+// tasks), borderless cards with the toggle direct on each card and 48dp
+// edit/delete targets, AppStatusChip pills, AppEmptyState, AppDialog
+// delete confirm, AppBottomSheet form. Toggle/CRUD/due-badge derivation,
+// refresh, team source and Keys are unchanged.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:crm_app/features/crm_dashboard/domain/entities/crm_entities.dart';
-import 'package:crm_app/features/crm_dashboard/presentation/crm_constants.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_task_provider.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_team_provider.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/support/crm_l10n.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_tasks_search_sheet.dart';
 
-/// Follow-up checklist: priority flags, call reminders, overdue badges and
-/// the same complete/edit/delete flows. Due badges derive from parseable
-/// due dates only — free-text dates that cannot be parsed get no badge
-/// rather than a guessed one. There is no snooze endpoint, so none is
-/// offered (documented, not improvised).
-class CrmTasksPage extends ConsumerWidget {
+/// Priority display kind by the stored English name (labels render verbatim,
+/// same family as the server-label note in the migration doc).
+AppStatusKind _priorityKind(String priority) {
+  switch (priority.toUpperCase()) {
+    case 'HIGH':
+      return AppStatusKind.error;
+    case 'MEDIUM':
+      return AppStatusKind.warning;
+    default:
+      return AppStatusKind.neutral;
+  }
+}
+
+class CrmTasksPage extends ConsumerStatefulWidget {
   const CrmTasksPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CrmTasksPage> createState() => _CrmTasksPageState();
+}
+
+class _CrmTasksPageState extends ConsumerState<CrmTasksPage> {
+  /// Scroll anchors for search-result reveals (presentation only).
+  final Map<String, GlobalKey> _scrollKeys = {};
+
+  GlobalKey _scrollKeyFor(String id) =>
+      _scrollKeys.putIfAbsent(id, () => GlobalKey());
+
+  @override
+  Widget build(BuildContext context) {
     final t = context.cx;
     final notifier = ref.read(crmTaskProvider.notifier);
     final tasks = ref.watch(crmTaskProvider).tasks;
+    _scrollKeys.removeWhere((id, _) => !tasks.any((task) => task.id == id));
+
+    // Progressive disclosure (the ONE sanctioned U1 exception — same as the
+    // leads list): the search find-aid appears ONLY when MORE THAN 5 tasks
+    // are loaded; ≤ 5 tasks are fully scannable without find-aids.
+    final showFindAids = tasks.length > 5;
 
     return Column(
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                decoration: BoxDecoration(
-                  color: CrmColors.accentLight,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: CrmColors.accent.withValues(alpha: 0.3)),
-                ),
-                child: Text(
-                  t.tkCount(tasks.length),
-                  style: const TextStyle(
-                    color: CrmColors.accent,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+          child: AppPageHeader(
+            title: t.navTasks,
+            subtitle: tasks.isEmpty ? null : t.tkCountN(tasks.length),
+            actions: [
+              if (showFindAids)
+                AppIconButton(
+                  icon: Icons.search_rounded,
+                  tooltip: t.tasksSearchTitle,
+                  onPressed: () => showCrmTasksSearchSheet(
+                    context,
+                    tasks: tasks,
+                    onSelect: (task) {
+                      final ctx = _scrollKeys[task.id]?.currentContext;
+                      if (ctx != null) {
+                        Scrollable.ensureVisible(
+                          ctx,
+                          duration: const Duration(milliseconds: 300),
+                          alignment: 0.1,
+                        );
+                      }
+                    },
                   ),
                 ),
+              AppIconButton(
+                icon: Icons.refresh_rounded,
+                tooltip: t.chromeRefresh,
+                onPressed: () => notifier.refresh(),
               ),
-              const Spacer(),
-              GestureDetector(
-                onTap: () => notifier.refresh(),
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: CrmColors.accentLight,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.refresh_rounded, color: CrmColors.accent, size: 17),
+              if (tasks.isNotEmpty)
+                TextButton.icon(
+                  onPressed: () => _showTaskForm(context, ref),
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: Text(t.tkAdd),
                 ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () => _showTaskForm(context, ref),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: CrmColors.primary,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.add_rounded, size: 15, color: Colors.white),
-                      const SizedBox(width: 4),
-                      Text(
-                        t.tkAdd,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
             ],
           ),
         ),
@@ -89,65 +103,33 @@ class CrmTasksPage extends ConsumerWidget {
           child: tasks.isEmpty
               ? ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   children: [
-                    const SizedBox(height: 80),
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: const BoxDecoration(
-                        color: CrmColors.accentLight,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.task_alt_rounded, size: 36, color: CrmColors.accent),
-                    ),
-                    const SizedBox(height: 20),
-                    Center(
-                      child: Text(
-                        t.tkEmpty,
-                        style: const TextStyle(
-                          color: CrmColors.textH,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Center(
-                      child: Text(
-                        t.tkEmptyBody,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: CrmColors.textM, fontSize: 12),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Center(
-                      child: ElevatedButton.icon(
-                        onPressed: () => _showTaskForm(context, ref),
-                        icon: const Icon(Icons.add_rounded, size: 18),
-                        label: Text(t.tkAdd),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: CrmColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        ),
-                      ),
+                    const SizedBox(height: 64),
+                    AppEmptyState(
+                      icon: Icons.task_alt_rounded,
+                      title: t.tkEmpty,
+                      message: t.tkEmptyBody,
+                      actionLabel: t.tkAdd,
+                      onAction: () => _showTaskForm(context, ref),
                     ),
                   ],
                 )
               : RefreshIndicator(
                   onRefresh: () => notifier.refresh(),
-                  color: CrmColors.accent,
                   child: ListView.separated(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(AppDimensions.s16),
+                    padding: const EdgeInsets.all(16),
                     itemCount: tasks.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: AppDimensions.s10),
-                    itemBuilder: (_, i) => _TaskCard(
-                      task: tasks[i],
-                      onToggle: () => notifier.toggleTask(tasks[i].id, !tasks[i].isDone),
-                      onEdit: () => _showTaskForm(context, ref, task: tasks[i]),
-                      onDelete: () => _confirmDelete(context, ref, tasks[i]),
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (_, i) => Container(
+                      key: _scrollKeyFor(tasks[i].id),
+                      child: _TaskCard(
+                        task: tasks[i],
+                        onToggle: () => notifier.toggleTask(tasks[i].id, !tasks[i].isDone),
+                        onEdit: () => _showTaskForm(context, ref, task: tasks[i]),
+                        onDelete: () => _confirmDelete(context, ref, tasks[i]),
+                      ),
                     ),
                   ),
                 ),
@@ -157,35 +139,24 @@ class CrmTasksPage extends ConsumerWidget {
   }
 
   Future<void> _showTaskForm(BuildContext context, WidgetRef ref, {CrmTaskEntity? task}) {
-    return showModalBottomSheet(
+    final t = context.cx;
+    return showAppModalSheet(
       context: context,
-      backgroundColor: Colors.white,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      title: task != null ? t.tkFormEdit : t.tkFormAdd,
       builder: (_) => _TaskFormSheet(task: task),
     );
   }
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref, CrmTaskEntity task) async {
     final t = context.cx;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(t.tkDeleteTitle, style: const TextStyle(fontWeight: FontWeight.w700)),
-        content: Text(t.tkDeleteBody(task.title)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(t.tkCancel)),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: CrmColors.red, foregroundColor: Colors.white),
-            child: Text(t.tkDelete),
-          ),
-        ],
-      ),
+    final confirmed = await showAppDialog<bool>(
+      context,
+      title: t.tkDeleteTitle,
+      message: t.tkDeleteBody(task.title),
+      secondaryLabel: t.tkCancel,
+      primaryLabel: t.tkDelete,
+      destructive: true,
+      onPrimary: () => Navigator.of(context).pop(true),
     );
     if (confirmed == true) {
       await ref.read(crmTaskProvider.notifier).deleteTask(task.id);
@@ -219,24 +190,15 @@ class _TaskCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.cx;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     final due = _dueStateOf(task);
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.s14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppDimensions.r14),
-        border: Border.all(
-          color: due == _DueState.overdue ? CrmColors.red.withValues(alpha: 0.4) : CrmColors.border,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: CrmColors.primary.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+
+    return AppSurfaceCard(
+      outlined: false,
+      padding: const EdgeInsets.all(14),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Semantics(
             button: true,
@@ -246,142 +208,110 @@ class _TaskCard extends StatelessWidget {
             child: GestureDetector(
               key: ValueKey('taskToggle_${task.id}'),
               onTap: onToggle,
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: task.isDone ? CrmColors.green : CrmColors.textM,
-                    width: 2,
+              behavior: HitTestBehavior.opaque,
+              child: SizedBox(
+                width: 48,
+                height: 48,
+                child: Center(
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: task.isDone ? colors.primary : colors.onSurfaceVariant,
+                        width: 2,
+                      ),
+                      color: task.isDone ? colors.primary : Colors.transparent,
+                    ),
+                    child: task.isDone
+                        ? Icon(Icons.check, color: colors.onPrimary, size: 14)
+                        : null,
                   ),
-                  color: task.isDone ? CrmColors.green : Colors.transparent,
                 ),
-                child: task.isDone
-                    ? const Icon(Icons.check, color: Colors.white, size: 14)
-                    : null,
               ),
             ),
           ),
-          const SizedBox(width: AppDimensions.s12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  task.title,
-                  style: TextStyle(
-                    color: task.isDone ? CrmColors.textM : CrmColors.textH,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    decoration: task.isDone ? TextDecoration.lineThrough : null,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    task.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: task.isDone ? colors.onSurfaceVariant : colors.onSurface,
+                      fontWeight: FontWeight.w600,
+                      decoration: task.isDone ? TextDecoration.lineThrough : null,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Wrap(
-                  spacing: AppDimensions.s12,
-                  runSpacing: 2,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.person_outline_rounded, color: CrmColors.textM, size: 12),
-                        const SizedBox(width: 4),
-                        Text(
-                          task.assignedTo.isEmpty ? t.tkUnassigned : task.assignedTo,
-                          style: const TextStyle(color: CrmColors.textM, fontSize: 11),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.calendar_today_rounded, color: CrmColors.textM, size: 11),
-                        const SizedBox(width: 4),
-                        Text(
-                          task.dueDate.isEmpty ? t.tkNoDue : task.dueDate,
-                          style: const TextStyle(color: CrmColors.textM, fontSize: 11),
-                        ),
-                      ],
-                    ),
-                    if (due == _DueState.overdue)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: CrmColors.redBg,
-                          borderRadius: BorderRadius.circular(AppDimensions.r8),
-                        ),
-                        child: Text(
-                          t.tkOverdue,
-                          style: const TextStyle(
-                            color: CrmColors.red,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
+                  const SizedBox(height: 4),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.person_outline_rounded, color: colors.onSurfaceVariant, size: 12),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              task.assignedTo.isEmpty ? t.tkUnassigned : task.assignedTo,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colors.onSurfaceVariant,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    if (due == _DueState.today)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: CrmColors.amberBg,
-                          borderRadius: BorderRadius.circular(AppDimensions.r8),
-                        ),
-                        child: Text(
-                          t.tkDueToday,
-                          style: const TextStyle(
-                            color: CrmColors.amber,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.calendar_today_rounded, color: colors.onSurfaceVariant, size: 11),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              task.dueDate.isEmpty ? t.tkNoDue : task.dueDate,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colors.onSurfaceVariant,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: task.priorityColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(AppDimensions.r10),
-            ),
-            child: Text(
-              task.priority,
-              style: TextStyle(
-                color: task.priorityColor,
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
+                      if (due == _DueState.overdue)
+                        AppStatusChip(label: t.tkOverdue, kind: AppStatusKind.error),
+                      if (due == _DueState.today)
+                        AppStatusChip(label: t.tkDueToday, kind: AppStatusKind.warning),
+                      AppStatusChip(label: task.priority, kind: _priorityKind(task.priority)),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
-          const SizedBox(width: 6),
-          GestureDetector(
-            onTap: onEdit,
-            child: Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: CrmColors.accentLight,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.edit_outlined, size: 14, color: CrmColors.accent),
-            ),
+          AppIconButton(
+            icon: Icons.edit_outlined,
+            tooltip: t.tkFormEdit,
+            filled: true,
+            onPressed: onEdit,
           ),
-          const SizedBox(width: 6),
-          GestureDetector(
-            onTap: onDelete,
-            child: Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: CrmColors.redBg,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.delete_outline_rounded, size: 14, color: CrmColors.red),
-            ),
+          const SizedBox(width: 4),
+          AppIconButton(
+            icon: Icons.delete_outline_rounded,
+            tooltip: t.tkDeleteTitle,
+            filled: true,
+            color: colors.error,
+            onPressed: onDelete,
           ),
         ],
       ),
@@ -436,204 +366,89 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
   @override
   Widget build(BuildContext context) {
     final t = context.cx;
-    final isEdit = widget.task != null;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 20),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: CrmColors.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 18),
-            Text(
-              isEdit ? t.tkFormEdit : t.tkFormAdd,
-              style: const TextStyle(
-                color: CrmColors.textH,
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 18),
-            _field(t.tkFormTitle, _titleCtrl, Icons.task_alt_rounded),
-            const SizedBox(height: 12),
-            _assigneeDropdown(),
-            const SizedBox(height: 12),
-            _field(t.tkFormDue, _dueCtrl, Icons.calendar_today_rounded),
-            const SizedBox(height: 12),
-            Text(
-              t.tkFormPriority,
-              style: const TextStyle(color: CrmColors.textM, fontSize: 11, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: _priorities.map((p) {
-                final sel = _priority == p;
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _priority = p),
-                    child: Container(
-                      margin: EdgeInsets.only(right: p == _priorities.last ? 0 : 8),
-                      padding: const EdgeInsets.symmetric(vertical: 9),
-                      decoration: BoxDecoration(
-                        color: sel ? CrmColors.primary : Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: sel ? CrmColors.primary : CrmColors.border),
-                      ),
-                      child: Center(
-                        child: Text(
-                          _priorityLabel(p),
-                          style: TextStyle(
-                            color: sel ? Colors.white : CrmColors.textB,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            if (_error != null) ...[
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: CrmColors.redBg,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(_error!, style: const TextStyle(color: CrmColors.red, fontSize: 12)),
-              ),
-            ],
-            const SizedBox(height: 18),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _busy ? null : _save,
-                icon: _busy
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : Icon(isEdit ? Icons.save_outlined : Icons.add_rounded, size: 18),
-                label: Text(_busy ? t.tkSaving : (isEdit ? t.tkSaveChanges : t.tkFormAdd)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: CrmColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ),
-          ],
-        ),
+    return SingleChildScrollView(
+      padding: const EdgeInsetsDirectional.fromSTEB(
+        AppSpacing.xl,
+        AppSpacing.xs,
+        AppSpacing.xl,
+        AppSpacing.xl,
       ),
-    );
-  }
-
-  Widget _field(String label, TextEditingController ctrl, IconData icon) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(color: CrmColors.textM, fontSize: 11, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 6),
-        TextField(
-          controller: ctrl,
-          style: const TextStyle(color: CrmColors.textH, fontSize: 13),
-          decoration: InputDecoration(
-            prefixIcon: Icon(icon, size: 17, color: CrmColors.textM),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: CrmColors.border),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: CrmColors.border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: CrmColors.primary, width: 1.5),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppInputField(
+            label: t.tkFormTitle,
+            controller: _titleCtrl,
+            prefixIcon: Icons.task_alt_rounded,
+            error: _error,
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: 12),
+          _assigneeDropdown(),
+          const SizedBox(height: 12),
+          AppInputField(
+            label: t.tkFormDue,
+            controller: _dueCtrl,
+            prefixIcon: Icons.calendar_today_rounded,
+            forceLtr: true,
+            textInputAction: TextInputAction.done,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            t.tkFormPriority,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w700,
             ),
           ),
-        ),
-      ],
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _priorities.map((p) {
+              return AppChip(
+                label: _priorityLabel(p),
+                selected: _priority == p,
+                onSelected: (_) => setState(() => _priority = p),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 18),
+          AppPillButton.primary(
+            label: widget.task != null ? t.tkSaveChanges : t.tkFormAdd,
+            busyLabel: t.tkSaving,
+            isLoading: _busy,
+            onPressed: _busy ? null : _save,
+          ),
+        ],
+      ),
     );
   }
 
   Widget _assigneeDropdown() {
     final t = context.cx;
     final teamAsync = ref.watch(teamMembersProvider);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(t.tkFormAssigned, style: const TextStyle(color: CrmColors.textM, fontSize: 11, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 6),
-        teamAsync.when(
-          loading: () => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: CrmColors.border),
-            ),
-            child: Row(
-              children: [
-                const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
-                const SizedBox(width: 10),
-                Text(t.tkLoadingTeam, style: const TextStyle(color: CrmColors.textM, fontSize: 13)),
-              ],
-            ),
-          ),
-          error: (e, _) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-            decoration: BoxDecoration(
-              color: CrmColors.redBg,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(t.tkTeamFail, style: const TextStyle(color: CrmColors.red, fontSize: 12)),
-          ),
-          data: (members) {
-            final options = [...members.map((m) => m.name), t.tkUnassigned];
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: CrmColors.border),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: options.contains(_assignCtrl.text) ? _assignCtrl.text : null,
-                  hint: Text(
-                    _assignCtrl.text.isEmpty ? t.tkSelectAssignee : _assignCtrl.text,
-                    style: const TextStyle(color: CrmColors.textM, fontSize: 13),
-                  ),
-                  dropdownColor: Colors.white,
-                  style: const TextStyle(color: CrmColors.textH, fontSize: 13),
-                  isExpanded: true,
-                  items: options.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
-                  onChanged: (v) => setState(() => _assignCtrl.text = v ?? ''),
-                ),
-              ),
-            );
-          },
-        ),
-      ],
+    return teamAsync.when(
+      loading: () => AppInputField(
+        label: t.tkFormAssigned,
+        hint: t.tkLoadingTeam,
+        enabled: false,
+      ),
+      error: (_, __) => AppBanner(
+        kind: AppBannerKind.error,
+        message: t.tkTeamFail,
+      ),
+      data: (members) {
+        final options = [...members.map((m) => m.name), t.tkUnassigned];
+        final current = _assignCtrl.text.isEmpty ? null : _assignCtrl.text;
+        return AppDropdown<String>(
+          label: t.tkFormAssigned,
+          options: options,
+          value: options.contains(current) ? current : null,
+          hint: t.tkSelectAssignee,
+          onChanged: (v) => setState(() => _assignCtrl.text = v ?? ''),
+        );
+      },
     );
   }
 

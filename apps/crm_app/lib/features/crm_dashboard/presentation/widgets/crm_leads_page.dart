@@ -1,27 +1,60 @@
+// Deal terminal: sortable table or Kanban swimlanes over the same
+// live leads, source + agent filters, and a side dossier on wide
+// screens. Sorting and the agent/stage filters are presentation-only state
+// applied locally over the frozen `filteredLeads`; stage moves reuse the
+// exact status-change payload through the existing `updateLead` endpoint.
+//
+// Presentation-only rebuild (brief `docs/ui-redesign/briefs/crm-leads-list.md`):
+// AppPageHeader + header find-aids (search/filter icons only when > 5
+// loaded leads), borderless cards with Call direct on each card, sheets for
+// search/filter, AppEmptyState/AppShimmerSkeleton. Providers, filters,
+// sort, refresh, routes and Keys are unchanged.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:crm_app/features/crm_dashboard/presentation/crm_constants.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_lead_provider.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/support/crm_board_filter.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/support/crm_l10n.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/support/lead_contact_actions.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/connect_integration_sheet.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_kanban_view.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_leads_filter_sheet.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_leads_search_sheet.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/lead_detail_sheet.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/lead_form_sheet.dart';
 import 'package:crm_app/features/crm_dashboard/domain/entities/crm_entities.dart';
 
-/// Deal terminal: dense sortable table or Kanban swimlanes over the same
-/// live leads, source + agent + stage filters, and a side dossier on wide
-/// screens. Sorting and the agent/stage filters are presentation-only state
-/// applied locally over the frozen `filteredLeads`; stage moves reuse the
-/// exact status-change payload through the existing `updateLead` endpoint.
 class CrmLeadsPage extends ConsumerStatefulWidget {
   const CrmLeadsPage({super.key});
 
   @override
   ConsumerState<CrmLeadsPage> createState() => _CrmLeadsPageState();
+}
+
+/// Sentence-case display for backend stage codes (`ACTIVE` -> `Active`,
+/// `NO_RESPONSE` -> `No Response`). Matching stays uppercase; only the
+/// chip label is reformatted (same class of display fix as the
+/// vehicles-list `.toUpperCase()` removal).
+String _displayStatus(String status) {
+  final words = status.toLowerCase().split('_');
+  return words
+      .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+      .join(' ');
+}
+
+AppStatusKind _statusKind(String status) {
+  switch (status.toUpperCase()) {
+    case 'WON':
+      return AppStatusKind.success;
+    case 'LOST':
+      return AppStatusKind.error;
+    case 'UNANSWERED':
+    case 'NO_RESPONSE':
+      return AppStatusKind.warning;
+    default:
+      return AppStatusKind.accent;
+  }
 }
 
 class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
@@ -30,6 +63,12 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
   int _sortIndex = 0;
   bool _sortAscending = true;
   String _agentFilter = '';
+
+  /// Scroll anchors for search-result reveals (presentation only).
+  final Map<String, GlobalKey> _scrollKeys = {};
+
+  GlobalKey _scrollKeyFor(String id) =>
+      _scrollKeys.putIfAbsent(id, () => GlobalKey());
 
   @override
   Widget build(BuildContext context) {
@@ -41,93 +80,152 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
     final leadNotifier = ref.read(crmLeadProvider.notifier);
     final sourceFilter = ref.watch(crmLeadSourceFilterProvider);
     final stageFilter = ref.watch(crmLeadStageFilterProvider);
+    final uiState = ref.watch(crmUiProvider);
+    final totalLoaded = ref.watch(crmLeadProvider).length;
     final leads = _visibleLeads(leadNotifier.filteredLeads);
     final adaptive = context.adaptive;
+    _scrollKeys.removeWhere(
+      (id, _) => !leads.any((lead) => lead.id == id),
+    );
+
+    // Progressive disclosure (the ONE sanctioned U1 exception on this
+    // screen, same as the vehicles list): the search + filter find-aids
+    // appear ONLY when the loaded list has MORE THAN 5 items.
+    final showFindAids = totalLoaded > 5;
+    final filtersActive =
+        sourceFilter.isNotEmpty || stageFilter.isNotEmpty || _agentFilter.isNotEmpty;
+    final subtitle = filtersActive
+        ? '${t.leadsCountN(leads.length)} · ${t.leadsFilterTitle}'
+        : t.leadsCountN(leads.length);
+
+    final sources = <String>{
+      for (final l in ref.read(crmLeadProvider)) l.source,
+    }.where((s) => s.isNotEmpty).toList()
+      ..sort();
+    final agents = <String>{
+      for (final l in ref.read(crmLeadProvider)) l.assignedTo,
+    }.where((s) => s.isNotEmpty).toList()
+      ..sort();
 
     return Column(
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: Row(
-            children: [
-              Expanded(
-                child: AppSearchField(
-                  hintText: t.leadsSearch,
-                  onChanged: ui.updateSearch,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Semantics(
-                button: true,
-                label: _kanbanMode ? t.leadsTableView : t.leadsKanbanView,
-                excludeSemantics: true,
-                child: IconButton.filledTonal(
-                  tooltip: _kanbanMode ? t.leadsTableView : t.leadsKanbanView,
-                  onPressed: () =>
-                      setState(() => _kanbanMode = !_kanbanMode),
-                  icon: Icon(
-                    _kanbanMode
-                        ? Icons.view_list_rounded
-                        : Icons.space_dashboard_outlined,
+          child: AppPageHeader(
+            title: t.navLeads,
+            subtitle: totalLoaded == 0 ? null : subtitle,
+            actions: [
+              if (showFindAids) ...[
+                AppIconButton(
+                  icon: Icons.search_rounded,
+                  tooltip: t.leadsSearchTitle,
+                  onPressed: () => showCrmLeadsSearchSheet(
+                    context,
+                    leads: leads,
+                    onSelect: (lead) => _revealLead(lead, adaptive.isCompact && !_kanbanMode),
                   ),
                 ),
+                AppIconButton(
+                  icon: Icons.filter_list_rounded,
+                  tooltip: t.leadsFilterTitle,
+                  onPressed: () async {
+                    final pick = await showCrmLeadsFilterSheet(
+                      context,
+                      sources: sources,
+                      agents: agents,
+                      source: sourceFilter,
+                      agent: _agentFilter,
+                    );
+                    if (pick == null || !mounted) return;
+                    ref.read(crmLeadSourceFilterProvider.notifier).state = pick.source;
+                    setState(() => _agentFilter = pick.agent);
+                    leadNotifier.refresh();
+                  },
+                ),
+              ],
+              AppIconButton(
+                icon: _kanbanMode
+                    ? Icons.view_list_rounded
+                    : Icons.space_dashboard_outlined,
+                tooltip: _kanbanMode ? t.leadsTableView : t.leadsKanbanView,
+                onPressed: () => setState(() => _kanbanMode = !_kanbanMode),
               ),
+              if (totalLoaded > 0)
+                TextButton.icon(
+                  onPressed: () => LeadFormSheet.show(context),
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: Text(t.leadsAdd),
+                ),
             ],
           ),
         ),
+        if (stageFilter.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: AppChip(
+                label: '× $stageFilter',
+                selected: true,
+                onSelected: (_) => ref
+                    .read(crmLeadStageFilterProvider.notifier)
+                    .state = '',
+              ),
+            ),
+          ),
+        ],
         Expanded(
           child: RefreshIndicator(
             onRefresh: () => leadNotifier.refresh(),
-            color: CrmColors.accent,
-            child: leads.isEmpty
-                ? _buildEmptyState(
-                    context,
-                    ref,
-                    anyConnected,
-                    meta?.connected ?? false,
-                  )
-                : Column(
-                    children: [
-                      _filterToolbar(
-                        context,
-                        ref,
-                        leads,
-                        sourceFilter,
-                        stageFilter,
-                        leadNotifier,
-                      ),
-                      Expanded(
-                        child: adaptive.isCompact && !_kanbanMode
-                            ? _buildList(context, leads)
-                            : _kanbanMode
-                            ? CrmKanbanView(leads: leads)
-                            : adaptive.isCompact
-                            ? _buildList(context, leads)
-                            : AppMasterDetailScaffold(
-                                master: _buildTable(context, leads),
-                                detail: _buildDossier(context, leads),
-                                detailOpen: _selectedLeadId != null,
-                                placeholder: Center(
-                                  child: Text(
-                                    t.leadsSearch,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.onSurfaceVariant,
-                                        ),
-                                  ),
-                                ),
-                              ),
-                      ),
-                    ],
-                  ),
+            child: _body(
+              leads: leads,
+              totalLoaded: totalLoaded,
+              anyConnected: anyConnected,
+              metaConnected: meta?.connected ?? false,
+              isLoading: uiState.isLoading,
+              adaptiveCompact: adaptive.isCompact,
+            ),
           ),
         ),
       ],
     );
+  }
+
+  Widget _body({
+    required List<CrmLeadEntity> leads,
+    required int totalLoaded,
+    required bool anyConnected,
+    required bool metaConnected,
+    required bool isLoading,
+    required bool adaptiveCompact,
+  }) {
+    if (isLoading && leads.isEmpty) {
+      // Skeleton mirrors the cards: header lines + card shape.
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        children: const [
+          AppShimmerSkeleton(width: 160, height: 26),
+          SizedBox(height: AppDimensions.s10),
+          AppShimmerSkeleton(width: 180, height: 12),
+          SizedBox(height: AppDimensions.s20),
+          AppShimmerSkeleton.card(height: 148),
+          SizedBox(height: AppDimensions.s12),
+          AppShimmerSkeleton.card(height: 148),
+        ],
+      );
+    }
+    if (leads.isEmpty) {
+      // A filtered-to-zero list is a no-match (with Clear), not an empty
+      // workspace: the old tree showed the connect/sync empties here.
+      if (totalLoaded > 0) return _buildNoMatch();
+      return _buildEmptyState(anyConnected, metaConnected);
+    }
+    if (adaptiveCompact && !_kanbanMode) return _buildList(leads);
+    if (_kanbanMode) return CrmKanbanView(leads: leads);
+    if (adaptiveCompact) return _buildList(leads);
+    return _buildWide(leads);
   }
 
   /// Frozen source/search results plus presentation-only agent + stage
@@ -155,152 +253,186 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
     return result;
   }
 
-  Widget _filterToolbar(
-    BuildContext context,
-    WidgetRef ref,
-    List<CrmLeadEntity> leads,
-    String sourceFilter,
-    String stageFilter,
-    CrmLeadNotifier leadNotifier,
-  ) {
-    final t = context.cx;
-    final sources = <String>{
-      for (final l in ref.read(crmLeadProvider)) l.source,
-    }.where((s) => s.isNotEmpty).toList()
-      ..sort();
-    final agents = <String>{
-      for (final l in ref.read(crmLeadProvider)) l.assignedTo,
-    }.where((s) => s.isNotEmpty).toList()
-      ..sort();
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: AppFilterBar(
-                  options: [t.filterAll, ...sources],
-                  selected: sourceFilter.isEmpty
-                      ? t.filterAll
-                      : (sources.contains(sourceFilter) ? sourceFilter : null),
-                  showAllOption: false,
-                  onSelected: (option) {
-                    final value = option == null || option == t.filterAll
-                        ? ''
-                        : option;
-                    ref
-                        .read(crmLeadSourceFilterProvider.notifier)
-                        .state = value;
-                    leadNotifier.refresh();
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              FilledButton.tonalIcon(
-                onPressed: () => LeadFormSheet.show(context),
-                icon: const Icon(Icons.add_rounded, size: 16),
-                label: Text(t.leadsAdd),
-              ),
-            ],
-          ),
-          if (agents.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            AppFilterBar(
-              options: [t.filterAll, ...agents],
-              selected: _agentFilter.isEmpty
-                  ? t.filterAll
-                  : (agents.contains(_agentFilter) ? _agentFilter : null),
-              showAllOption: false,
-              onSelected: (option) => setState(() {
-                _agentFilter = (option == null || option == t.filterAll)
-                    ? ''
-                    : option;
-              }),
-            ),
-          ],
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              StatusPill(
-                label: t.leadsCount(leads.length),
-                fg: Theme.of(context).colorScheme.primary,
-                bg: Theme.of(
-                  context,
-                ).colorScheme.primary.withValues(alpha: 0.10),
-              ),
-              if (stageFilter.isNotEmpty) ...[
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () =>
-                      ref.read(crmLeadStageFilterProvider.notifier).state = '',
-                  child: StatusPill(
-                    label: '× $stageFilter',
-                    fg: Theme.of(context).colorScheme.onSurfaceVariant,
-                    bg: Theme.of(
-                      context,
-                    ).colorScheme.surfaceContainerHighest,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
+  void _revealLead(CrmLeadEntity lead, bool listMode) {
+    if (listMode) {
+      final ctx = _scrollKeys[lead.id]?.currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 300),
+          alignment: 0.1,
+        );
+        return;
+      }
+    }
+    if (!mounted) return;
+    if (_kanbanMode) {
+      LeadDetailSheet.show(context, lead);
+    } else {
+      setState(() => _selectedLeadId = lead.id);
+    }
   }
 
-  Widget _buildList(BuildContext context, List<CrmLeadEntity> leads) {
+  Widget _buildList(List<CrmLeadEntity> leads) {
     return ListView.separated(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       itemCount: leads.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (_, index) {
         final lead = leads[index];
-        final contact = lead.phone.isNotEmpty ? lead.phone : lead.email;
-        return AppRecordRow(
-          title: lead.customerName.isEmpty ? lead.leadNumber : lead.customerName,
-          subtitle: contact,
-          metadata: Wrap(
-            spacing: 8,
-            runSpacing: 4,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              StatusPill(
-                label: lead.status,
-                bg: lead.statusColor.withValues(alpha: 0.10),
-                fg: lead.statusColor,
-              ),
-              Directionality(
-                textDirection: TextDirection.ltr,
-                child: Text(
-                  'AED ${lead.leadValue.toStringAsFixed(0)}',
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
+        return Container(
+          key: _scrollKeyFor(lead.id),
+          child: _LeadCard(
+            lead: lead,
+            onOpen: () => LeadDetailSheet.show(context, lead),
+            onEdit: () => LeadFormSheet.show(context, lead: lead),
+            onDelete: () => _confirmDelete(lead),
           ),
-          trailing: const Icon(Icons.chevron_right_rounded),
-          onTap: () => LeadDetailSheet.show(context, lead),
         );
       },
     );
   }
 
-  Widget _buildTable(BuildContext context, List<CrmLeadEntity> leads) {
+  Future<void> _confirmDelete(CrmLeadEntity lead) async {
+    final t = context.cx;
+    final confirmed = await showAppDialog<bool>(
+      context,
+      title: t.dtDeleteTitle,
+      message: t.dtDeleteBody(
+        lead.customerName.isEmpty ? lead.leadNumber : lead.customerName,
+        lead.leadNumber,
+      ),
+      secondaryLabel: t.dtCancel,
+      primaryLabel: t.dtDelete,
+      destructive: true,
+      onPrimary: () => Navigator.of(context).pop(true),
+    );
+    if (confirmed != true || !mounted) return;
+    await ref.read(crmLeadProvider.notifier).deleteLead(lead.id);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(t.dtDeleted),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  Widget _buildNoMatch() {
+    final t = context.cx;
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      children: [
+        const SizedBox(height: 64),
+        AppEmptyState(
+          icon: Icons.search_off_rounded,
+          title: t.leadsFilterNoMatch,
+          message: t.leadsCountN(0),
+          actionLabel: t.leadsFilterClear,
+          onAction: () {
+            ref.read(crmLeadSourceFilterProvider.notifier).state = '';
+            ref.read(crmLeadStageFilterProvider.notifier).state = '';
+            setState(() => _agentFilter = '');
+            ref.read(crmLeadProvider.notifier).refresh();
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState(bool anyConnected, bool metaConnected) {
+    final t = context.cx;
+    if (!anyConnected) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: [
+          const SizedBox(height: 64),
+          AppEmptyState(
+            icon: Icons.link_off_rounded,
+            title: t.leadsNoCrm,
+            message: t.leadsNoCrmBody,
+            actionLabel: t.leadsConnectNow,
+            onAction: () => ConnectIntegrationSheet.show(context),
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: Text(
+              t.leadsAutoNote,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      children: [
+        const SizedBox(height: 64),
+        AppEmptyState(
+          icon: Icons.people_outline_rounded,
+          title: t.leadsEmpty,
+          message: t.leadsEmptySync(metaConnected ? 'Meta' : t.leadsPlatforms),
+          actionLabel: t.leadsSyncNow,
+          onAction: () => ref.read(crmLeadProvider.notifier).refresh(),
+        ),
+        const SizedBox(height: 12),
+        Center(
+          child: Text(
+            t.leadsIntegNote,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWide(List<CrmLeadEntity> leads) {
+    final t = context.cx;
+    return AppMasterDetailScaffold(
+      master: _buildTable(leads),
+      detail: _buildDossier(leads),
+      detailOpen: _selectedLeadId != null,
+      placeholder: Center(
+        child: Text(
+          t.leadsSelectLead,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTable(List<CrmLeadEntity> leads) {
     final t = context.cx;
     return AppTable<CrmLeadEntity>(
       columns: [
         AppTableColumn(label: t.colLead, flex: 3, sortable: true),
         AppTableColumn(label: t.colPhone, flex: 2),
         AppTableColumn(label: t.colValue, flex: 2, numeric: true, sortable: true),
-        AppTableColumn(label: t.colStage, flex: 2),
+        // Wide-tablet fix (U5): the Stage chip wrapped one letter per line
+        // at 768px because the master pane is ~45% of the width. The Stage
+        // column takes one extra flex share so the whole status label fits;
+        // compact cards are untouched (separate _buildList branch).
+        AppTableColumn(label: t.colStage, flex: 3),
         AppTableColumn(label: t.colAgent, flex: 2),
       ],
+      // Mirror the header flexes in the rows (AppTableRow defaults to 1
+      // per cell, which squeezed Stage even narrower than the header).
+      cellFlex: const [3, 2, 2, 3, 2],
       items: leads,
       sortIndex: _sortIndex == 0 ? 0 : 2,
       sortAscending: _sortAscending,
@@ -339,10 +471,16 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
         ),
-        StatusPill(
-          label: lead.status,
-          bg: lead.statusColor.withValues(alpha: 0.10),
-          fg: lead.statusColor,
+        // Scale-down (never mid-word wrap): if a longer stage label still
+        // exceeds the tablet cell, the whole chip shrinks instead of
+        // stacking one letter per line. Same record, same chip, no logic.
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.centerStart,
+          child: AppStatusChip(
+            label: _displayStatus(lead.status),
+            kind: _statusKind(lead.status),
+          ),
         ),
         Text(
           lead.assignedTo,
@@ -350,10 +488,11 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
           overflow: TextOverflow.ellipsis,
         ),
       ],
-      compactBuilder: (context, lead) => AppRecordRow(
-        title: lead.customerName.isEmpty ? lead.leadNumber : lead.customerName,
-        subtitle: lead.phone,
-        onTap: () => LeadDetailSheet.show(context, lead),
+      compactBuilder: (context, lead) => _LeadCard(
+        lead: lead,
+        onOpen: () => LeadDetailSheet.show(context, lead),
+        onEdit: () => LeadFormSheet.show(context, lead: lead),
+        onDelete: () => _confirmDelete(lead),
       ),
     );
   }
@@ -361,7 +500,7 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
   /// Side dossier for the selected lead: the same real record the sheet
   /// shows, with call/WhatsApp/edit actions and a way into the full sheet.
   /// Read-only composition over frozen fields — no new data, no new logic.
-  Widget _buildDossier(BuildContext context, List<CrmLeadEntity> leads) {
+  Widget _buildDossier(List<CrmLeadEntity> leads) {
     final t = context.cx;
     final lead = leads.where((l) => l.id == _selectedLeadId).firstOrNull;
     if (lead == null) return const SizedBox.shrink();
@@ -380,10 +519,9 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
                   ),
                 ),
               ),
-              StatusPill(
-                label: lead.status,
-                bg: lead.statusColor.withValues(alpha: 0.10),
-                fg: lead.statusColor,
+              AppStatusChip(
+                label: _displayStatus(lead.status),
+                kind: _statusKind(lead.status),
               ),
             ],
           ),
@@ -399,14 +537,15 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
             ),
           ),
           const SizedBox(height: 12),
-          _DossierRow(label: t.dtPhone, value: lead.phone, ltr: true),
-          _DossierRow(label: t.dtEmail, value: lead.email, ltr: true),
-          _DossierRow(label: t.dtSource, value: lead.source),
-          _DossierRow(
+          AppDataRow(label: t.dtPhone, value: lead.phone),
+          AppDataRow(label: t.dtEmail, value: lead.email),
+          AppDataRow(label: t.dtSource, value: lead.source, forceValueLtr: false),
+          AppDataRow(
             label: t.dtAssigned,
             value: lead.assignedTo.isEmpty ? t.dtUnassigned : lead.assignedTo,
+            forceValueLtr: false,
           ),
-          _DossierRow(label: t.dtFollowUp, value: lead.followUpDate, ltr: true),
+          AppDataRow(label: t.dtFollowUp, value: lead.followUpDate),
           if (lead.notes.trim().isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
@@ -418,10 +557,9 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
           Row(
             children: [
               Expanded(
-                child: OutlinedButton.icon(
+                child: AppPillButton.secondary(
+                  label: t.dtEdit,
                   onPressed: () => LeadDetailSheet.show(context, lead),
-                  icon: const Icon(Icons.open_in_full_rounded, size: 18),
-                  label: Text(t.dtEdit),
                 ),
               ),
             ],
@@ -430,177 +568,133 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
       ),
     );
   }
+}
 
-  Widget _buildEmptyState(
-    BuildContext context,
-    WidgetRef ref,
-    bool anyConnected,
-    bool metaConnected,
-  ) {
+/// Borderless lead card (C16): title = customer name (the thing the user
+/// recognizes), ONE status pill (existing `status`, sentence-case), meta =
+/// contact + LTR value. Frequent action binding: Call sits DIRECTLY on the
+/// card (≤ 1 tap from the list); WhatsApp/Edit/Delete live in the card
+/// menu (existing destinations only). Wraps at 320px / 1.3x.
+class _LeadCard extends StatelessWidget {
+  final CrmLeadEntity lead;
+  final VoidCallback onOpen;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  const _LeadCard({
+    required this.lead,
+    required this.onOpen,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final t = context.cx;
-    if (!anyConnected) {
-      return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final contact = lead.phone.isNotEmpty ? lead.phone : lead.email;
+
+    return AppSurfaceCard(
+      outlined: false,
+      onTap: onOpen,
+      semanticLabel:
+          '${lead.customerName.isEmpty ? lead.leadNumber : lead.customerName}, $contact',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 90),
-          Container(
-            width: 88,
-            height: 88,
-            decoration: BoxDecoration(
-              color: CrmColors.primary.withValues(alpha: 0.06),
-              shape: BoxShape.circle,
-              border: Border.all(color: CrmColors.primary.withValues(alpha: 0.15)),
-            ),
-            child: const Icon(Icons.link_off_rounded, size: 38, color: CrmColors.primary),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  lead.customerName.isEmpty ? lead.leadNumber : lead.customerName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              AppStatusChip(
+                label: _displayStatus(lead.status),
+                kind: _statusKind(lead.status),
+              ),
+            ],
           ),
-          const SizedBox(height: 24),
-          Center(
+          if (contact.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Directionality(
+              textDirection: TextDirection.ltr,
+              child: Text(
+                contact,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 4),
+          Directionality(
+            textDirection: TextDirection.ltr,
             child: Text(
-              t.leadsNoCrm,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: CrmColors.textH,
-                fontSize: 18,
+              'AED ${lead.leadValue.toStringAsFixed(0)}',
+              style: theme.textTheme.labelMedium?.copyWith(
                 fontWeight: FontWeight.w800,
               ),
             ),
           ),
-          const SizedBox(height: 8),
-          Center(
-            child: Text(
-              t.leadsNoCrmBody,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: CrmColors.textM, fontSize: 13, height: 1.5),
-            ),
-          ),
-          const SizedBox(height: 28),
-          SizedBox(
-            height: 50,
-            child: ElevatedButton.icon(
-              onPressed: () => ConnectIntegrationSheet.show(context),
-              icon: const Icon(Icons.add_link_rounded, size: 18),
-              label: Text(
-                t.leadsConnectNow,
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: CrmColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+          const SizedBox(height: 4),
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 4,
+            runSpacing: 4,
+            children: [
+              if (lead.phone.isNotEmpty)
+                TextButton.icon(
+                  onPressed: () => callLeadPhone(context, lead.phone),
+                  icon: const Icon(Icons.phone_outlined, size: 18),
+                  label: Text(t.dtCall),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
                 ),
-                elevation: 0,
+              PopupMenuButton<String>(
+                tooltip: MaterialLocalizations.of(context).showMenuTooltip,
+                icon: const Icon(Icons.more_vert_rounded),
+                onSelected: (value) {
+                  if (value == 'whatsapp') {
+                    whatsAppLeadPhone(context, lead.phone);
+                  } else if (value == 'edit') {
+                    onEdit();
+                  } else if (value == 'delete') {
+                    onDelete();
+                  }
+                },
+                itemBuilder: (itemContext) => [
+                  if (lead.phone.isNotEmpty)
+                    PopupMenuItem(
+                      value: 'whatsapp',
+                      child: Text(itemContext.cx.dtWhatsApp),
+                    ),
+                  PopupMenuItem(
+                    value: 'edit',
+                    child: Text(itemContext.cx.dtEdit),
+                  ),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Text(
+                      itemContext.cx.dtDelete,
+                      style: TextStyle(color: colors.error),
+                    ),
+                  ),
+                ],
               ),
-            ),
+            ],
           ),
-          const SizedBox(height: 14),
-          Center(
-            child: Text(
-              t.leadsAutoNote,
-              style: const TextStyle(color: CrmColors.textM, fontSize: 11),
-            ),
-          ),
-        ],
-      );
-    }
-
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      children: [
-        const SizedBox(height: 90),
-        Container(
-          width: 88,
-          height: 88,
-          decoration: const BoxDecoration(
-            color: CrmColors.accentLight,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.people_outline_rounded, size: 38, color: CrmColors.accent),
-        ),
-        const SizedBox(height: 24),
-        Center(
-          child: Text(
-            t.leadsEmpty,
-            style: const TextStyle(
-              color: CrmColors.textH,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Center(
-          child: Text(
-            t.leadsEmptySync(metaConnected ? 'Meta' : t.leadsPlatforms),
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: CrmColors.textM, fontSize: 13, height: 1.5),
-          ),
-        ),
-        const SizedBox(height: 28),
-        SizedBox(
-          height: 50,
-          child: ElevatedButton.icon(
-            onPressed: () => ref.read(crmLeadProvider.notifier).refresh(),
-            icon: const Icon(Icons.sync_rounded, size: 18),
-            label: Text(
-              t.leadsSyncNow,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: CrmColors.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-              elevation: 0,
-            ),
-          ),
-        ),
-        const SizedBox(height: 14),
-        Center(
-          child: Text(
-            t.leadsIntegNote,
-            style: const TextStyle(color: CrmColors.textM, fontSize: 11),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _DossierRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool ltr;
-
-  const _DossierRow({required this.label, required this.value, this.ltr = false});
-
-  @override
-  Widget build(BuildContext context) {
-    if (value.trim().isEmpty) return const SizedBox.shrink();
-    final text = ltr
-        ? Directionality(
-            textDirection: TextDirection.ltr,
-            child: Text(value.trim()),
-          )
-        : Text(value.trim());
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 110,
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          Expanded(child: text),
         ],
       ),
     );

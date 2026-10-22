@@ -267,5 +267,17 @@
   "csNeedMeta": "أدخل معرف الصفحة ورمز الوصول",
   "csNeedZoho": "أدخل معرف العميل وسر العميل ورمز التحديث",
   "csDone": "تم ربط {platform}! اضغط زامن الآن لجلب العملاء",
-  "csFail": "فشل الاتصال. تحقق من بيانات الاعتماد وحاول مرة أخرى."
+  "csFail": "فشل الاتصال. تحقق من بيانات الاعتماد وحاول مرة أخرى.",
+  "leadsSearchTitle": "البحث في العملاء",
+  "leadsSearchNoMatch": "لا يوجد عملاء يطابقون بحثك.",
+  "leadsFilterTitle": "تصفية العملاء",
+  "leadsFilterShow": "عرض النتائج",
+  "leadsFilterNoMatch": "لا يوجد عملاء يطابقون هذه التصفية.",
+  "leadsFilterClear": "مسح",
+  "leadsCountN": "{count, plural, =0{0 عميل} =1{عميل واحد} other{{count} عميل}}",
+  "tasksSearchTitle": "البحث في المهام",
+  "tasksSearchHint": "ابحث بالعنوان أو المسؤول",
+  "tasksSearchNoMatch": "لا توجد مهام مطابقة لبحثك.",
+  "tkCountN": "{count, plural, =0{0 مهمة} =1{مهمة واحدة} other{{count} مهمة}}",
+  "leadsSelectLead": "اختر عميلاً لعرض التفاصيل"
 }

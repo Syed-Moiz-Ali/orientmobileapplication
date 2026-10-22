@@ -1699,6 +1699,78 @@ abstract class CrmLocalizations {
   /// In en, this message translates to:
   /// **'Connection failed. Check your credentials and try again.'**
   String get csFail;
+
+  /// Leads search sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Search leads'**
+  String get leadsSearchTitle;
+
+  /// Leads search no-match
+  ///
+  /// In en, this message translates to:
+  /// **'No leads match your search.'**
+  String get leadsSearchNoMatch;
+
+  /// Leads filter sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Filter leads'**
+  String get leadsFilterTitle;
+
+  /// Filter apply CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Show results'**
+  String get leadsFilterShow;
+
+  /// Filter no-match
+  ///
+  /// In en, this message translates to:
+  /// **'No leads match this filter.'**
+  String get leadsFilterNoMatch;
+
+  /// Filter/search clear
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get leadsFilterClear;
+
+  /// Leads count (ICU plural; zero renders as 0)
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{0 leads} =1{1 lead} other{{count} leads}}'**
+  String leadsCountN(int count);
+
+  /// Tasks search sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Search tasks'**
+  String get tasksSearchTitle;
+
+  /// Tasks search hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search by title or assignee'**
+  String get tasksSearchHint;
+
+  /// Tasks search no-match
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks match your search.'**
+  String get tasksSearchNoMatch;
+
+  /// Tasks count (ICU plural; zero renders as 0)
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{0 tasks} =1{1 task} other{{count} tasks}}'**
+  String tkCountN(int count);
+
+  /// Wide-layout dossier placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'Select a lead to view details'**
+  String get leadsSelectLead;
 }
 
 class _CrmLocalizationsDelegate
