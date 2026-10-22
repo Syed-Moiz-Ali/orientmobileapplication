@@ -29,6 +29,7 @@ import 'package:owner_app/features/dashboard/presentation/providers/dashboard_ui
 import 'package:owner_app/features/dashboard/presentation/providers/team_providers.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/dashboard_body.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/owner_activity_feed_tab.dart';
+import 'package:owner_app/features/dashboard/presentation/widgets/owner_dashboard_page.dart';
 import 'package:owner_app/l10n/gen/owner_localizations.dart';
 
 const _outDir = 'before-owner-home';
@@ -350,8 +351,15 @@ void _drainExpected(WidgetTester tester, String name) {
   }
 }
 
+/// Opens the palette via the home header search action (U1) — scoped to
+/// OwnerDashboardPage so the finder names the single remaining affordance
+/// (search-affordance audit, ui/integration-1: the shell bar trigger is
+/// hidden on the dashboard tab; same palette, same route).
 Future<void> _openSearch(WidgetTester tester) async {
-  final search = find.byIcon(Icons.search_rounded);
+  final search = find.descendant(
+    of: find.byType(OwnerDashboardPage),
+    matching: find.byIcon(Icons.search_rounded),
+  );
   expect(search, findsOneWidget);
   await tester.tap(search);
   await tester.pump();

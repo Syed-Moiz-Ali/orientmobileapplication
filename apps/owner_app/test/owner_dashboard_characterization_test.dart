@@ -407,16 +407,17 @@ void main() {
       ],
     );
 
-    // Tap 1: shell search trigger opens the existing command palette.
-    // FORWARD PIN: scoped to the app bar — the recomposition adds a second
-    // search action on the home header opening the same palette, so a bare
-    // icon finder would turn ambiguous. SHELL FIX: the bar is now AppAppBar.
-    final shellSearch = find.descendant(
-      of: find.byType(AppAppBar),
+    // Tap 1: home header search opens the existing command palette.
+    // SEARCH-AFFORDANCE AUDIT (ui/integration-1): the shell bar trigger is
+    // hidden on the dashboard tab (U1/C16 one path per task), so the single
+    // remaining affordance is the home header action — same palette, same
+    // destination, same tap count (2 taps to the triage route).
+    final headerSearch = find.descendant(
+      of: find.byType(OwnerDashboardPage),
       matching: find.byIcon(Icons.search_rounded),
     );
-    expect(shellSearch, findsOneWidget);
-    await tester.tap(shellSearch);
+    expect(headerSearch, findsOneWidget);
+    await tester.tap(headerSearch);
     await _settle(tester);
     expect(find.text('Search destinations…'), findsWidgets);
 

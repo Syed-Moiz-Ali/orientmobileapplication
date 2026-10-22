@@ -419,9 +419,14 @@ class _FloorBoard extends StatelessWidget {
         ],
       );
     }
+    // C16 exact tiling (16 bays divide evenly — no orphan tile):
+    // compact 2, medium 2 (board + rail side-by-side per brief §States),
+    // expanded/large 4 (brief's 4-col bend). Medium was 3 (16 mod 3 = 1
+    // orphan); 2-col also widens tiles so the vehicle identity fits
+    // without a mid-token cut (U5). Tile data unchanged.
     final columns = context.adaptive.pick(
       compact: 2,
-      medium: 3,
+      medium: 2,
       expanded: 4,
       large: 4,
     );
@@ -564,9 +569,12 @@ class _BayTile extends StatelessWidget {
                     ),
                   )
                 else ...[
+                  // U5 full-word labels: the vehicle identity wraps to a
+                  // second line at word boundaries instead of truncating
+                  // mid-token (`Camry ABC 12…`). Same string, same style.
                   Text(
                     bay.title,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.labelMedium?.copyWith(
                       fontWeight: FontWeight.w800,
@@ -867,9 +875,10 @@ class _FloorSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Mirrors _FloorBoard columns so the loading shimmer matches the board.
     final columns = context.adaptive.pick(
       compact: 2,
-      medium: 3,
+      medium: 2,
       expanded: 4,
       large: 4,
     );

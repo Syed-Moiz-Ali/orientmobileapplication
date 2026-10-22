@@ -394,11 +394,16 @@ class _SupervisorChrome extends ConsumerWidget implements PreferredSizeWidget {
       title: titles[selectedIndex],
       showDivider: true,
       actions: [
-        AppIconButton(
-          icon: Icons.search_rounded,
-          tooltip: t.svSearchTitle,
-          onPressed: onSearch,
-        ),
+        // U1/C16 search-affordance audit (ui/integration-1): the floor tab
+        // owns the ONE search path on the floor header (same floor sheet) —
+        // the bar trigger renders only off the floor tab so floor home never
+        // shows two search icons. Route/sheet/logic untouched.
+        if (selectedIndex != 0)
+          AppIconButton(
+            icon: Icons.search_rounded,
+            tooltip: t.svSearchTitle,
+            onPressed: onSearch,
+          ),
         const StaffNotificationBell(),
         SizedBox(
           width: 48,

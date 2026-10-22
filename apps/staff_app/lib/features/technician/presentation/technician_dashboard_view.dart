@@ -357,11 +357,16 @@ class _TechChrome extends ConsumerWidget implements PreferredSizeWidget {
       title: titles[selectedIndex],
       showDivider: true,
       actions: [
-        AppIconButton(
-          icon: Icons.search_rounded,
-          tooltip: t.techJobsSearch,
-          onPressed: onSearch,
-        ),
+        // U1/C16 search-affordance audit (ui/integration-1): the Today tab
+        // owns the ONE search path on the day header (same today sheet) —
+        // the bar trigger renders only off the Today tab so Today home never
+        // shows two search icons. Route/sheet/logic untouched.
+        if (selectedIndex != 0)
+          AppIconButton(
+            icon: Icons.search_rounded,
+            tooltip: t.techJobsSearch,
+            onPressed: onSearch,
+          ),
         AppIconButton(
           icon: Icons.notifications_none_rounded,
           tooltip: t.advisorNotificationsTitle,

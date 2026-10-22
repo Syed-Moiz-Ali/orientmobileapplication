@@ -123,3 +123,58 @@ read-only triage (no approve/reject endpoint exists).
   stay composed from the existing shared atoms (`AppCard.standard` +
   `SectionHeader` + `SparklineChart` + first/last month rule); the change
   is structural (swipeable `PageView` on compact removed; curves stack).
+
+## Search-affordance audit (ui/integration-1, C16 one path per task)
+
+Audit found TWO visible search icons on the owner dashboard home opening the
+same palette: the shell `_OwnerChrome` bar trigger (`dashboard_body.dart`)
+and the home `_HomeHeader` U1 action (`owner_dashboard_page.dart`). Per
+C16/U1/U7 the header affordance is kept and the shell trigger is hidden from
+view on the dashboard tab only (`if (selectedIndex != 0)` in
+`_OwnerChrome.actions`). Presentation-only: same palette
+(`openOwnerSearch`), same routes/sheets/predicates, Ctrl+K kept, drill tabs
+keep the bar trigger. No logic changes.
+
+### Changed test assertions (additive rows)
+
+| Test | Old | New | Kind |
+|---|---|---|---|
+| before-capture search-open (`owner_home_before_capture_test.dart` `_openSearch`) | Bare `find.byIcon(Icons.search_rounded)` (hit header U1 + shell trigger = 2 widgets) | Finder scoped to `OwnerDashboardPage` descendant (the single remaining affordance) | structural (same palette/route; only which affordance is visible) |
+| palette search path reaches approvals in two taps (`owner_dashboard_characterization_test.dart`) | Finder scoped to `AppAppBar` (shell trigger) | Finder scoped to `OwnerDashboardPage` (header U1; shell trigger hidden on tab 0) | structural (same palette, same 2 taps, same triage route) |
+
+### Behavior assertions (verbatim, unchanged)
+
+- Tap counts (brief BEFORE, verified from code): glance hero + pods =
+  **0 taps** (hero + first pods above the fold at launch); register row (or
+  section View-all) -> `AppRoutes.jobCards` = **1 tap**; approvals tile ->
+  `AppRoutes.pendingApprovals` = **1 tap + scroll**; shell search icon ->
+  palette destination = **2 taps**. AFTER: identical (hero + first pods
+  above the fold; row tap 1; tile 1 + scroll; header search icon -> same
+  palette destination 2; Show-all expand + destination 2).
+- Provider reads identical: `dashboardUiProvider` (+ notifier `kpis` /
+  `registerItems` / `salesTrend` / `profitTrend` / `expensesTrend` /
+  `selectTab` / `refresh`) untouched; shell providers untouched.
+- Figures derivation identical: `_findKpi` (revenue/sales/turnover,
+  margin, occupancy/occupan/bay, approval, open/active, new/today) and
+  `_trendOf` moved verbatim; all figures render verbatim with the same
+  LTR locks (`AED 84K`-style values); zero renders as `0`; missing
+  families omitted, never zero-filled.
+- No new routes, no dropped routes: 10 pushes + 2 `selectTab` targets
+  unchanged; palette ids/labels/hints/icons/ordering unchanged (moved to
+  `owner_search.dart`, shared by shell + header); Show-all rows push the
+  same `jobCards` route; view-all trailing kept (`ownerRegisterAll`).
+- No Approve/Reject buttons anywhere (pinned `findsNothing`); the
+  approvals drill lands on the read-only triage; the new blocker banner is
+  warning-kind with a View drill, no decision affordance.
+- Pills: `Live operations` (accent) + active/today (info/success) rebuilt
+  on `AppStatusChip` with verbatim labels. BEFORE-QUIRK fixed
+  presentation-side: the old `const _CockpitHeader` read KPIs via
+  `ref.read` and froze on the first (empty) content frame, so active/today
+  pills never populated; the header now takes `kpis` as parameters.
+  Providers/state/logic untouched — same derivation, same strings.
+- Copy identical except two new keys (below). No ALL CAPS added: pod
+  overlines stay uppercase exactly as the legacy pods rendered them
+  (`REVENUE`, `MARGIN` — both UIs uppercase non-Arabic labels); no new
+  uppercase styling.
+- Audit counts: characterization still **10 tests / 36 expects** — no test
+  added or removed, no expect added or removed (counts never down).

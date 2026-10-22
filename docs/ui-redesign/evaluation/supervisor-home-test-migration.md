@@ -230,3 +230,36 @@ untouched; no new keys. File touched:
   no `--update-goldens` on anything else. All 17 re-viewed: search
   top-right/end-side same-row on 360/320/ar/tablet, exactly one filled
   Dispatch per screen state, zero bordered light tiles.
+
+## Fixer round-2 (phase-5 current re-audit FAIL 8/16: C16 orphan + U5 cap)
+
+Gating defects from `phase-5-supervisor-home-current-evaluation.md` §4:
+medium 3-col board orphans B-16 (16 mod 3 = 1) and truncates B-02
+mid-token (`Camry ABC 12…`, `_BayTile` title `maxLines: 1` ellipsis).
+
+Presentation-only, zero logic changes: bay derivation/filter predicate/
+selection/routes/providers/copy/ARB untouched; no new keys/routes; taps
+unchanged (columns + `maxLines` never touch `onTap`). File touched:
+`supervisor_dashboard_tab.dart` only.
+
+- C16 exact tiling: `_FloorBoard` + `_FloorSkeleton` medium pick 3 -> 2
+  (compact 2 / medium 2 / expanded 4 / large 4 — every breakpoint divides
+  16 exactly: 8 / 8 / 4 / 4 rows, no orphan). Medium 2-col matches brief
+  §States "tablet 2-col (board + rail side by side)"; expanded/large keep
+  the brief's 4-col bend; compact 2 kept (already exact). Wider medium
+  tiles also give the vehicle identity room to fit.
+- U5 full-word labels: `_BayTile` title `maxLines: 1` -> `2` (same
+  string, same `labelMedium` style) so the identity wraps at word
+  boundaries instead of cutting mid-token. Ref/meta rows untouched
+  (short LTR codes, still single-line).
+- Test deltas this round: **none** — all 8 behavior tests green
+  unmodified; no finder references columns or `maxLines`.
+- Verify: `flutter test --exclude-tags baseline` (staff_app) all green;
+  `flutter analyze --no-pub` (staff_app) no issues; current-capture matrix
+  in compare mode 10/11 — only `sv_home_en_1.0_768x1024.png` diffs
+  (10.32%, the intended 3-col -> 2-col reflow; B-02 now renders
+  `Camry ABC 1234` in full, pairs B-01/B-02, B-03/B-04, no orphan, zero
+  overflow tolerations). 360/ar/320/1.3x/1180/empty/loading/error/search/
+  more all still match (fold intact at 360x800, no 320/1.3x/ar overflow).
+  No `--update-goldens` — 768 regen belongs to the capture agent.
+  `test/failures/` debris deleted.
