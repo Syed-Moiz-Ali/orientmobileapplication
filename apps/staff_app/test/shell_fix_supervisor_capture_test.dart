@@ -8,9 +8,11 @@
 // shell chrome (greeting header, pills, bottom nav), so this file exists to
 // cover those focus regions.
 //
-// Matrix (4 PNGs):
+// Matrix (5 PNGs):
 //   data en 1.0 360x800 | data ar 1.0 360x800 | data en 1.3 360x800 |
-//   data en 1.0 320x568.
+//   data en 1.0 320x568 | More sheet open en 1.0 360x800
+//   (sv_more_open_en_360x800.png: More AppBottomSheet open showing
+//   Reports/Staff/Schedule rows at 48dp+).
 //
 // Fixtures mirror supervisor_dashboard_after_capture_test.dart (1 QC +
 // 1 occupied + 1 parts + 1 booking = 4 active bays, 12 idle, 1 breakdown).
@@ -306,6 +308,127 @@ Future<void> _capture(
   debugDisableShadows = oldShadows;
 }
 
+/// More-open variant: same shell pump as [_capture], then taps the 5th
+/// "More" slot to open the Reports/Staff/Schedule [AppBottomSheet] and
+/// golden-captures with the sheet open. Verifies the 3 overflow rows are
+/// present at 48dp+ before capturing.
+Future<void> _captureMoreOpen(
+  WidgetTester tester, {
+  required String name,
+  Locale locale = const Locale('en'),
+  Size logicalSize = const Size(360, 800),
+  double pixelRatio = 3.0,
+  double textScale = 1.0,
+  ConnectivityResult connectivity = ConnectivityResult.wifi,
+}) async {
+  final oldShadows = debugDisableShadows;
+  debugDisableShadows = false;
+  addTearDown(() => debugDisableShadows = oldShadows);
+  tester.view.physicalSize = Size(
+    logicalSize.width * pixelRatio,
+    logicalSize.height * pixelRatio,
+  );
+  tester.view.devicePixelRatio = pixelRatio;
+  addTearDown(tester.view.reset);
+
+  const channel = MethodChannel('dev.fluttercommunity.plus/connectivity');
+  final binding = TestDefaultBinaryMessengerBinding.instance;
+  binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
+    MethodCall call,
+  ) async {
+    if (call.method == 'checkConnectivity' || call.method == 'check') {
+      return <String>[connectivity.name];
+    }
+    return null;
+  });
+  binding.defaultBinaryMessenger.setMockMethodCallHandler(
+    const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
+    (MethodCall call) async => null,
+  );
+  addTearDown(
+    () => binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, null),
+  );
+
+  final container = ProviderContainer(
+    overrides: [
+      supervisorRemoteDataSourceProvider.overrideWithValue(
+        _FakeSupervisorRemote(),
+      ),
+      connectivityStatusProvider.overrideWith(
+        (ref) => Stream<ConnectivityResult>.value(connectivity),
+      ),
+    ],
+  );
+  addTearDown(container.dispose);
+  await tester.runAsync(() async {
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          locale: locale,
+          supportedLocales: AppLocales.supported,
+          localizationsDelegates: const [
+            StaffLocalizations.delegate,
+            SharedCoreLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          theme: AppTheme.light(BrandConfig.orient, locale: locale),
+          home: Builder(
+            builder: (context) => MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaler: TextScaler.linear(textScale),
+              ),
+              child: const SupervisorScaffold(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    for (var i = 0; i < 40; i++) {
+      if (!container.read(supervisorDashboardProvider).isDashboardLoading) {
+        break;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+  });
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 300));
+  _drainExpected(tester, name);
+
+  final moreTarget = find.descendant(
+    of: find.byType(AppBottomNav),
+    matching: find.text('More'),
+  );
+  expect(moreTarget, findsOneWidget);
+  await tester.tap(moreTarget);
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 300));
+  _drainExpected(tester, '$name-more-sheet');
+  expect(find.byType(AppBottomSheet), findsOneWidget);
+  for (final label in ['Reports', 'Staff', 'Schedule']) {
+    final row = find.ancestor(
+      of: find.text(label),
+      matching: find.byType(InkWell),
+    );
+    expect(row, findsWidgets, reason: 'More sheet row $label missing');
+    expect(
+      tester.getSize(row.first).height,
+      greaterThanOrEqualTo(48),
+      reason: 'More sheet row $label under 48dp',
+    );
+  }
+
+  await expectLater(
+    find.byType(MaterialApp),
+    matchesGoldenFile('../../../docs/ui-redesign/baseline/$_outDir/$name'),
+  );
+  debugDisableShadows = oldShadows;
+}
+
 /// Drains the exception queue, tolerating ONLY RenderFlex overflows.
 ///
 /// Overflow kept here is redesign evidence (striped in the PNG) and is
@@ -359,6 +482,13 @@ void main() {
       tester,
       name: 'sv_floor_en_1.0_320x568.png',
       logicalSize: const Size(320, 568),
+    );
+  });
+
+  testWidgets('shell-fix supervisor More open en 360x800', (tester) async {
+    await _captureMoreOpen(
+      tester,
+      name: 'sv_more_open_en_360x800.png',
     );
   });
 }

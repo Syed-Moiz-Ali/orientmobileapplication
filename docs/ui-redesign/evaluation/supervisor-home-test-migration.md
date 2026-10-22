@@ -134,6 +134,66 @@ Bottom nav untouched; no new routes.
   statuses/bays/scores; no shared_core changes were needed (no parity
   params missing); `supervisor_providers.dart` untouched.
 
+## Compact nav (ui/integration-1): 4 primaries + More (LOGIC_FOLLOWUPS #8)
+
+Presentation-only; resolves entry 8 (orchestrator closes that file).
+File touched: `supervisor_scaffold.dart` only — routes, providers, tab
+content/targets, haptics, badge derivation, selection, assign-sheet
+contract, copy/ARB all untouched; no new keys, no new routes, no tab
+removed. The expanded rail keeps all 7 destinations; only the compact
+bottom bar changes (legacy 7-slot `AppBottomNavigation` replaced by the
+spec-C8 `AppBottomNav` + `AppBottomSheet` More overflow, tokens only).
+
+- 4 PRIMARY tabs (the tabs the brief's top-3 tasks need, plus home):
+  Floor (home; dispatch bay tap -> assign sheet), Jobs
+  (dispatch-adjacent active-jobs list), Queue (check what's waiting),
+  Review (QC sign-off). 5th slot = More (`commonMore`, shared key,
+  en "More" / ar "المزيد") opening an `AppBottomSheet` (icon + label
+  rows, 48dp+ targets, trailing check on the active destination, same
+  tab targets/routes when tapped; More slot selected while an overflow
+  tab is active).
+- More contents: Reports, Staff, Schedule (indices 4/5/6, order kept).
+- Badges: no tab carries badge/count state (the scaffold never wired
+  `badgeIndices`/`badgeCounts`), so More carries no dot/count — existing
+  state read only, nothing invented.
+
+### Tap table (BEFORE = brief + §Behavior assertions; AFTER measured)
+
+Primary tasks stay ≤ before (most-frequent dispatch = 1 tap ≤ 2, U3 held):
+
+| Task | Before | After | Delta |
+|---|---|---|---|
+| Dispatch a job into a bay (bay tap -> assign sheet; hero Dispatch CTA) | 1 tap, 0 scroll | 1 tap, 0 scroll (Floor primary, unchanged) | ±0 |
+| Check what's waiting (Queue tab; floor rail row/button) | 1 tap | 1 tap (Queue primary; rail unchanged) | ±0 |
+| Review a finished job (Review tab; rail Review button) | 1 tap | 1 tap (Review primary; rail unchanged) | ±0 |
+| Active jobs list (Jobs tab) | 1 tap | 1 tap (Jobs primary) | ±0 |
+| Operations report | 1 tap (Reports tab) | 2 taps (More -> Reports) | **+1** |
+| Workshop roster | 1 tap (Staff tab) | 2 taps (More -> Staff) | **+1** |
+| Bay schedule | 1 tap (Schedule tab) | 2 taps (More -> Schedule) | **+1** |
+
+Plainly: Reports, Staff and Schedule each cost exactly one extra tap
+(the More sheet); dispatch, queue, review and jobs cost the same as
+before. No frequent task takes more taps than before (U3: Reports/Staff/
+Schedule are infrequent admin destinations, not top-3 tasks).
+
+### Verification
+
+- New pins: `apps/staff_app/test/supervisor_scaffold_nav_test.dart`
+  (6 testWidgets, harness per gate: real FontLoader fonts,
+  debugShowCheckedModeBanner:false, shadows restored, runAsync+delays,
+  connectivity mocks BOTH check+checkConnectivity, ar locale+delegates+
+  AppTheme): bar shows Floor/Jobs/Queue/Review + More with overflow tabs
+  hidden; each primary switches in one tap; More sheet rows are 48dp+ and
+  navigate to Reports/Staff/Schedule; ar RTL + 320px + 1.3x pump with
+  `takeException()` null (0 overflow). Run green.
+- Shell captures (`shell_fix_supervisor_capture_test.dart`, capture agent
+  owns) run locally in compare mode: 320/1.3x/ar pump with 0 overflow;
+  golden diffs vs the pre-nav goldens are expected and left for the
+  capture-agent regen (no `--update-goldens`, nothing written to
+  `after-shell-fix/`).
+- STOPs: none. No logic change was needed (no badge state existed to
+  surface; no hidden-tab count derivation exists).
+
 ## Fixer round-1 (U-review FAIL: U1 + U7 capped 8/16, plus borderless + hero nits)
 
 Presentation-only, zero logic changes: routes/providers/domain/bay

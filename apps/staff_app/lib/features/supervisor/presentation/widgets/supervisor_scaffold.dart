@@ -191,22 +191,171 @@ class _SupervisorScaffoldState extends ConsumerState<SupervisorScaffold> {
           ],
         ),
       ),
-      // STOP (shell-fix round 2): the 7-destination IA is a KEPT contract
-      // (phase-5 brief flow: "bottom nav (7 items)") and spec C16 caps the
-      // new AppBottomNav at 5 (asserts 1–5). Consolidating to 5 is a product
-      // IA decision, not presentation — so the shared overflow bar stays
-      // until the reviewer adjudicates. The AppBar above is migrated.
+      // Compact nav (ui/integration-1): 4 primary tabs + a 5th "More" slot
+      // on the spec-C8 [AppBottomNav]. Primaries are the top-3-task tabs
+      // (Floor = dispatch home, Jobs = dispatch-adjacent, Queue, Review);
+      // Reports/Staff/Schedule live behind More in an [AppBottomSheet]
+      // (icon + label rows, 48dp+, same tab targets/routes when tapped).
+      // No routes removed, no tab content changed; the expanded rail keeps
+      // all 7 destinations. [AppBottomNav] asserts 1–5 items, so the 7-slot
+      // legacy [AppBottomNavigation] overflow bar is replaced, not kept.
+      // Badges: no tab carries badge/count state (scaffold never wired
+      // badgeIndices/badgeCounts), so More carries no dot/count — read
+      // existing state only, nothing invented.
       bottomNavigationBar: adaptive.useNavigationRail
           ? null
-          : AppBottomNavigation(
+          : _SupervisorBottomBar(
               items: items,
               selectedIndex: _navIndex,
               onSelected: (index) => setState(() => _navIndex = index),
+              onOpenMore: (_) => _openMore(items),
             ),
     );
   }
 
+  /// Opens the More overflow sheet (Reports/Staff/Schedule rows) and moves
+  /// to the picked destination. Presentation-only: same tab targets/routes
+  /// as the old 7-slot bar.
+  Future<void> _openMore(List<AppNavItem> items) async {
+    HapticFeedback.selectionClick();
+    final selected = await showAppBottomSheet<int>(
+      context,
+      title: SharedCoreL10n.of(context).commonMore,
+      semanticLabel: SharedCoreL10n.of(context).commonMore,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = _kPrimaryTabCount; i < items.length; i++)
+            _MoreDestinationRow(
+              item: items[i],
+              selected: _navIndex == i,
+              onTap: () => Navigator.of(context).pop(i),
+            ),
+        ],
+      ),
+    );
+    if (selected != null && selected != _navIndex) {
+      setState(() => _navIndex = selected);
+    }
+  }
+
   void _openQueueFromSchedule() => setState(() => _navIndex = 2);
+}
+
+/// Number of primary compact destinations. Floor/Jobs/Queue/Review stay on
+/// the bar (top-3-task tabs); Reports/Staff/Schedule move behind More.
+const int _kPrimaryTabCount = 4;
+
+/// Compact bottom bar: 4 primary tabs + a 5th "More" slot on the spec-C8
+/// [AppBottomNav] (max 5). Tapping More opens the overflow [AppBottomSheet];
+/// tapping a primary moves straight to its tab (1 tap, unchanged).
+class _SupervisorBottomBar extends StatelessWidget {
+  final List<AppNavItem> items;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+  final ValueChanged<List<AppNavItem>> onOpenMore;
+
+  const _SupervisorBottomBar({
+    required this.items,
+    required this.selectedIndex,
+    required this.onSelected,
+    required this.onOpenMore,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // C16: outlined glyphs on the bar; active = accent (never color alone —
+    // [AppBottomNav] also marks `selected` Semantics).
+    final barItems = <AppBottomNavItem>[
+      for (var i = 0; i < _kPrimaryTabCount; i++)
+        AppBottomNavItem(label: items[i].label, icon: items[i].icon),
+      AppBottomNavItem(
+        label: SharedCoreL10n.of(context).commonMore,
+        icon: Icons.more_horiz_rounded,
+      ),
+    ];
+    final barIndex = selectedIndex < _kPrimaryTabCount
+        ? selectedIndex
+        : _kPrimaryTabCount;
+    return AppBottomNav(
+      items: barItems,
+      currentIndex: barIndex,
+      onTap: (bar) {
+        if (bar < _kPrimaryTabCount) {
+          onSelected(bar);
+        } else {
+          onOpenMore(items);
+        }
+      },
+    );
+  }
+}
+
+/// One More-sheet destination row: icon + label, 48dp+ target, trailing
+/// check on the active destination. Same tab target/route when tapped.
+class _MoreDestinationRow extends StatelessWidget {
+  final AppNavItem item;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _MoreDestinationRow({
+    required this.item,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(AppDimensions.radiusControl),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.s12,
+              vertical: AppDimensions.s8,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  selected ? item.selectedIcon : item.icon,
+                  size: 22,
+                  color: selected ? colors.primary : colors.onSurfaceVariant,
+                ),
+                const SizedBox(width: AppDimensions.s12),
+                Expanded(
+                  child: Text(
+                    item.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+                      color: selected ? colors.primary : colors.onSurface,
+                    ),
+                  ),
+                ),
+                if (selected)
+                  Icon(
+                    Icons.check_rounded,
+                    size: AppDimensions.iconSm,
+                    color: colors.primary,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Shell bar (shell-fix round 2): the shared spec-C8 [AppAppBar] (56,

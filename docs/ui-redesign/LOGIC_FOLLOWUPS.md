@@ -113,7 +113,16 @@ owner. No silent filtering.
 - Proposed owner: product/design — either confirm the 7-tab IA (then the
   More overflow is the specified pattern for >5) or consolidate to 5 named
   destinations; frontend migrates the bar only then.
-- Status: open. Shell AppBar migrated; nav intentionally unchanged.
+- Status: CLOSED (integration session, item 1) — resolved as a
+  presentation decision per explicit order: 4 primaries
+  (Floor/Jobs/Queue/Review — the tabs the brief's top-3 tasks need;
+  dispatch/queue/review/jobs stay 1 tap) + 5th More tab opening an
+  `AppBottomSheet` (Reports/Staff/Schedule, icon + label rows ≥48dp, same
+  routes/targets, order kept; More selected while an overflow tab is
+  active; expanded rail keeps all 7). No badges existed on any tab, so
+  More carries none. Infrequent admin tasks move 1→2 taps (+1 stated
+  plainly in the supervisor migration doc). Review
+  `phase-supervisor-nav-review.md`: 15/16 PASS.
 
 ## 9. Server/entity labels render English inside the ar locale (no ARB key to use)
 

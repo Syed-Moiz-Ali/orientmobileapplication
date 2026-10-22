@@ -338,3 +338,14 @@ confirmation + snackbar contracts, `RefreshIndicator` + `AppResponsivePage`
 Eleven new ARB keys (`vhSearchTitle/Hint/NoMatch`,
 `vhFilterTitle/All/Booked/LastService/None/Show/NoMatch/Clear`, en+ar,
 gen-l10n from `apps/customer_app`).
+
+## Supervisor compact nav (branch `ui/integration-1`, resolves LOGIC #8)
+
+`supervisor_scaffold.dart` compact bottom bar migrated presentation-only
+onto spec-C8 tokens; providers/routes/tab content/tab targets/IndexedStack
+order/selection/haptics/copy/ARB untouched (no new keys — More label is the
+shared `commonMore`); expanded rail keeps all 7 destinations.
+
+| Deleted legacy widget | Surface | Replaced by | Notes |
+|---|---|---|---|
+| 7-slot `AppBottomNavigation` compact bar (legacy shared overflow) | supervisor shell (1) | `AppBottomNav` (4 primaries: Floor/Jobs/Queue/Review + 5th More slot; outlined glyphs, active = accent, `currentIndex` maps overflow tabs to More) + `showAppBottomSheet`/`AppBottomSheet` More sheet (Reports/Staff/Schedule rows: icon + label, 48dp+ targets, trailing check on active, same tab targets/routes when tapped) | No routes removed, no tab content changed; More carries no badge (no tab wires badge/count state — read existing state only, nothing invented); tap counts: primaries ≤ before, More-moved tasks +1 each (see `evaluation/supervisor-home-test-migration.md` tap table) |
