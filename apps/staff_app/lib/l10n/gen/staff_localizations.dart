@@ -5270,35 +5270,17 @@ abstract class StaffLocalizations {
   /// **'Job details'**
   String get techDetailTitle;
 
-  /// Detail running eyebrow
-  ///
-  /// In en, this message translates to:
-  /// **'CURRENT TASK'**
-  String get techDetailCurrentTask;
-
   /// Detail running section title
   ///
   /// In en, this message translates to:
   /// **'Current task'**
   String get techDetailCurrentTitle;
 
-  /// Detail next eyebrow
-  ///
-  /// In en, this message translates to:
-  /// **'NEXT TASK'**
-  String get techDetailNextTask;
-
   /// Detail next section title
   ///
   /// In en, this message translates to:
   /// **'Next task'**
   String get techDetailNextTitle;
-
-  /// Detail held eyebrow
-  ///
-  /// In en, this message translates to:
-  /// **'ON HOLD'**
-  String get techDetailOnHold;
 
   /// Detail done eyebrow
   ///
@@ -5312,23 +5294,11 @@ abstract class StaffLocalizations {
   /// **'No tasks'**
   String get techDetailNoTasks;
 
-  /// Detail section eyebrow
-  ///
-  /// In en, this message translates to:
-  /// **'EXECUTION'**
-  String get techDetailExecution;
-
   /// Task list header
   ///
   /// In en, this message translates to:
   /// **'{count} assigned'**
   String techDetailTasksAssigned(int count);
-
-  /// Task list eyebrow
-  ///
-  /// In en, this message translates to:
-  /// **'ALL TASKS'**
-  String get techDetailAllTasks;
 
   /// Detail primary action
   ///
@@ -5444,23 +5414,17 @@ abstract class StaffLocalizations {
   /// **'Support'**
   String get techDetailSupport;
 
-  /// Support section eyebrow
-  ///
-  /// In en, this message translates to:
-  /// **'NEED HELP?'**
-  String get techDetailNeedHelp;
-
   /// Handover action
   ///
   /// In en, this message translates to:
   /// **'Complete repair'**
   String get techDetailCompleteRepair;
 
-  /// Handover confirm title
+  /// Handover confirm title naming the job reference
   ///
   /// In en, this message translates to:
-  /// **'Complete repair?'**
-  String get techDetailConfirmTitle;
+  /// **'Complete repair on \'{ref}\'?'**
+  String techDetailCompleteRepairOn(String ref);
 
   /// Handover confirm body
   ///
