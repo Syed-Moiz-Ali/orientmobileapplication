@@ -226,12 +226,12 @@ void main() {
     // Fixed-cents tabular money, verbatim; zero renders as AED 0.00 (U11).
     expect(find.textContaining('AED 2,450.00'), findsWidgets);
     expect(find.textContaining('AED 0.00'), findsWidgets);
-    // Status pills come from the real JobCardStatus only, upper-cased by the
-    // shared helper (also serving the detail view — STOP boundary, kept
-    // byte-identical; see the migration doc).
-    expect(find.text('IN PROGRESS'), findsWidgets);
-    expect(find.text('QUALITY CHECK'), findsWidgets);
-    expect(find.text('COMPLETED'), findsWidgets);
+    // Status pills come from the real JobCardStatus only, rendered
+    // sentence-case verbatim from the shared helper (also serving the
+    // detail view — shared helper fix, same statuses/tones; see migration).
+    expect(find.text('In progress'), findsWidgets);
+    expect(find.text('Quality check'), findsWidgets);
+    expect(find.text('Completed'), findsWidgets);
   });
 
   testWidgets('inline search narrows by customer, plate and job ref', (

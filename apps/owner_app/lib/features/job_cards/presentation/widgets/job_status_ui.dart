@@ -63,7 +63,7 @@ Widget jobStatusPill(
   JobCardStatus status, {
   bool showDot = true,
 }) {
-  final label = jobStatusLabel(t, status).toUpperCase();
+  final label = jobStatusLabel(t, status);
   return switch (status) {
     JobCardStatus.completed ||
     JobCardStatus.delivered ||

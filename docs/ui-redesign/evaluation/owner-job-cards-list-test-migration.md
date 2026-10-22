@@ -17,16 +17,19 @@ frames (no regression).
   after (9/9). Frozen after STEP 0 — same 9 tests, same assertion shapes,
   counts 9 -> 9.
 - Copy finders: pill/money/findings use `text`/`findsWidgets` where the UI
-  renders plain `Text` pre and post (`jobStatusPill` labels are byte-identical
-  UPPERCASE via the shared helper — pinned quirk, see below); empty/no-match/
-  prompt strings use `textContaining` (the recomposed `AppEmptyState`
+  renders plain `Text` pre and post (`jobStatusPill` labels are sentence-case
+  verbatim from the shared helper — UPPERCASE quirk fixed display-side, see
+  below); empty/no-match/ prompt strings use `textContaining` (the recomposed
+  `AppEmptyState`
   bidi-isolates title/message, invisible).
-- Pinned quirk (logic, untouched): pills render `.toUpperCase()` labels
-  (`IN PROGRESS`, `QUALITY CHECK`, `COMPLETED`) from `job_status_ui.dart`,
-  which is shared with the detail view (2 call sites in
-  `job_card_detail_view.dart`). Changing it would restyle an out-of-scope
-  surface — STOP boundary, kept byte-identical. C16 bans ADDED caps; none
-  added here.
+- UPPERCASE fix (display-side only, shared helper): pills rendered
+  `.toUpperCase()` labels (`IN PROGRESS`, `QUALITY CHECK`, `COMPLETED`) from
+  `job_status_ui.dart`, shared with the detail view (2 call sites in
+  `job_card_detail_view.dart`). Fixed at the helper by dropping
+  `.toUpperCase()` — same `jobStatusLabel` keys, same statuses, same
+  tones; ARB verbatim (`In progress`, `Quality check`, `Completed` en;
+  Arabic unchanged). No logic/status/color change. C16 now clean (zero caps
+  ADDED or kept on this surface).
 - Pinned rail behavior: the six-chip milestone rail scrolls horizontally — the
   `QC` chip needs one drag into view before tapping (test harness only;
   production behavior identical). Filter re-tap clears (rail keeps scroll
@@ -48,7 +51,7 @@ frames (no regression).
 | Test | Old | New | Kind |
 |---|---|---|---|
 | header shows title, subtitle and live count, no header search | `WorkspaceAppBar` + count `StatusPill.neutral` + inline `AppSearchField` | Same bar (deviation A: chrome owned by workspace) + `AppStatusChip` neutral (same `ownerRegCount` label); still zero header search icons at any size (deviation B: audited single affordance) | structural (rendering-identical) |
-| compact rows render identity, tabular money and status | `AppTable` + `AppRecordRow` + `jobStatusPill` + `formatAed2` | verbatim (deviations C/D: STOP boundaries — table/row atoms + detail-shared helper kept) | behavioral (unchanged) |
+| compact rows render identity, tabular money and status | `AppTable` + `AppRecordRow` + `jobStatusPill` + `formatAed2` | sentence-case (UPPERCASE quirk fixed display-side — same `ownerJs*` keys/statuses/tones, `In progress`/`Quality check`/`Completed`); `AppTable`/`AppRecordRow`/`formatAed2` verbatim | behavioral (display-case only) |
 | inline search narrows by customer, plate and job ref | `AppSearchField` → `onSearch` + `_applyFilters` | verbatim | behavioral (unchanged) |
 | milestone rail filters and re-tap clears | `AppFilterBar` + `_statusFor` mapping + `setFilter` | verbatim | behavioral (unchanged) |
 | compact row tap opens the job audit | `_openJob` + `push(jobCardDetail)` | verbatim (stub route) | behavioral (unchanged) |
@@ -73,9 +76,11 @@ frames (no regression).
   mutated) untouched.
 - `formatAed2` byte-exact (`AED 2,450.00`, zero as `AED 0.00`), LTR locks on
   ref/plate/vehicleDisplay/money, unshrinkable pill block at 320px/1.3x kept.
+  Pill labels sentence-case verbatim (`In progress`, `Quality check`,
+  `Completed` en; Arabic unchanged) — same statuses/tones, display-case only.
 - No-header-search STOP honored (deviation B); no `AppPageHeader` swap
-  (deviation A); table kept on wide (deviation C); shared atoms/helpers kept
-  (deviation D). App bar + nav untouched.
+  (deviation A); table kept on wide (deviation C); shared atoms kept
+  (deviation D) except the display-case helper fix above. App bar + nav untouched.
 - Copy keys: zero new (reused `ownerReg*`, `ownerJs*`; prompt title reuses
   `ownerRegTitle`). Phase-9 list: none.
 
@@ -94,6 +99,7 @@ frames (no regression).
 - KEPT (STOP/pinned, not legacy): `WorkspaceAppBar` + back + shortcut,
   `AppSearchField`, `AppFilterBar` + milestone mapping, `AppTable` +
   columns/cells/sort/sticky + `compactBuilder` + `AppRecordRow` + pill-block
-  fix, `jobStatusPill` (incl. existing `.toUpperCase()` — shared with detail),
+  fix, `jobStatusPill` (UPPERCASE quirk fixed display-side — `.toUpperCase()`
+  dropped, same keys/statuses/tones, shared with detail),
   `formatAed2`, providers/sort/selection/open/routes/keys (detail view +
-  shared atoms untouched).
+  shared atoms otherwise untouched).
