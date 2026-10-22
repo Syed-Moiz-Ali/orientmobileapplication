@@ -268,6 +268,51 @@ class CustomerLocalizationsEn extends CustomerLocalizations {
   }
 
   @override
+  String get bkSearchTitle => 'Search bookings';
+
+  @override
+  String get bkSearchHint => 'Search by service, vehicle, or plate';
+
+  @override
+  String get bkSearchNoMatch => 'No bookings match your search.';
+
+  @override
+  String get bkFilterTitle => 'Filter bookings';
+
+  @override
+  String get bkFilterAll => 'All';
+
+  @override
+  String get bkFilterUpcoming => 'Upcoming';
+
+  @override
+  String get bkFilterInService => 'In service';
+
+  @override
+  String get bkFilterHistory => 'History';
+
+  @override
+  String get bkFilterShow => 'Show results';
+
+  @override
+  String get bkFilterNoMatch => 'No bookings match this filter.';
+
+  @override
+  String get bkFilterClear => 'Clear';
+
+  @override
+  String get bkfNotSent => 'Not sent';
+
+  @override
+  String get bkfSendBody => 'We couldn\'t send this booking to the workshop.';
+
+  @override
+  String get bkfWaitingBody => 'The workshop hasn\'t received it.';
+
+  @override
+  String get bkfRetrying => 'Retrying…';
+
+  @override
   String get jsInService => 'IN SERVICE';
 
   @override
@@ -403,6 +448,60 @@ class CustomerLocalizationsEn extends CustomerLocalizations {
 
   @override
   String get vhInService => 'In the workshop now';
+
+  @override
+  String get vhStatusBooked => 'Booked';
+
+  @override
+  String get vhStatusRequested => 'Requested';
+
+  @override
+  String get vhStatusLastService => 'Last service';
+
+  @override
+  String get vhStatusInProgress => 'Service in progress';
+
+  @override
+  String get bkWeekdayMon => 'Mon';
+
+  @override
+  String get bkWeekdayTue => 'Tue';
+
+  @override
+  String get bkWeekdayWed => 'Wed';
+
+  @override
+  String get bkWeekdayThu => 'Thu';
+
+  @override
+  String get bkWeekdayFri => 'Fri';
+
+  @override
+  String get bkWeekdaySat => 'Sat';
+
+  @override
+  String get bkWeekdaySun => 'Sun';
+
+  @override
+  String get bkWeekdayMonday => 'Monday';
+
+  @override
+  String get bkWeekdayTuesday => 'Tuesday';
+
+  @override
+  String get bkWeekdayWednesday => 'Wednesday';
+
+  @override
+  String get bkWeekdayThursday => 'Thursday';
+
+  @override
+  String get bkWeekdayFriday => 'Friday';
+
+  @override
+  String get bkWeekdaySaturday => 'Saturday';
+
+  @override
+  String get bkWeekdaySunday => 'Sunday';
 
   @override
   String get vhFallbackName => 'Vehicle';

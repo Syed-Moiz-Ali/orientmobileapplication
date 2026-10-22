@@ -267,6 +267,51 @@ class CustomerLocalizationsAr extends CustomerLocalizations {
   }
 
   @override
+  String get bkSearchTitle => 'البحث في الحجوزات';
+
+  @override
+  String get bkSearchHint => 'ابحث بالخدمة أو المركبة أو اللوحة';
+
+  @override
+  String get bkSearchNoMatch => 'لا توجد حجوزات تطابق بحثك.';
+
+  @override
+  String get bkFilterTitle => 'تصفية الحجوزات';
+
+  @override
+  String get bkFilterAll => 'الكل';
+
+  @override
+  String get bkFilterUpcoming => 'القادمة';
+
+  @override
+  String get bkFilterInService => 'في الورشة';
+
+  @override
+  String get bkFilterHistory => 'السجل';
+
+  @override
+  String get bkFilterShow => 'عرض النتائج';
+
+  @override
+  String get bkFilterNoMatch => 'لا توجد حجوزات تطابق هذه التصفية.';
+
+  @override
+  String get bkFilterClear => 'مسح';
+
+  @override
+  String get bkfNotSent => 'لم يُرسل';
+
+  @override
+  String get bkfSendBody => 'تعذّر إرسال هذا الحجز إلى الورشة.';
+
+  @override
+  String get bkfWaitingBody => 'لم تستلم الورشة هذا الحجز.';
+
+  @override
+  String get bkfRetrying => 'جارٍ إعادة المحاولة…';
+
+  @override
   String get jsInService => 'قيد الصيانة';
 
   @override
@@ -399,6 +444,60 @@ class CustomerLocalizationsAr extends CustomerLocalizations {
 
   @override
   String get vhInService => 'في الورشة الآن';
+
+  @override
+  String get vhStatusBooked => 'محجوز';
+
+  @override
+  String get vhStatusRequested => 'مطلوب';
+
+  @override
+  String get vhStatusLastService => 'آخر صيانة';
+
+  @override
+  String get vhStatusInProgress => 'الصيانة جارية';
+
+  @override
+  String get bkWeekdayMon => 'الاثنين';
+
+  @override
+  String get bkWeekdayTue => 'الثلاثاء';
+
+  @override
+  String get bkWeekdayWed => 'الأربعاء';
+
+  @override
+  String get bkWeekdayThu => 'الخميس';
+
+  @override
+  String get bkWeekdayFri => 'الجمعة';
+
+  @override
+  String get bkWeekdaySat => 'السبت';
+
+  @override
+  String get bkWeekdaySun => 'الأحد';
+
+  @override
+  String get bkWeekdayMonday => 'الاثنين';
+
+  @override
+  String get bkWeekdayTuesday => 'الثلاثاء';
+
+  @override
+  String get bkWeekdayWednesday => 'الأربعاء';
+
+  @override
+  String get bkWeekdayThursday => 'الخميس';
+
+  @override
+  String get bkWeekdayFriday => 'الجمعة';
+
+  @override
+  String get bkWeekdaySaturday => 'السبت';
+
+  @override
+  String get bkWeekdaySunday => 'الأحد';
 
   @override
   String get vhFallbackName => 'مركبة';

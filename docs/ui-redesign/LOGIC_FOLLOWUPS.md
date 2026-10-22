@@ -139,3 +139,37 @@ owner. No silent filtering.
 - Proposed owner: backend/product — return locale-aware labels (or confirm
   English-codes acceptable, e.g. "AED", plate numbers stay LTR by design).
 - Status: open. Presentation renders the feed verbatim; no invented copy.
+
+## 10. Customer notification mark-read is silent by contract (no success/failure feedback)
+
+- Feed/handlers: mark-one/mark-all persist in the background (optimistic);
+  the handler contract exposes no success/failure signal, so a
+  success/failure-aware toast would need a handler-contract change.
+- Evidence: adversarial review (ui/list-customer) — U10 raised, brief U7
+  mandates the silent persist; existing markAllRead rollback + AppBanner
+  failure path kept.
+- Proposed owner: state owners — expose mark-read result on the handler
+  contract; frontend adds feedback only then.
+- Status: open. Behavior intentionally unchanged.
+
+## 11. Customer notification titles/bodies/times stay English in the ar locale (backend-stored fields)
+
+- Feed/copy: inbox rows render `title`/`body`/`time` verbatim from stored
+  fields (`customer_notifications_view.dart` `_NotificationRow` builds
+  `Text(notification.title)` / `Text(notification.body)` /
+  `label · time` meta with no EN template in UI code; only the category
+  label is ARB-localized via `labelOf`/`groupOf`). The ar capture fixtures
+  (`customer_notifications_list_after_capture_test.dart` `_service`,
+  `_approval`, `_invoice`, `_general`) carry EN stored-field copy, so the ar
+  inbox correctly shows EN content rows inside otherwise-RTL chrome.
+  Translating stored copy in presentation would invent Arabic.
+- Evidence: `apps/customer_app/lib/features/customer/presentation/customer_notifications_view.dart:408-409,419-430,432-443`
+  (verbatim `notification.title`/`body`/`time`); brief
+  `docs/ui-redesign/briefs/customer-notifications-list.md` Truth rules
+  (title/body/time/category only from stored fields); after-frames
+  `after-customer-notifications/idle_light_1.0_ar_360x800.png` (EN rows,
+  AR chrome per contract).
+- Proposed owner: backend/product — return locale-aware notification copy
+  (or confirm EN-codes acceptable, same family as entries 2 and 9);
+  frontend maps via `context.l10n` only then.
+- Status: open. Presentation keeps stored fields verbatim; no invented Arabic.

@@ -2,6 +2,7 @@ import 'package:customer_app/features/customer/domain/entities/customer_entities
 import 'package:customer_app/features/customer/presentation/support/customer_booking_relations.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_bookings_presentation.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
+import 'package:customer_app/l10n/gen/customer_localizations.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_models/shared_models.dart' as models;
@@ -91,12 +92,17 @@ abstract final class CustomerVehiclePresentation {
 
   /// A real service context for one vehicle, derived only from records that
   /// genuinely reference it (matched on the plate, the identifier both the
-  /// booking and the vehicle endpoints carry).
+  /// booking and the vehicle endpoints carry). Presentation-only localization:
+  /// pass the ambient [l10n] + [locale] so pill/detail copy renders in the
+  /// active language; predicates (plate match, finished sets, ordering) are
+  /// unchanged. When omitted, English template copy is used (tests).
   static CustomerVehicleContext? contextFor({
     required CustomerVehicleEntity vehicle,
     required List<CustomerBookingEntity> bookings,
     CustomerServiceEntity? liveService,
     String Function(double amount)? formatAmount,
+    CustomerLocalizations? l10n,
+    Locale? locale,
   }) {
     final plate = CustomerBookingRelations.normalizePlate(vehicle.plateNumber);
     if (plate.isEmpty) return null;
@@ -110,12 +116,15 @@ abstract final class CustomerVehiclePresentation {
         final stage = CustomerServiceTracking.humanize(
           liveService.currentStage,
         );
+        final detail = stage.isEmpty
+            ? (l10n?.vhStatusInProgress ?? 'Service in progress')
+            : (l10n != null
+                ? l10n.jsStage(stage)
+                : 'Current stage · $stage');
         return CustomerVehicleContext(
           kind: CustomerVehicleContextKind.inService,
-          label: 'In the workshop now',
-          detail: stage.isEmpty
-              ? 'Service in progress'
-              : 'Current stage · $stage',
+          label: l10n?.vhInService ?? 'In the workshop now',
+          detail: detail,
           booking: null,
         );
       }
@@ -132,7 +141,12 @@ abstract final class CustomerVehiclePresentation {
       final booking = upcoming.first;
       return CustomerVehicleContext(
         kind: CustomerVehicleContextKind.upcoming,
-        label: upcomingLabel(booking.status),
+        label: upcomingLabel(booking.status, l10n),
+        // Detail schedule stays Latin (verbatim compactDate/time helpers):
+        // the inline `service · date · time` line mixes backend-EN service
+        // names with numbers, and an Arabic month inside it corrupts the
+        // bidi order (`AM 10:00`, swapped segments). Pills carry the Arabic
+        // status; the detail keeps LTR-locked Latin like plate/VIN (U10).
         detail: _scheduleOrService(booking),
         booking: booking,
       );
@@ -146,7 +160,7 @@ abstract final class CustomerVehiclePresentation {
     final booking = past.first;
     return CustomerVehicleContext(
       kind: CustomerVehicleContextKind.completed,
-      label: 'Last service',
+      label: l10n?.vhStatusLastService ?? 'Last service',
       detail: _scheduleOrService(booking),
       booking: booking,
     );
@@ -168,12 +182,17 @@ abstract final class CustomerVehiclePresentation {
         .toList();
   }
 
-  static String upcomingLabel(BookingStatus status) =>
-      status == BookingStatus.confirmed ? 'Booked' : 'Requested';
+  static String upcomingLabel(BookingStatus status, [CustomerLocalizations? l10n]) {
+    if (status == BookingStatus.confirmed) {
+      return l10n?.vhStatusBooked ?? 'Booked';
+    }
+    return l10n?.vhStatusRequested ?? 'Requested';
+  }
 
   static String _scheduleOrService(CustomerBookingEntity booking) {
     final service = booking.service.trim();
     // The compact date keeps the real appointment on one line in a record.
+    // Intentionally Latin (verbatim helpers): see contextFor note on bidi.
     final schedule = [
       CustomerBookingsPresentation.compactDateLabel(booking.date),
       CustomerBookingsPresentation.timeLabel(booking.time),

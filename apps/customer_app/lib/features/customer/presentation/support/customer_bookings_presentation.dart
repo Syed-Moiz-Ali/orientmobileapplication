@@ -1,4 +1,7 @@
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
+import 'package:customer_app/l10n/gen/customer_localizations.dart';
+import 'package:flutter/widgets.dart';
+import 'package:shared_core/shared_core.dart';
 
 /// Lifecycle grouping for the Bookings screen.
 ///
@@ -261,11 +264,20 @@ abstract final class CustomerBookingsPresentation {
   }
 
   /// `Tue, 22 Sep 2026`, or the raw backend value when it cannot be read.
-  static String dateLabel(String raw) {
+  /// Locale-aware: Arabic uses ARB weekday names + central-formatter months
+  /// (Latin digits in both locales per frozen policy). Defaults to English
+  /// when no locale/l10n is provided (tests, fallbacks).
+  static String dateLabel(String raw, {Locale? locale, CustomerLocalizations? l10n}) {
     final parsed = parseDateTime(raw, '');
     if (parsed == null) return raw.trim();
-    return '${_weekdays[parsed.weekday - 1]}, ${parsed.day} '
-        '${_months[parsed.month - 1]} ${parsed.year}';
+    final isAr = locale?.languageCode == 'ar';
+    final weekday = isAr && l10n != null
+        ? _weekdayShortAr(l10n, parsed.weekday)
+        : _weekdays[parsed.weekday - 1];
+    final month = isAr
+        ? AppFormatters(locale ?? const Locale('en')).monthName(parsed.month)
+        : _months[parsed.month - 1];
+    return '$weekday, ${parsed.day} $month ${parsed.year}';
   }
 
   /// `2026-09-22` for a real date.
@@ -278,12 +290,19 @@ abstract final class CustomerBookingsPresentation {
       '${date.day.toString().padLeft(2, '0')}';
 
   /// `Tuesday, 22 September 2026` — the fuller appointment date used where the
-  /// screen has room to present the appointment properly.
-  static String longDateLabel(String raw) {
+  /// screen has room to present the appointment properly. Locale-aware
+  /// (same weekday/month policy as [dateLabel]).
+  static String longDateLabel(String raw, {Locale? locale, CustomerLocalizations? l10n}) {
     final parsed = parseDateTime(raw, '');
     if (parsed == null) return raw.trim();
-    return '${_weekdaysLong[parsed.weekday - 1]}, ${parsed.day} '
-        '${_monthsLong[parsed.month - 1]} ${parsed.year}';
+    final isAr = locale?.languageCode == 'ar';
+    final weekday = isAr && l10n != null
+        ? _weekdayLongAr(l10n, parsed.weekday)
+        : _weekdaysLong[parsed.weekday - 1];
+    final month = isAr
+        ? AppFormatters(locale ?? const Locale('en')).monthName(parsed.month)
+        : _monthsLong[parsed.month - 1];
+    return '$weekday, ${parsed.day} $month ${parsed.year}';
   }
 
   /// Day-of-month for a compact date block, e.g. `22`.
@@ -296,17 +315,28 @@ abstract final class CustomerBookingsPresentation {
   }
 
   /// Uppercase short month for a compact date block, e.g. `SEP`.
-  static String monthLabel(String raw) {
+  /// Locale-aware: English stays uppercase (`SEP`); Arabic uses the central
+  /// month name as-is (no case). Empty when unreadable.
+  static String monthLabel(String raw, {Locale? locale}) {
     final parsed = parseDateTime(raw, '');
-    return parsed == null ? '' : _months[parsed.month - 1].toUpperCase();
+    if (parsed == null) return '';
+    final isAr = locale?.languageCode == 'ar';
+    if (isAr) {
+      return AppFormatters(locale ?? const Locale('ar')).monthName(parsed.month);
+    }
+    return _months[parsed.month - 1].toUpperCase();
   }
 
   /// `22 Sep 2026` — the appointment date without the weekday, for dense
-  /// secondary lines.
-  static String compactDateLabel(String raw) {
+  /// secondary lines. Locale-aware (same month policy as [dateLabel]).
+  static String compactDateLabel(String raw, {Locale? locale}) {
     final parsed = parseDateTime(raw, '');
     if (parsed == null) return raw.trim();
-    return '${parsed.day} ${_months[parsed.month - 1]} ${parsed.year}';
+    final isAr = locale?.languageCode == 'ar';
+    final month = isAr
+        ? AppFormatters(locale ?? const Locale('en')).monthName(parsed.month)
+        : _months[parsed.month - 1];
+    return '${parsed.day} $month ${parsed.year}';
   }
 
   /// `9:00 AM`, or the raw backend value when it cannot be read.
@@ -320,8 +350,10 @@ abstract final class CustomerBookingsPresentation {
   }
 
   /// `Tue, 22 Sep 2026 · 9:00 AM`, degrading to whichever part is readable.
-  static String scheduleLabel(String date, String time) {
-    final datePart = dateLabel(date);
+  /// Locale-aware date part (same policy as [dateLabel]); time stays
+  /// LTR-locked Latin per frozen policy.
+  static String scheduleLabel(String date, String time, {Locale? locale, CustomerLocalizations? l10n}) {
+    final datePart = dateLabel(date, locale: locale, l10n: l10n);
     final timePart = timeLabel(time);
     if (datePart.isEmpty) return timePart;
     if (timePart.isEmpty) return datePart;
@@ -417,4 +449,31 @@ abstract final class CustomerBookingsPresentation {
     'November',
     'December',
   ];
+
+  /// ARB short weekday for `DateTime.weekday` (1=Mon..7=Sun). Kept here so
+  /// date helpers stay presentation-only without threading BuildContext.
+  static String _weekdayShortAr(CustomerLocalizations l10n, int weekday) {
+    return switch (weekday) {
+      1 => l10n.bkWeekdayMon,
+      2 => l10n.bkWeekdayTue,
+      3 => l10n.bkWeekdayWed,
+      4 => l10n.bkWeekdayThu,
+      5 => l10n.bkWeekdayFri,
+      6 => l10n.bkWeekdaySat,
+      _ => l10n.bkWeekdaySun,
+    };
+  }
+
+  /// ARB long weekday for `DateTime.weekday` (1=Mon..7=Sun).
+  static String _weekdayLongAr(CustomerLocalizations l10n, int weekday) {
+    return switch (weekday) {
+      1 => l10n.bkWeekdayMonday,
+      2 => l10n.bkWeekdayTuesday,
+      3 => l10n.bkWeekdayWednesday,
+      4 => l10n.bkWeekdayThursday,
+      5 => l10n.bkWeekdayFriday,
+      6 => l10n.bkWeekdaySaturday,
+      _ => l10n.bkWeekdaySunday,
+    };
+  }
 }

@@ -3,16 +3,22 @@ import 'package:shared_core/shared_core.dart';
 
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_bookings_presentation.dart';
+import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_service_tracking.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_plate_chip.dart';
+import 'package:customer_app/l10n/gen/customer_localizations.dart';
 
 /// One scannable booking row.
 ///
 /// The row is built around a compact date block so appointments can be scanned
 /// by date, then carries only the summary needed to decide whether to open the
-/// booking: canonical status, service, vehicle, reference and Ã¢â‚¬â€ when the
-/// booking genuinely has one Ã¢â‚¬â€ its live or action-required state. Live tracking
+/// booking: canonical status, service, vehicle, reference and — when the
+/// booking genuinely has one — its live or action-required state. Live tracking
 /// itself stays in Status and the full record stays in Booking Details.
+///
+/// Presentation only — grouping, tones, labels, tracking derivation, routes
+/// and handlers are unchanged; the row is rebuilt on shared atoms
+/// (AppSurfaceCard, AppStatusChip, ARB copy).
 class CustomerBookingItem extends StatelessWidget {
   final CustomerBookingEntity booking;
 
@@ -33,11 +39,23 @@ class CustomerBookingItem extends StatelessWidget {
     this.liveService,
   });
 
+  static AppStatusKind _kindFor(BookingStatus status) {
+    return switch (status) {
+      BookingStatus.completed || BookingStatus.delivered =>
+        AppStatusKind.success,
+      BookingStatus.cancelled => AppStatusKind.neutral,
+      BookingStatus.approvalRequired => AppStatusKind.error,
+      _ => AppStatusKind.accent,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
+    final t = context.cx;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final locale = Localizations.localeOf(context);
 
     final group = CustomerBookingsPresentation.groupOf(booking.status);
     final tone = CustomerServiceTracking.bookingTone(colors, booking.status);
@@ -46,16 +64,23 @@ class CustomerBookingItem extends StatelessWidget {
     final needsApproval = booking.status == BookingStatus.approvalRequired;
 
     final service = booking.service.trim();
-    final title = service.isEmpty ? 'Service appointment' : service;
+    final title = service.isEmpty ? t.bkServiceAppt : service;
     final plate = booking.plateNumber.trim();
     final vehicle = booking.vehicleName.trim();
     final reference = CustomerBookingsPresentation.referenceOf(booking);
+    // Locale-aware schedule date part (ARB weekdays + central months in ar);
+    // time stays LTR-locked Latin per frozen policy. Same data/predicates.
     final schedule = CustomerBookingsPresentation.scheduleLabel(
       booking.date,
       booking.time,
+      locale: locale,
+      l10n: t,
     );
     final day = CustomerBookingsPresentation.dayOfMonthLabel(booking.date);
-    final month = CustomerBookingsPresentation.monthLabel(booking.date);
+    final month = CustomerBookingsPresentation.monthLabel(
+      booking.date,
+      locale: locale,
+    );
     final hasDateBlock = day.isNotEmpty && month.isNotEmpty;
     // A time the parser cannot read is shown as the backend sent it on the
     // metadata line instead of being squeezed into the date block.
@@ -76,9 +101,15 @@ class CustomerBookingItem extends StatelessWidget {
         ? CustomerServiceTracking.humanize(liveService?.currentStage ?? '')
         : '';
 
+    // Locale-aware pill copy: shared-core already ships Arabic status labels,
+    // so the pill renders via AppStatusLabels.of(context) (English fallback
+    // when the delegate is absent, Arabic in production). Same status, tone.
+    final statusText =
+        AppStatusLabels.of(context).booking(booking.status.name);
+
     final semantics = [
       title,
-      booking.statusLabel,
+      statusText,
       if (vehicle.isNotEmpty || plate.isNotEmpty) '$vehicle $plate'.trim(),
       if (hasDateBlock) '${booking.date.trim()} ${booking.time.trim()}'.trim(),
       if (!hasDateBlock && schedule.isNotEmpty) schedule,
@@ -87,167 +118,176 @@ class CustomerBookingItem extends StatelessWidget {
       if (reference.isNotEmpty) 'Booking reference $reference',
     ].join(', ');
 
+    // Card hierarchy (brief U0 binding): title = service (the thing the user
+    // recognizes); status pill ONLY from the existing statusLabel/tone (never
+    // invented, sentence case — no .toUpperCase()); vehicle/plate = meta;
+    // reference = small mono LTR meta. Borderless in light (C16).
     return Semantics(
       button: true,
       excludeSemantics: true,
       label: semantics,
-      child: InkWell(
-        onTap: onOpen,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.s14,
-            vertical: AppDimensions.s12,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (hasDateBlock)
-                _DateBlock(day: day, month: month, time: time)
-              else
-                _IconTile(icon: _iconFor(booking.status), tone: tone),
-              const SizedBox(width: AppDimensions.s12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // The service name and the status share the top line while
-                    // they fit; a long name pushes the status onto its own line
-                    // instead of breaking mid-word.
-                    Wrap(
-                      alignment: WrapAlignment.spaceBetween,
-                      runSpacing: AppDimensions.s6,
-                      spacing: AppDimensions.s8,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Text(
-                          title,
-                          // Long service names wrap instead of being cut off,
-                          // because the title is the row's anchor.
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: textTheme.titleSmall?.copyWith(
-                            color: isCancelled
-                                ? colors.onSurfaceVariant
-                                : colors.onSurface,
-                            fontWeight: FontWeight.w700,
+      child: AppSurfaceCard(
+        outlined: false,
+        padding: EdgeInsets.zero,
+        child: InkWell(
+          onTap: onOpen,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.s14,
+              vertical: AppDimensions.s12,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (hasDateBlock)
+                  _DateBlock(day: day, month: month, time: time)
+                else
+                  _IconTile(icon: _iconFor(booking.status), tone: tone),
+                const SizedBox(width: AppDimensions.s12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // The service name and the status share the top line while
+                      // they fit; a long name pushes the status onto its own line
+                      // instead of breaking mid-word.
+                      Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        runSpacing: AppDimensions.s6,
+                        spacing: AppDimensions.s8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            title,
+                            // Long service names wrap instead of being cut off,
+                            // because the title is the row's anchor.
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: textTheme.titleSmall?.copyWith(
+                              color: isCancelled
+                                  ? colors.onSurfaceVariant
+                                  : colors.onSurface,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                        ),
-                        StatusPill(
-                          label: booking.statusLabel.toUpperCase(),
-                          showDot: true,
-                          bg: tone.withValues(alpha: 0.12),
-                          fg: tone,
+                          AppStatusChip(
+                            // Sentence case via theme (C17): locale-aware label
+                            // (shared-core ARB in ar, canonical shim in EN
+                            // fallback), no .toUpperCase() anywhere.
+                            label: statusText,
+                            kind: _kindFor(booking.status),
+                          ),
+                        ],
+                      ),
+                      if (plate.isNotEmpty || vehicle.isNotEmpty) ...[
+                        const SizedBox(height: AppDimensions.s6),
+                        Row(
+                          children: [
+                            if (plate.isNotEmpty)
+                              CustomerPlateChip(plate: plate),
+                            if (plate.isNotEmpty && vehicle.isNotEmpty)
+                              const SizedBox(width: AppDimensions.s8),
+                            if (vehicle.isNotEmpty)
+                              Expanded(
+                                child: Text(
+                                  vehicle,
+                                  // U5: vehicle is primary text alongside the
+                                  // service — wrap to 2 lines at word boundary
+                                  // at 1.3x instead of mid-word `Toyota Cam…`.
+                                  // Title (service) stays maxLines 2 untouched.
+                                  maxLines: 2,
+                                  softWrap: true,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: colors.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ],
-                    ),
-                    if (plate.isNotEmpty || vehicle.isNotEmpty) ...[
-                      const SizedBox(height: AppDimensions.s6),
-                      Row(
-                        children: [
-                          if (plate.isNotEmpty) CustomerPlateChip(plate: plate),
-                          if (plate.isNotEmpty && vehicle.isNotEmpty)
-                            const SizedBox(width: AppDimensions.s8),
-                          if (vehicle.isNotEmpty)
-                            Expanded(
-                              child: Text(
-                                vehicle,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: textTheme.bodySmall?.copyWith(
-                                  color: colors.onSurfaceVariant,
+                      if (stage.isNotEmpty) ...[
+                        const SizedBox(height: AppDimensions.s6),
+                        _StateLine(
+                          icon: Icons.build_circle_rounded,
+                          text: t.jsStage(stage),
+                          color: colors.primary,
+                        ),
+                      ],
+                      if (needsApproval) ...[
+                        const SizedBox(height: AppDimensions.s6),
+                        _StateLine(
+                          icon: Icons.error_outline_rounded,
+                          text: _approvalMessage(t),
+                          color: colors.error,
+                        ),
+                      ],
+                      if (showRawSchedule) ...[
+                        const SizedBox(height: AppDimensions.s6),
+                        _StateLine(
+                          icon: Icons.event_rounded,
+                          text: schedule,
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ],
+                      if (reference.isNotEmpty ||
+                          (!needsApproval && !trackable)) ...[
+                        const SizedBox(height: AppDimensions.s6),
+                        Row(
+                          children: [
+                            if (reference.isNotEmpty)
+                              Flexible(
+                                child: Text(
+                                  reference,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: textTheme.labelSmall?.copyWith(
+                                    color: colors.onSurfaceVariant,
+                                    fontFamily: AppFontFamilies.mono,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
-                            ),
-                        ],
-                      ),
-                    ],
-                    if (stage.isNotEmpty) ...[
-                      const SizedBox(height: AppDimensions.s6),
-                      _StateLine(
-                        icon: Icons.build_circle_rounded,
-                        text: 'Current stage \u00b7 $stage',
-                        color: colors.primary,
-                      ),
-                    ],
-                    if (needsApproval) ...[
-                      const SizedBox(height: AppDimensions.s6),
-                      _StateLine(
-                        icon: Icons.error_outline_rounded,
-                        text: _approvalMessage(),
-                        color: colors.error,
-                      ),
-                    ],
-                    if (showRawSchedule) ...[
-                      const SizedBox(height: AppDimensions.s6),
-                      _StateLine(
-                        icon: Icons.event_rounded,
-                        text: schedule,
-                        color: colors.onSurfaceVariant,
-                      ),
-                    ],
-                    if (reference.isNotEmpty ||
-                        (!needsApproval && !trackable)) ...[
-                      const SizedBox(height: AppDimensions.s6),
-                      Row(
-                        children: [
-                          if (reference.isNotEmpty)
-                            Flexible(
-                              child: Text(
-                                reference,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: textTheme.labelSmall?.copyWith(
-                                  color: colors.onSurfaceVariant,
-                                  fontFamily: AppFontFamilies.mono,
-                                  fontWeight: FontWeight.w600,
+                          ],
+                        ),
+                      ],
+                      // A contextual action only ever appears when the booking
+                      // really has one, and it keeps its own line so the record's
+                      // reference is never squeezed.
+                      if (needsApproval || trackable) ...[
+                        const SizedBox(height: AppDimensions.s4),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: needsApproval
+                              ? _RowAction(
+                                  label: t.bkReview,
+                                  onPressed: () =>
+                                      onReviewApproval(booking.estimateId),
+                                )
+                              : _RowAction(
+                                  label: t.bkdTrack,
+                                  onPressed: onTrackService,
                                 ),
-                              ),
-                            ),
-                          // const Spacer(),
-                          // if (!needsApproval && !trackable)
-                          //   Icon(
-                          //     Icons.chevron_right_rounded,
-                          //     size: AppDimensions.iconMd,
-                          //     color: colors.onSurfaceVariant,
-                          //   ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ],
-                    // A contextual action only ever appears when the booking
-                    // really has one, and it keeps its own line so the record's
-                    // reference is never squeezed.
-                    if (needsApproval || trackable) ...[
-                      const SizedBox(height: AppDimensions.s4),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: needsApproval
-                            ? _RowAction(
-                                label: 'Review',
-                                onPressed: () =>
-                                    onReviewApproval(booking.estimateId),
-                              )
-                            : _RowAction(
-                                label: 'Track service',
-                                onPressed: onTrackService,
-                              ),
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  String _approvalMessage() {
+  String _approvalMessage(CustomerLocalizations t) {
     final amount = booking.estimateAmount;
-    if (amount <= 0) return 'Approval needed before work continues';
+    if (amount <= 0) return t.bkApprovalMsg;
     // The row carries the compact indicator; the fuller wording lives in
     // Booking Details.
-    return 'Estimate ${formatAmount(amount)} awaiting approval';
+    return t.bkApprovalEst(formatAmount(amount));
   }
 
   IconData _iconFor(BookingStatus status) {
@@ -280,13 +320,23 @@ class _DateBlock extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
+    // Time is PRIMARY schedule text: it must never be ellipsis-cut to
+    // `9:00 …` at 1.3x. The block widens with the text scaler and the time
+    // may wrap once at the token boundary (`9:00` / `AM`) so `9:00 AM`-style
+    // times render whole at 1.3x/360 and stay intact at 320px/1.0x/ar/dark.
+    // Same date/time data, same predicates/routes — presentation only.
+    final scale = MediaQuery.textScalerOf(
+      context,
+    ).scale(1.0).clamp(1.0, 2.0).toDouble();
+    final blockWidth = (60.0 * scale).clamp(60.0, 96.0).toDouble();
+
     return SizedBox(
-      width: 60,
+      width: blockWidth,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 60,
+            width: blockWidth,
             padding: const EdgeInsets.symmetric(vertical: AppDimensions.s6),
             decoration: BoxDecoration(
               color: colors.surfaceContainerHighest,
@@ -317,13 +367,20 @@ class _DateBlock extends StatelessWidget {
           ),
           if (time.isNotEmpty) ...[
             const SizedBox(height: AppDimensions.s4),
-            Text(
-              time,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: colors.onSurfaceVariant,
-                fontWeight: FontWeight.w700,
+            // LTR-locked (U10): the `9:00 AM`-style token keeps its order
+            // inside RTL layouts instead of reordering to `AM 9:00`.
+            Directionality(
+              textDirection: TextDirection.ltr,
+              child: Text(
+                time,
+                maxLines: 2,
+                textAlign: TextAlign.center,
+                softWrap: true,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],
