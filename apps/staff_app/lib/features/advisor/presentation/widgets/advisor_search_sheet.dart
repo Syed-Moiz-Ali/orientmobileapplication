@@ -256,18 +256,30 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
                           cardResults.length,
                         ),
                         ...cardResults.map(
-                          (j) => _result(
-                            context,
-                            icon: Icons.assignment_rounded,
-                            title: j.customerName,
-                            subtitle: '${j.vehicleInfo} · ${j.id}',
-                            onTap: () {
-                              _remember(_query);
-                              final router = GoRouter.of(context);
-                              Navigator.pop(context);
-                              router.push(AppRoutes.advisorJobDetail, extra: j);
-                            },
-                          ),
+                          (j) {
+                            // Card hierarchy binding: recognized thing first
+                            // (customer + vehicle), identifiers as secondary.
+                            final split = _splitVehiclePlate(j.vehicleInfo);
+                            final subtitle = [
+                              if (split.plate != null) split.plate!,
+                              j.id,
+                            ].join(' · ');
+                            return _result(
+                              context,
+                              icon: Icons.assignment_rounded,
+                              title: '${j.customerName} · ${split.vehicle}',
+                              subtitle: subtitle,
+                              onTap: () {
+                                _remember(_query);
+                                final router = GoRouter.of(context);
+                                Navigator.pop(context);
+                                router.push(
+                                  AppRoutes.advisorJobDetail,
+                                  extra: j,
+                                );
+                              },
+                            );
+                          },
                         ),
                         const SizedBox(height: AppDimensions.s8),
                       ],
@@ -330,6 +342,22 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
     ),
   );
 
+  /// Splits local-first `vehicleInfo` ("Model · PLATE") into vehicle + plate.
+  /// Presentation only; never invents data.
+  ({String vehicle, String? plate}) _splitVehiclePlate(String vehicleInfo) {
+    final parts = vehicleInfo.split('·');
+    if (parts.length >= 2) {
+      final plate = parts.sublist(1).join('·').trim();
+      return (
+        vehicle: parts.first.trim(),
+        plate: plate.isEmpty ? null : plate,
+      );
+    }
+    return (vehicle: vehicleInfo, plate: null);
+  }
+
+  // Borderless result rows (C16: no borders on light cards): whitespace
+  // separation only, 48dp tap target, directional chevron. Same taps.
   Widget _result(
     BuildContext context, {
     required IconData icon,
@@ -337,11 +365,72 @@ class _AdvisorSearchSheetState extends ConsumerState<AdvisorSearchSheet> {
     required String subtitle,
     required VoidCallback onTap,
   }) {
-    return AppRecordRow(
-      leading: Icon(icon, size: AppDimensions.iconMd),
-      title: title,
-      subtitle: subtitle,
-      onTap: onTap,
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.s16,
+            vertical: AppDimensions.s12,
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: AppDimensions.touchTarget,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: AppDimensions.iconMd,
+                  color: colors.onSurfaceVariant,
+                ),
+                const SizedBox(width: AppDimensions.s12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: colors.onSurface,
+                        ),
+                      ),
+                      if (subtitle.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: Text(
+                            subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colors.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppDimensions.s8),
+                DirectionalIcon(
+                  Icons.chevron_right_rounded,
+                  size: AppDimensions.iconMd,
+                  color: colors.onSurfaceVariant.withValues(alpha: 0.6),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

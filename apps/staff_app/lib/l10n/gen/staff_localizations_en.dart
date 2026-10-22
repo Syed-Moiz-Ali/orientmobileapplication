@@ -170,6 +170,17 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String get advisorJobsTitle => 'Workshop Job Cards';
 
   @override
+  String get advisorJobsCountNone => 'No job cards';
+
+  @override
+  String get advisorJobsCountOne => '1 job card';
+
+  @override
+  String advisorJobsCountMany(int count) {
+    return '$count job cards';
+  }
+
+  @override
   String get advisorJobsSearchHint =>
       'Search by registration, customer, or ID…';
 

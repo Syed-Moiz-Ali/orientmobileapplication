@@ -323,11 +323,16 @@ void main() {
     // Same predicate as the removed inline pill: id / customer / vehicle,
     // case-insensitive — across BOTH sheet feeds (job cards + approvals).
     // "Layla" hits one job card and one approval; Ahmed/Sara hit neither.
+    // Job-card rows carry customer + vehicle titles (card-hierarchy binding).
     await tester.enterText(field, 'LAYLA');
     await tester.pump();
     expect(
+      find.descendant(of: sheet, matching: find.text('Layla · Yaris')),
+      findsOneWidget,
+    );
+    expect(
       find.descendant(of: sheet, matching: find.text('Layla')),
-      findsNWidgets(2),
+      findsOneWidget,
     );
     expect(
       find.descendant(of: sheet, matching: find.text('Ahmed')),

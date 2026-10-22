@@ -392,6 +392,24 @@ abstract class StaffLocalizations {
   /// **'Workshop Job Cards'**
   String get advisorJobsTitle;
 
+  /// Jobs header count subtitle: zero
+  ///
+  /// In en, this message translates to:
+  /// **'No job cards'**
+  String get advisorJobsCountNone;
+
+  /// Jobs header count subtitle: one
+  ///
+  /// In en, this message translates to:
+  /// **'1 job card'**
+  String get advisorJobsCountOne;
+
+  /// Jobs header count subtitle: many
+  ///
+  /// In en, this message translates to:
+  /// **'{count} job cards'**
+  String advisorJobsCountMany(int count);
+
   /// Jobs search field hint
   ///
   /// In en, this message translates to:

@@ -24,6 +24,37 @@ String advisorStatusLabel(StaffLocalizations t, JobCardStatus status) =>
       JobCardStatus.qualityCheckPassed => t.advisorStatusQcPassed,
     };
 
+/// An [AppStatusChip] with the shared semantic tone for [status] and the same
+/// localized vocabulary as [advisorStatusLabel] (sentence case, never color
+/// alone). Presentation-only twin of [advisorStatusPill] for App* surfaces;
+/// the pill stays untouched for the surfaces that still use it.
+AppStatusChip advisorStatusChip(StaffLocalizations t, JobCardStatus status) {
+  final label = advisorStatusLabel(t, status);
+  return AppStatusChip(label: label, kind: _statusKind(status));
+}
+
+/// Shared kind mapping for the App* status chip (same taxonomy as
+/// [advisorStatusPill]: pending/approval/waiting → warning, finished →
+/// success, parts → danger, active/inspected → info, cancelled → neutral).
+AppStatusKind _statusKind(JobCardStatus status) => switch (status) {
+  JobCardStatus.pending ||
+  JobCardStatus.pendingApproval ||
+  JobCardStatus.awaitingSupervisor ||
+  JobCardStatus.waitingCustomerApproval =>
+    AppStatusKind.warning,
+  JobCardStatus.completed ||
+  JobCardStatus.approved ||
+  JobCardStatus.delivered ||
+  JobCardStatus.qualityCheckPassed => AppStatusKind.success,
+  JobCardStatus.waitingParts => AppStatusKind.error,
+  JobCardStatus.qualityCheck ||
+  JobCardStatus.inProgress ||
+  JobCardStatus.workAssigned ||
+  JobCardStatus.inspected ||
+  JobCardStatus.vehicleReceived => AppStatusKind.info,
+  JobCardStatus.cancelled => AppStatusKind.neutral,
+};
+
 /// A [StatusPill] with the shared semantic tone for [status] and the localized
 /// label. State is always encoded by text + tone, never colour alone.
 StatusPill advisorStatusPill(StaffLocalizations t, JobCardStatus status) {
