@@ -361,7 +361,6 @@ provider/sync/predicate/route/handler/Key change (predicates `contextFor` /
 | `vhCountMany(0/1)` → `vhCount(n)` ICU plural (`=0{0 …}` / `=1{1 …}` / `other{{count} …}`, en+ar, no renames) | vehicles header subtitle (all + filtered, ≤5 and >5) | `vhCount` | Fixes "1 registered vehicles"; zero renders as `0` (U11); `vhCountNone` kept for truly empty; `gen-l10n` from `apps/customer_app` |
 | Year shown twice (title + specs) → ONCE | record card (`customer_vehicle_record.dart` display only) | title keeps `Make Model · Year`; specs line shows colour + mileage (`White · 45000 km`) | `specs()` untouched; display filters the year token; VIN untouched; search still matches year via `specs()` |
 
-<<<<<<< HEAD
 ## Customer bookings-list recomposition (branch `ui/list-customer`)
 
 Bookings list (`customer_bookings_tab.dart` + `customer_booking_item.dart` +
