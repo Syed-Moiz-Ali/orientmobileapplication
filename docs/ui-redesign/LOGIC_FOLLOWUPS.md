@@ -218,3 +218,24 @@ owner. No silent filtering.
   rename the subtitle. Frontend takes no silent-filter action until then.
 - Status: open. Register behavior intentionally unchanged (presentation keeps
   the pill + meter + summary exactly as the feed reports them).
+
+## 14. CRM `CrmTaskState.isLoading` is dead (skeleton would be dead code)
+
+- Feed/state: the task notifier never sets `isLoading`, so a list-level
+  loading skeleton has no signal to key on. Presentation must not invent
+  one (dead code masquerading as a state).
+- Evidence: group-D builder report (ui/list-crm) — no skeleton branch on
+  the tasks surface for this reason.
+- Proposed owner: state owners — either drive `isLoading` from the fetch
+  path or remove it; frontend adds the skeleton only then.
+- Status: open.
+
+## 15. CRM list-level refresh failures are swallowed (no error signal)
+
+- Feed/state: lead/task provider `refresh()` failures are swallowed
+  (`ui.refresh` path; lead `refresh()` throw path unhandled), so a list
+  error-with-retry state has no signal to key on.
+- Evidence: group-D builder report (ui/list-crm).
+- Proposed owner: state owners — surface refresh failures on the list
+  state; frontend adds error+retry only then.
+- Status: open.

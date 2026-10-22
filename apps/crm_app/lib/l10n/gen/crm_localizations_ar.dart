@@ -633,6 +633,18 @@ class CrmLocalizationsAr extends CrmLocalizations {
   String get tmWinRate => 'معدل الفوز';
 
   @override
+  String get tmRevenue => 'الإيراد';
+
+  @override
+  String get tmSearchTitle => 'البحث في الفريق';
+
+  @override
+  String get tmSearchHint => 'ابحث بالاسم أو الدور';
+
+  @override
+  String get tmSearchNoMatch => 'لا يوجد أعضاء فريق يطابقون بحثك.';
+
+  @override
   String get tmEmpty => 'لا يوجد موظفون بعد';
 
   @override
@@ -853,4 +865,58 @@ class CrmLocalizationsAr extends CrmLocalizations {
 
   @override
   String get csFail => 'فشل الاتصال. تحقق من بيانات الاعتماد وحاول مرة أخرى.';
+
+  @override
+  String get leadsSearchTitle => 'البحث في العملاء';
+
+  @override
+  String get leadsSearchNoMatch => 'لا يوجد عملاء يطابقون بحثك.';
+
+  @override
+  String get leadsFilterTitle => 'تصفية العملاء';
+
+  @override
+  String get leadsFilterShow => 'عرض النتائج';
+
+  @override
+  String get leadsFilterNoMatch => 'لا يوجد عملاء يطابقون هذه التصفية.';
+
+  @override
+  String get leadsFilterClear => 'مسح';
+
+  @override
+  String leadsCountN(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count عميل',
+      one: 'عميل واحد',
+      zero: '0 عميل',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get tasksSearchTitle => 'البحث في المهام';
+
+  @override
+  String get tasksSearchHint => 'ابحث بالعنوان أو المسؤول';
+
+  @override
+  String get tasksSearchNoMatch => 'لا توجد مهام مطابقة لبحثك.';
+
+  @override
+  String tkCountN(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count مهمة',
+      one: 'مهمة واحدة',
+      zero: '0 مهمة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get leadsSelectLead => 'اختر عميلاً لعرض التفاصيل';
 }

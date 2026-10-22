@@ -223,15 +223,23 @@ class _CrmChrome extends ConsumerWidget implements PreferredSizeWidget {
     final notifier = ref.read(crmUiProvider.notifier);
     final adaptive = context.adaptive;
     final useRail = adaptive.useNavigationRail;
-    return WorkspaceAppBar(
-      title: _titles(t)[selectedIndex],
-      subtitle: '${t.shellSubtitle} · ${t.shellBranchName}',
-      toolbarHeight: 56,
-      // Frosted glass on desktop; the bar falls back to a solid surface
-      // where translucency is reduced.
-      frosted: !adaptive.isCompact,
-      showOfflineStatus: true,
-      onSearch: () => _openSearch(context, ref),
+      // F9 single-path (owner/tech/supervisor `selectedIndex` precedent):
+      // the shell search trigger is hidden on the Leads tab (index 1),
+      // where the list header owns the find-aid (list-scoped sheet when
+      // > 5). The palette target (jump-to-dossier over the first 50) would
+      // otherwise sit alongside the list icon for the same "find a lead"
+      // task (C16 duplicate entry). The Ctrl+K shortcut above stays wired
+      // for keyboards — only the visible trigger is scoped out.
+      final shellSearchOnLeads = selectedIndex == 1;
+      return WorkspaceAppBar(
+        title: _titles(t)[selectedIndex],
+        subtitle: '${t.shellSubtitle} · ${t.shellBranchName}',
+        toolbarHeight: 56,
+        // Frosted glass on desktop; the bar falls back to a solid surface
+        // where translucency is reduced.
+        frosted: !adaptive.isCompact,
+        showOfflineStatus: true,
+        onSearch: shellSearchOnLeads ? null : () => _openSearch(context, ref),
       // The kbd hint only fits non-compact bars.
       searchShortcutLabel: adaptive.isCompact ? null : t.chromeShortcut,
       leading: useRail

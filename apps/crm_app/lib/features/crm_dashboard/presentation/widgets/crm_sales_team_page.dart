@@ -1,52 +1,216 @@
+// Agent leaderboard in list order: rank badges derive from position, every
+// figure is the record's own (revenue display-mapped, counts interpolated,
+// win rate as provided). There is no period control on the record, so none
+// is offered — the subtitle says what the ranking covers.
+//
+// Presentation-only rebuild (brief `docs/ui-redesign/briefs/crm-sales-team-list.md`):
+// plain-Row header, borderless cards + AppAvatar + theme type, token stat
+// blocks, AppProgressBar (pinned accent, same value + semantics),
+// list-scoped search sheet when the roster exceeds 5 rows (family > 5 rule),
+// action-less AppEmptyState. Feed, rank/medal derivation, figures, order
+// and view-only rows are unchanged.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:crm_app/features/crm_dashboard/presentation/crm_constants.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/support/crm_l10n.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_sales_team_search_sheet.dart';
+
+/// Display-only revenue mapping (F7, same class as the leads fix): the
+/// String feed field renders through the existing `AppFormatters.moneyAED`
+/// so figures group (`AED 12,000` en / `12,000 د.إ` ar, Latin digits per
+/// the frozen policy). Digits are extracted for display only — feed order,
+/// rank math and the raw field are untouched (no parsing semantics change).
+/// Unparseable values render verbatim, never invented.
+String _displayRevenue(BuildContext context, String revenue) {
+  final numeric = revenue.replaceAll(RegExp(r'[^0-9.\-]'), '');
+  if (numeric.isEmpty || numeric == '-' || numeric == '.') return revenue;
+  final value = double.tryParse(numeric);
+  if (value == null) return revenue;
+  return AppFormatters.of(context).moneyAED(value);
+}
 
 /// Agent leaderboard in list order: rank badges derive from position, every
 /// figure is the record's own (revenue verbatim, counts interpolated, win
 /// rate as provided). There is no period control on the record, so none is
 /// offered — the subtitle says what the ranking covers.
-class CrmSalesTeamPage extends ConsumerWidget {
+class CrmSalesTeamPage extends ConsumerStatefulWidget {
   const CrmSalesTeamPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CrmSalesTeamPage> createState() => _CrmSalesTeamPageState();
+}
+
+class _CrmSalesTeamPageState extends ConsumerState<CrmSalesTeamPage> {
+  /// Scroll anchors for search-result reveals (presentation only).
+  final Map<String, GlobalKey> _scrollKeys = {};
+
+  GlobalKey _scrollKeyFor(String id) =>
+      _scrollKeys.putIfAbsent(id, () => GlobalKey());
+
+  @override
+  Widget build(BuildContext context) {
     final t = context.cx;
     final ui = ref.read(crmUiProvider.notifier);
     final team = ui.salesTeam;
+    _scrollKeys.removeWhere(
+      (id, _) => !team.asMap().entries.any((e) => 'row_${e.key}' == id),
+    );
+
+    // Family > 5 search rule (F8): the brief's no-search exception covered
+    // the 3-row idle; a 6-row roster scrolls (scrolled golden proves
+    // overflow), so the list-scoped search sheet applies — same threshold
+    // as the leads/tasks lists.
+    final showFindAids = team.length > 5;
+
+    void reveal(int index) {
+      final ctx = _scrollKeys['row_$index']?.currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 300),
+          alignment: 0.1,
+        );
+      }
+    }
+
+    Future<void> openSearch() => showCrmSalesTeamSearchSheet(
+          context,
+          team: team,
+          onSelect: (member) => reveal(team.indexOf(member)),
+        );
+
     if (team.isEmpty) {
-      return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
+      // Empty keeps the header (U0 orientation) above the calm
+      // action-less empty state — same header contract as the content branch.
+      return Column(
         children: [
-          SizedBox(height: context.adaptive.sectionSpacing),
-          EmptyState(
-            icon: Icons.groups_outlined,
-            title: t.tmEmpty,
-            message: t.tmEmptyBody,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: _TeamHeader(
+              title: t.tmTitle,
+              subtitle: t.tmSub,
+              showSearch: false,
+              onSearch: openSearch,
+            ),
+          ),
+          Expanded(
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
+                const SizedBox(height: 64),
+                AppEmptyState(
+                  icon: Icons.groups_outlined,
+                  title: t.tmEmpty,
+                  message: t.tmEmptyBody,
+                ),
+              ],
+            ),
           ),
         ],
       );
     }
-    return ListView.separated(
-      padding: EdgeInsets.all(context.adaptive.gutter),
-      itemCount: team.length + 1,
-      separatorBuilder: (_, __) => const SizedBox(height: AppDimensions.s12),
-      itemBuilder: (_, i) {
-        if (i == 0) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SectionHeader(title: t.tmTitle, subtitle: t.tmSub),
-              const SizedBox(height: AppDimensions.s12),
-            ],
-          );
-        }
-        final m = team[i - 1];
-        return _LeaderRow(rank: i, name: m.name, role: m.role, revenue: m.revenue, leads: m.leadsHandled, won: m.wonDeals, winRate: m.winRate);
-      },
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: _TeamHeader(
+            title: t.tmTitle,
+            subtitle: t.tmSub,
+            showSearch: showFindAids,
+            onSearch: openSearch,
+          ),
+        ),
+        Expanded(
+          child: ListView.separated(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            itemCount: team.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (_, i) {
+              final m = team[i];
+              return Container(
+                key: _scrollKeyFor('row_$i'),
+                child: _LeaderRow(
+                  rank: i + 1,
+                  name: m.name,
+                  role: m.role,
+                  revenue: m.revenue,
+                  leads: m.leadsHandled,
+                  won: m.wonDeals,
+                  winRate: m.winRate,
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Plain-Row header (F6 pattern shared with the leads/tasks lists): title
+/// and the find-aid share ONE Row so the search icon stays top-end
+/// same-row on compact. Row mirrors in RTL (search lands top-start in
+/// Arabic — correct end side). Same >5 condition, same sheet — placement
+/// only.
+class _TeamHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final bool showSearch;
+  final VoidCallback onSearch;
+
+  const _TeamHeader({
+    required this.title,
+    required this.subtitle,
+    required this.showSearch,
+    required this.onSearch,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.cx;
+    final theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Semantics(
+            header: true,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: theme.colorScheme.onSurface,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (showSearch) ...[
+          const SizedBox(width: AppDimensions.s12),
+          AppIconButton(
+            icon: Icons.search_rounded,
+            tooltip: t.tmSearchTitle,
+            onPressed: onSearch,
+          ),
+        ],
+      ],
     );
   }
 }
@@ -76,51 +240,15 @@ class _LeaderRow extends StatelessWidget {
     final colors = theme.colorScheme;
     final t = context.cx;
     final medal = rank <= 3;
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.s16),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.r16),
-        border: Border.all(
-          color: medal
-              ? colors.primary.withValues(alpha: 0.4)
-              : colors.outlineVariant,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: colors.primary.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
+    final percent = (winRate * 100).round();
+    return AppSurfaceCard(
+      outlined: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [CrmColors.gStart, CrmColors.gEnd],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    name.isEmpty ? '?' : name.characters.first.toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
+              AppAvatar(name: name.isEmpty ? '?' : name),
               const SizedBox(width: AppDimensions.s12),
               Expanded(
                 child: Column(
@@ -130,9 +258,7 @@ class _LeaderRow extends StatelessWidget {
                       name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: CrmColors.textH,
-                        fontSize: 15,
+                      style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -141,9 +267,8 @@ class _LeaderRow extends StatelessWidget {
                         role.trim(),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: CrmColors.textM,
-                          fontSize: 12,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
                         ),
                       ),
                   ],
@@ -175,60 +300,62 @@ class _LeaderRow extends StatelessWidget {
                   ),
                 ),
               const SizedBox(width: AppDimensions.s8),
-              Directionality(
-                textDirection: TextDirection.ltr,
-                child: Text(
-                  revenue,
-                  style: const TextStyle(
-                    color: CrmColors.green,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+              // Grouped tabular revenue (F7 display mapping) with the
+              // small `Revenue` label above the figure.
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    t.tmRevenue,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
                   ),
-                ),
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      _displayRevenue(context, revenue),
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: context.semanticColors.success.ink,
+                        fontWeight: FontWeight.w800,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
           const SizedBox(height: AppDimensions.s14),
           Row(
             children: [
-              _statPill(t.tmLeads, '$leads', CrmColors.accent),
+              _statBlock(context, t.tmLeads, '$leads'),
               const SizedBox(width: AppDimensions.s8),
-              _statPill(t.tmWon, '$won', CrmColors.green),
+              _statBlock(context, t.tmWon, '$won'),
               const SizedBox(width: AppDimensions.s8),
-              _statPill(
-                t.tmWinRate,
-                '${(winRate * 100).round()}%',
-                CrmColors.purple,
-              ),
+              _statBlock(context, t.tmWinRate, '$percent%'),
             ],
           ),
           const SizedBox(height: AppDimensions.s12),
-          Semantics(
-            excludeSemantics: true,
-            label: '${t.tmWinRate} ${(winRate * 100).round()}%',
-            child: ClipRRect(
-              borderRadius: const BorderRadius.all(Radius.circular(4)),
-              child: LinearProgressIndicator(
-                value: winRate.clamp(0.0, 1.0),
-                backgroundColor: CrmColors.border,
-                valueColor: const AlwaysStoppedAnimation<Color>(
-                  CrmColors.accent,
-                ),
-                minHeight: 6,
-              ),
-            ),
+          AppProgressBar(
+            value: winRate.clamp(0.0, 1.0),
+            tone: AppProgressTone.accent,
+            semanticLabel: '${t.tmWinRate} $percent%',
           ),
         ],
       ),
     );
   }
 
-  Widget _statPill(String label, String value, Color color) {
+  Widget _statBlock(BuildContext context, String label, String value) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
+          color: colors.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(AppDimensions.r10),
         ),
         child: Column(
@@ -237,10 +364,10 @@ class _LeaderRow extends StatelessWidget {
               textDirection: TextDirection.ltr,
               child: Text(
                 value,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 15,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: colors.onSurface,
                   fontWeight: FontWeight.w800,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
             ),
@@ -249,10 +376,8 @@ class _LeaderRow extends StatelessWidget {
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: CrmColors.textM,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: colors.onSurfaceVariant,
               ),
             ),
           ],
