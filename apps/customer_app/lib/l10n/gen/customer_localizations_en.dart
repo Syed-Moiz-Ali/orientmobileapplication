@@ -268,6 +268,51 @@ class CustomerLocalizationsEn extends CustomerLocalizations {
   }
 
   @override
+  String get bkSearchTitle => 'Search bookings';
+
+  @override
+  String get bkSearchHint => 'Search by service, vehicle, or plate';
+
+  @override
+  String get bkSearchNoMatch => 'No bookings match your search.';
+
+  @override
+  String get bkFilterTitle => 'Filter bookings';
+
+  @override
+  String get bkFilterAll => 'All';
+
+  @override
+  String get bkFilterUpcoming => 'Upcoming';
+
+  @override
+  String get bkFilterInService => 'In service';
+
+  @override
+  String get bkFilterHistory => 'History';
+
+  @override
+  String get bkFilterShow => 'Show results';
+
+  @override
+  String get bkFilterNoMatch => 'No bookings match this filter.';
+
+  @override
+  String get bkFilterClear => 'Clear';
+
+  @override
+  String get bkfNotSent => 'Not sent';
+
+  @override
+  String get bkfSendBody => 'We couldn\'t send this booking to the workshop.';
+
+  @override
+  String get bkfWaitingBody => 'The workshop hasn\'t received it.';
+
+  @override
+  String get bkfRetrying => 'Retrying…';
+
+  @override
   String get jsInService => 'IN SERVICE';
 
   @override

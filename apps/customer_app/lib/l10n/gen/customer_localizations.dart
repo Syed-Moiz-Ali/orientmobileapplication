@@ -587,6 +587,96 @@ abstract class CustomerLocalizations {
   /// **'Estimate {amount} awaiting approval'**
   String bkApprovalEst(String amount);
 
+  /// Bookings search sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Search bookings'**
+  String get bkSearchTitle;
+
+  /// Bookings search field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search by service, vehicle, or plate'**
+  String get bkSearchHint;
+
+  /// Bookings search no-match
+  ///
+  /// In en, this message translates to:
+  /// **'No bookings match your search.'**
+  String get bkSearchNoMatch;
+
+  /// Bookings filter sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Filter bookings'**
+  String get bkFilterTitle;
+
+  /// Bookings filter: all
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get bkFilterAll;
+
+  /// Bookings filter: upcoming
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get bkFilterUpcoming;
+
+  /// Bookings filter: in service
+  ///
+  /// In en, this message translates to:
+  /// **'In service'**
+  String get bkFilterInService;
+
+  /// Bookings filter: history
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get bkFilterHistory;
+
+  /// Bookings filter confirm CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Show results'**
+  String get bkFilterShow;
+
+  /// Bookings filter no-match
+  ///
+  /// In en, this message translates to:
+  /// **'No bookings match this filter.'**
+  String get bkFilterNoMatch;
+
+  /// Bookings filter clear CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get bkFilterClear;
+
+  /// Failed booking pill (sentence case)
+  ///
+  /// In en, this message translates to:
+  /// **'Not sent'**
+  String get bkfNotSent;
+
+  /// Failed booking body line 1
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t send this booking to the workshop.'**
+  String get bkfSendBody;
+
+  /// Failed booking body line 2
+  ///
+  /// In en, this message translates to:
+  /// **'The workshop hasn\'t received it.'**
+  String get bkfWaitingBody;
+
+  /// Failed booking busy label
+  ///
+  /// In en, this message translates to:
+  /// **'Retrying…'**
+  String get bkfRetrying;
+
   /// Live pill
   ///
   /// In en, this message translates to:

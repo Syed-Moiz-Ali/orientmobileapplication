@@ -360,3 +360,78 @@ provider/sync/predicate/route/handler/Key change (predicates `contextFor` /
 |---|---|---|---|
 | `vhCountMany(0/1)` → `vhCount(n)` ICU plural (`=0{0 …}` / `=1{1 …}` / `other{{count} …}`, en+ar, no renames) | vehicles header subtitle (all + filtered, ≤5 and >5) | `vhCount` | Fixes "1 registered vehicles"; zero renders as `0` (U11); `vhCountNone` kept for truly empty; `gen-l10n` from `apps/customer_app` |
 | Year shown twice (title + specs) → ONCE | record card (`customer_vehicle_record.dart` display only) | title keeps `Make Model · Year`; specs line shows colour + mileage (`White · 45000 km`) | `specs()` untouched; display filters the year token; VIN untouched; search still matches year via `specs()` |
+
+## Customer bookings-list recomposition (branch `ui/list-customer`)
+
+Bookings list (`customer_bookings_tab.dart` + `customer_booking_item.dart` +
+`customer_failed_booking_item.dart` + new `customer_bookings_search_sheet.dart`
++ `customer_bookings_filter_sheet.dart`) recomposed presentation-only;
+providers/sync/refresh, `groupOf`/`sortByUpcoming`/`sortByRecent`/
+`scheduleLabel`/`referenceOf`/`bookingKey` predicates, `selectTab`, all routes,
+Keys and error mapping untouched. Legacy usages below drop to zero on the
+bookings surface (verified by grep; the shared classes themselves are kept —
+still used by home/status/detail/approval sheets and other customer surfaces):
+
+| Deleted legacy widget | Homes before | Replaced by | Notes |
+|---|---|---|---|
+| bespoke `_BookingsHeader` (headline + subtitle + `TextButton.icon` Book) | bookings tab (1) | `AppPageHeader` (title `bkTitle` + verbatim `_subtitle`, same copy; search + filter `AppIconButton`s top-right ONLY when loaded list > 5 — the ONE sanctioned U1 exception, vehicles-list precedent; `TextButton.icon` Book kept when non-empty) | Same title/count/Book copy + destinations; ≤ 5 items = cards only, no find-aids |
+| (no search affordance) | bookings tab (0) | `CustomerBookingsSearchSheet`: `showAppModalSheet` + `AppSearchField` (`bkSearchHint`) over loaded records (service/vehicle/plate/reference substring, plates punctuation-insensitive); result tap closes + reveals the record via `ensureVisible`; no-match (`bkSearchNoMatch`) + `Clear` | Permitted "list-scoped search over loaded records"; no new routes/logic |
+| (no filter affordance) | bookings tab (0) | `CustomerBookingsFilterSheet`: `showAppModalSheet` + `AppChip` single-select (All / `bkFilterUpcoming` / `bkFilterInService` / `bkFilterHistory`) + `Show results` + `Clear`; in-place filter via existing `groupOf`, counts update verbatim, no-match + `Clear` | Only honest facets (group derived via existing predicate); no new routes/logic |
+| bespoke `_BookingSection` bordered `DecoratedBox` + dividers | bookings tab (1 per section) | whitespace-separated `AppSurfaceCard(outlined: false)` rows (borderless light w/ shadow, bordered dark) with the same split predicate (two sections → `AppSplitView`, else single) | `AppListGroup` is settings-rows only; same atoms, same layout rule |
+| bespoke row chrome (`StatusPill.toUpperCase`, `_DateBlock`/`_IconTile` container, `_StateLine`, `_RowAction` styling; hardcoded EN copy) | row (per card) | date-block anchor kept; title = service (`bkServiceAppt` fallback); `AppStatusChip` sentence-case (`.toUpperCase()` removed, tone→kind mapping preserves semantics); stage via `jsStage`, approval via `bkApprovalMsg`/`bkApprovalEst`, track via `bkdTrack`, review via `bkReview`; reference mono LTR; direct `Review`/`Track service` + row-tap open kept | Card hierarchy binding (title/status/meta); taps never regress |
+| bespoke failed row chrome (`StatusPill('NOT SENT')`, hardcoded EN body, `TextButton`/`FilledButton` styling) | failed row (per card) | `AppStatusChip` (`bkfNotSent`, sentence case); ARB body (`bkfSendBody`/`bkfWaitingBody`); inline Retry (`bkRetry`/`bkfRetrying` busy) + Remove (`vhRemove` reuse) | Same retry/remove handlers; busy guard kept |
+| bespoke `_NoBookings` panel (`CustomerSurfacePanel` + icon + title/body + filled CTA) | bookings tab (1) | `AppEmptyState` (exactly 1 icon + 1 sentence + 1 action: `bkBookCta` with vehicles, `garHeroAdd` without) | Same copy/destinations |
+| `EmptyState` first-load error | bookings tab (1) | `AppErrorState` (`bkLoadFailTitle`/`bkLoadFailBody` + `bkRetryCta`, same retry) | Same copy/retry |
+| `AppSkeleton` bookings skeleton | bookings tab (1) | `AppShimmerSkeleton` (header lines + `card(148)` x2) mirroring the cards | Same loading contract (`isLoading && isEmpty`) |
+| `CustomerRefreshNotice` stale notice | bookings tab (1) | `AppBanner` warning (same `stRefreshFail` + `stRetry` + retry) | Same copy/retry; stale data kept |
+| `showAppConfirmationDialog` (destructive) on this surface | failed section (1) | confirmation bottom sheet via `showAppModalSheet` (same `bkRemoveTitle`/`bkRemoveBody`/`bkRemoveCta`/`bkKeepCta` + invalidate contracts, destructive confirm, NO undo) | Same handler/copy; presentation only |
+
+Kept verbatim (predicates, providers, router untouched):
+`groupOf`/`sortByUpcoming`/`sortByRecent`/`scheduleLabel`/`timeLabel`/
+`referenceOf`/`bookingKey`/`identityKey` reconciliation,
+`CustomerServiceTracking.bookingTone`/`bookingForJobCard`/`humanize`/
+`isLiveService`, `dash.formatAmount`, `_subtitle` parts, `AppSplitView`
+predicate, `RefreshIndicator`, bottom nav (no rail — consumer contract),
+haptics, confirmation + snackbar (`bkSendFail`) contracts. No new routes.
+Fifteen new ARB keys (`bkSearchTitle/Hint/NoMatch`,
+`bkFilterTitle/All/Upcoming/InService/History/Show/NoMatch/Clear`,
+`bkfNotSent/SendBody/WaitingBody/Retrying`, en+ar, gen-l10n from
+`apps/customer_app`).
+
+Fixer note (gating U5, `_DateBlock` in `customer_booking_item.dart`,
+presentation-only, same date/time data + predicates/routes): the fixed
+`SizedBox(width: 60)` + `maxLines: 1` ellipsis cut schedule time to `9:00 …`
+at 1.3x (AM cut; 1.0x/320px full). The block is now scale-aware — width
+`60 × textScaler` (clamped 60–96) and the time wraps once at the token
+boundary (`maxLines: 2`, center, `9:00` / `AM`) — so `9:00 AM`-style times
+render whole at 1.3x/360 and stay intact at 320px/1.0x/ar/dark (guard:
+`customer_booking_date_block_scale_test.dart`; living-record frames
+`after-customer-bookings` re-captured + compared back-to-back green).
+
+## Customer notifications-list recomposition (branch `ui/list-customer`)
+
+Notifications inbox (`customer_notifications_view.dart`) recomposed
+presentation-only; providers/sync/refresh, `groupOf`/`labelOf`/`tone`/
+`destination` predicates, `markRead`/`markAllRead` + rollback, all routes, Keys
+and error mapping untouched. Legacy usages below drop to zero on the inbox
+surface (verified by grep; the shared classes themselves are kept — still used
+by approvals/detail/status/profile/book-service/breakdown surfaces):
+
+| Deleted legacy widget | Homes before | Replaced by | Notes |
+|---|---|---|---|
+| `Scaffold` + `WorkspaceAppBar` page chrome | inbox (1) | `AppScaffold` + `AppAppBar` (title `ntTitle`, same back behavior; max-width 860 kept) | Same title/back/width; bell entry (shell) untouched |
+| (no search/filter affordances) | inbox (0) | NONE BY DESIGN (brief deviations with written reasons: recency triage needs no text-find; categories already are the group sections — a filter would duplicate them, U7; no destructive action exists for a remove sheet) | No new routes/logic; no invented find-aids |
+| bespoke `_GroupSection` bordered `DecoratedBox` | inbox (1 per group) | whitespace-separated `AppSurfaceCard(outlined: false)` rows (borderless light w/ shadow, bordered dark; 12 gaps) | Same group titles/order; `AppListGroup` is settings-rows only |
+| bespoke row chrome (tint `Material` + `InkWell` + dot `Container` + icon + chevron `Padding`; `left` padding) | row (per notification) | same atoms (unread tint, dot slot, icon, `DirectionalIcon` chevron — mirrors in RTL, `EdgeInsetsDirectional`) with byte-identical behavior; hierarchy binding (title → body → category·time meta) | Same tappability/chevron predicate; Semantics label kept |
+| bespoke `_SummaryRow` styling | inbox (1) | same row rebuilt on tokens (count text + `Mark all read` iff `unread > 0`) | Same copy/predicate/handler |
+| bespoke `_AllCaughtUp` / `_LoadFailure` panels | inbox (1 + 1) | `AppEmptyState` (exactly 1 icon + 1 sentence, NO action — calm empty, U6) / `AppErrorState` (`ntLoadTitle`/`ntLoadBody` + `ntRetry`, same `_refresh`) | Same copy/retry; adding a CTA would be a fake action |
+| `AppSkeleton` inbox skeleton | inbox (1) | `AppShimmerSkeleton` (summary line + `card(86)` x4) mirroring the rows | Same loading contract (`isLoading && isEmpty`) |
+| `CustomerRefreshNotice` stale + `CustomerNoticePanel` mark-fail | inbox (1 + 1) | `AppBanner` warning (`stRefreshFail` + `stRetry`, same retry) + `AppBanner` error (`ntMarkFail` + `ntRetry`, same `_markAllRead`, rollback kept) | Same copy/retry; stale data kept |
+
+Kept verbatim (predicates, providers, router untouched): `groupOf`/`labelOf`
+frozen mappings, `_grouped` bucketing + stable order, `icon`/`tone`/`toneColor`/
+`destination`/`isActionable`, `NotifType.fromWire` fallback, `markRead`
+background persist, `markAllRead` bulk + rollback, `RefreshIndicator` +
+pull-to-refresh, bell + badge (shell), back behavior, Semantics contracts
+(bell announcement, row label, group headers). No new routes. No new ARB keys
+(all copy reuses existing `nt*` + `stRefreshFail`/`stRetry`).
