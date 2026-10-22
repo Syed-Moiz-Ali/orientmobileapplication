@@ -38,6 +38,25 @@ class _LeadsSearchSheetState extends State<_LeadsSearchSheet> {
   final _ctrl = TextEditingController();
   String _query = '';
 
+  /// Private copy of the list's customer-name-first chain (round-2 fix #1):
+  /// name, then contact, then ID last-resort. Kept local on purpose — the
+  /// sheet must not import the page (import cycle), same precedent as the
+  /// dossier sheet keeping its own contact-intent copy.
+  String _titleOf(CrmLeadEntity lead) {
+    if (lead.customerName.trim().isNotEmpty) return lead.customerName;
+    if (lead.phone.trim().isNotEmpty) return lead.phone;
+    if (lead.email.trim().isNotEmpty) return lead.email;
+    return lead.leadNumber;
+  }
+
+  /// Secondary contact that never repeats the title; falls back to the ID
+  /// as small meta (never a title here either).
+  String _subOf(CrmLeadEntity lead, String title) {
+    for (final c in [lead.phone, lead.email, lead.leadNumber]) {
+      if (c.trim().isNotEmpty && c != title) return c;
+    }
+    return '';
+  }
   @override
   void dispose() {
     _ctrl.dispose();
@@ -112,7 +131,13 @@ class _LeadsSearchSheetState extends State<_LeadsSearchSheet> {
                   itemCount: results.length,
                   itemBuilder: (rowContext, index) {
                     final lead = results[index];
-                    final name = lead.customerName.isEmpty ? lead.leadNumber : lead.customerName;
+                    // Identity-triage rows: title + one contact. The value is
+                    // deliberately NOT a third column here (round-2 fix #5):
+                    // at 320px it would reintroduce the U5 truncation the
+                    // tablet fix removes, and the value surfaces on the
+                    // revealed card within the same <= 2-tap find path.
+                    final name = _titleOf(lead);
+                    final sub = _subOf(lead, name);
                     return InkWell(
                       onTap: () {
                         HapticFeedback.selectionClick();
@@ -143,7 +168,7 @@ class _LeadsSearchSheetState extends State<_LeadsSearchSheet> {
                             Directionality(
                               textDirection: TextDirection.ltr,
                               child: Text(
-                                lead.phone.isEmpty ? lead.email : lead.phone,
+                                sub,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: theme.textTheme.bodySmall?.copyWith(

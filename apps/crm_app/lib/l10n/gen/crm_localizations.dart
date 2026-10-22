@@ -1280,6 +1280,30 @@ abstract class CrmLocalizations {
   /// **'Win Rate'**
   String get tmWinRate;
 
+  /// Team revenue label
+  ///
+  /// In en, this message translates to:
+  /// **'Revenue'**
+  String get tmRevenue;
+
+  /// Team search sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Search team'**
+  String get tmSearchTitle;
+
+  /// Team search hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name or role'**
+  String get tmSearchHint;
+
+  /// Team search no-match
+  ///
+  /// In en, this message translates to:
+  /// **'No team members match your search.'**
+  String get tmSearchNoMatch;
+
   /// Team empty
   ///
   /// In en, this message translates to:

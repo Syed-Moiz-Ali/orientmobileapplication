@@ -1,9 +1,9 @@
 // AFTER captures for the recomposed CRM sales team leaderboard.
 //
 // Matrix: idle with-data, empty (action-less), compare (4 rows for the medal
-// rule), scrolled compare state, ar, 1.3x, 320px, tablet. No search exists
-// on this screen (reasoned U1 exception in the brief). View every PNG
-// against the brief before blessing anything.
+// rule), scrolled compare state, search-sheet open (6 rows, family > 5
+// rule), ar, 1.3x, 320px, tablet. View every PNG against the brief before
+// blessing anything.
 @Tags(['baseline'])
 library;
 
@@ -24,14 +24,28 @@ import 'package:shared_core/shared_core.dart';
 
 const _outDir = 'after-crm-sales-team';
 
-SalesTeamMember _member(String name, int leads, int won) => SalesTeamMember(
-  name: name,
-  role: 'Closer',
-  leadsHandled: leads,
-  wonDeals: won,
-  revenue: 'AED 12000',
-  winRate: won / leads,
-);
+SalesTeamMember _member(String name, int leads, int won) {
+  // Diversified realistic revenues, descending with rank (feed order):
+  // Sara > John > Mia > Omar > Lina > Kris. Names/counts/roles/winRate
+  // untouched; rank medals (#1-#3) now align with revenue order.
+  // Display still groups via moneyAED (e.g. `AED 48,500`).
+  const revenues = {
+    'Sara': 'AED 48500',
+    'John': 'AED 32750',
+    'Mia': 'AED 26400',
+    'Omar': 'AED 18900',
+    'Lina': 'AED 15250',
+    'Kris': 'AED 9800',
+  };
+  return SalesTeamMember(
+    name: name,
+    role: 'Closer',
+    leadsHandled: leads,
+    wonDeals: won,
+    revenue: revenues[name] ?? 'AED 12000',
+    winRate: won / leads,
+  );
+}
 
 class _FakeCrmRepo implements CrmRepository {
   final List<SalesTeamMember> team;
@@ -265,6 +279,26 @@ void main() {
         await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
+      },
+    );
+  });
+
+  testWidgets('search sheet open light en', (tester) async {
+    await _capture(
+      tester,
+      name: 'team_search-open_light_1.0_en_360x800.png',
+      team: [
+        _member('Sara', 4, 3),
+        _member('John', 2, 1),
+        _member('Mia', 6, 2),
+        _member('Omar', 4, 0),
+        _member('Lina', 5, 4),
+        _member('Kris', 3, 1),
+      ],
+      interact: () async {
+        await tester.tap(find.byTooltip('Search team'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
       },
     );
   });

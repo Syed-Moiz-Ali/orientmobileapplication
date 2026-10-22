@@ -25,14 +25,33 @@ const _outDir = 'after-crm-tasks';
 
 // ---------------------------------------------------------------- fixtures
 
-CrmTaskEntity _task(int i) => CrmTaskEntity(
-  id: 't$i',
-  title: 'Task $i',
-  assignedTo: i.isEven ? 'Sara' : '',
-  dueDate: '',
-  priority: 'High',
-  priorityColor: Colors.red,
-);
+CrmTaskEntity _task(int i) {
+  // Diversified realistic fixtures (counts unchanged): mixed titles,
+  // priorities (High/Medium/Low), assignees, some ISO due dates in the
+  // existing EN `2026-10-xx` style (leads `followUpDate` precedent).
+  // IDs (`t0..t5`) and counts (2 / 6) stable; no Arabic invented.
+  const titles = [
+    'Call back buyer',
+    'Prepare payment plan',
+    'Follow up site visit',
+    'Send contract draft',
+    'Schedule valuation visit',
+    'Confirm token deposit',
+  ];
+  const assignees = ['Sara', '', 'John', 'Sara', '', 'Mia'];
+  const dues = ['2026-10-24', '', '2026-10-25', '', '2026-10-26', ''];
+  const priorities = ['High', 'Medium', 'Low', 'High', 'Medium', 'Low'];
+  const colors = [Colors.red, Colors.amber, Colors.green, Colors.red, Colors.amber, Colors.green];
+  final k = i % 6;
+  return CrmTaskEntity(
+    id: 't$i',
+    title: titles[k],
+    assignedTo: assignees[k],
+    dueDate: dues[k],
+    priority: priorities[k],
+    priorityColor: colors[k],
+  );
+}
 
 class _FakeCrmRepo implements CrmRepository {
   final List<CrmTaskEntity> tasks;

@@ -19,8 +19,9 @@ import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_team_p
 import 'package:crm_app/features/crm_dashboard/presentation/support/crm_l10n.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_tasks_search_sheet.dart';
 
-/// Priority display kind by the stored English name (labels render verbatim,
-/// same family as the server-label note in the migration doc).
+/// Priority display kind by the stored English name (labels render via the
+/// existing `tkHigh/Medium/Low` keys — same mapping as the form sheet —
+/// so the AR pill reads localized copy; unknown server labels stay verbatim).
 AppStatusKind _priorityKind(String priority) {
   switch (priority.toUpperCase()) {
     case 'HIGH':
@@ -29,6 +30,22 @@ AppStatusKind _priorityKind(String priority) {
       return AppStatusKind.warning;
     default:
       return AppStatusKind.neutral;
+  }
+}
+
+/// Localized priority label for the card chip (presentation display mapping
+/// only; entity field is read verbatim, never rewritten).
+String _priorityLabelOf(BuildContext context, String priority) {
+  final t = context.cx;
+  switch (priority.toUpperCase()) {
+    case 'HIGH':
+      return t.tkHigh;
+    case 'MEDIUM':
+      return t.tkMedium;
+    case 'LOW':
+      return t.tkLow;
+    default:
+      return priority;
   }
 }
 
@@ -49,6 +66,7 @@ class _CrmTasksPageState extends ConsumerState<CrmTasksPage> {
   @override
   Widget build(BuildContext context) {
     final t = context.cx;
+    final theme = Theme.of(context);
     final notifier = ref.read(crmTaskProvider.notifier);
     final tasks = ref.watch(crmTaskProvider).tasks;
     _scrollKeys.removeWhere((id, _) => !tasks.any((task) => task.id == id));
@@ -61,42 +79,120 @@ class _CrmTasksPageState extends ConsumerState<CrmTasksPage> {
     return Column(
       children: [
         Padding(
+          // Plain-Row header (F6, owner/supervisor precedent): the title and
+          // the search find-aid share ONE Row so the icon stays top-end
+          // same-row on compact. AppPageHeader stacked every action below
+          // the title on compact, which read as a body toolbar row. Three
+          // trailing actions cannot share one 360px row with the title, so
+          // on compact refresh + Add sit in an end-aligned second header
+          // row (still header chrome, never body); on wide screens
+          // everything shares one row as before. Rows mirror in RTL, so the
+          // icon lands top-start in Arabic (correct end side). Same >5
+          // condition, same sheet, same target — placement only.
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: AppPageHeader(
-            title: t.navTasks,
-            subtitle: tasks.isEmpty ? null : t.tkCountN(tasks.length),
-            actions: [
-              if (showFindAids)
-                AppIconButton(
-                  icon: Icons.search_rounded,
-                  tooltip: t.tasksSearchTitle,
-                  onPressed: () => showCrmTasksSearchSheet(
-                    context,
-                    tasks: tasks,
-                    onSelect: (task) {
-                      final ctx = _scrollKeys[task.id]?.currentContext;
-                      if (ctx != null) {
-                        Scrollable.ensureVisible(
-                          ctx,
-                          duration: const Duration(milliseconds: 300),
-                          alignment: 0.1,
-                        );
-                      }
-                    },
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final titleBlock = Expanded(
+                child: Semantics(
+                  header: true,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        t.navTasks,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: theme.colorScheme.onSurface,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      if (tasks.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          t.tkCountN(tasks.length),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-              AppIconButton(
-                icon: Icons.refresh_rounded,
-                tooltip: t.chromeRefresh,
-                onPressed: () => notifier.refresh(),
-              ),
-              if (tasks.isNotEmpty)
-                TextButton.icon(
-                  onPressed: () => _showTaskForm(context, ref),
-                  icon: const Icon(Icons.add_rounded, size: 18),
-                  label: Text(t.tkAdd),
-                ),
-            ],
+              );
+              List<Widget> findAids() => [
+                    if (showFindAids)
+                      AppIconButton(
+                        icon: Icons.search_rounded,
+                        tooltip: t.tasksSearchTitle,
+                        onPressed: () => showCrmTasksSearchSheet(
+                          context,
+                          tasks: tasks,
+                          onSelect: (task) {
+                            final ctx = _scrollKeys[task.id]?.currentContext;
+                            if (ctx != null) {
+                              Scrollable.ensureVisible(
+                                ctx,
+                                duration: const Duration(milliseconds: 300),
+                                alignment: 0.1,
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                  ];
+              List<Widget> utilityActions() => [
+                    AppIconButton(
+                      icon: Icons.refresh_rounded,
+                      tooltip: t.chromeRefresh,
+                      onPressed: () => notifier.refresh(),
+                    ),
+                    if (tasks.isNotEmpty)
+                      TextButton.icon(
+                        onPressed: () => _showTaskForm(context, ref),
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        label: Text(t.tkAdd),
+                      ),
+                  ];
+              if (constraints.maxWidth >= 600) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    titleBlock,
+                    const SizedBox(width: AppDimensions.s12),
+                    ...findAids(),
+                    const SizedBox(width: AppDimensions.s8),
+                    ...utilityActions(),
+                  ],
+                );
+              }
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      titleBlock,
+                      const SizedBox(width: AppDimensions.s12),
+                      ...findAids(),
+                    ],
+                  ),
+                  const SizedBox(height: AppDimensions.s8),
+                  Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: Wrap(
+                      spacing: AppDimensions.s8,
+                      runSpacing: AppDimensions.s8,
+                      alignment: WrapAlignment.end,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: utilityActions(),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
         Expanded(
@@ -292,7 +388,7 @@ class _TaskCard extends StatelessWidget {
                         AppStatusChip(label: t.tkOverdue, kind: AppStatusKind.error),
                       if (due == _DueState.today)
                         AppStatusChip(label: t.tkDueToday, kind: AppStatusKind.warning),
-                      AppStatusChip(label: task.priority, kind: _priorityKind(task.priority)),
+                      AppStatusChip(label: _priorityLabelOf(context, task.priority), kind: _priorityKind(task.priority)),
                     ],
                   ),
                 ],

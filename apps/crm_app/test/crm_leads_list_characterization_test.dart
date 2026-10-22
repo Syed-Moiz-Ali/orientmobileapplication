@@ -115,12 +115,21 @@ IntegrationEntity _integration({required bool connected}) => IntegrationEntity(
   connected: connected,
 );
 
+/// Loading-state notifier: the real [CrmUiNotifier] with `isLoading` latched
+/// on, so the skeleton branch (which keys on the existing
+/// `ui.isLoading && empty` signal) can be asserted structurally.
+class _LoadingUiNotifier extends CrmUiNotifier {
+  @override
+  CrmUiState build() => super.build().copyWith(isLoading: true);
+}
+
 Future<void> _pumpLeads(
   WidgetTester tester, {
   required List<CrmLeadEntity> leads,
   required List<IntegrationEntity> integrations,
   double scale = 1.0,
   Size viewport = const Size(360, 800),
+  bool loading = false,
 }) async {
   // Compact viewport: the list branch only renders below the medium
   // breakpoint; the default 800x600 test surface takes the master-detail
@@ -134,6 +143,7 @@ Future<void> _pumpLeads(
         crmRepositoryProvider.overrideWithValue(
           _FakeCrmRepo(leads: leads, integrations: integrations),
         ),
+        if (loading) crmUiProvider.overrideWith(_LoadingUiNotifier.new),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -184,10 +194,19 @@ void main() {
         leads: [_lead(0), _lead(1)],
         integrations: [_integration(connected: true)],
       );
-      // Lead 0 falls back to leadNumber when the name is empty.
-      expect(find.text('LD-1000'), findsOneWidget);
+      // Lead 0 has no name: the title falls back to the contact
+      // (customer-name-first chain); the ID renders only as small trailing
+      // meta on the value line, never as the title.
+      expect(find.text('+971 50 100 0000'), findsOneWidget);
+      expect(find.text('LD-1000'), findsNothing);
+      expect(find.textContaining('LD-1000'), findsOneWidget);
       expect(find.text('Customer 1'), findsOneWidget);
-      expect(find.textContaining('AED'), findsNWidgets(2));
+      // Grouped labeled values with the ID last.
+      expect(find.textContaining('AED 12,000'), findsOneWidget);
+      expect(find.textContaining('AED 13,000'), findsOneWidget);
+      // Why-line from existing fields only (source/agent/last-touch).
+      expect(find.text('Meta · Sara · Called'), findsOneWidget);
+      expect(find.text('Zoho · John · Called'), findsOneWidget);
       await tester.tap(find.byType(AppSurfaceCard).first);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -258,6 +277,31 @@ void main() {
       expect(find.text('6 leads'), findsOneWidget);
       expect(find.byTooltip('Search leads'), findsOneWidget);
       expect(find.byTooltip('Filter leads'), findsOneWidget);
+    });
+
+    testWidgets('header is a plain same-row Row (no AppPageHeader stacking)', (tester) async {
+      await _pumpLeads(
+        tester,
+        leads: [for (var i = 0; i < 6; i++) _lead(i)],
+        integrations: [_integration(connected: true)],
+      );
+      // F6: the shared atom stacked actions below the title on compact
+      // (read as a body toolbar row); the plain Row keeps title + search
+      // icons top-end same-row. Same tooltips, same sheets, same targets.
+      expect(find.byType(AppPageHeader), findsNothing);
+      expect(find.text('Leads'), findsOneWidget);
+      expect(find.byTooltip('Search leads'), findsOneWidget);
+      expect(find.byTooltip('Filter leads'), findsOneWidget);
+      // Search shares its Row with the title (compact row 1).
+      final searchRow = find.ancestor(
+        of: find.byTooltip('Search leads'),
+        matching: find.byType(Row),
+      );
+      expect(searchRow, findsWidgets);
+      expect(
+        find.descendant(of: searchRow.first, matching: find.text('Leads')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('search sheet filters loaded leads; no-match + Clear', (tester) async {
@@ -331,7 +375,7 @@ void main() {
       expect(find.text('6 leads'), findsOneWidget);
     });
 
-    testWidgets('empty-sync state offers Sync Now', (tester) async {
+    testWidgets('empty-sync state offers Sync Now + secondary Add', (tester) async {
       await _pumpLeads(
         tester,
         leads: const [],
@@ -340,10 +384,12 @@ void main() {
       expect(find.byType(AppEmptyState), findsOneWidget);
       expect(find.textContaining('No leads yet'), findsOneWidget);
       expect(find.text('Sync Now'), findsOneWidget);
+      // Round-2 fix #3: secondary Add path below the single primary action.
+      expect(find.text('Add Lead'), findsOneWidget);
       expect(find.byType(AppSurfaceCard), findsNothing);
     });
 
-    testWidgets('no-crm state offers Connect Now', (tester) async {
+    testWidgets('no-crm state offers Connect Now + secondary Add', (tester) async {
       await _pumpLeads(
         tester,
         leads: const [],
@@ -352,6 +398,21 @@ void main() {
       expect(find.byType(AppEmptyState), findsOneWidget);
       expect(find.textContaining('No third-party CRMs connected'), findsOneWidget);
       expect(find.text('Connect Now'), findsOneWidget);
+      // Round-2 fix #3: secondary Add path below the single primary action.
+      expect(find.text('Add Lead'), findsOneWidget);
+    });
+
+    testWidgets('loading with empty list shows skeleton cards', (tester) async {
+      await _pumpLeads(
+        tester,
+        leads: const [],
+        integrations: [_integration(connected: true)],
+        loading: true,
+      );
+      // Skeleton mirrors the cards (header lines + card shapes); no records.
+      expect(find.byType(AppShimmerSkeleton), findsWidgets);
+      expect(find.byType(AppSurfaceCard), findsNothing);
+      expect(find.byType(AppEmptyState), findsNothing);
     });
 
     testWidgets('kanban toggle switches to swimlanes', (tester) async {

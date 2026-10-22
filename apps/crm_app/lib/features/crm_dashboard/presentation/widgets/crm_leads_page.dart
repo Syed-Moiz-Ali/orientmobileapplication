@@ -57,6 +57,29 @@ AppStatusKind _statusKind(String status) {
   }
 }
 
+/// Customer-name-first title (C16 hierarchy, round-2 adversarial fix #1):
+/// the thing the user recognizes — name, then dialable contact, then email —
+/// with the database ID only as a last resort. The ID always also renders as
+/// small trailing meta (value line), so cards/table/dossier never lead with
+/// it. Display mapping only; entity fields are read verbatim.
+String _leadTitle(CrmLeadEntity lead) {
+  if (lead.customerName.trim().isNotEmpty) return lead.customerName;
+  if (lead.phone.trim().isNotEmpty) return lead.phone;
+  if (lead.email.trim().isNotEmpty) return lead.email;
+  return lead.leadNumber;
+}
+
+/// Why-line from existing fields only (round-2 fix #6): source/agent/
+/// last-touch verbatim values joined for display; never invented. Empty parts
+/// are dropped; an empty result renders nothing.
+String _leadContextLine(CrmLeadEntity lead) {
+  return <String>[
+    lead.source.trim(),
+    lead.assignedTo.trim(),
+    lead.lastActivity.trim(),
+  ].where((s) => s.isNotEmpty).join(' · ');
+}
+
 class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
   bool _kanbanMode = false;
   String? _selectedLeadId;
@@ -73,6 +96,7 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
   @override
   Widget build(BuildContext context) {
     final t = context.cx;
+    final theme = Theme.of(context);
     final ui = ref.read(crmUiProvider.notifier);
     final integrations = ui.integrations;
     final meta = integrations.where((i) => i.isMeta).firstOrNull;
@@ -91,6 +115,11 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
     // Progressive disclosure (the ONE sanctioned U1 exception on this
     // screen, same as the vehicles list): the search + filter find-aids
     // appear ONLY when the loaded list has MORE THAN 5 items.
+    // Scope note (round-2 fix #4): this icon opens the LIST-scoped sheet
+    // (filters the loaded leads in place). The shell command palette
+    // (WorkspaceAppBar search trigger -> jump-to-dossier over the first 50)
+    // is app-chrome in a different scope with a different target, so the
+    // pair is not a same-target duplicate and is not collapsed.
     final showFindAids = totalLoaded > 5;
     final filtersActive =
         sourceFilter.isNotEmpty || stageFilter.isNotEmpty || _agentFilter.isNotEmpty;
@@ -110,53 +139,139 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
     return Column(
       children: [
         Padding(
+          // Plain-Row header (F6, owner/supervisor precedent): the title and
+          // the search/filter find-aids share ONE Row so the icons stay
+          // top-end same-row on compact. AppPageHeader stacked every action
+          // below the title on compact (Align centerLeft), which read as a
+          // body toolbar row. Four trailing actions cannot share one 360px
+          // row with the title, so on compact the view toggle + Add sit in
+          // an end-aligned second header row (still header chrome, never
+          // body); on wide screens everything shares one row as before.
+          // Rows mirror in RTL, so icons land top-start in Arabic (correct
+          // end side). Same >5 conditions, same sheets, same targets —
+          // placement only.
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: AppPageHeader(
-            title: t.navLeads,
-            subtitle: totalLoaded == 0 ? null : subtitle,
-            actions: [
-              if (showFindAids) ...[
-                AppIconButton(
-                  icon: Icons.search_rounded,
-                  tooltip: t.leadsSearchTitle,
-                  onPressed: () => showCrmLeadsSearchSheet(
-                    context,
-                    leads: leads,
-                    onSelect: (lead) => _revealLead(lead, adaptive.isCompact && !_kanbanMode),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final titleBlock = Expanded(
+                child: Semantics(
+                  header: true,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        t.navLeads,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: theme.colorScheme.onSurface,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      if (totalLoaded > 0) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                AppIconButton(
-                  icon: Icons.filter_list_rounded,
-                  tooltip: t.leadsFilterTitle,
-                  onPressed: () async {
-                    final pick = await showCrmLeadsFilterSheet(
-                      context,
-                      sources: sources,
-                      agents: agents,
-                      source: sourceFilter,
-                      agent: _agentFilter,
-                    );
-                    if (pick == null || !mounted) return;
-                    ref.read(crmLeadSourceFilterProvider.notifier).state = pick.source;
-                    setState(() => _agentFilter = pick.agent);
-                    leadNotifier.refresh();
-                  },
-                ),
-              ],
-              AppIconButton(
-                icon: _kanbanMode
-                    ? Icons.view_list_rounded
-                    : Icons.space_dashboard_outlined,
-                tooltip: _kanbanMode ? t.leadsTableView : t.leadsKanbanView,
-                onPressed: () => setState(() => _kanbanMode = !_kanbanMode),
-              ),
-              if (totalLoaded > 0)
-                TextButton.icon(
-                  onPressed: () => LeadFormSheet.show(context),
-                  icon: const Icon(Icons.add_rounded, size: 18),
-                  label: Text(t.leadsAdd),
-                ),
-            ],
+              );
+              List<Widget> findAids() => [
+                    if (showFindAids) ...[
+                      AppIconButton(
+                        icon: Icons.search_rounded,
+                        tooltip: t.leadsSearchTitle,
+                        onPressed: () => showCrmLeadsSearchSheet(
+                          context,
+                          leads: leads,
+                          onSelect: (lead) => _revealLead(
+                              lead, adaptive.isCompact && !_kanbanMode),
+                        ),
+                      ),
+                      AppIconButton(
+                        icon: Icons.filter_list_rounded,
+                        tooltip: t.leadsFilterTitle,
+                        onPressed: () async {
+                          final pick = await showCrmLeadsFilterSheet(
+                            context,
+                            sources: sources,
+                            agents: agents,
+                            source: sourceFilter,
+                            agent: _agentFilter,
+                          );
+                          if (pick == null || !mounted) return;
+                          ref
+                              .read(crmLeadSourceFilterProvider.notifier)
+                              .state = pick.source;
+                          setState(() => _agentFilter = pick.agent);
+                          leadNotifier.refresh();
+                        },
+                      ),
+                    ],
+                  ];
+              List<Widget> utilityActions() => [
+                    AppIconButton(
+                      icon: _kanbanMode
+                          ? Icons.view_list_rounded
+                          : Icons.space_dashboard_outlined,
+                      tooltip:
+                          _kanbanMode ? t.leadsTableView : t.leadsKanbanView,
+                      onPressed: () =>
+                          setState(() => _kanbanMode = !_kanbanMode),
+                    ),
+                    if (totalLoaded > 0)
+                      TextButton.icon(
+                        onPressed: () => LeadFormSheet.show(context),
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        label: Text(t.leadsAdd),
+                      ),
+                  ];
+              if (constraints.maxWidth >= 600) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    titleBlock,
+                    const SizedBox(width: AppDimensions.s12),
+                    ...findAids(),
+                    const SizedBox(width: AppDimensions.s8),
+                    ...utilityActions(),
+                  ],
+                );
+              }
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      titleBlock,
+                      const SizedBox(width: AppDimensions.s12),
+                      ...findAids(),
+                    ],
+                  ),
+                  if (utilityActions().isNotEmpty) ...[
+                    const SizedBox(height: AppDimensions.s8),
+                    Align(
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: Wrap(
+                        spacing: AppDimensions.s8,
+                        runSpacing: AppDimensions.s8,
+                        alignment: WrapAlignment.end,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: utilityActions(),
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            },
           ),
         ),
         if (stageFilter.isNotEmpty) ...[
@@ -368,6 +483,18 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
               ),
             ),
           ),
+          // Round-2 fix #3: empties keep their single primary action
+          // (Connect/Sync) and gain a secondary Add path below it, so a
+          // hand-entered lead is never a dead end. Header-XOR-empty holds:
+          // the header Add renders only when non-empty (totalLoaded > 0).
+          const SizedBox(height: 4),
+          Center(
+            child: TextButton.icon(
+              onPressed: () => LeadFormSheet.show(context),
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: Text(t.leadsAdd),
+            ),
+          ),
         ],
       );
     }
@@ -394,6 +521,15 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
             ),
           ),
         ),
+        // Same secondary Add path as above (fix #3, header-XOR-empty).
+        const SizedBox(height: 4),
+        Center(
+          child: TextButton.icon(
+            onPressed: () => LeadFormSheet.show(context),
+            icon: const Icon(Icons.add_rounded, size: 18),
+            label: Text(t.leadsAdd),
+          ),
+        ),
       ],
     );
   }
@@ -401,6 +537,12 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
   Widget _buildWide(List<CrmLeadEntity> leads) {
     final t = context.cx;
     return AppMasterDetailScaffold(
+      // Caller-local pane floor (same class of caller param as the advisor
+      // list's masterMaxWidth): at 768px the default 45% master (~345px)
+      // leaves the Agent header ~2px short of whole. 380px keeps every
+      // header + cell whole; wider screens still clamp to 420. Detail keeps
+      // ~387px for the dossier. No shared-atom change.
+      masterMinWidth: 380,
       master: _buildTable(leads),
       detail: _buildDossier(leads),
       detailOpen: _selectedLeadId != null,
@@ -420,19 +562,20 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
     final t = context.cx;
     return AppTable<CrmLeadEntity>(
       columns: [
-        AppTableColumn(label: t.colLead, flex: 3, sortable: true),
-        AppTableColumn(label: t.colPhone, flex: 2),
-        AppTableColumn(label: t.colValue, flex: 2, numeric: true, sortable: true),
-        // Wide-tablet fix (U5): the Stage chip wrapped one letter per line
-        // at 768px because the master pane is ~45% of the width. The Stage
-        // column takes one extra flex share so the whole status label fits;
-        // compact cards are untouched (separate _buildList branch).
+        AppTableColumn(label: t.colLead, flex: 4, sortable: true),
+        AppTableColumn(label: t.colPhone, flex: 3),
+        AppTableColumn(label: t.colValue, flex: 3, numeric: true, sortable: true),
+        // Wide-tablet fix (U5, round-2 fix #2): the master pane is ~45% of
+        // 768px, so every text cell wraps in a scale-down FittedBox exactly
+        // like the round-1 Stage fix — whole primary text, never mid-word
+        // ellipsis. Flex leans toward Lead/Phone/Value/Stage; compact cards
+        // are untouched (separate _buildList branch).
         AppTableColumn(label: t.colStage, flex: 3),
         AppTableColumn(label: t.colAgent, flex: 2),
       ],
       // Mirror the header flexes in the rows (AppTableRow defaults to 1
       // per cell, which squeezed Stage even narrower than the header).
-      cellFlex: const [3, 2, 2, 3, 2],
+      cellFlex: const [4, 3, 3, 3, 2],
       items: leads,
       sortIndex: _sortIndex == 0 ? 0 : 2,
       sortAscending: _sortAscending,
@@ -448,27 +591,47 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
       onRowTap: (lead) => setState(() => _selectedLeadId = lead.id),
       isSelected: (lead) => lead.id == _selectedLeadId,
       cells: (context, lead) => [
-        Text(
-          lead.customerName.isEmpty ? lead.leadNumber : lead.customerName,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontWeight: FontWeight.w700),
-        ),
-        Directionality(
-          textDirection: TextDirection.ltr,
+        // Whole-word scale-down (never mid-word ellipsis): softWrap false +
+        // visible overflow lets the Text size to its intrinsic single-line
+        // width so the FittedBox scales the whole string instead of cutting
+        // it. Title follows the customer-name-first chain (fix #1); value is
+        // grouped tabular money via the existing AppFormatters (fix #5).
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.centerStart,
           child: Text(
-            lead.phone,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            _leadTitle(lead),
+            softWrap: false,
+            overflow: TextOverflow.visible,
+            style: const TextStyle(fontWeight: FontWeight.w700),
           ),
         ),
-        Directionality(
-          textDirection: TextDirection.ltr,
-          child: Text(
-            'AED ${lead.leadValue.toStringAsFixed(0)}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.w700),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.centerStart,
+          child: Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              lead.phone,
+              softWrap: false,
+              overflow: TextOverflow.visible,
+            ),
+          ),
+        ),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.centerStart,
+          child: Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              AppFormatters.of(context).moneyAED(lead.leadValue),
+              softWrap: false,
+              overflow: TextOverflow.visible,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontFeatures: [FontFeature.tabularFigures()],
+              ),
+            ),
           ),
         ),
         // Scale-down (never mid-word wrap): if a longer stage label still
@@ -482,10 +645,14 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
             kind: _statusKind(lead.status),
           ),
         ),
-        Text(
-          lead.assignedTo,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.centerStart,
+          child: Text(
+            lead.assignedTo,
+            softWrap: false,
+            overflow: TextOverflow.visible,
+          ),
         ),
       ],
       compactBuilder: (context, lead) => _LeadCard(
@@ -513,7 +680,7 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
             children: [
               Expanded(
                 child: Text(
-                  lead.customerName.isEmpty ? lead.leadNumber : lead.customerName,
+                  _leadTitle(lead),
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -529,10 +696,11 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
           Directionality(
             textDirection: TextDirection.ltr,
             child: Text(
-              'AED ${lead.leadValue.toStringAsFixed(0)} · ${lead.leadNumber}',
+              '${AppFormatters.of(context).moneyAED(lead.leadValue)} · ${lead.leadNumber}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w700,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
           ),
@@ -593,13 +761,14 @@ class _LeadCard extends StatelessWidget {
     final t = context.cx;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final title = _leadTitle(lead);
     final contact = lead.phone.isNotEmpty ? lead.phone : lead.email;
+    final contextLine = _leadContextLine(lead);
 
     return AppSurfaceCard(
       outlined: false,
       onTap: onOpen,
-      semanticLabel:
-          '${lead.customerName.isEmpty ? lead.leadNumber : lead.customerName}, $contact',
+      semanticLabel: contact.isEmpty || contact == title ? title : '$title, $contact',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -607,7 +776,7 @@ class _LeadCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  lead.customerName.isEmpty ? lead.leadNumber : lead.customerName,
+                  title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleSmall?.copyWith(
@@ -622,7 +791,7 @@ class _LeadCard extends StatelessWidget {
               ),
             ],
           ),
-          if (contact.isNotEmpty) ...[
+          if (contact.isNotEmpty && contact != title) ...[
             const SizedBox(height: 4),
             Directionality(
               textDirection: TextDirection.ltr,
@@ -637,15 +806,32 @@ class _LeadCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 4),
+          // Grouped tabular value (round-2 fix #5, existing AppFormatters —
+          // display mapping only) with the value label and the ID as small
+          // trailing meta (round-2 fix #1: plate/ID last, never the title).
           Directionality(
             textDirection: TextDirection.ltr,
             child: Text(
-              'AED ${lead.leadValue.toStringAsFixed(0)}',
+              '${t.colValue} · ${AppFormatters.of(context).moneyAED(lead.leadValue)} · ${lead.leadNumber}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: theme.textTheme.labelMedium?.copyWith(
                 fontWeight: FontWeight.w800,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
           ),
+          if (contextLine.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              contextLine,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
+            ),
+          ],
           const SizedBox(height: 4),
           Wrap(
             alignment: WrapAlignment.spaceBetween,

@@ -633,6 +633,18 @@ class CrmLocalizationsAr extends CrmLocalizations {
   String get tmWinRate => 'معدل الفوز';
 
   @override
+  String get tmRevenue => 'الإيراد';
+
+  @override
+  String get tmSearchTitle => 'البحث في الفريق';
+
+  @override
+  String get tmSearchHint => 'ابحث بالاسم أو الدور';
+
+  @override
+  String get tmSearchNoMatch => 'لا يوجد أعضاء فريق يطابقون بحثك.';
+
+  @override
   String get tmEmpty => 'لا يوجد موظفون بعد';
 
   @override

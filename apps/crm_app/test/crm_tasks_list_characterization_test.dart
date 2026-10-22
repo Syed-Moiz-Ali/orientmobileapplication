@@ -229,6 +229,27 @@ void main() {
       expect(find.byType(AppEmptyState), findsOneWidget);
     });
 
+    testWidgets('header is a plain same-row Row (no AppPageHeader stacking)', (tester) async {
+      await _pumpTasks(
+        tester,
+        tasks: [for (var i = 0; i < 6; i++) _task(i)],
+      );
+      // F6: same placement fix as the leads list — title + search share one
+      // Row top-end on compact. Same >5 condition, same sheet, same target.
+      expect(find.byType(AppPageHeader), findsNothing);
+      expect(find.text('Tasks'), findsOneWidget);
+      expect(find.byTooltip('Search tasks'), findsOneWidget);
+      final searchRow = find.ancestor(
+        of: find.byTooltip('Search tasks'),
+        matching: find.byType(Row),
+      );
+      expect(searchRow, findsWidgets);
+      expect(
+        find.descendant(of: searchRow.first, matching: find.text('Tasks')),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('>5: search icon appears; sheet filters tasks', (tester) async {
       await _pumpTasks(
         tester,
@@ -272,6 +293,13 @@ void main() {
       expect(find.text('Free-text due'), findsOneWidget);
       expect(find.text('Overdue'), findsNothing);
       expect(find.text('Due today'), findsNothing);
+    });
+
+    testWidgets('priority chip renders the localized label', (tester) async {
+      await _pumpTasks(tester, tasks: [_task(1)]);
+      // en tkHigh renders "High" through the shared key (the ar capture
+      // proves the localized pill); unknown server labels stay verbatim.
+      expect(find.text('High'), findsOneWidget);
     });
 
     testWidgets('dark + 1.3x + 320px pump clean', (tester) async {

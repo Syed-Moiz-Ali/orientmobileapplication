@@ -639,6 +639,18 @@ class CrmLocalizationsEn extends CrmLocalizations {
   String get tmWinRate => 'Win Rate';
 
   @override
+  String get tmRevenue => 'Revenue';
+
+  @override
+  String get tmSearchTitle => 'Search team';
+
+  @override
+  String get tmSearchHint => 'Search by name or role';
+
+  @override
+  String get tmSearchNoMatch => 'No team members match your search.';
+
+  @override
   String get tmEmpty => 'No salespeople yet';
 
   @override

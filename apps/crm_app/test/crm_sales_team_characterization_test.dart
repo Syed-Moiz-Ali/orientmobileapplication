@@ -124,7 +124,11 @@ void main() {
       expect(find.byType(AppAvatar), findsNWidgets(2));
       expect(find.text('Sara'), findsOneWidget);
       expect(find.text('John'), findsOneWidget);
-      expect(find.text('AED 12000'), findsNWidgets(2));
+      // F7 display mapping: the `AED 12000` feed verbatim renders grouped.
+      expect(find.text('AED 12,000'), findsNWidgets(2));
+      expect(find.text('AED 12000'), findsNothing);
+      // Small `Revenue` label above each figure (new `tmRevenue` key).
+      expect(find.text('Revenue'), findsNWidgets(2));
       expect(find.text('#1'), findsOneWidget);
       expect(find.text('#2'), findsOneWidget);
     });
@@ -168,6 +172,14 @@ void main() {
       expect(find.byType(AppSurfaceCard), findsNWidgets(4));
     });
 
+    testWidgets('empty keeps the Leaderboard header for orientation', (tester) async {
+      await _pumpTeam(tester, const []);
+      expect(find.text('Leaderboard'), findsOneWidget);
+      expect(find.textContaining('Ranked by revenue won this period.'), findsOneWidget);
+      expect(find.byType(AppEmptyState), findsOneWidget);
+      expect(find.byType(AppPillButton), findsNothing);
+    });
+
     testWidgets('dark + 1.3x + 320px pump clean', (tester) async {
       await _pumpTeam(
         tester,
@@ -177,6 +189,71 @@ void main() {
         theme: AppTheme.dark(BrandConfig.orient),
       );
       expect(find.byType(AppSurfaceCard), findsNWidgets(2));
+    });
+
+    testWidgets('<=5: header + count, no find-aid', (tester) async {
+      await _pumpTeam(tester, [_member('Sara', 4, 3), _member('John', 2, 1)]);
+      expect(find.text('Leaderboard'), findsOneWidget);
+      // Family > 5 rule: a 2-row roster is fully scannable, no search.
+      expect(find.byTooltip('Search team'), findsNothing);
+      expect(find.byType(AppSurfaceCard), findsNWidgets(2));
+    });
+
+    testWidgets('>5: search icon appears; sheet filters roster', (tester) async {
+      await _pumpTeam(tester, [
+        _member('Sara', 4, 3),
+        _member('John', 2, 1),
+        _member('Mia', 6, 2),
+        _member('Omar', 4, 0),
+        _member('Lina', 5, 4),
+        _member('Kris', 3, 1),
+      ]);
+      expect(find.byTooltip('Search team'), findsOneWidget);
+      // Search shares its header Row with the title (same-row end-side).
+      final searchRow = find.ancestor(
+        of: find.byTooltip('Search team'),
+        matching: find.byType(Row),
+      );
+      expect(searchRow, findsWidgets);
+      expect(
+        find.descendant(
+          of: searchRow.first,
+          matching: find.text('Leaderboard'),
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.byTooltip('Search team'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Search team'), findsWidgets);
+      await tester.enterText(find.byType(TextField), 'zzz-no-such-member');
+      await tester.pump();
+      expect(find.text('No team members match your search.'), findsOneWidget);
+      await tester.tap(find.text('Clear'));
+      await tester.pump();
+      expect(find.text('Sara'), findsWidgets);
+    });
+
+    testWidgets('search result tap reveals the row', (tester) async {
+      await _pumpTeam(tester, [
+        _member('Sara', 4, 3),
+        _member('John', 2, 1),
+        _member('Mia', 6, 2),
+        _member('Omar', 4, 0),
+        _member('Lina', 5, 4),
+        _member('Kris', 3, 1),
+      ]);
+      await tester.tap(find.byTooltip('Search team'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.enterText(find.byType(TextField), 'lina');
+      await tester.pump();
+      // Sheet lists the match; tapping closes + reveals (no destinations).
+      await tester.tap(find.text('Lina').first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Lina'), findsWidgets);
+      expect(tester.takeException(), isNull);
     });
   });
 }

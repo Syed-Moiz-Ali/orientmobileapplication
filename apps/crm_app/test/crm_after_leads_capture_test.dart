@@ -115,6 +115,14 @@ IntegrationEntity _integration({required bool connected}) => IntegrationEntity(
   connected: connected,
 );
 
+/// Loading-state notifier for the skeleton golden: the real notifier with the
+/// existing `isLoading` signal latched on (presentation state only — the
+/// signal already exists in `crm_ui_provider.dart`).
+class _LoadingCrmUiNotifier extends CrmUiNotifier {
+  @override
+  CrmUiState build() => super.build().copyWith(isLoading: true);
+}
+
 // ---------------------------------------------------------------- harness
 
 void _mockConnectivity() {
@@ -192,6 +200,7 @@ Future<void> _capture(
   Locale locale = const Locale('en'),
   Size logicalSize = const Size(360, 800),
   double dpr = 3.0,
+  bool loading = false,
   Future<void> Function()? interact,
 }) async {
   final oldShadows = debugDisableShadows;
@@ -203,7 +212,10 @@ Future<void> _capture(
   await tester.runAsync(() async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [crmRepositoryProvider.overrideWithValue(repo)],
+        overrides: [
+          crmRepositoryProvider.overrideWithValue(repo),
+          if (loading) crmUiProvider.overrideWith(_LoadingCrmUiNotifier.new),
+        ],
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
           locale: locale,
@@ -280,6 +292,15 @@ void main() {
       tester,
       name: 'leads_empty-nocrm_light_1.0_en_360x800.png',
       repo: leadsRepo(leads: const [], connected: false),
+    );
+  });
+
+  testWidgets('loading light en (skeleton proof)', (tester) async {
+    await _capture(
+      tester,
+      name: 'leads_loading_light_1.0_en_360x800.png',
+      repo: leadsRepo(leads: const []),
+      loading: true,
     );
   });
 
