@@ -2806,19 +2806,10 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String get techDetailTitle => 'Job details';
 
   @override
-  String get techDetailCurrentTask => 'CURRENT TASK';
-
-  @override
   String get techDetailCurrentTitle => 'Current task';
 
   @override
-  String get techDetailNextTask => 'NEXT TASK';
-
-  @override
   String get techDetailNextTitle => 'Next task';
-
-  @override
-  String get techDetailOnHold => 'ON HOLD';
 
   @override
   String get techDetailAllDone => 'Repair tasks complete';
@@ -2827,15 +2818,9 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String get techDetailNoTasks => 'No tasks';
 
   @override
-  String get techDetailExecution => 'EXECUTION';
-
-  @override
   String techDetailTasksAssigned(int count) {
     return '$count assigned';
   }
-
-  @override
-  String get techDetailAllTasks => 'ALL TASKS';
 
   @override
   String get techDetailCompleteTask => 'Complete task';
@@ -2899,13 +2884,12 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String get techDetailSupport => 'Support';
 
   @override
-  String get techDetailNeedHelp => 'NEED HELP?';
-
-  @override
   String get techDetailCompleteRepair => 'Complete repair';
 
   @override
-  String get techDetailConfirmTitle => 'Complete repair?';
+  String techDetailCompleteRepairOn(String ref) {
+    return 'Complete repair on \'$ref\'?';
+  }
 
   @override
   String get techDetailConfirmBody =>

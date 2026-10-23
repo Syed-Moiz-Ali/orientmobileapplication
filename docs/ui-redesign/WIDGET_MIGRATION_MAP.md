@@ -595,3 +595,26 @@ by kanban/detail/form/connect sheets and other CRM surfaces):
 | white `Container` task card (border AND shadow, 30px targets, bare meta `Text`s) | tasks cards (per task) | borderless `AppSurfaceCard(outlined: false)` + 48dp toggle (24px visual, same `taskToggle_<id>` keys) + `Flexible` meta (ellipsis) + `AppStatusChip` due/priority pills + 48dp `AppIconButton` edit/delete with tooltips | `Flexible` fixes a 6px Row overflow the suite caught; priority labels verbatim (server English, LOGIC #9 family), kinds by name |
 | bespoke `_TaskFormSheet` chrome (raw `TextField`s, custom dropdown/priority containers, `ElevatedButton`) + team loading/error containers | tasks form (1) | `AppInputField` (title w/ error, due LTR) + `AppDropdown` assignee (loading → disabled hint; error → `AppBanner` error, verbatim `tkTeamFail`) + `AppChip` priority + `AppPillButton` save | Same fields/validation/save mapping; no skeleton branch (`isLoading` never set — logic candidate) |
 | `SectionHeader` + bespoke card `Container` (border+shadow, gradient avatar, hardcoded styles) + legacy `EmptyState` | sales team page (1 header + per-row cards) | `AppPageHeader` (title + subtitle, no count suffix — would misread against `tmLeads`) + borderless `AppSurfaceCard(outlined: false)` + `AppAvatar` (40) + theme type + rank badge (`#n`, accent tint ≤ 3) + tabular LTR revenue (success ink) + token stat blocks (`surfaceContainerHighest`) + `AppProgressBar` (pinned accent, same value + semantics) + action-less `AppEmptyState` (U6 calm) | No new ARB keys (all `tm*` reused); no search (reasoned U1 exception — roster fits one screen, no per-row destinations); gradient removed (C16); no skeleton/error signals in feed (logic candidates) |
+
+## DETAIL technician job detail (branch `ui/detail-technician`, screen 1)
+
+`job_detail_sheet.dart` (`TechnicianJobDetailView`) recomposed
+presentation-only onto App* pattern widgets: providers, status machines
+(task + derived job sync + `completeJob` handover), sync/offline queue,
+routes, sheet contracts, copy semantics, shell chrome untouched; no new
+routes. One new ARB key (`techDetailCompleteRepairOn`, en+ar, `gen-l10n`
+from `apps/staff_app`); seven dead detail-only keys removed. Search wired
+to the existing `showTechnicianTodaySearch` sheet (same jobs/predicate,
+same `openJob`/`push`/`closeJob` contract — U1 placement).
+
+| Deleted legacy widget | Surface | Replaced by | Notes |
+|---|---|---|---|
+| `AppCard.standard(` (hero + focus + rows + notice) | technician detail hero/focus/rows | `AppSurfaceCard(outlined: false)` (borderless light, shadow; dark keeps border) | Hero carries identity + progress only (second pill removed — one pill per screen) |
+| bespoke `_GreaseButton.fill` (cobalt/amber/emerald) + `_TaskAction` (filled/outlined triplets) | technician detail focus + rows | `AppPillButton.primary` (focus next step, `busyLabel`) + `ghost` (Hold) / `secondary` + `ghost` small (rows) | One filled accent per section; meaning via icon + label, never color alone |
+| bespoke `PrimaryButton` dock | technician detail sticky CTA | `_HandoverBar` (spec chrome, CTA-priority flex) on compact; `AppPillButton.primary` in the wide rail (never both) | Atom split 50/50 truncates the CTA at 320px (U5) — custom composition keeps the full label |
+| `showAppConfirmationDialog` | technician detail handover | `showAppDialog` (title `techDetailCompleteRepairOn(ref)` names the object — U10; explicit bool pops) | Body/cancel/confirm verbatim |
+| `showAppModalSheet` | technician detail parts/escalation openers | `showAppBottomSheet` (same sheet content, own submit — no added steps) | Taps stay 3 = 3 |
+| bespoke `_DelayedNotice` Container | technician detail delayed | `AppBanner` warning (`techDetailDelayedHint` verbatim) | Abnormal-only banner, live region |
+| `SectionHeader` (ALL CAPS subtitles) + bespoke `_HelpActions` outlined buttons | technician detail sections + support | `AppSection` (sentence-case titles, `View all` only when > 3 — U7) + `AppListGroup` (Support rows → sheets, chevrons, inset dividers) | Dead ALL-CAPS ARB keys removed |
+| no-tasks hint `Text` + `AppLinearProgress` | technician detail empty + hero progress | `AppEmptyState` (no action — U6) + `AppProgressBar` (same value + label, pinned accent) | Zero as 0; tests match copy by containment (bidi isolation) |
+| KEPT (STOP/pinned, not legacy) | technician detail | `WorkspaceAppBar` (+ permanent `Synced` pill — shared chrome STOP) + `onSearch` wiring + `technicianStatusPill`/`StatusPill` + `TechnicianStopwatch`/`TechnicianPlateChip` + sheets content + providers/routes/sync/machines + medium single-column + sticky bar (verbatim `adaptive.pick` parity) + offline/pending chrome | Status machine + transitions honored verbatim (start/complete/hold/resume/`completeJob`/read-only locked); loading/error states live on the list screens (entity-driven detail) |

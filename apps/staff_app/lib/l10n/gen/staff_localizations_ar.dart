@@ -2787,19 +2787,10 @@ class StaffLocalizationsAr extends StaffLocalizations {
   String get techDetailTitle => 'تفاصيل المهمة';
 
   @override
-  String get techDetailCurrentTask => 'المهمة الجارية';
-
-  @override
   String get techDetailCurrentTitle => 'المهمة الحالية';
 
   @override
-  String get techDetailNextTask => 'المهمة التالية';
-
-  @override
   String get techDetailNextTitle => 'المهمة القادمة';
-
-  @override
-  String get techDetailOnHold => 'متوقفة';
 
   @override
   String get techDetailAllDone => 'اكتملت مهام الإصلاح';
@@ -2808,15 +2799,9 @@ class StaffLocalizationsAr extends StaffLocalizations {
   String get techDetailNoTasks => 'لا توجد مهام';
 
   @override
-  String get techDetailExecution => 'التنفيذ';
-
-  @override
   String techDetailTasksAssigned(int count) {
     return '$count مسندة';
   }
-
-  @override
-  String get techDetailAllTasks => 'كل المهام';
 
   @override
   String get techDetailCompleteTask => 'إكمال المهمة';
@@ -2879,13 +2864,12 @@ class StaffLocalizationsAr extends StaffLocalizations {
   String get techDetailSupport => 'الدعم';
 
   @override
-  String get techDetailNeedHelp => 'تحتاج مساعدة؟';
-
-  @override
   String get techDetailCompleteRepair => 'إكمال الإصلاح';
 
   @override
-  String get techDetailConfirmTitle => 'إكمال الإصلاح؟';
+  String techDetailCompleteRepairOn(String ref) {
+    return 'إكمال الإصلاح على \'$ref\'؟';
+  }
 
   @override
   String get techDetailConfirmBody =>

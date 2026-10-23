@@ -13,16 +13,20 @@ import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
 /// Technician Job Detail — "how do I execute THIS job correctly?".
 ///
-/// Phase 10 dossier workspace (home-grammar sibling of the advisor job
-/// dossier): WorkspaceAppBar + breadcrumbs, identity header, the current
-/// task with its live stopwatch and one-handed grease actions
-/// (Start cobalt / Hold amber / Complete emerald), the full 28px-toggle
-/// checklist, then parts/escalation support and the handover-to-QC dock.
+/// C16 detail pattern (dossier + sticky action bar + sheets): WorkspaceAppBar
+/// (back, search, offline status) + breadcrumbs header with one status pill,
+/// hero identity card with progress, the current task with its live stopwatch
+/// and one primary action, the full task checklist with latest-3 progressive
+/// disclosure, parts/escalation as list rows opening AppBottomSheets, and the
+/// handover CTA in the C16 sticky bar (compact) or the rail (wide).
 ///
 /// Start/Hold/Complete/Resume call the exact same notifier methods as before
 /// (local-first with offline queueing); the stopwatch is display-only
-/// elapsed derived from the recorded start time. All copy is localized with
-/// the established English values.
+/// elapsed derived from the recorded start time. The job status machine is
+/// untouched: task pending/inProgress/onHold/completed transitions, the
+/// derived job sync (all-done → QC review), read-only locked states, and the
+/// completeJob handover. All copy is localized with the established English
+/// values; the handover dialog names the job reference (U10).
 class TechnicianJobDetailView extends ConsumerStatefulWidget {
   final TechnicianJobEntity job;
 
@@ -88,7 +92,7 @@ class _TechnicianJobDetailViewState
     );
 
     // Dossier (60%) + support/handover rail (40%) on wide viewports; a
-    // single-column stream with a handover dock below that.
+    // single-column stream with a sticky handover bar below that.
     final wide = context.adaptive.pick(
       compact: false,
       medium: false,
@@ -99,7 +103,7 @@ class _TechnicianJobDetailViewState
     final dossier = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _JobIdentity(job: liveJob),
+        _HeroCard(job: liveJob),
         const SizedBox(height: AppDimensions.s16),
         _ExecutionArea(
           job: liveJob,
@@ -121,7 +125,7 @@ class _TechnicianJobDetailViewState
     );
 
     // Handover is only meaningful once real tasks exist and not all are done.
-    // Compact viewports serve it from the sticky bottom dock; wide ones from
+    // Compact viewports serve it from the sticky bottom bar; wide ones from
     // the rail — never both at once.
     final canComplete =
         isActionable &&
@@ -132,6 +136,8 @@ class _TechnicianJobDetailViewState
         '${liveJob.vehicleBrand} ${liveJob.vehicleModel}'.trim().isEmpty
         ? t.techVehicleFallback
         : '${liveJob.vehicleBrand} ${liveJob.vehicleModel}'.trim();
+
+    final ctaBusy = state.isSaving || busy == 'job';
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -166,34 +172,22 @@ class _TechnicianJobDetailViewState
           );
         },
       ),
+      // C16 sticky action bar: status summary on the start side, the ONE
+      // job-level primary (handover to QC) on the end side. Hidden whenever
+      // there is no handover to offer (empty / locked / all-done → U6).
+      // Custom composition (not AppStickyActionBar): that atom splits the row
+      // 50/50, which truncates the CTA label at 320 px (U5). Here the summary
+      // takes its intrinsic width and the CTA takes the remainder, so the
+      // CTA label never truncates. Same chrome as the spec bar (surface, top
+      // hairline, safe area, keyboard viewInsets).
       bottomNavigationBar: wide || !canComplete
           ? null
-          : SafeArea(
-              top: false,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  border: Border(
-                    top: BorderSide(
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                    ),
-                  ),
-                ),
-                padding: const EdgeInsets.fromLTRB(
-                  AppDimensions.s16,
-                  AppDimensions.s12,
-                  AppDimensions.s16,
-                  AppDimensions.s12,
-                ),
-                child: PrimaryButton(
-                  label: t.techDetailCompleteRepair,
-                  icon: Icons.check_circle_outline_rounded,
-                  isLoading: state.isSaving || busy == 'job',
-                  onPressed: state.isSaving || busy == 'job'
-                      ? null
-                      : () => _confirmComplete(notifier, liveJob),
-                ),
-              ),
+          : _HandoverBar(
+              job: liveJob,
+              isLoading: ctaBusy,
+              onCompleteRepair: ctaBusy
+                  ? null
+                  : () => _confirmComplete(notifier, liveJob),
             ),
       body: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -244,24 +238,112 @@ class _TechnicianJobDetailViewState
   ) async {
     if (_busy != null) return;
     final t = StaffLocalizations.of(context)!;
-    final confirmed = await showAppConfirmationDialog(
+    final confirmed = await showAppDialog<bool>(
       context,
-      title: t.techDetailConfirmTitle,
+      // U10: the destructive handover names the object under repair.
+      title: t.techDetailCompleteRepairOn(liveJob.jobCardNo),
       message: t.techDetailConfirmBody,
-      confirmLabel: t.techDetailCompleteRepair,
-      cancelLabel: t.techDetailCancel,
-      icon: Icons.check_circle_outline_rounded,
+      secondaryLabel: t.techDetailCancel,
+      onSecondary: () => Navigator.of(context).pop(false),
+      primaryLabel: t.techDetailCompleteRepair,
+      onPrimary: () => Navigator.of(context).pop(true),
     );
     if (confirmed != true) return;
     await _mutate('job', () => notifier.completeJob(liveJob));
   }
 }
 
-/// Job + vehicle identity and real task progress.
-class _JobIdentity extends StatelessWidget {
+/// Sticky handover bar: status summary over the LTR-locked job reference on
+/// the start side, the ONE job-level primary on the end side.
+///
+/// Same chrome as the spec sticky bar (surface, top hairline, safe area,
+/// keyboard viewInsets, ≥ 48 dp targets, wraps at 1.3x). The summary keeps
+/// its intrinsic width and the CTA takes the remainder, so the CTA label
+/// never truncates — even at 320 px (U5).
+class _HandoverBar extends StatelessWidget {
+  final TechnicianJobEntity job;
+  final bool isLoading;
+  final VoidCallback? onCompleteRepair;
+
+  const _HandoverBar({
+    required this.job,
+    required this.isLoading,
+    required this.onCompleteRepair,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final t = StaffLocalizations.of(context)!;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(top: BorderSide(color: colors.outline)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding:
+              const EdgeInsets.all(AppSpacing.lg) +
+              EdgeInsets.only(
+                bottom: MediaQuery.viewInsetsOf(context).bottom,
+              ),
+          child: Row(
+            children: [
+              MergeSemantics(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      job.status.label,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Text(
+                        job.jobCardNo,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: colors.onSurface,
+                          fontFeatures: const [
+                            FontFeature.tabularFigures(),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: AppPillButton.primary(
+                  label: t.techDetailCompleteRepair,
+                  icon: Icons.check_circle_outline_rounded,
+                  size: AppPillButtonSize.large,
+                  isLoading: isLoading,
+                  onPressed: onCompleteRepair,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Job + vehicle identity and real task progress (C9 hero).
+///
+/// One status pill lives on the screen (the header trailing pill above), so
+/// the hero carries identity + progress only: LTR-locked reference, vehicle,
+/// plate/customer, and the plain-language progress sentence.
+class _HeroCard extends StatelessWidget {
   final TechnicianJobEntity job;
 
-  const _JobIdentity({required this.job});
+  const _HeroCard({required this.job});
 
   @override
   Widget build(BuildContext context) {
@@ -272,30 +354,23 @@ class _JobIdentity extends StatelessWidget {
 
     return Semantics(
       header: true,
-      child: AppCard.standard(
+      child: AppSurfaceCard(
+        outlined: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: Text(
-                      job.jobCardNo,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: colors.primary,
-                        fontWeight: FontWeight.w900,
-                        fontFamily: AppFontFamilies.mono,
-                      ),
-                    ),
-                  ),
+            Directionality(
+              textDirection: TextDirection.ltr,
+              child: Text(
+                job.jobCardNo,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: colors.primary,
+                  fontWeight: FontWeight.w900,
+                  fontFamily: AppFontFamilies.mono,
                 ),
-                const SizedBox(width: AppDimensions.s8),
-                technicianStatusPill(job.status),
-              ],
+              ),
             ),
             const SizedBox(height: AppDimensions.s12),
             Text(
@@ -324,12 +399,13 @@ class _JobIdentity extends StatelessWidget {
             ),
             if (job.tasks.isNotEmpty) ...[
               const SizedBox(height: AppDimensions.s16),
-              AppLinearProgress(
+              AppProgressBar(
                 value: job.completedTasks / job.tasks.length,
                 label: t.techTodayProgress(
                   job.completedTasks,
                   job.tasks.length,
                 ),
+                tone: AppProgressTone.accent,
               ),
             ],
           ],
@@ -340,7 +416,8 @@ class _JobIdentity extends StatelessWidget {
 }
 
 /// The primary operational area: current/next task with its live stopwatch,
-/// one handed primary action, and the full 28px-toggle checklist.
+/// one handed primary action, and the checklist with latest-3 progressive
+/// disclosure (U7: "View all" only appears when more tasks exist).
 class _ExecutionArea extends StatelessWidget {
   final TechnicianJobEntity job;
   final bool isActionable;
@@ -364,54 +441,80 @@ class _ExecutionArea extends StatelessWidget {
     final running = job.tasks
         .where((task) => task.status == TaskStatus.inProgress)
         .firstOrNull;
-    final pending = job.tasks
-        .where((task) => task.status == TaskStatus.pending)
-        .firstOrNull;
-    final held = job.tasks
-        .where((task) => task.status == TaskStatus.onHold)
-        .firstOrNull;
     final allDone =
         job.tasks.isNotEmpty && job.completedTasks == job.tasks.length;
+
+    if (job.tasks.isEmpty) {
+      // U6 calm empty: icon + sentence + how to start, never a CTA to nothing.
+      return AppEmptyState(
+        icon: Icons.inbox_outlined,
+        title: t.techDetailNoTasks,
+        message: t.techDetailNoTasksHint,
+      );
+    }
+
+    final showAll = job.tasks.length > 3;
+    final visible = showAll ? job.tasks.take(3).toList() : job.tasks;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (job.status == TechJobStatus.delayed) ...[
-          const _DelayedNotice(),
+          AppBanner(
+            kind: AppBannerKind.warning,
+            message: t.techDetailDelayedHint,
+          ),
           const SizedBox(height: AppDimensions.s16),
         ],
-        SectionHeader(
-          title: job.tasks.isEmpty
-              ? t.techDetailNoTasks
-              : allDone
+        AppSection(
+          title: allDone
               ? t.techDetailAllDone
               : running != null
               ? t.techDetailCurrentTitle
               : t.techDetailNextTitle,
-          subtitle: t.techDetailExecution,
-        ),
-        const SizedBox(height: AppDimensions.s12),
-        _FocusPanel(
-          job: job,
-          running: running,
-          pending: pending,
-          held: held,
-          isActionable: isActionable,
-          busy: busy,
-          onStart: onStart,
-          onHold: onHold,
-          onComplete: onComplete,
+          child: _FocusPanel(
+            job: job,
+            running: running,
+            isActionable: isActionable,
+            busy: busy,
+            onStart: onStart,
+            onHold: onHold,
+            onComplete: onComplete,
+          ),
         ),
         const SizedBox(height: AppDimensions.s20),
-        _TaskList(
-          job: job,
-          isActionable: isActionable,
-          busy: busy,
-          onStart: onStart,
-          onHold: onHold,
-          onComplete: onComplete,
+        AppSection(
+          title: t.techDetailTasksAssigned(job.tasks.length),
+          seeAllLabel: showAll ? t.techTodayViewAll : null,
+          onSeeAll: showAll
+              ? () => _showAllTasks(context)
+              : null,
+          child: _TaskList(
+            tasks: visible,
+            isActionable: isActionable,
+            busy: busy,
+            onStart: onStart,
+            onHold: onHold,
+            onComplete: onComplete,
+          ),
         ),
       ],
+    );
+  }
+
+  Future<void> _showAllTasks(BuildContext context) {
+    final t = StaffLocalizations.of(context)!;
+    return showAppBottomSheet<void>(
+      context,
+      title: t.techDetailTasksAssigned(job.tasks.length),
+      child: _TaskList(
+        tasks: job.tasks,
+        isActionable: isActionable,
+        busy: busy,
+        onStart: onStart,
+        onHold: onHold,
+        onComplete: onComplete,
+      ),
     );
   }
 }
@@ -419,8 +522,6 @@ class _ExecutionArea extends StatelessWidget {
 class _FocusPanel extends StatelessWidget {
   final TechnicianJobEntity job;
   final WorkTaskEntity? running;
-  final WorkTaskEntity? pending;
-  final WorkTaskEntity? held;
   final bool isActionable;
   final String? busy;
   final void Function(WorkTaskEntity task) onStart;
@@ -430,8 +531,6 @@ class _FocusPanel extends StatelessWidget {
   const _FocusPanel({
     required this.job,
     required this.running,
-    required this.pending,
-    required this.held,
     required this.isActionable,
     required this.busy,
     required this.onStart,
@@ -445,23 +544,12 @@ class _FocusPanel extends StatelessWidget {
     final colors = theme.colorScheme;
     final t = StaffLocalizations.of(context)!;
 
-    if (job.tasks.isEmpty) {
-      return AppCard.standard(
-        child: Text(
-          t.techDetailNoTasksHint,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: colors.onSurfaceVariant,
-            height: 1.4,
-          ),
-        ),
-      );
-    }
-
     if (!isActionable) {
       final qc = job.status == TechJobStatus.qcReview;
       return Semantics(
         liveRegion: true,
-        child: AppCard.standard(
+        child: AppSurfaceCard(
+          outlined: false,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -486,54 +574,79 @@ class _FocusPanel extends StatelessWidget {
       );
     }
 
+    final pending = job.tasks
+        .where((task) => task.status == TaskStatus.pending)
+        .firstOrNull;
+    final held = job.tasks
+        .where((task) => task.status == TaskStatus.onHold)
+        .firstOrNull;
+    final allDone =
+        job.tasks.isNotEmpty && job.completedTasks == job.tasks.length;
     final run = running;
-    final pend = pending;
-    final heldTask = held;
-    final active = run ?? pend ?? heldTask;
+    final active = run ?? pending ?? held;
     final activeBusy = active != null && busy == 'task-${active.id}';
 
-    final String? label;
-    final VoidCallback? action;
-    if (run != null) {
-      label = activeBusy ? t.techDetailCompleting : t.techDetailCompleteTask;
-      action = () => onComplete(run);
-    } else if (pend != null) {
-      label = activeBusy ? t.techDetailStarting : t.techDetailStartTask;
-      action = () => onStart(pend);
-    } else if (heldTask != null) {
-      label = activeBusy ? t.techDetailResuming : t.techDetailResumeTask;
-      action = () => onStart(heldTask);
-    } else {
-      label = null;
-      action = null;
+    if (allDone || active == null) {
+      return AppSurfaceCard(
+        outlined: false,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.check_circle_rounded,
+              color: context.semanticColors.success.base,
+            ),
+            const SizedBox(width: AppDimensions.s10),
+            Expanded(
+              child: Text(
+                t.techDetailAllDone,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colors.onSurface,
+                  fontWeight: FontWeight.w700,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
-    return AppCard.standard(
+    final String label;
+    final String busyLabel;
+    final VoidCallback action;
+    final IconData icon;
+    if (run != null) {
+      label = t.techDetailCompleteTask;
+      busyLabel = t.techDetailCompleting;
+      action = () => onComplete(run);
+      icon = Icons.check_rounded;
+    } else if (pending != null) {
+      label = t.techDetailStartTask;
+      busyLabel = t.techDetailStarting;
+      action = () => onStart(pending);
+      icon = Icons.play_arrow_rounded;
+    } else {
+      label = t.techDetailResumeTask;
+      busyLabel = t.techDetailResuming;
+      action = () => onStart(held!);
+      icon = Icons.play_arrow_rounded;
+    }
+
+    return AppSurfaceCard(
+      outlined: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            run != null
-                ? t.techDetailCurrentTask
-                : heldTask != null && pend == null
-                ? t.techDetailOnHold
-                : t.techDetailNextTask,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: colors.primary,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.8,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            active?.description ?? '',
+            active.description,
             style: theme.textTheme.titleMedium?.copyWith(
               color: colors.onSurface,
               fontWeight: FontWeight.w800,
               height: 1.35,
             ),
           ),
-          if (run ?? heldTask case final stopTask?
+          if ((run ?? held) case final stopTask?
               when stopTask.startTime != null) ...[
             const SizedBox(height: AppDimensions.s8),
             TechnicianStopwatch(task: stopTask),
@@ -545,25 +658,24 @@ class _FocusPanel extends StatelessWidget {
               ),
             ),
           ],
-          if (label != null) ...[
-            const SizedBox(height: AppDimensions.s12),
-            _GreaseButton.fill(
-              label: label,
-              icon: run != null ? Icons.check_rounded : Icons.play_arrow_rounded,
-              tone: run != null
-                  ? context.semanticColors.success.base
-                  : colors.primary,
-              onPressed: activeBusy ? null : action,
+          const SizedBox(height: AppDimensions.s12),
+          // C16: exactly ONE filled accent in this section; Hold is ghost.
+          AppPillButton.primary(
+            label: label,
+            busyLabel: busyLabel,
+            isLoading: activeBusy,
+            icon: icon,
+            onPressed: activeBusy ? null : action,
+          ),
+          if (run != null) ...[
+            const SizedBox(height: AppDimensions.s8),
+            AppPillButton.ghost(
+              label: t.techDetailHoldTask,
+              icon: Icons.pause_rounded,
+              size: AppPillButtonSize.large,
+              isExpanded: true,
+              onPressed: activeBusy ? null : () => onHold(run),
             ),
-            if (run != null) ...[
-              const SizedBox(height: AppDimensions.s8),
-              _GreaseButton.fill(
-                label: activeBusy ? label : t.techDetailHoldTask,
-                icon: Icons.pause_rounded,
-                tone: context.semanticColors.warning.base,
-                onPressed: activeBusy ? null : () => onHold(run),
-              ),
-            ],
           ],
         ],
       ),
@@ -571,56 +683,12 @@ class _FocusPanel extends StatelessWidget {
   }
 }
 
-/// Grease-first action button: 52px tall, bold label, optional semantic fill.
-/// A local task composition (not a shared primitive): Start stays cobalt,
-/// Hold renders amber, Complete emerald — text always carries the meaning.
-class _GreaseButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color? fill;
-  final VoidCallback? onPressed;
-
-  const _GreaseButton.fill({
-    required this.label,
-    required this.icon,
-    Color? tone,
-    required this.onPressed,
-  }) : fill = tone;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final bg = fill ?? colors.primary;
-    return SizedBox(
-      height: 52,
-      child: FilledButton.icon(
-        onPressed: onPressed == null
-            ? null
-            : () {
-                HapticFeedback.mediumImpact();
-                onPressed!();
-              },
-        style: FilledButton.styleFrom(
-          backgroundColor: bg,
-          // FIXED-INK: white label on the saturated grease fills.
-          foregroundColor: colors.onPrimary,
-          disabledBackgroundColor: bg.withValues(alpha: 0.4),
-          textStyle: Theme.of(context).textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        icon: Icon(icon, size: 20),
-        label: Text(label),
-      ),
-    );
-  }
-}
-
-/// The complete task checklist. Every row carries a 28px grease toggle plus
-/// its own Start / Hold / Complete controls, so the technician can drive any
-/// task directly with gloves on.
+/// The task checklist rows. Glove-first execution is the content: every row
+/// keeps its 28px grease toggle plus its own Start / Hold / Complete controls,
+/// rebuilt with App* buttons (secondary progress actions, ghost Hold) so the
+/// section carries no second filled accent next to the focus CTA.
 class _TaskList extends StatelessWidget {
-  final TechnicianJobEntity job;
+  final List<WorkTaskEntity> tasks;
   final bool isActionable;
   final String? busy;
   final void Function(WorkTaskEntity task) onStart;
@@ -628,7 +696,7 @@ class _TaskList extends StatelessWidget {
   final void Function(WorkTaskEntity task) onComplete;
 
   const _TaskList({
-    required this.job,
+    required this.tasks,
     required this.isActionable,
     required this.busy,
     required this.onStart,
@@ -638,28 +706,19 @@ class _TaskList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = StaffLocalizations.of(context)!;
-    if (job.tasks.isEmpty) return const SizedBox.shrink();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SectionHeader(
-          title: t.techDetailTasksAssigned(job.tasks.length),
-          subtitle: t.techDetailAllTasks,
-        ),
-        const SizedBox(height: AppDimensions.s12),
-        for (var i = 0; i < job.tasks.length; i++) ...[
+        for (var i = 0; i < tasks.length; i++) ...[
           _TaskRow(
-            index: i + 1,
-            task: job.tasks[i],
+            task: tasks[i],
             isActionable: isActionable,
-            busy: busy == 'task-${job.tasks[i].id}',
+            busy: busy == 'task-${tasks[i].id}',
             onStart: onStart,
             onHold: onHold,
             onComplete: onComplete,
           ),
-          if (i < job.tasks.length - 1)
+          if (i < tasks.length - 1)
             const SizedBox(height: AppDimensions.s8),
         ],
       ],
@@ -668,7 +727,6 @@ class _TaskList extends StatelessWidget {
 }
 
 class _TaskRow extends StatelessWidget {
-  final int index;
   final WorkTaskEntity task;
   final bool isActionable;
   final bool busy;
@@ -677,7 +735,6 @@ class _TaskRow extends StatelessWidget {
   final void Function(WorkTaskEntity task) onComplete;
 
   const _TaskRow({
-    required this.index,
     required this.task,
     required this.isActionable,
     required this.busy,
@@ -692,6 +749,7 @@ class _TaskRow extends StatelessWidget {
     final colors = theme.colorScheme;
     final semantic = context.semanticColors;
     final t = StaffLocalizations.of(context)!;
+    final taskIndex = task.id;
     final done = task.status == TaskStatus.completed;
     final running = task.status == TaskStatus.inProgress;
     final held = task.status == TaskStatus.onHold;
@@ -704,8 +762,9 @@ class _TaskRow extends StatelessWidget {
         : colors.onSurfaceVariant;
 
     return Semantics(
-      label: t.techDetailTaskLabel(index, task.description, task.status.label),
-      child: AppCard.standard(
+      label: t.techDetailTaskLabel(taskIndex, task.description, task.status.label),
+      child: AppSurfaceCard(
+        outlined: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -741,10 +800,10 @@ class _TaskRow extends StatelessWidget {
                               : TextDecoration.none,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppDimensions.s4),
                       Wrap(
                         spacing: AppDimensions.s8,
-                        runSpacing: 4,
+                        runSpacing: AppDimensions.s4,
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
@@ -795,32 +854,35 @@ class _TaskRow extends StatelessWidget {
                 runSpacing: AppDimensions.s8,
                 children: [
                   if (task.status == TaskStatus.pending)
-                    _TaskAction(
+                    AppPillButton.secondary(
                       label: busy
                           ? t.techDetailStarting
                           : t.techDetailStart,
                       icon: Icons.play_arrow_rounded,
-                      tone: colors.primary,
+                      size: AppPillButtonSize.small,
+                      isExpanded: false,
                       onPressed: busy ? null : () => onStart(task),
                     ),
                   if (running || held)
-                    _TaskAction(
+                    AppPillButton.ghost(
                       label: held ? t.techDetailResume : t.techDetailHold,
                       icon: held
                           ? Icons.play_arrow_rounded
                           : Icons.pause_rounded,
-                      tone: null,
+                      size: AppPillButtonSize.small,
+                      isExpanded: false,
                       onPressed: busy
                           ? null
                           : () => held ? onStart(task) : onHold(task),
                     ),
                   if (running)
-                    _TaskAction(
+                    AppPillButton.secondary(
                       label: busy
                           ? t.techDetailCompleting
                           : t.techDetailComplete,
                       icon: Icons.check_rounded,
-                      tone: semantic.success.base,
+                      size: AppPillButtonSize.small,
+                      isExpanded: false,
                       onPressed: busy ? null : () => onComplete(task),
                     ),
                 ],
@@ -920,121 +982,10 @@ class _GreaseToggle extends StatelessWidget {
   }
 }
 
-/// A single per-task control, always a 48px touch target. The optional tone
-/// fills the button in the matching semantic colour (Start cobalt, Complete
-/// emerald); the default renders the outlined treatment.
-class _TaskAction extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color? tone;
-  final VoidCallback? onPressed;
-
-  const _TaskAction({
-    required this.label,
-    required this.icon,
-    required this.tone,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final child = Icon(icon, size: 18);
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: AppDimensions.touchTarget),
-      child: tone == null
-          ? OutlinedButton.icon(
-              onPressed: onPressed == null
-                  ? null
-                  : () {
-                      HapticFeedback.selectionClick();
-                      onPressed!();
-                    },
-              icon: child,
-              label: Text(label),
-            )
-          : FilledButton.icon(
-              onPressed: onPressed == null
-                  ? null
-                  : () {
-                      HapticFeedback.selectionClick();
-                      onPressed!();
-                    },
-              style: FilledButton.styleFrom(
-                backgroundColor: tone,
-                // FIXED-INK: white label on the saturated action fills.
-                foregroundColor: colors.onPrimary,
-              ),
-              icon: child,
-              label: Text(label),
-            ),
-    );
-  }
-}
-
-/// Real blocker state derived from the job's own status.
-class _DelayedNotice extends StatelessWidget {
-  const _DelayedNotice();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final t = StaffLocalizations.of(context)!;
-
-    return Semantics(
-      liveRegion: true,
-      container: true,
-      label: '${t.techDetailDelayed}. ${t.techDetailDelayedHint}',
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.s14,
-          vertical: AppDimensions.s12,
-        ),
-        decoration: BoxDecoration(
-          color: colors.error.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-          border: Border.all(color: colors.error.withValues(alpha: 0.22)),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              Icons.pause_circle_outline_rounded,
-              size: AppDimensions.iconMd,
-              color: colors.error,
-            ),
-            const SizedBox(width: AppDimensions.s10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    t.techDetailDelayed,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colors.onSurface,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    t.techDetailDelayedHint,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                      height: 1.35,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// The contextual tool column: parts/escalation entry and the completion action.
+/// The contextual tool column: parts/escalation as list-group rows opening
+/// AppBottomSheets (same sheet content with its own submit — no added steps),
+/// and the completion action on wide viewports (compact serves it from the
+/// sticky bar instead — never both at once).
 class _ContextColumn extends StatelessWidget {
   final TechnicianJobEntity job;
   final String empId;
@@ -1042,7 +993,7 @@ class _ContextColumn extends StatelessWidget {
   final bool isSaving;
 
   /// True on wide viewports, where this column owns the handover CTA.
-  /// Compact viewports serve handover from the sticky bottom dock instead.
+  /// Compact viewports serve handover from the sticky bottom bar instead.
   final bool showHandover;
   final VoidCallback onCompleteRepair;
 
@@ -1073,89 +1024,54 @@ class _ContextColumn extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SectionHeader(
+        AppListGroup(
           title: t.techDetailSupport,
-          subtitle: t.techDetailNeedHelp,
+          items: [
+            AppListGroupItem(
+              leadingIcon: Icons.build_circle_outlined,
+              title: t.techTodayRequestPart,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                showAppBottomSheet<void>(
+                  context,
+                  child: PartsRequestSheet(
+                    jobCardRef: job.jobCardNo,
+                    technicianEmpId: empId,
+                    vehicleLabel:
+                        '${job.vehicleBrand} ${job.vehicleModel}'.trim(),
+                    plateNumber: job.plateNumber,
+                  ),
+                );
+              },
+            ),
+            AppListGroupItem(
+              leadingIcon: Icons.warning_amber_rounded,
+              title: t.techEscSend,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                showAppBottomSheet<void>(
+                  context,
+                  child: EscalationSheet(
+                    jobCardRef: job.jobCardNo,
+                    technicianEmpId: empId,
+                    vehicleLabel:
+                        '${job.vehicleBrand} ${job.vehicleModel}'.trim(),
+                    plateNumber: job.plateNumber,
+                  ),
+                );
+              },
+            ),
+          ],
         ),
-        const SizedBox(height: AppDimensions.s12),
-        _HelpActions(job: job, empId: empId),
         if (canComplete) ...[
           const SizedBox(height: AppDimensions.s16),
-          PrimaryButton(
+          AppPillButton.primary(
             label: t.techDetailCompleteRepair,
             icon: Icons.check_circle_outline_rounded,
             isLoading: isSaving,
             onPressed: isSaving ? null : onCompleteRepair,
           ),
         ],
-      ],
-    );
-  }
-}
-
-class _HelpActions extends StatelessWidget {
-  final TechnicianJobEntity job;
-  final String empId;
-
-  const _HelpActions({required this.job, required this.empId});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final t = StaffLocalizations.of(context)!;
-
-    Widget sheetButton({
-      required IconData icon,
-      required String label,
-      required Color tone,
-      required Widget Function() sheet,
-    }) {
-      return SizedBox(
-        height: AppDimensions.touchTarget,
-        child: OutlinedButton.icon(
-          onPressed: () {
-            HapticFeedback.selectionClick();
-            showAppModalSheet<void>(
-              context: context,
-              builder: (_) => sheet(),
-            );
-          },
-          icon: Icon(icon, size: 18),
-          label: Text(label),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: tone,
-            side: BorderSide(color: tone),
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        sheetButton(
-          icon: Icons.build_circle_outlined,
-          label: t.techTodayRequestPart,
-          tone: colors.onSurface,
-          sheet: () => PartsRequestSheet(
-            jobCardRef: job.jobCardNo,
-            technicianEmpId: empId,
-            vehicleLabel: '${job.vehicleBrand} ${job.vehicleModel}'.trim(),
-            plateNumber: job.plateNumber,
-          ),
-        ),
-        const SizedBox(height: AppDimensions.s10),
-        sheetButton(
-          icon: Icons.warning_amber_rounded,
-          label: t.techEscSend,
-          tone: colors.error,
-          sheet: () => EscalationSheet(
-            jobCardRef: job.jobCardNo,
-            technicianEmpId: empId,
-            vehicleLabel: '${job.vehicleBrand} ${job.vehicleModel}'.trim(),
-            plateNumber: job.plateNumber,
-          ),
-        ),
       ],
     );
   }

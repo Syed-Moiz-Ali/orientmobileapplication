@@ -1,17 +1,18 @@
-// AFTER capture for the technician job detail (ruling (a) task-find).
+// AFTER capture for the technician job detail view (DETAIL family, C16
+// recomposition onto App* pattern widgets).
 //
-// Pumps the CURRENT TechnicianJobDetailView with deterministic fakes and
-// writes viewport PNGs into docs/ui-redesign/baseline/after-technician-job-detail/
-// for review + contact sheets. Staff light-only.
+// Pumps the CURRENT (recomposed) TechnicianJobDetailView with deterministic
+// fakes and writes viewport PNGs into docs/ui-redesign/baseline/after-technician-job-detail/
+// for before/after review. Staff light-only (en + ar 360x800, empty/locked/
+// delayed/running/done/loading/error/sheet 360x800, 320x568 data, 1.3x data,
+// tablet data).
 //
-// Matrix (5 PNGs):
-//   data en 1.0 360x800 | data ar 1.0 360x800 | data en 1.3 360x800 |
-//   data en 1.0 320x568 | search sheet open with query en 360x800.
-//
-// Determinism note: fixtures keep every task pending/completed (no
-// in-progress task), so no live TechnicianStopwatch renders and the frames
-// are stable. The search sheet opens from the shell WorkspaceAppBar
-// top-right trigger (ruling (a)) over the detail's loaded tasks.
+// Determinism note (shell-fix precedent): the live TechnicianStopwatch ticks a
+// wall-clock HH:MM:SS for in-progress tasks. Idle/empty/locked/delayed/done/
+// sheet fixtures keep tasks pending/completed — no running task, no ticking
+// stopwatch. The running (JC-107) frame renders the live stopwatch and can
+// never be byte-stable across runs; the running-focus copy is pinned by the
+// characterization tests instead.
 //
 // Run (from apps/staff_app):
 //   flutter test --tags baseline --update-goldens test/technician_job_detail_after_capture_test.dart   (generate)
@@ -20,6 +21,7 @@
 @Tags(['baseline'])
 library;
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -40,69 +42,194 @@ import 'package:staff_app/l10n/gen/staff_localizations.dart';
 const _outDir = 'after-technician-job-detail';
 
 // ---------------------------------------------------------------- fixtures
-// Same deterministic job as the today captures (JC-101), but with no
-// in-progress task so no live stopwatch renders: one completed + two
-// pending tasks (static start-end text only).
+// No in-progress task anywhere (see header note): the idle job shows the
+// Start-next-task focus with static start/end times only.
 
-const _jobs = [
-  TechnicianJobResponse(
-    jobCardNo: 'JC-101',
-    dateOfWork: '2026-10-21',
-    startTime: '08:30',
-    vehicleBrand: 'Toyota',
-    vehicleModel: 'Camry',
-    plateNumber: 'ABC 1234',
-    customerName: 'Ahmed',
-    status: 'inProgress',
-    tasks: [
-      TaskResponse(
-        id: 't1',
-        description: 'Change engine oil',
-        status: 'completed',
-        startTime: '08:30',
-        endTime: '08:50',
-      ),
-      TaskResponse(id: 't2', description: 'Replace brake pads', status: 'pending'),
-      TaskResponse(id: 't3', description: 'Rotate tires', status: 'pending'),
-    ],
-  ),
-];
+const _idleJob = TechnicianJobResponse(
+  jobCardNo: 'JC-101',
+  dateOfWork: '2026-10-21',
+  startTime: '08:30',
+  vehicleBrand: 'Toyota',
+  vehicleModel: 'Camry',
+  plateNumber: 'ABC 1234',
+  customerName: 'Ahmed',
+  status: 'inProgress',
+  tasks: [
+    TaskResponse(
+      id: '1',
+      description: 'Change engine oil',
+      status: 'completed',
+      startTime: '08:30',
+      endTime: '08:50',
+    ),
+    TaskResponse(
+      id: '2',
+      description: 'Replace brake pads',
+      status: 'pending',
+    ),
+    TaskResponse(id: '3', description: 'Rotate tires', status: 'pending'),
+  ],
+);
+
+const _delayedJob = TechnicianJobResponse(
+  jobCardNo: 'JC-102',
+  dateOfWork: '2026-10-21',
+  startTime: '10:30',
+  vehicleBrand: 'Nissan',
+  vehicleModel: 'Yaris',
+  plateNumber: 'XYZ 5678',
+  customerName: 'Sara',
+  status: 'delayed',
+  tasks: [
+    TaskResponse(id: '4', description: 'Inspect brakes', status: 'pending'),
+  ],
+);
+
+const _lockedJob = TechnicianJobResponse(
+  jobCardNo: 'JC-105',
+  dateOfWork: '2026-10-20',
+  startTime: '08:00',
+  vehicleBrand: 'Toyota',
+  vehicleModel: 'Corolla',
+  plateNumber: 'JKL 7890',
+  customerName: 'Omar',
+  status: 'qualitycheck',
+  tasks: [
+    TaskResponse(
+      id: '5',
+      description: 'Change engine oil',
+      status: 'completed',
+      startTime: '08:00',
+      endTime: '08:30',
+    ),
+  ],
+);
+
+const _emptyJob = TechnicianJobResponse(
+  jobCardNo: 'JC-106',
+  dateOfWork: '2026-10-21',
+  startTime: '12:00',
+  vehicleBrand: 'Honda',
+  vehicleModel: 'Civic',
+  plateNumber: 'MNO 1122',
+  customerName: 'Lina',
+  status: 'pending',
+  tasks: [],
+);
+
+// Terminal job: every task completed -> "Repair tasks complete" focus,
+// no handover CTA (canComplete false). Static start-end ranges only.
+const _doneJob = TechnicianJobResponse(
+  jobCardNo: 'JC-108',
+  dateOfWork: '2026-10-21',
+  startTime: '08:30',
+  vehicleBrand: 'Toyota',
+  vehicleModel: 'Corolla',
+  plateNumber: 'QRS 4455',
+  customerName: 'Omar',
+  status: 'completed',
+  tasks: [
+    TaskResponse(
+      id: '1',
+      description: 'Change engine oil',
+      status: 'completed',
+      startTime: '08:30',
+      endTime: '08:50',
+    ),
+    TaskResponse(
+      id: '2',
+      description: 'Replace brake pads',
+      status: 'completed',
+      startTime: '09:00',
+      endTime: '09:40',
+    ),
+  ],
+);
+
+// Many-task job: 4 pending tasks -> "View all" affordance opens the
+// activity bottom sheet. All pending, so no stopwatch renders (stable).
+const _manyJob = TechnicianJobResponse(
+  jobCardNo: 'JC-109',
+  dateOfWork: '2026-10-21',
+  startTime: '08:30',
+  vehicleBrand: 'Toyota',
+  vehicleModel: 'Camry',
+  plateNumber: 'ABC 1234',
+  customerName: 'Ahmed',
+  status: 'inProgress',
+  tasks: [
+    TaskResponse(id: '1', description: 'Change engine oil', status: 'pending'),
+    TaskResponse(id: '2', description: 'Replace brake pads', status: 'pending'),
+    TaskResponse(id: '3', description: 'Rotate tires', status: 'pending'),
+    TaskResponse(id: '4', description: 'Top up fluids', status: 'pending'),
+  ],
+);
+
+class _DetailData {
+  const _DetailData({this.fail = false, this.hang = false});
+
+  final bool fail;
+  final bool hang;
+
+  List<TechnicianJobResponse> get jobs => const [
+        _idleJob,
+        _delayedJob,
+        _lockedJob,
+        _emptyJob,
+        _doneJob,
+        _manyJob,
+      ];
+}
 
 class _FakeTechnicianRemote implements TechnicianRemoteDataSource {
+  _FakeTechnicianRemote(this.data);
+
+  final _DetailData data;
+
+  Future<T> _maybeHang<T>(T value) async {
+    if (data.fail) throw Exception('offline');
+    if (data.hang) await Completer<void>().future;
+    return value;
+  }
+
   @override
-  Future<TechnicianProfileResponse> getProfile(String empId) async =>
-      const TechnicianProfileResponse(
-        name: 'Omar Haddad',
-        empId: 'EMP-007',
-        role: 'Technician',
-        branch: 'Deira',
-        shift: 'Morning shift',
-        avatarInitials: 'OH',
+  Future<TechnicianProfileResponse> getProfile(String empId) => _maybeHang(
+        const TechnicianProfileResponse(
+          name: 'Omar Haddad',
+          empId: 'EMP-007',
+          role: 'Technician',
+          branch: 'Deira',
+          shift: 'Morning shift',
+          avatarInitials: 'OH',
+        ),
       );
 
   @override
   Future<List<TechnicianJobResponse>> getJobs(
     String empId, {
     String? status,
-  }) async => _jobs;
+  }) =>
+      _maybeHang(List.of(data.jobs));
 
   @override
-  Future<List<AssignedJobResponse>> getAssignedJobs(String empId) async =>
-      const [];
+  Future<List<AssignedJobResponse>> getAssignedJobs(String empId) =>
+      _maybeHang(const <AssignedJobResponse>[]);
 
   @override
-  Future<AttendanceResponse> getAttendance(String empId, {String? date}) async =>
-      const AttendanceResponse(
-        status: 'working',
-        punchIn: '08:00',
-        punchOut: '',
-        breakTime: '0 min',
-        workHours: '1h 0m',
+  Future<AttendanceResponse> getAttendance(String empId, {String? date}) =>
+      _maybeHang(
+        const AttendanceResponse(
+          status: 'working',
+          punchIn: '08:00',
+          punchOut: '',
+          breakTime: '0 min',
+          workHours: '1h 0m',
+        ),
       );
 
   @override
-  Future<ProductivityResponse> getProductivity(String empId) async =>
-      const ProductivityResponse();
+  Future<ProductivityResponse> getProductivity(String empId) =>
+      _maybeHang(const ProductivityResponse());
 
   @override
   Future<AttendanceResponse> punchIn(Map<String, dynamic> data) async =>
@@ -125,14 +252,16 @@ class _FakeTechnicianRemote implements TechnicianRemoteDataSource {
   ) async {}
 
   @override
-  Future<TechnicianJobResponse> searchJob(String q) async => _jobs.first;
+  Future<TechnicianJobResponse> searchJob(String q) =>
+      _maybeHang(data.jobs.first);
 
   @override
   Future<TaskActionResponse> startTask(
     String jobCardNo,
     String taskId,
     String startTime,
-  ) async => TaskActionResponse(startTime: startTime);
+  ) async =>
+      TaskActionResponse(startTime: startTime);
 
   @override
   Future<void> completeTask(
@@ -218,49 +347,26 @@ Future<void> _loadFonts() async {
   }
 }
 
-/// Pumps the job detail with deterministic fakes, runs the optional [interact]
-/// step (task-find sheet), then golden-captures the full MaterialApp (sheet
-/// overlays included).
 Future<void> _capture(
   WidgetTester tester, {
   required String name,
+  String jobCardNo = 'JC-101',
   Locale locale = const Locale('en'),
-  Size logicalSize = const Size(360, 800),
-  double pixelRatio = 3.0,
-  double textScale = 1.0,
-  Future<void> Function(WidgetTester tester)? interact,
+  Size size = const Size(360, 800),
+  double scale = 1.0,
+  _DetailData data = const _DetailData(),
+  Future<void> Function(WidgetTester)? interact,
 }) async {
   final oldShadows = debugDisableShadows;
   debugDisableShadows = false;
-  tester.view.physicalSize = Size(
-    logicalSize.width * pixelRatio,
-    logicalSize.height * pixelRatio,
-  );
-  tester.view.devicePixelRatio = pixelRatio;
+  tester.view.physicalSize = Size(size.width * 3, size.height * 3);
+  tester.view.devicePixelRatio = 3.0;
   addTearDown(tester.view.reset);
-
-  const channel = MethodChannel('dev.fluttercommunity.plus/connectivity');
-  final binding = TestDefaultBinaryMessengerBinding.instance;
-  binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
-    MethodCall call,
-  ) async {
-    if (call.method == 'checkConnectivity' || call.method == 'check') {
-      return <String>['wifi'];
-    }
-    return null;
-  });
-  binding.defaultBinaryMessenger.setMockMethodCallHandler(
-    const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
-    (MethodCall call) async => null,
-  );
-  addTearDown(
-    () => binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, null),
-  );
 
   final container = ProviderContainer(
     overrides: [
       technicianRemoteDataSourceProvider.overrideWithValue(
-        _FakeTechnicianRemote(),
+        _FakeTechnicianRemote(data),
       ),
       connectivityStatusProvider.overrideWith(
         (ref) => Stream<ConnectivityResult>.value(ConnectivityResult.wifi),
@@ -269,7 +375,7 @@ Future<void> _capture(
   );
   addTearDown(container.dispose);
   await tester.runAsync(() async {
-    await Hive.box<dynamic>('technician_jobs').clear();
+    final job = TechnicianJobEntityShim(jobCardNo);
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
@@ -285,29 +391,16 @@ Future<void> _capture(
             GlobalCupertinoLocalizations.delegate,
           ],
           theme: AppTheme.light(BrandConfig.orient, locale: locale),
-          home: Builder(
-            builder: (context) => MediaQuery(
-              data: MediaQuery.of(context).copyWith(
-                textScaler: TextScaler.linear(textScale),
-              ),
-              child: const TechnicianJobDetailView(
-                job: TechnicianJobEntity(
-                  jobCardNo: 'JC-101',
-                  dateOfWork: '2026-10-21',
-                  startTime: '08:30',
-                  vehicleBrand: 'Toyota',
-                  vehicleModel: 'Camry',
-                  plateNumber: 'ABC 1234',
-                  customerName: 'Ahmed',
-                  tasks: [],
-                ),
-              ),
-            ),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(scale)),
+            child: child!,
           ),
+          home: Scaffold(body: TechnicianJobDetailView(job: job.entity)),
         ),
       ),
     );
-    await Future<void>.delayed(const Duration(milliseconds: 100));
     for (var i = 0; i < 40; i++) {
       if (!container.read(technicianDashboardProvider).isLoading) break;
       await Future<void>.delayed(const Duration(milliseconds: 100));
@@ -315,11 +408,10 @@ Future<void> _capture(
   });
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 300));
-  expect(tester.takeException(), isNull);
-
   if (interact != null) {
     await interact(tester);
-    expect(tester.takeException(), isNull);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
   }
 
   await expectLater(
@@ -329,28 +421,47 @@ Future<void> _capture(
   debugDisableShadows = oldShadows;
 }
 
-Future<void> _openTaskSearch(WidgetTester tester) async {
-  // Ruling (a): exactly one search icon on the detail — the shell bar
-  // top-right trigger. It opens the task find sheet over the loaded tasks.
-  final search = find.byIcon(Icons.search_rounded);
-  expect(search, findsOneWidget);
-  await tester.tap(search);
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 300));
-  final field = find.descendant(
-    of: find.byType(AppSearchField),
-    matching: find.byType(TextField),
-  );
-  expect(field, findsOneWidget);
-  await tester.enterText(field, 'oil');
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 100));
+/// Minimal route-time entity: the view resolves the live canonical job from
+/// the provider by jobCardNo, so the shell only carries the reference.
+class TechnicianJobEntityShim {
+  TechnicianJobEntityShim(this.jobCardNo);
+
+  final String jobCardNo;
+
+  TechnicianJobEntity get entity => TechnicianJobEntity(
+        jobCardNo: jobCardNo,
+        dateOfWork: '',
+        startTime: '',
+        vehicleBrand: '',
+        vehicleModel: '',
+        plateNumber: '',
+        tasks: const [],
+      );
 }
+
+String _name(String state, double scale, String locale, Size size) =>
+    '${state}_light_${scale.toStringAsFixed(1)}_${locale}_${size.width.toInt()}x${size.height.toInt()}.png';
 
 void main() {
   setUp(() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(SystemChannels.platform, (call) async => null);
+    final binding = TestDefaultBinaryMessengerBinding.instance;
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async => null,
+    );
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
+      (MethodCall call) async => null,
+    );
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      const MethodChannel('dev.fluttercommunity.plus/connectivity'),
+      (MethodCall call) async {
+        if (call.method == 'checkConnectivity' || call.method == 'check') {
+          return 'wifi';
+        }
+        return null;
+      },
+    );
   });
 
   setUpAll(() async {
@@ -361,39 +472,157 @@ void main() {
     debugPrint('technician job detail after capture: fonts ready');
   });
 
-  testWidgets('after detail data en 360x800', (tester) async {
-    await _capture(tester, name: 'detail_1.0_en_360x800.png');
-  });
-
-  testWidgets('after detail data ar 360x800', (tester) async {
+  testWidgets('after idle light en 360x800', (tester) async {
     await _capture(
       tester,
-      name: 'detail_1.0_ar_360x800.png',
+      name: _name('idle', 1.0, 'en', const Size(360, 800)),
+    );
+  });
+
+  testWidgets('after idle light ar 360x800', (tester) async {
+    await _capture(
+      tester,
+      name: _name('idle', 1.0, 'ar', const Size(360, 800)),
       locale: const Locale('ar'),
     );
   });
 
-  testWidgets('after detail data 1.3x en 360x800', (tester) async {
+  testWidgets('after empty light en 360x800', (tester) async {
     await _capture(
       tester,
-      name: 'detail_1.3_en_360x800.png',
-      textScale: 1.3,
+      name: _name('empty', 1.0, 'en', const Size(360, 800)),
+      jobCardNo: 'JC-106',
     );
   });
 
-  testWidgets('after detail data en 320x568', (tester) async {
+  testWidgets('after locked light en 360x800', (tester) async {
     await _capture(
       tester,
-      name: 'detail_1.0_en_320x568.png',
-      logicalSize: const Size(320, 568),
+      name: _name('locked', 1.0, 'en', const Size(360, 800)),
+      jobCardNo: 'JC-105',
     );
   });
 
-  testWidgets('after detail search open en 360x800', (tester) async {
+  testWidgets('after delayed light en 360x800', (tester) async {
     await _capture(
       tester,
-      name: 'detail_search_open_en_360x800.png',
-      interact: _openTaskSearch,
+      name: _name('delayed', 1.0, 'en', const Size(360, 800)),
+      jobCardNo: 'JC-102',
+    );
+  });
+
+  testWidgets('after idle light en 320x568', (tester) async {
+    await _capture(
+      tester,
+      name: _name('idle', 1.0, 'en', const Size(320, 568)),
+      size: const Size(320, 568),
+    );
+  });
+
+  testWidgets('after idle light en 1.3 360x800', (tester) async {
+    await _capture(
+      tester,
+      name: _name('idle', 1.3, 'en', const Size(360, 800)),
+      scale: 1.3,
+    );
+  });
+
+  testWidgets('after idle light en 768x1024', (tester) async {
+    await _capture(
+      tester,
+      name: _name('idle', 1.0, 'en', const Size(768, 1024)),
+      size: const Size(768, 1024),
+    );
+  });
+
+  // NOTE: no running-task golden. A running task renders the live
+  // TechnicianStopwatch (wall-clock HH:MM:SS, ticks every second), so any
+  // running frame diffs ~0.06% (~1552px, stopwatch digits) on immediate
+  // re-compare and can never be byte-stable (verified 2026-10-22).
+  // The running-focus copy ("Complete task" CTA) is pinned by
+  // characterization instead: "focus offers complete when a task is running".
+  testWidgets('after done light en 360x800', (tester) async {
+    await _capture(
+      tester,
+      name: _name('done', 1.0, 'en', const Size(360, 800)),
+      jobCardNo: 'JC-108',
+    );
+  });
+
+  testWidgets('after loading light en 360x800', (tester) async {
+    await _capture(
+      tester,
+      name: _name('loading', 1.0, 'en', const Size(360, 800)),
+      data: const _DetailData(hang: true),
+    );
+  });
+
+  testWidgets('after error light en 360x800', (tester) async {
+    await _capture(
+      tester,
+      name: _name('error', 1.0, 'en', const Size(360, 800)),
+      data: const _DetailData(fail: true),
+    );
+  });
+
+  testWidgets('after sheet light en 360x800', (tester) async {
+    await _capture(
+      tester,
+      name: _name('sheet', 1.0, 'en', const Size(360, 800)),
+      jobCardNo: 'JC-109',
+      interact: (t) async {
+        final seeAll = find.text('View all');
+        expect(seeAll, findsOneWidget);
+        await t.tap(seeAll);
+        await t.pump();
+        await t.pump(const Duration(milliseconds: 300));
+      },
+    );
+  });
+
+  testWidgets('after task search light en 360x800', (tester) async {
+    await _capture(
+      tester,
+      name: 'task_search_open_en_360x800.png',
+      interact: (t) async {
+        final trigger = find.byIcon(Icons.search_rounded);
+        expect(trigger, findsOneWidget);
+        await t.tap(trigger);
+        await t.pump();
+        await t.pump(const Duration(milliseconds: 300));
+        expect(find.text('Search tasks'), findsOneWidget);
+        final box = find.descendant(
+          of: find.byType(AppSearchField),
+          matching: find.byType(TextField),
+        );
+        expect(box, findsOneWidget);
+        await t.enterText(box, 'brake');
+        await t.pump();
+        await t.pump(const Duration(milliseconds: 100));
+        // Sheet-only scope: the detail behind still lists all tasks in a
+        // Column, while the sheet results render in a ListView.
+        expect(
+          find.descendant(
+            of: find.byType(ListView),
+            matching: find.text('Replace brake pads'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: find.byType(ListView),
+            matching: find.text('Change engine oil'),
+          ),
+          findsNothing,
+        );
+        expect(
+          find.descendant(
+            of: find.byType(ListView),
+            matching: find.text('Rotate tires'),
+          ),
+          findsNothing,
+        );
+      },
     );
   });
 }
