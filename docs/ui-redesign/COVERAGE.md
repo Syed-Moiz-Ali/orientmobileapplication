@@ -49,13 +49,13 @@ Pages:
 |---|---|---|---|
 | `presentation/pages/advisor_home_view.dart` | dashboard | R | tag `ui-phase-3-advisor-home-done` |
 | `presentation/pages/advisor_jobs_view.dart` | list | R | commit `29891fe5` (merge `60fcf67e`), review 15/16 + adversarial 13/16 PASS |
-| `presentation/pages/advisor_job_detail_view.dart` | detail | F | phase-3 (DETAIL-family session; 2nd dossier after technician detail) |
+| `presentation/pages/advisor_job_detail_view.dart` | detail | R | `ui/detail-advisor e1f88b79`, adversarial 16/16 PASS |
 | `presentation/pages/advisor_vehicle_checkin_view.dart` | form | P | phase-3 |
 | `presentation/pages/advisor_assign_tasks_view.dart` | form | P | phase-3 |
 | `presentation/pages/advisor_reports_view.dart` | dashboard | F | phase-3 (filed in sweep: legacy `AppSkeleton.chart`) |
 | `presentation/pages/scan_vehicle_view.dart` | special | P | phase-3 |
 | `presentation/pages/vehicle_customer_view.dart` | form | P | phase-3 |
-| `presentation/pages/vehicle_delivery_view.dart` | detail | F | phase-3 (filed in sweep: partial `AppPageHeader` only) |
+| `presentation/pages/vehicle_delivery_view.dart` | detail | R | `ui/detail-group3 87d9126e`, adversarial 14-16 PASS |
 
 Advisor widgets / sheets (reached from done screens vs pending flows):
 
@@ -96,9 +96,9 @@ Advisor widgets / sheets (reached from done screens vs pending flows):
 |---|---|---|---|
 | `presentation/pages/choose_inspection_view.dart` | form | P | phase-4 |
 | `presentation/pages/inspection_sheet_view.dart` | form | P | phase-4 |
-| `presentation/pages/inspection_preview_view.dart` | detail | P | phase-4 |
+| `presentation/pages/inspection_preview_view.dart` | detail | R | `ui/detail-group3 87d9126e`, adversarial 14-16 PASS |
 | `presentation/pages/damage_detail_sheet.dart` | special | P | phase-4 |
-| `presentation/pages/repair_order_view.dart` (incl. `RepairOrderPreviewView`, same file) | detail | P | phase-4 |
+| `presentation/pages/repair_order_view.dart` (incl. `RepairOrderPreviewView`, same file) | detail | R | `ui/detail-group3 87d9126e`, adversarial 14-16 PASS |
 | `presentation/pages/real_damage_canvas.dart` | special | P | phase-4 (fragile canvas; deterministic-stub plan lives in phase-14 notes — NOT a redesign blocker) |
 | `inspection_pages/presentation/vehicle_map/hud_pin_bridge.dart` | special | P | phase-4 |
 | `inspection_pages/presentation/vehicle_map/vehicle_body_condition_panel.dart` | special | P | phase-4 |
@@ -138,7 +138,7 @@ Technician:
 | `technician/presentation/widgets/technician_jobs_view.dart` | list | R | commit `80ad4613`, adversarial re-review 13/16 PASS |
 | `technician/presentation/widgets/technician_productivity_view.dart` | dashboard | F | phase-5 (filed in sweep) |
 | `technician/presentation/widgets/technician_components.dart` | special | P | phase-5 (`TechnicianJobSummary` STOP boundary per tech-jobs brief) |
-| `technician/presentation/widgets/job_detail_sheet.dart` | detail | P | DETAIL family next — brief `detail-staff-job-detail.md` written (commit `9c5be3e3`), build approval pending; owner phase-5 |
+| `technician/presentation/widgets/job_detail_sheet.dart` | detail | R | commit `a36d9482`, review 15/16 PASS (2nd-confirmed) |
 | `technician/presentation/widgets/parts_request_sheet.dart` | form | P | phase-5 |
 | `technician/presentation/widgets/escalation_sheet.dart` | form | P | phase-5 |
 
@@ -158,13 +158,13 @@ Pages:
 |---|---|---|---|
 | `presentation/customer_dashboard_view.dart` | dashboard | R | tag `ui-phase-6-customer-home-done` |
 | `presentation/customer_book_service_view.dart` | form | P | phase-6 |
-| `presentation/customer_booking_detail_view.dart` | detail | P | phase-6 |
+| `presentation/customer_booking_detail_view.dart` | detail | R | `ui/detail-group2 6db3ff6c`, adversarial 14-16 PASS |
 | `presentation/customer_booking_success_view.dart` | special | P | phase-6 |
-| `presentation/customer_approvals_page.dart` | detail | F | phase-6 (filed in sweep: legacy `StatusPill`/`AppSkeleton`) |
-| `presentation/customer_service_status_page.dart` | detail | P | phase-6 |
+| `presentation/customer_approvals_page.dart` | detail | R | `ui/detail-group4 d4a19724`, adversarial 15/16 PASS (overview; base `ui/detail-group2 6db3ff6c`) |
+| `presentation/customer_service_status_page.dart` | detail | R | `ui/detail-group2 6db3ff6c`, adversarial 14-16 PASS |
 | `presentation/customer_breakdown_help_view.dart` | form | P | phase-6 |
 | `presentation/customer_breakdown_result_view.dart` | special | P | phase-6 |
-| `presentation/customer_invoice_detail_view.dart` | detail | P | phase-6 |
+| `presentation/customer_invoice_detail_view.dart` | detail | R | `ui/detail-group2 6db3ff6c`, adversarial 14-16 PASS |
 | `presentation/customer_feedback_view.dart` | form | P | phase-6 |
 | `presentation/customer_notifications_view.dart` | list | R | commit `b8de9d6d` (merge `3316f86d`), review 16/16 PASS |
 | `presentation/add_vehicle_view.dart` | form | P | phase-6 |
@@ -188,23 +188,23 @@ Widgets (tabs, rows, sheets, shell):
 | `presentation/widgets/customer_failed_booking_item.dart` | list | R | commit `b8de9d6d` |
 | `presentation/widgets/customer_bookings_search_sheet.dart` | special | R | commit `b8de9d6d` (new) |
 | `presentation/widgets/customer_bookings_filter_sheet.dart` | special | R | commit `b8de9d6d` (new) |
-| `presentation/widgets/customer_service_status_tab.dart` | detail | P | phase-6 |
-| `presentation/widgets/customer_status_service_panel.dart` | detail | P | phase-6 |
-| `presentation/widgets/customer_status_notices.dart` | detail | P | phase-6 |
-| `presentation/widgets/customer_status_details.dart` | detail | P | phase-6 |
-| `presentation/widgets/customer_service_journey.dart` | detail | P | phase-6 |
+| `presentation/widgets/customer_service_status_tab.dart` | detail | R | `ui/detail-group2 6db3ff6c` (tracking experience, same build as status page) |
+| `presentation/widgets/customer_status_service_panel.dart` | detail | R | `ui/detail-group2 6db3ff6c` (sub-widget in scope, same build) |
+| `presentation/widgets/customer_status_notices.dart` | detail | R | `ui/detail-group2 6db3ff6c` (sub-widget in scope, same build) |
+| `presentation/widgets/customer_status_details.dart` | detail | R | `ui/detail-group2 6db3ff6c` (sub-widget in scope, same build) |
+| `presentation/widgets/customer_service_journey.dart` | detail | R | `ui/detail-group2 6db3ff6c` (sub-widget in scope, same build) |
 | `presentation/widgets/customer_profile_tab.dart` | settings | P | phase-6 |
 | `presentation/widgets/customer_profile_rows.dart` | settings | P | phase-6 |
 | `presentation/widgets/customer_scaffold.dart` | special | R | tag `ui-phase-6-customer-home-done` (shell; no-rail consumer contract kept) |
 | `presentation/widgets/customer_surface_panel.dart` | special | R | commit `b8de9d6d` (states rebuilt on shared atoms) |
 | `presentation/widgets/customer_plate_chip.dart` | special | R | tag `ui-integration-1-vehicles-done` |
 | `presentation/widgets/customer_notice_panel.dart` | special | R | commit `b8de9d6d` (stale/failure → `AppBanner`) |
-| `presentation/widgets/customer_approval_detail_view.dart` | detail | P | phase-6 |
+| `presentation/widgets/customer_approval_detail_view.dart` | detail | R | `ui/detail-group2 6db3ff6c`, adversarial 14-16 PASS |
 | `presentation/widgets/customer_booking_steps.dart` | form | P | phase-6 |
 | `presentation/widgets/customer_booking_flow_progress.dart` | form | P | phase-6 |
-| `presentation/widgets/customer_booking_detail_vehicle.dart` | detail | P | phase-6 |
-| `presentation/widgets/customer_booking_detail_summary.dart` | detail | P | phase-6 |
-| `presentation/widgets/customer_booking_detail_service.dart` | detail | P | phase-6 |
+| `presentation/widgets/customer_booking_detail_vehicle.dart` | detail | R | `ui/detail-group2 6db3ff6c` (sub-widget in scope, same build) |
+| `presentation/widgets/customer_booking_detail_summary.dart` | detail | R | `ui/detail-group2 6db3ff6c` (sub-widget in scope, same build) |
+| `presentation/widgets/customer_booking_detail_service.dart` | detail | R | `ui/detail-group2 6db3ff6c` (sub-widget in scope, same build) |
 
 Support (14 files):
 
@@ -236,13 +236,13 @@ Dashboard + 9 sub-pages + widgets:
 | `dashboard/presentation/widgets/owner_dashboard_page.dart` | dashboard | R | tag `ui-phase-7-owner-done` |
 | `dashboard/presentation/pages/team_view.dart` | settings | F | phase-7 — PROCESS GATE: parallel commit `71983229` owns `team_view`+providers; do not touch until reviewed |
 | `dashboard/presentation/pages/subscription_view.dart` | settings | P | phase-7 |
-| `dashboard/presentation/pages/pending_approvals_view.dart` | detail | P | phase-7 |
+| `dashboard/presentation/pages/pending_approvals_view.dart` | detail | R | `ui/detail-group2 6db3ff6c`, adversarial 14-16 PASS |
 | `dashboard/presentation/pages/job_status_view.dart` | dashboard | P | phase-7 |
 | `dashboard/presentation/pages/inventory_view.dart` | list | P | phase-7 (AR/inventory tables break on mobile) |
 | `dashboard/presentation/pages/feedback_moderation_view.dart` | list | P | phase-7 |
-| `dashboard/presentation/pages/document_expiry_view.dart` | detail | P | phase-7 |
+| `dashboard/presentation/pages/document_expiry_view.dart` | detail | R | `ui/detail-group3 87d9126e`, adversarial 14-16 PASS |
 | `dashboard/presentation/pages/attendance_view.dart` | settings | P | phase-7 |
-| `dashboard/presentation/pages/accounts_receivable_view.dart` | detail | P | phase-7 |
+| `dashboard/presentation/pages/accounts_receivable_view.dart` | detail | R | `ui/detail-group3 87d9126e`, adversarial 14-16 PASS |
 | `dashboard/presentation/widgets/kpi_grid.dart` | dashboard | F | phase-7 (filed in sweep: verify + complete) |
 | `dashboard/presentation/widgets/owner_activity_feed_tab.dart` | special | F | phase-7 (filed in sweep) |
 | `dashboard/presentation/widgets/messages_page.dart` | special | F | phase-7 (filed in sweep) |
@@ -279,7 +279,7 @@ Job cards:
 | `presentation/widgets/crm_integrations_page.dart` | settings | F | phase-8 (filed in sweep: sheet/state rebuild) |
 | `presentation/widgets/crm_settings_page.dart` | settings | F | phase-8 (filed in sweep: verify rows/states) |
 | `presentation/widgets/lead_form_sheet.dart` | form | F | phase-8 (filed: migrates with its owning flow) |
-| `presentation/widgets/lead_detail_sheet.dart` | detail | F | phase-8 (filed: migrates with its owning flow) |
+| `presentation/widgets/lead_detail_sheet.dart` | detail | R | `ui/detail-group3 87d9126e`, adversarial 14-16 PASS |
 | `presentation/widgets/connect_integration_sheet.dart` | form | F | phase-8 (filed: migrates with its owning flow) |
 | `presentation/widgets/crm_pipeline_widget.dart` | dashboard | F | phase-8 (filed in sweep: rebuilds with dashboard surface) |
 | `presentation/widgets/crm_followups_widget.dart` | list | F | phase-8 (filed in sweep) |
@@ -293,11 +293,11 @@ Job cards:
 | app | screens | redesigned | pending / filed leftover |
 |---|---|---|---|
 | shared (all 4, M2 auth) | 16 | 16 | 0 |
-| staff (M3+M4+M5) | 75 | 17 | 58 |
-| customer (M6) | 58 | 28 | 30 |
-| owner (M7) | 22 | 7 | 15 |
-| crm (M8) | 24 | 8 | 16 |
-| TOTAL | 195 | 76 | 119 |
+| staff (M3+M4+M5) | 75 | 22 | 53 |
+| customer (M6) | 58 | 41 | 17 |
+| owner (M7) | 22 | 10 | 12 |
+| crm (M8) | 24 | 9 | 15 |
+| TOTAL | 195 | 98 | 97 |
 
 ## Counts per family
 
@@ -305,49 +305,46 @@ Job cards:
 |---|---|---|---|
 | dashboard | 26 | 13 | 13 |
 | list | 22 | 16 | 6 |
-| detail | 23 | 1 | 22 |
+| detail | 23 | 23 | 0 |
 | form | 24 | 8 | 16 |
 | settings | 10 | 1 | 9 |
 | special (sheets/rows/shells/support/empty-error variants) | 90 | 37 | 53 |
-| TOTAL | 195 | 76 | 119 |
+| TOTAL | 195 | 98 | 97 |
 
-## Pending screens by planned phase (119)
+## Pending screens by planned phase (97)
 
-- phase-3 (staff advisor core, 32): `advisor_job_detail_view`, `advisor_vehicle_checkin_view`,
+- phase-3 (staff advisor core, 30): `advisor_vehicle_checkin_view`,
   `advisor_assign_tasks_view`, `advisor_reports_view`, `scan_vehicle_view`,
-  `vehicle_customer_view`, `vehicle_delivery_view` + 25 advisor widgets/sheets
+  `vehicle_customer_view` + 25 advisor widgets/sheets
   (all except search/job-card-row/job-card-sheet).
-- phase-4 (inspection & repair, 11): `choose_inspection_view`, `inspection_sheet_view`,
-  `inspection_preview_view`, `damage_detail_sheet`, `repair_order_view`
-  (+`RepairOrderPreviewView`), `real_damage_canvas`, `hud_pin_bridge`,
+- phase-4 (inspection & repair, 9): `choose_inspection_view`, `inspection_sheet_view`,
+  `damage_detail_sheet`, `real_damage_canvas`, `hud_pin_bridge`,
   `vehicle_body_condition_panel`, `vehicle_inspection_map`, `vehicle_map_transform`,
   `inspection_widgets`.
-- phase-5 (supervisor/technician/common + DETAIL family, 15):
+- phase-5 (supervisor/technician/common, 14):
   `supervisor_dashboard_tab`, `supervisor_staff_tab`, `supervisor_schedule_tab`,
   `supervisor_reports_tab`, `supervisor_assign_sheet`, `supervisor_components`,
   `qc_checklist_sheet`, `staff_notification_bell`, `technician_productivity_view`,
-  `technician_components`, `job_detail_sheet` (DETAIL brief written, approval pending),
+  `technician_components`,
   `parts_request_sheet`, `escalation_sheet`, `simple_pages`, `staff_attendance_screen`.
-- phase-6 (customer, 30): `customer_book_service_view`, `customer_booking_detail_view`,
-  `customer_booking_success_view`, `customer_approvals_page`, `customer_service_status_page`,
+- phase-6 (customer, 17): `customer_book_service_view`,
+  `customer_booking_success_view`,
   `customer_breakdown_help_view`, `customer_breakdown_result_view`,
-  `customer_invoice_detail_view`, `customer_feedback_view`, `add_vehicle_view`,
-  `customer_service_status_tab`, `customer_status_service_panel`, `customer_status_notices`,
-  `customer_status_details`, `customer_service_journey`, `customer_profile_tab`,
-  `customer_profile_rows`, `customer_approval_detail_view`, `customer_booking_steps`,
-  `customer_booking_flow_progress`, `customer_booking_detail_vehicle`,
-  `customer_booking_detail_summary`, `customer_booking_detail_service` + 7 support files
+  `customer_feedback_view`, `add_vehicle_view`,
+  `customer_profile_tab`,
+  `customer_profile_rows`, `customer_booking_steps`,
+  `customer_booking_flow_progress` + 7 support files
   (`vehicle_booking_decision`, `failed_vehicle_delete`, `failed_breakdown_sync`,
   `customer_service_tracking`, `customer_push_routing`, `customer_l10n`,
   `customer_approval_presentation`).
-- phase-7 (owner, 15): `team_view` (gated on `71983229` review), `subscription_view`,
-  `pending_approvals_view`, `job_status_view`, `inventory_view`, `feedback_moderation_view`,
-  `document_expiry_view`, `attendance_view`, `accounts_receivable_view`, `kpi_grid`,
+- phase-7 (owner, 12): `team_view` (gated on `71983229` review), `subscription_view`,
+  `job_status_view`, `inventory_view`, `feedback_moderation_view`,
+  `attendance_view`, `kpi_grid`,
   `owner_activity_feed_tab`, `messages_page`, `top_sales_page`, `period_dropdown`,
   `owner_search`.
-- phase-8 (CRM, 16): `crm_dashboard_view`, `crm_dashboard_page`, `crm_kanban_view`,
+- phase-8 (CRM, 15): `crm_dashboard_view`, `crm_dashboard_page`, `crm_kanban_view`,
   `crm_conversations_page`, `crm_reports_page`, `crm_integrations_page`,
-  `crm_settings_page`, `lead_form_sheet`, `lead_detail_sheet`, `connect_integration_sheet`,
+  `crm_settings_page`, `lead_form_sheet`, `connect_integration_sheet`,
   `crm_pipeline_widget`, `crm_followups_widget`, `crm_activity_feed_widget`,
   `crm_recent_leads`, `crm_channel_widgets`, `crm_drawer`.
 
