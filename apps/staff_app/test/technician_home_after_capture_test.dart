@@ -28,6 +28,7 @@ import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/technician/data/datasources/technician_providers.dart';
 import 'package:staff_app/features/technician/data/datasources/technician_remote_datasource.dart';
 import 'package:staff_app/features/technician/presentation/providers/technician_providers.dart';
+import 'package:staff_app/features/technician/presentation/widgets/technician_today_search.dart';
 import 'package:staff_app/features/technician/presentation/widgets/technician_today_view.dart';
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
@@ -369,10 +370,14 @@ Future<void> _capture(
   debugDisableShadows = oldShadows;
 }
 
+/// Opens the shell-owned today search sheet directly (ruling (a): the header
+/// glyph moved to the shell AppBar; the tab pumps alone here, so the test
+/// opens the same sheet the shell icon opens, over the same loaded jobs).
 Future<void> _openSearch(WidgetTester tester) async {
-  final search = find.byIcon(Icons.search_rounded);
-  expect(search, findsOneWidget);
-  await tester.tap(search);
+  final ctx = tester.element(find.byType(TechnicianTodayView));
+  final container = ProviderScope.containerOf(ctx);
+  final jobs = container.read(technicianDashboardProvider.notifier).allJobs;
+  showTechnicianTodaySearch(ctx, jobs: jobs, onSelect: (_) {});
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 300));
 }

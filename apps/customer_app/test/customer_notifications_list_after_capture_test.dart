@@ -188,6 +188,8 @@ Future<void> _capture(
   Locale locale = const Locale('en'),
   Size logicalSize = const Size(360, 800),
   double dpr = 3.0,
+  bool openSearch = false,
+  String searchQuery = '',
 }) async {
   final oldShadows = debugDisableShadows;
   debugDisableShadows = false;
@@ -255,6 +257,19 @@ Future<void> _capture(
   });
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 300));
+
+  if (openSearch) {
+    // New find sheet (ruling a): AppBar search action top-right, single path.
+    await tester.tap(find.byTooltip('Search notifications'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+    if (searchQuery.isNotEmpty) {
+      await tester.enterText(find.byType(TextField), searchQuery);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+  }
 
   await expectLater(
     find.byType(MaterialApp),
@@ -386,6 +401,14 @@ void main() {
         state: _state(notifications: inbox),
         logicalSize: const Size(768, 1024),
         dpr: 2.0,
+      );
+    });
+    testWidgets('search sheet open light en 1.0', (tester) async {
+      await _capture(
+        tester,
+        name: _name('search-open', 'light', 1.0, 'en', const Size(360, 800)),
+        state: _state(notifications: inbox),
+        openSearch: true,
       );
     });
   });

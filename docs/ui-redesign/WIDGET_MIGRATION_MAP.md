@@ -486,7 +486,8 @@ different entity/fields/scope/contract, see
 | `AppInfoPanel.danger(` (1 site) | supervisor Jobs tab error | `AppErrorState` (title reuses shared `commonErrorTitle`, message `svJobsError` verbatim, retry `commonRetry` → same refresh) | Live-region kept |
 | `AppLinearProgress(` (1 site) | supervisor Jobs tab row meter | `AppProgressBar(value:)` (auto tone; status meaning stays on rail + pill) | Progress math byte-identical |
 | `Divider(` (1 site) | supervisor Jobs tab row separator | `AppDivider()` (spec hairline) | Full-bleed kept |
-| KEPT (STOP/pinned, not legacy) | supervisor Jobs tab | `AppSearchField` + `AppFilterBar` + `AppPageHeader` + `supervisorStatusPill/Tone/Mono` | Inline filter predicate + bucket predicate byte-identical |
+| KEPT (STOP/pinned, not legacy) | supervisor Jobs tab | `AppFilterBar` + `AppPageHeader` + `supervisorStatusPill/Tone/Mono` | Status-rail + bucket predicate byte-identical |
+| MOVED (ruling (a) scope unification, `ui/fix-rulings`) | supervisor Jobs tab inline `AppSearchField` (1 site) | NEW `supervisor_register_search.dart` sheet: `showAppModalSheet` + `AppSearchField` (`svJobsSearchHint`) over `AssignedJobEntity` (same 4-field predicate: `jobCard`/`customer`/`vehicle`/`status`); result tap = same assign sheet; Jobs-tab shell icon opens it, inline removed | Supersedes the §2 dual-search STOP by scope unification (recorded in `evaluation/supervisor-jobs-list-test-migration.md`); zero new keys; one visible search path per screen |
 
 ## GROUP-C supervisor Queue list (branch `ui/list-ops`, screen 2)
 

@@ -32,7 +32,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/supervisor/data/datasources/supervisor_remote_datasource.dart';
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
+import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_components.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_dashboard_tab.dart';
+import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_floor_search.dart';
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
 const _outDir = 'after-phase-5-supervisor';
@@ -506,10 +508,19 @@ Future<void> _tapFilter(WidgetTester tester, String label) async {
   await tester.pump(const Duration(milliseconds: 100));
 }
 
+/// Opens the shell-owned floor search sheet directly (ruling (a): the header
+/// glyph moved to the shell AppBar; the tab pumps alone here, so the test
+/// opens the same sheet the shell icon opens, over the same derived bays).
 Future<void> _openSearch(WidgetTester tester) async {
-  final search = find.byIcon(Icons.search_rounded);
-  expect(search, findsOneWidget);
-  await tester.tap(search);
+  final ctx = tester.element(find.byType(SupervisorDashboardTab));
+  final container = ProviderScope.containerOf(ctx);
+  final notifier = container.read(supervisorDashboardProvider.notifier);
+  final bays = buildSupervisorBays(
+    awaiting: notifier.awaitingCompletions,
+    jobs: notifier.jobs,
+    bookings: notifier.bookings,
+  );
+  showSupervisorFloorSearch(ctx, bays: bays, onSelect: (_) {});
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 300));
 }

@@ -22,6 +22,7 @@ import 'dart:io';
 
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_home_search_sheet.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_tab.dart';
 import 'package:customer_app/l10n/gen/customer_localizations.dart';
 import 'package:flutter/foundation.dart';
@@ -309,7 +310,37 @@ Future<void> _capture(
   await tester.pump(const Duration(milliseconds: 300));
 
   if (openSearch) {
-    await tester.tap(find.byTooltip('Search'));
+    // Ruling (a): header shows no search icon — shell owns the single trigger
+    // opening the SAME home sheet. Open the same sheet directly over the
+    // home's existing vehicles + bookings (same sheet/predicate/targets).
+    final sheetVehicles = state.vehicles;
+    showModalBottomSheet(
+      context: tester.element(find.byType(CustomerHomeTab)),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        final size = MediaQuery.sizeOf(sheetContext);
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
+          ),
+          child: SizedBox.fromSize(
+            size: size,
+            child: ColoredBox(
+              color: Theme.of(sheetContext).colorScheme.surface,
+              child: SingleChildScrollView(
+                child: CustomerHomeSearchSheet(
+                  vehicles: sheetVehicles,
+                  bookings: bookings,
+                  onSelectVehicle: (_) {},
+                  onSelectBooking: (_) {},
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     if (searchQuery.isNotEmpty) {

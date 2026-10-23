@@ -407,13 +407,13 @@ void main() {
       ],
     );
 
-    // Tap 1: home header search opens the existing command palette.
-    // SEARCH-AFFORDANCE AUDIT (ui/integration-1): the shell bar trigger is
-    // hidden on the dashboard tab (U1/C16 one path per task), so the single
-    // remaining affordance is the home header action — same palette, same
+    // Tap 1: shell AppBar search opens the existing command palette.
+    // RULING (a) relocation (ui/fix-rulings): the shell AppBar owns the
+    // single visible search path on the dashboard tab (top-right action
+    // cluster); the home page header shows none — same palette, same
     // destination, same tap count (2 taps to the triage route).
     final headerSearch = find.descendant(
-      of: find.byType(OwnerDashboardPage),
+      of: find.byType(AppAppBar),
       matching: find.byIcon(Icons.search_rounded),
     );
     expect(headerSearch, findsOneWidget);

@@ -11,7 +11,6 @@ import 'package:staff_app/features/technician/presentation/providers/technician_
 import 'package:staff_app/features/technician/presentation/widgets/escalation_sheet.dart';
 import 'package:staff_app/features/technician/presentation/widgets/parts_request_sheet.dart';
 import 'package:staff_app/features/technician/presentation/widgets/technician_components.dart';
-import 'package:staff_app/features/technician/presentation/widgets/technician_today_search.dart';
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
 /// Today — "what needs my hands during this shift?".
@@ -92,11 +91,7 @@ class _TechnicianTodayViewState extends ConsumerState<TechnicianTodayView> {
             else if (showSkeleton)
               const _TodaySkeleton()
             else if (noJobs) ...[
-              _TodayHeader(
-                state: state,
-                notifier: notifier,
-                onSearch: () => _openTodaySearch(notifier),
-              ),
+              _TodayHeader(state: state, notifier: notifier),
               SizedBox(height: AppSpacing.lg),
               AppEmptyState(
                 icon: Icons.assignment_outlined,
@@ -106,11 +101,7 @@ class _TechnicianTodayViewState extends ConsumerState<TechnicianTodayView> {
                 onAction: () => _refresh(notifier),
               ),
             ] else ...[
-              _TodayHeader(
-                state: state,
-                notifier: notifier,
-                onSearch: () => _openTodaySearch(notifier),
-              ),
+              _TodayHeader(state: state, notifier: notifier),
               if (state.dashboardError.isNotEmpty) ...[
                 SizedBox(height: AppSpacing.lg),
                 AppBanner(
@@ -230,15 +221,6 @@ class _TechnicianTodayViewState extends ConsumerState<TechnicianTodayView> {
     }
   }
 
-  void _openTodaySearch(TechnicianNotifier notifier) {
-    HapticFeedback.selectionClick();
-    showTechnicianTodaySearch(
-      context,
-      jobs: notifier.allJobs,
-      onSelect: (job) => _openJob(job),
-    );
-  }
-
   void _openJob(TechnicianJobEntity job) {
     HapticFeedback.selectionClick();
     ref.read(technicianDashboardProvider.notifier).openJob(job);
@@ -279,20 +261,14 @@ class _TechnicianTodayViewState extends ConsumerState<TechnicianTodayView> {
 }
 
 // ─── HEADER ──────────────────────────────────────────────────────────────────
-// Day title + shift/attendance subtitle with the search glyph pinned to the
-// end side of the SAME row on every breakpoint (phones mirror tablets). A
-// plain Row, not AppPageHeader, whose compact layout stacks actions below
-// the subtitle — same lesson as the supervisor floor header.
+// Day title + shift/attendance subtitle. The search glyph moved to the shell
+// AppBar top-right (ruling (a) — same today sheet/target); this header keeps
+// title + subtitle only, so the Today tab shows exactly one search icon.
 class _TodayHeader extends StatelessWidget {
   final TechnicianState state;
   final TechnicianNotifier notifier;
-  final VoidCallback onSearch;
 
-  const _TodayHeader({
-    required this.state,
-    required this.notifier,
-    required this.onSearch,
-  });
+  const _TodayHeader({required this.state, required this.notifier});
 
   @override
   Widget build(BuildContext context) {
@@ -306,43 +282,30 @@ class _TodayHeader extends StatelessWidget {
       attendance,
     ].where((s) => s.isNotEmpty).join(' · ');
 
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                t.techNavToday,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: colors.onSurface,
-                  letterSpacing: -0.2,
-                ),
-              ),
-              if (subtitle.isNotEmpty) ...[
-                SizedBox(height: AppSpacing.xs),
-                Text(
-                  subtitle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colors.onSurfaceVariant,
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ],
+        Text(
+          t.techNavToday,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: colors.onSurface,
+            letterSpacing: -0.2,
           ),
         ),
-        SizedBox(width: AppSpacing.sm),
-        AppIconButton(
-          icon: Icons.search_rounded,
-          tooltip: t.techJobsSearch,
-          onPressed: onSearch,
-        ),
+        if (subtitle.isNotEmpty) ...[
+          SizedBox(height: AppSpacing.xs),
+          Text(
+            subtitle,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colors.onSurfaceVariant,
+              height: 1.35,
+            ),
+          ),
+        ],
       ],
     );
   }

@@ -89,6 +89,7 @@ Counts never down (0 -> 11 -> 11).
 | Open notification destination | 2 taps + scroll (bell + row tap) | ≤ 1 tap from list, ≤ 2 from launch (row tap, same `destination()` mapping) |
 | Mark all read | 2 taps (bell + `Mark all read`) | ≤ 1 tap from list, ≤ 2 from launch (summary row, no scroll) |
 | Mark one read | 2 taps (bell + row tap) | ≤ 2 taps (row tap, background persist) |
+| Find (search sheet, >5 only) | n/a (no find-aid) | ≤ 1 tap + keys (AppBar search → sheet → result; new capability, no budget regression) |
 
 ## Wave-2 fixer notes (2026-10-22 — investigate, no code change)
 
@@ -141,9 +142,90 @@ Counts never down (0 -> 11 -> 11).
 
 ## New ARB keys (en+ar, `flutter gen-l10n` from `apps/customer_app`)
 
-NONE expected — all copy reuses existing `nt*` keys (`ntTitle`, `ntUnread`,
-`ntAllRead`, `ntMarkAll`, `ntMarkFail`, `ntRetry`, `ntLoadTitle`, `ntLoadBody`,
+`ntSearchTitle` ("Search notifications" / "البحث في التنبيهات"),
+`ntSearchHint` ("Search by title or message" / "ابحث بالعنوان أو الرسالة"),
+`ntSearchNoMatch` ("No notifications match your search." /
+"لا توجد تنبيهات مطابقة لبحثك."),
+`ntSearchClear` ("Clear" / "مسح") — new find-sheet copy (new capability).
+Reused verbatim: all prior `nt*` keys (`ntTitle`, `ntUnread`, `ntAllRead`,
+`ntMarkAll`, `ntMarkFail`, `ntRetry`, `ntLoadTitle`, `ntLoadBody`,
 `ntCaughtUp`, `ntCaughtUpBody`, `ntGroup*`, `ntType*`, `ntReadWord`,
-`ntUnreadWord`) + `stRefreshFail`/`stRetry`. If the build surfaces any
-hardcoded string without a key, it will be added (en+ar) and listed here for
-phase 9. No ALL CAPS strings added (C16/C17).
+`ntUnreadWord`) + `stRefreshFail`/`stRetry`. No ALL CAPS strings added
+(C16/C17).
+
+## Ruling (a) search addition (ui/fix-rulings — presentation/flow-wiring only,
+## new capability, no regression possible)
+
+- Before locus: `AppAppBar` with NO search action (sanctioned no-search
+  deviation). After locus: `AppAppBar` WITH search action top-right
+  (`AppIconButton(Icons.search_rounded, tooltip ntSearchTitle)`), visible
+  ONLY when loaded > 5 (D3 ONE rule, same as vehicles/bookings/lists
+  family; was non-empty at ruling-(a) landing, tightened by D3 fix);
+  ≤5/empty/loading/error show none.
+  Single path by construction (no filter, no duplicate). NEW list-scoped
+  find sheet (`customer_notifications_search_sheet.dart`,
+  `showCustomerNotificationsSearchSheet`) over the SAME loaded inbox rows:
+  title/body/time substring (case-insensitive), empty query = full list,
+  no-match (`ntSearchNoMatch`) + Clear (`ntSearchClear`), existing
+  `AppSearchField`/`showAppModalSheet` patterns. Result tap closes the sheet
+  and reuses the row contract (`_open`: background `markRead` + conditional
+  `destination()` push, same routes) — no new routes, no new logic/data/
+  predicates.
+- Taps: find ≤1+keys (new capability); all budgeted tasks unchanged (open
+  inbox ≤1 bell, open destination ≤1 from list, mark-all ≤1 from list,
+  mark-one ≤2 — same handlers). Single visible search path verified by
+  pumping: non-empty inbox = exactly 1 search icon; empty = 0. RTL: AppBar
+  actions direction-aware (chevron already `DirectionalIcon`; search glyph
+  symmetric); 320/1.3x/ar/dark covered by recaptured matrix + new
+  `search-open` frame.
+- Tests: 11 → 12 testWidgets (never down: updated loci pin to expect 1
+  search when non-empty / 0 when empty + new sheet filter/no-match/Clear
+  test). After-frames recaptured in `after-customer-notifications/` (idle
+  variants now show the AppBar search; new `search-open` frame) and compared
+  back-to-back GREEN. STOPs: none.
+
+## Fixer notes (ui/fix-rulings D3+D4 — presentation/flow-wiring only, no logic/
+## data/predicate changes to list behavior; same sheets/targets/routes)
+
+- D3 (ONE rule >5 everywhere — FIXED, verified real): `customer_notifications_view.dart:84`
+  `if (notifications.isNotEmpty)` → `if (notifications.length > 5)` (+ comment).
+  Notifications now shares the single family predicate with vehicles/bookings/
+  lists (visible ONLY when loaded >5; ≤5/empty/loading/error show none). Flow-
+  wiring only (which visible icon shows when); same sheet/predicate/targets/
+  routes — no logic/data/predicate change to list behavior. Brief conflict
+  (D1's brief half) resolved by the D3 brief amendment (ruling (a) override
+  recorded in `docs/ui-redesign/briefs/customer-notifications-list.md`;
+  deviation text kept for history). Taps: find ≤1+keys (new capability);
+  open/mark budgets unchanged (tap table above re-checked).
+- D4 (search-result truncation — FIXED, verified real): `customer_notifications_search_sheet.dart`
+  result rows were `Row(Expanded(title maxLines:1) + Flexible(time))` with
+  body maxLines:1 — mid-word `…` cuts at 1.0x (`Estimate needs appr…`,
+  `booked f…`, `Camr…`). Rebuilt on tokens only as a vertical stack:
+  title maxLines:2 softWrap + body maxLines:2 softWrap + time meta 1-line
+  (secondary, ellipsis allowed); no Row width competition so 320/1.3x/ar fit.
+  Same data/filter/targets/routes; tokens only (`AppDimensions.s20/s8/s4`).
+  Characterization pins titles at maxLines 2; `search-open` frame shows whole
+  titles (`Booking confirmed`, `Technician assigned`,
+  `Estimate needs approval`, `Estimate approved`, `Invoice ready`,
+  `Workshop update`) at 1.0x.
+- D2 (home global search duplicates rows — REBUTTED, not fixed): search-as-
+  transport is not a duplicate entry (consistent with every prior PASS across
+  all apps); home search untouched per instruction. No code change here.
+- D5 (red-pending/Title-Case pills — STOP, stays filed): shared tones/vocab
+  owner; no per-screen fix attempted. Filed as STOP.
+- D1 (notifications search vs brief no-search — brief-conflict half RESOLVED
+  by the D3 brief amendment above; no code revert — ruling (a) EVERY-screen
+  mandate stands).
+- D6 (unbudgeted taps — COVERED by the ≥-tap-table check): tap table above
+  re-checked — find ≤1+keys; open ≤1 from list (≤2 from launch); mark-all
+  ≤1 from list (≤2 from launch); mark-one ≤2. No budgeted task regresses.
+- Tests: 12 testWidgets (never down: 11 → 12 at ruling (a), 12 → 12 here —
+  updated loci: ≤5 = 0 search icons, 6 = exactly 1 search icon + sheet
+  filter/no-match/Clear + D4 maxLines-2 pin). `flutter test --exclude-tags
+  baseline` (customer_app): all GREEN. `flutter analyze --no-pub`
+  (customer_app): no issues. After-frames recaptured in living dir
+  `after-customer-notifications/` (idle 6-item still shows AppBar search;
+  1–2-item markall/allread correctly show none per D3; new `search-open`
+  shows wrapped whole rows per D4) via `--update-goldens` limited to the
+  after-capture test, then compared back-to-back GREEN (13/13). STOPs: D5
+  only. `test/failures/` debris: none (verified, nothing to delete).

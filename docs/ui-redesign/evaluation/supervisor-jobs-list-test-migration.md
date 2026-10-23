@@ -129,3 +129,73 @@ REBUTTED (no code change; evidence):
 
 Tap walk AFTER-fix: open ≤1 ✓ · find ≤1 + keystrokes ✓ · assign ≤2 ✓ ·
 clear 1 ✓ · retry 1 / pull ✓. No budget regresses.
+
+## Scope-unification pass (ui/fix-rulings, ruling (a) — presentation only)
+
+The adjudicated dual-search STOP above (§Behavior assertions STOP + §Adversarial-fix
+D1) is SUPERSEDED by scope unification: the shell AppBar icon on the Jobs tab
+now opens a NEW register search sheet over `AssignedJobEntity` (same 4-field
+inline predicate: `jobCard`/`customer`/`vehicle`/`status`, case-insensitive
+contains; same fields; result tap = same assign sheet via `onSelect` →
+`showSupervisorAssignSheet`), and the inline `AppSearchField`
+(`supervisor_jobs_tab.dart:106-109`) is REMOVED. One visible search path per
+screen: AppBar icon → register sheet (Jobs tab), AppBar icon → floor sheet
+(floor tab). Zero new ARB keys (`svJobsTitle` title, `svJobsSearchHint` hint,
+`svJobsNoMatch` message, shared `commonNoResults`/`filterBarClear` reused
+verbatim); providers, routes, bucket predicate, progress math, sheets/targets
+untouched; no predicate change.
+
+### Changed test assertions (this pass)
+
+| Test | Old | New | Kind |
+|---|---|---|---|
+| inline search narrows by job card, customer, vehicle, status | `AppSearchField` inline filter in the tab body | `register search sheet narrows by job card, customer, vehicle, status`: the sheet (opened exactly as the Jobs-tab AppBar icon opens it, over the same `notifier.jobs`) filters to the match; background tab keeps all rows (sheet scope only); result tap fires the assign contract with the right `jobCard` | structural (same predicate/target, new seat) |
+| no match offers a clear action that resets the list | inline no-match Clear resets `_query` + `_filter` | `no match offers a clear action that resets the sheet`: sheet no-match (`commonNoResults` + `svJobsNoMatch` verbatim) Clear restores all register rows in the sheet | structural (same copy, new seat) |
+
+Counts: characterization file still 8 tests, 8 assertions — counts did not
+go down (2 tests rewritten for the new seat, 6 untouched). Header note in the
+test file ("Do NOT modify …") is superseded by this ruling for exactly these
+two search-seat tests; all other pins frozen.
+
+### Behavior assertions (verbatim, updated seats)
+
+- Tap counts (brief BEFORE, verified from code): open list = tab (**1 tap**);
+  find = AppBar icon (**1 tap**) + keystrokes + result (**1 tap**, same assign
+  sheet — per-path cost identical to the old bar-sheet and inline paths, one
+  path kept); assign = header/empty Assign (**2 taps** from launch);
+  rail filter = chip (**1 tap**); clear = Clear (**1 tap**); retry = Retry
+  (**1 tap**) / pull. AFTER: identical budgets, single path.
+- Provider reads identical (`supervisorDashboardProvider` + notifier `jobs`,
+  `refreshDashboard`); scaffold `_openSearch` branches per tab
+  (Jobs → register sheet, else floor sheet); `_SupervisorChrome` always shows
+  the one icon (tooltip `svJobsSearchHint` on Jobs, `svSearchTitle` else).
+- Search predicate identical (4 fields over `notifier.jobs`, `_bucket` via
+  `supervisorStatusKind` untouched); tab keeps the status rail only.
+- Copy keys: zero new (reused `svJobsTitle`, `svJobsSearchHint`,
+  `svJobsNoMatch`, `commonNoResults`, `filterBarClear`, `commonRetry`).
+- Frames: all 10 `after-supervisor-jobs/` PNGs regenerated (the `search` frame
+  now captures the register sheet open with query `sara`); compare
+  back-to-back green, `takeException` null, RTL/320/1.3x intact.
+
+STOPs: none. No logic change was needed (unification is flow-wiring over the
+same sheets/predicates/targets/routes).
+
+## Adversarial D1/D3 close-out (ui/fix-rulings — presentation only)
+
+- D1 scoping: `_SupervisorChrome` now guards the shell icon to
+  `selectedIndex == 0 || selectedIndex == 1` (Floor + Jobs only; same
+  `selectedIndex` guard pattern as before). Queue/Review/Reports/Staff/
+  Schedule (incl. More overflow) show NO icon — those tabs never had a list
+  search, so nothing that existed is removed; taps unchanged. `_openSearch`
+  branches untouched (Jobs → register sheet, Floor → floor sheet; same
+  sheets/predicates/targets/routes, no logic change).
+- D3 rebuttal (FALSE, no code change): the register result tap pops the sheet
+  (`Navigator.of(context).pop()` in `supervisor_register_search.dart` +
+  `onSelect` → `showSupervisorAssignSheet`) — find costs icon (1) + keys +
+  result (1), tying the inline path; there is NO extra close tap. The
+  dismiss the adversarial counts only applies to find-without-assign, which
+  the inline path also paid (chip Clear / scroll-away); budgets tie.
+- Counts: characterization file still 8 tests, 8 assertions — counts did not
+  go down (no test edits this pass). Frames: `after-supervisor-jobs/` search
+  frame unchanged (Jobs keeps the icon); compare back-to-back green,
+  `takeException` null, RTL/320/1.3x intact.

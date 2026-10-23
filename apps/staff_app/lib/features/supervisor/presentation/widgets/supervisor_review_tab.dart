@@ -129,19 +129,19 @@ class _QcRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Ruling (d): vehicle/customer leads (human-recognizable title),
+              // JC ref is small mono meta LAST — consistent with owner cards.
+              // Tokens only; same data/pill/sheet/taps.
               Row(
                 children: [
                   Expanded(
-                    child: Directionality(
-                      textDirection: TextDirection.ltr,
-                      child: Text(
-                        jobCardRef,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: supervisorMono(
-                          context,
-                          color: context.colors.onSurface,
-                        ).copyWith(fontWeight: FontWeight.w800),
+                    child: Text(
+                      vehicleInfo.isNotEmpty ? vehicleInfo : customerName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: context.colors.onSurface,
                       ),
                     ),
                   ),
@@ -157,7 +157,7 @@ class _QcRow extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      '$customerName · $vehicleInfo',
+                      customerName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -181,6 +181,19 @@ class _QcRow extends StatelessWidget {
                       ),
                     ),
                   ],
+                  const SizedBox(width: AppDimensions.s8),
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      jobCardRef,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: supervisorMono(
+                        context,
+                        color: context.colors.onSurfaceVariant,
+                      ).copyWith(fontSize: 11),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: AppDimensions.s10),

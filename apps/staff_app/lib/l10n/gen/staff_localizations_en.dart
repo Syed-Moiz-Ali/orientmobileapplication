@@ -2778,6 +2778,18 @@ class StaffLocalizationsEn extends StaffLocalizations {
   String get techJobsNoMatchHint => 'No jobs match your search and filter.';
 
   @override
+  String get techTaskSearch => 'Search tasks';
+
+  @override
+  String get techTaskSearchHint => 'Search by task name';
+
+  @override
+  String get techTaskNoMatch => 'No matching tasks';
+
+  @override
+  String get techTaskNoMatchHint => 'No tasks match your search.';
+
+  @override
   String get techJobsClearFilters => 'Clear filters';
 
   @override

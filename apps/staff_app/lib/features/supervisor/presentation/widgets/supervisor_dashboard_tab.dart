@@ -5,7 +5,6 @@ import 'package:shared_core/shared_core.dart';
 
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_components.dart';
-import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_floor_search.dart';
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
 /// Floor command board (Phase 11, Archetype 4 — Tactical Operations Radar;
@@ -43,11 +42,6 @@ class _SupervisorDashboardTabState
     HapticFeedback.selectionClick();
     setState(() => _selected = bay);
     widget.onOpenAssign();
-  }
-
-  void _openFloorSearch(List<SupervisorBay> bays) {
-    HapticFeedback.selectionClick();
-    showSupervisorFloorSearch(context, bays: bays, onSelect: _onBayTap);
   }
 
   @override
@@ -102,8 +96,6 @@ class _SupervisorDashboardTabState
               _FloorHeader(
                 title: t.svFloorTitle,
                 subtitle: t.svFloorSubtitle(active, kSupervisorBayCount),
-                searchTooltip: t.svSearchTitle,
-                onSearch: () => _openFloorSearch(bays),
               ),
               const SizedBox(height: AppDimensions.s16),
               _FloorHero(
@@ -195,58 +187,37 @@ class _SupervisorDashboardTabState
 
 // ─── HEADER + HERO + FILTER ──────────────────────────────────────────────────
 
-/// Floor header: title + occupancy sentence with the search glyph pinned to
-/// the end side of the SAME row on every breakpoint (compact included), so
-/// phones mirror the tablet placement. Plain Row (not AppPageHeader, whose
-/// compact layout stacks actions below the subtitle) — same strings, same
-/// text styles, same AppIconButton contract.
+/// Floor header: title + occupancy sentence. The search glyph moved to the
+/// shell AppBar top-right (ruling (a) — same floor sheet/target); this header
+/// keeps title + subtitle only, so the floor tab shows exactly one search
+/// icon. Same strings, same text styles.
 class _FloorHeader extends StatelessWidget {
   final String title;
   final String subtitle;
-  final String searchTooltip;
-  final VoidCallback onSearch;
 
-  const _FloorHeader({
-    required this.title,
-    required this.subtitle,
-    required this.searchTooltip,
-    required this.onSearch,
-  });
+  const _FloorHeader({required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: context.colors.onSurface,
-                  letterSpacing: -0.2,
-                ),
-              ),
-              const SizedBox(height: AppDimensions.s4),
-              Text(
-                subtitle,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: context.colors.onSurfaceVariant,
-                  height: 1.35,
-                ),
-              ),
-            ],
+        Text(
+          title,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: context.colors.onSurface,
+            letterSpacing: -0.2,
           ),
         ),
-        const SizedBox(width: AppDimensions.s8),
-        AppIconButton(
-          icon: Icons.search_rounded,
-          tooltip: searchTooltip,
-          onPressed: onSearch,
+        const SizedBox(height: AppDimensions.s4),
+        Text(
+          subtitle,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: context.colors.onSurfaceVariant,
+            height: 1.35,
+          ),
         ),
       ],
     );

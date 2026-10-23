@@ -60,14 +60,14 @@ void main() {
       expect(AppFormatters(en).moneyAED(12450), 'AED 12,450');
     });
 
-    test('ar: suffix placement, Latin digits', () {
-      expect(AppFormatters(ar).moneyAED(12450), '12,450 د.إ');
+    test('ar: Latin AED prefix, Latin digits (LTR-locked at call sites)', () {
+      expect(AppFormatters(ar).moneyAED(12450), 'AED 12,450');
     });
 
     test('compact money both locales', () {
       // Existing compactCount style keeps a space before the suffix.
       expect(AppFormatters(en).compactMoneyAED(1200000), 'AED 1.2 M');
-      expect(AppFormatters(ar).compactMoneyAED(1200000), '1.2 M د.إ');
+      expect(AppFormatters(ar).compactMoneyAED(1200000), 'AED 1.2 M');
     });
   });
 

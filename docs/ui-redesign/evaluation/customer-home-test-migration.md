@@ -104,3 +104,25 @@ No behavior assertions were modified because no behavior changed:
 - `garUnpaidBody` ("Review and settle your outstanding invoices." /
   "راجع وسدد فواتيرك المستحقة.") — payment-hero sentence.
 - All other home strings reused verbatim (`gar*`, `st*`, `js*`, `bk*`, `ap*`).
+
+## Ruling (a) search relocation (ui/fix-rulings — presentation/flow-wiring only)
+
+- Before locus: `CustomerHomeHeader` search icon end-side of the greeting
+  row. After locus: shell `WorkspaceAppBar.onSearch` top-right adjacent to
+  bell/avatar; header shows greeting eyebrow + name only, zero search icons
+  (loading skeleton circle placeholder removed likewise). Same sheet/
+  predicate/targets (`CustomerHomeSearchSheet` over existing vehicles +
+  bookings, vehicle → `customerBookServiceLocation(vehicleId:)`, booking →
+  `customerBookingDetail`, same full-screen modal) — only WHICH visible icon
+  opens it moved. No `>5` gating ever existed here; shell icon always visible
+  on Home.
+- Taps: unchanged (hero/carousel/tiles/recent-activity budgets per brief;
+  search result taps reuse existing destinations, ≤2 taps preserved).
+  Single visible search path verified by pumping: Home via shell = exactly 1
+  search icon; header alone = 0. RTL: shell actions direction-aware;
+  320/1.3x/ar/dark covered by recaptured `after-phase-6-customer/` matrix
+  (idle/search-open/search-query).
+- Tests: 11 testWidgets unchanged in count (updated 2 loci pins: header
+  asserts 0 search; sheet test pumps `CustomerHomeSearchSheet` directly,
+  same predicate). After-frames recaptured in `after-phase-6-customer/` and
+  compared back-to-back GREEN. No new ARB keys. STOPs: none.

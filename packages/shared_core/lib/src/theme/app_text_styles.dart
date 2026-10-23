@@ -23,6 +23,16 @@ abstract final class AppFontFamilies {
     'Noto Sans Arabic',
     'sans-serif',
   ];
+
+  /// Latin-mono fallback chain (additive, spec §3.3): the mono primary stays
+  /// Plus Jakarta Sans (Latin) in both locales — Latin output is
+  /// byte-identical — while Arabic glyphs that reach a mono run (e.g. the
+  /// odometer unit `كم`, pending-total copy) fall through to Plex Arabic →
+  /// Noto → system instead of tofu.
+  static const List<String> monoFallback = <String>[
+    arabic,
+    ...arabicFallback,
+  ];
 }
 
 /// Disciplined typographic hierarchy for the ORIENT design system.
@@ -57,7 +67,7 @@ class AppTextStyles {
       fontFamily: useArabicFamily ? AppFontFamilies.arabic : family,
       fontFamilyFallback: useArabicFamily
           ? AppFontFamilies.arabicFallback
-          : null,
+          : (arabic && latinFamilyOnly ? AppFontFamilies.monoFallback : null),
       fontSize: fontSize,
       fontWeight: fontWeight,
       height: arabic && height != null

@@ -2,7 +2,9 @@ import 'package:customer_app/features/customer/domain/entities/customer_entities
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_notification_presentation.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_notifications_search_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
@@ -70,8 +72,32 @@ class _CustomerNotificationsViewState
 
     final groups = _grouped(context, notifications);
 
+    // Ruling (a) + D3 (ui/fix-rulings): AppBar WITH search trigger — the find
+    // action lives HERE (top-right, direction-aware AppBar actions, mirrored
+    // in RTL); single path by construction. Visible ONLY when loaded > 5
+    // (the ONE family rule shared with vehicles/bookings/lists; ≤5/empty
+    // show none). Same data, substring filter, no-match + Clear, existing
+    // patterns.
     return AppScaffold(
-      appBar: AppAppBar(title: t.ntTitle, showBack: true),
+      appBar: AppAppBar(
+        title: t.ntTitle,
+        showBack: true,
+        actions: [
+          if (notifications.length > 5)
+            AppIconButton(
+              icon: Icons.search_rounded,
+              tooltip: t.ntSearchTitle,
+              onPressed: () {
+                HapticFeedback.selectionClick();
+                showCustomerNotificationsSearchSheet(
+                  context,
+                  notifications: notifications,
+                  onSelect: _open,
+                );
+              },
+            ),
+        ],
+      ),
       scrollable: false,
       maxContentWidth: 860,
       body: Column(

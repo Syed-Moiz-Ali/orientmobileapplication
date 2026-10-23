@@ -5,6 +5,14 @@
 // and the customer vehicles list keeps its sanctioned U1 exception (search
 // icon ONLY when > 5 items; <= 5 cards-only).
 //
+// Ruling (a) locus (ui/fix-rulings): the single visible affordance sits in
+// the FIRST header row at the top-right/end-side — either the shell AppBar
+// action cluster (post-ruling owner: AppAppBar WITH the trigger, page shows
+// none) or the page-header trailing Row (supervisor/tech/advisor/customer
+// header row, vehicles find-aids row). Never stacked below a subtitle and
+// never mid-page. The COUNT guards below are unchanged; the LOCUS group
+// added for ruling (a) pins the position per shell.
+//
 // Why shared_core: the five home shells live in owner_app / staff_app /
 // customer_app, which all depend on shared_core — the dependency arrow points
 // the wrong way to pump those shells from here (a dev-dependency would be a
@@ -12,9 +20,10 @@
 // mirrors post-audit (DashboardShell + AppAppBar / WorkspaceAppBar + header
 // search row), using the same widgets, same U1 icon
 // (Icons.search_rounded) and the same visibility rule the audit applied
-// (shell trigger hidden on the home tab, header U1 kept). Per-app
-// regression is additionally covered by the scoped search finders in the
-// apps' own tests (owner before-capture + characterization,
+// (shell trigger hidden on the home tab, header U1 kept — except post-ruling
+// owner, which flips to shell-kept/header-removed with the same palette).
+// Per-app regression is additionally covered by the scoped search finders in
+// the apps' own tests (owner before-capture + characterization,
 // supervisor/technician after-captures, advisor single-entry pins).
 //
 // Harness: bundled fonts (loaded once in setUpAll),
@@ -71,6 +80,76 @@ Future<void> _loadFonts() async {
 /// skipOffstage defaults to true, so hidden (audit-removed) triggers are
 /// never counted — only what the user can see and tap.
 Finder _visibleSearchIcons() => find.byIcon(Icons.search_rounded);
+
+/// LOCUS assertion (ruling a, ui/fix-rulings): the single visible search
+/// affordance sits in the FIRST header row at the top-right/end-side —
+/// either the shell AppBar action cluster or the page-header trailing Row —
+/// never stacked below a subtitle and never mid-page.
+///
+/// Checks (position-only, no logic/palette changes):
+/// 1) first header band: center-y in the top ~35% of the viewport;
+/// 2) end-side: right half in LTR, left half in RTL (bell/avatar cluster);
+/// 3) same row as [rowTitle]: |dy| < 48 (stacked-below-subtitle would sit a
+///    full text row lower, mid-page far lower);
+/// 4) ancestor is the AppBar action cluster OR a header trailing Row.
+void _expectTopEndLocus(WidgetTester tester, {required String rowTitle}) {
+  final search = _visibleSearchIcons();
+  expect(
+    search,
+    findsOneWidget,
+    reason: 'locus needs exactly one visible search icon',
+  );
+  final searchCenter = tester.getCenter(search);
+  final size = MediaQuery.sizeOf(tester.element(search));
+  final isRtl =
+      Directionality.of(tester.element(search)) == TextDirection.rtl;
+  expect(
+    searchCenter.dy,
+    lessThan(size.height * 0.35),
+    reason:
+        'search must sit in the first header band '
+        '(dy ${searchCenter.dy.toStringAsFixed(1)} on ${size.height.toStringAsFixed(0)}h), never mid-page',
+  );
+  if (isRtl) {
+    expect(
+      searchCenter.dx,
+      lessThan(size.width * 0.5),
+      reason:
+          'search must sit end-side in RTL '
+          '(dx ${searchCenter.dx.toStringAsFixed(1)} on ${size.width.toStringAsFixed(0)}w)',
+    );
+  } else {
+    expect(
+      searchCenter.dx,
+      greaterThan(size.width * 0.5),
+      reason:
+          'search must sit top-right in LTR '
+          '(dx ${searchCenter.dx.toStringAsFixed(1)} on ${size.width.toStringAsFixed(0)}w)',
+    );
+  }
+  expect(
+    find.text(rowTitle),
+    findsWidgets,
+    reason: 'locus row-mate title "$rowTitle" must be visible',
+  );
+  final titleCenter = tester.getCenter(find.text(rowTitle).first);
+  expect(
+    (searchCenter.dy - titleCenter.dy).abs(),
+    lessThan(48),
+    reason:
+        'search must share the first header row with "$rowTitle" '
+        '(Δdy ${(searchCenter.dy - titleCenter.dy).abs().toStringAsFixed(1)}), never stacked below a subtitle',
+  );
+  final inAppBar =
+      find.ancestor(of: search, matching: find.byType(AppBar)).evaluate().isNotEmpty;
+  final inRow =
+      find.ancestor(of: search, matching: find.byType(Row)).evaluate().isNotEmpty;
+  expect(
+    inAppBar || inRow,
+    isTrue,
+    reason: 'search must live in the AppBar action cluster or a header trailing Row',
+  );
+}
 
 /// Post-audit staff/owner home chrome: spec-C8 [AppAppBar] WITHOUT the shell
 /// search trigger (hidden on the home tab) + a header row carrying the ONE
@@ -155,8 +234,44 @@ Widget _customerHomeShell() {
   );
 }
 
+/// Post-ruling owner home chrome (ruling a, ui/fix-rulings): spec-C8
+/// [AppAppBar] WITH the shell search trigger (top-right action cluster) +
+/// a page header showing NO search action. Mirrors flipped `_OwnerChrome`
+/// (tab 0, same `openOwnerSearch` palette) + `_HomeHeader` without the
+/// page icon. Same one-icon count, new locus (shell-kept).
+Widget _shellSearchHomeShell({required String title}) {
+  return DashboardShell(
+    showOfflineBanner: false,
+    appBar: AppAppBar(
+      title: title,
+      showDivider: true,
+      actions: [
+        AppIconButton(
+          icon: Icons.search_rounded,
+          onPressed: () {},
+          tooltip: 'Search',
+        ),
+      ],
+    ),
+    body: ListView(
+      children: const [
+        Row(
+          children: [
+            Expanded(child: Text('Home header')),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
 /// Customer vehicles list header (sanctioned U1 exception): the search
 /// find-aid appears ONLY when the loaded list has MORE THAN 5 items.
+///
+/// Mirrors the real `customer_vehicles_tab` header (ruling-a compliant):
+/// title + find-aids share the SAME first Row (top-right/end-side), the
+/// subtitle spans full width below — never AppPageHeader, whose compact
+/// layout would stack the action below the subtitle.
 Widget _vehiclesListShell({required int itemCount}) {
   final showFindAids = itemCount > 5;
   return DashboardShell(
@@ -164,16 +279,23 @@ Widget _vehiclesListShell({required int itemCount}) {
     appBar: WorkspaceAppBar(title: 'Vehicles', subtitle: 'Sub'),
     body: ListView(
       children: [
-        AppPageHeader(
-          title: 'My vehicles',
-          subtitle: '$itemCount',
-          actions: [
-            if (showFindAids)
-              AppIconButton(
-                icon: Icons.search_rounded,
-                onPressed: () {},
-                tooltip: 'Search vehicles',
-              ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Expanded(child: Text('My vehicles')),
+                if (showFindAids)
+                  AppIconButton(
+                    icon: Icons.search_rounded,
+                    onPressed: () {},
+                    tooltip: 'Search vehicles',
+                  ),
+              ],
+            ),
+            Text('$itemCount'),
           ],
         ),
       ],
@@ -399,6 +521,75 @@ void main() {
         locale: const Locale('ar'),
       );
       expect(_visibleSearchIcons(), findsOneWidget);
+    });
+  });
+
+  group('search affordance: locus first header row end-side (ruling a)', () {
+    testWidgets('post-ruling owner shell trigger sits top-right in AppBar', (
+      tester,
+    ) async {
+      await _pumpShell(tester, _shellSearchHomeShell(title: 'Dashboard'));
+      expect(_visibleSearchIcons(), findsOneWidget);
+      _expectTopEndLocus(tester, rowTitle: 'Dashboard');
+    });
+
+    testWidgets('header-row home shell keeps locus in trailing Row', (
+      tester,
+    ) async {
+      await _pumpShell(tester, _specBarHomeShell(title: 'Dashboard'));
+      expect(_visibleSearchIcons(), findsOneWidget);
+      _expectTopEndLocus(tester, rowTitle: 'Home header');
+    });
+
+    testWidgets('advisor header-row locus stays end-side', (tester) async {
+      await _pumpShell(tester, _advisorHomeShell());
+      expect(_visibleSearchIcons(), findsOneWidget);
+      _expectTopEndLocus(tester, rowTitle: 'Good morning');
+    });
+
+    testWidgets('customer header-row locus stays end-side', (tester) async {
+      await _pumpShell(tester, _customerHomeShell());
+      expect(_visibleSearchIcons(), findsOneWidget);
+      _expectTopEndLocus(tester, rowTitle: 'Hello');
+    });
+
+    testWidgets('vehicles find-aid locus sits in trailing Row', (
+      tester,
+    ) async {
+      await _pumpShell(tester, _vehiclesListShell(itemCount: 6));
+      expect(_visibleSearchIcons(), findsOneWidget);
+      _expectTopEndLocus(tester, rowTitle: 'My vehicles');
+    });
+
+    testWidgets('shell locus mirrors end-side in ar', (tester) async {
+      await _pumpShell(
+        tester,
+        _shellSearchHomeShell(title: 'Dashboard'),
+        locale: const Locale('ar'),
+      );
+      expect(_visibleSearchIcons(), findsOneWidget);
+      _expectTopEndLocus(tester, rowTitle: 'Dashboard');
+    });
+
+    testWidgets('customer locus mirrors end-side in ar', (tester) async {
+      await _pumpShell(
+        tester,
+        _customerHomeShell(),
+        locale: const Locale('ar'),
+      );
+      expect(_visibleSearchIcons(), findsOneWidget);
+      _expectTopEndLocus(tester, rowTitle: 'Hello');
+    });
+
+    testWidgets('320px at 1.3x keeps shell locus top-right', (tester) async {
+      await _pumpShell(
+        tester,
+        _shellSearchHomeShell(title: 'Dashboard'),
+        surface: const Size(320, 568),
+        textScale: 1.3,
+      );
+      expect(_visibleSearchIcons(), findsOneWidget);
+      _expectTopEndLocus(tester, rowTitle: 'Dashboard');
     });
   });
 

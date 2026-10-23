@@ -6,7 +6,11 @@ untouched. Characterization tests were written against the CURRENT list
 FIRST (6 testWidgets, GREEN before touching UI) and migrated after the
 rebuild (11 testWidgets, all structural). WAVE-2 fixes (F6 header)
 migrated the same file to **12 testWidgets**, all structural. Counts
-never down (6 -> 11 -> 12).
+never down (6 -> 11 -> 12). Ruling (a) shell relocation keeps the same
+file at **12 testWidgets** (assertions updated verbatim below, none
+added/removed) + **8 new shell relocation tests** in
+`apps/crm_app/test/crm_shell_search_relocation_test.dart` (all
+structural). Counts never down (6 -> 11 -> 12 -> 12 + 8 shell).
 
 ## Inventory (existing CRM tests before this change)
 
@@ -140,3 +144,39 @@ Fixture diversification (test-data only, no production change):
   only, so no pin change and no count change.
 - Recaptured `after-crm-tasks/` (8 PNGs) with `--update-goldens` limited
   to the after-capture file, compared back-to-back GREEN.
+
+## Ruling (a) search relocation (presentation/flow-wiring only)
+
+- Shell (`crm_dashboard_view.dart` `_CrmChrome`): the AppBar search
+  trigger is the SINGLE visible icon on the tasks tab — contextual,
+  opening the EXISTING `showCrmTasksSearchSheet` (same widget, same
+  `crmTaskProvider.tasks` list), gated by the same `tasks.length > 5`
+  condition relocated from the list header. ≤ 5 → no trigger. Non-list
+  tabs keep the palette untouched; Ctrl+K untouched.
+- List (`crm_tasks_page.dart`): header search icon REMOVED with its
+  `findAids()` block (refresh + Add stay where they are);
+  `crm_tasks_search_sheet.dart` import removed (row keys stay). No
+  logic/data/predicate change.
+- Changed assertions (same 12 testWidgets, verbatim): same-row test now
+  pins title-only row 1 + refresh/Add + no search; `>5` test pins no
+  header search + the same sheet opened directly (identical no-match +
+  Clear pins).
+- Tap table (AFTER ≤ BEFORE): Open ≤ 1; Complete ≤ 1 from list;
+  Add/Edit/Delete ≤ 2 (+1 confirm, NO undo); Find = scroll unchanged +
+  ≤ 2 via shell search (> 5 only); all handlers/keys unchanged.
+- Frames recaptured in the living dir `after-crm-tasks/` (8 PNGs) with
+  `--update-goldens` limited to `crm_after_tasks_capture_test.dart`
+  (search-open now opens the same sheet directly), compared back-to-back
+  GREEN. RTL mirror, 320/1.3x clean.
+- STOPs: scroll-reveal needs the page scroll anchors (page-owned
+  presentation state) and no dossier route exists on this list — the
+  shell `onSelect` only re-selects the tab (existing route, no-op when
+  already there); manual scroll is unchanged (taps still ≤ 2, no
+  regression). Replicating the anchors in the shell would be logic;
+  filed, not changed.
+- R1 gate check (ui/fix-rulings, no change needed): the shell tasks gate
+  already reads the SAME source the page renders —
+  `ref.watch(crmTaskProvider).tasks.length` vs page
+  `ref.watch(crmTaskProvider).tasks` (`crm_tasks_page.dart:72`); sheet
+  reads `ref.read(crmTaskProvider).tasks` (same provider list). No
+  defect, no edit. Counts never down (6 -> 11 -> 12 -> 12 + 8 shell).

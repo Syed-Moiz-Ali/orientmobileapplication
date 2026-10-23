@@ -153,3 +153,27 @@ Counts never down (0 -> 12 -> 16).
 `bkServiceAppt`, `bkApprovalMsg`, `bkApprovalEst`, `jsStage`, `bkdTrack`,
 `vhRemove`, `garHeroAdd`, `stRefreshFail`, `stRetry`. No ALL CAPS strings
 added (C16/C17).
+
+## Ruling (a) search relocation (ui/fix-rulings — presentation/flow-wiring only)
+
+- Before locus: `_BookingsHeader` search icon top-right of the page header
+  (with filter + Book). After locus: shell `WorkspaceAppBar.onSearch`
+  top-right adjacent to bell/avatar; page header shows filter + Book only,
+  zero search icons. Same sheet/predicate/target/reveal
+  (`showCustomerBookingsSearchSheet`, service/vehicle/plate/reference
+  substring + normalized plate, `ensureVisible` reveal via tab scroll keys,
+  same routes) — only WHICH visible icon opens it moved. `>5` gating
+  relocated verbatim: shell icon visible ONLY when loaded bookings > 5
+  (same `showFindAids` condition); `≤5` shows no search anywhere.
+- Taps: unchanged (open/detail/track/review/book/retry/remove budgets per
+  tap table above; search was never a budgeted top-task, find ≤1+keys
+  preserved via same sheet). Single visible search path verified by pumping:
+  6 via shell = exactly 1 search icon; tab alone (>5) = filter only,
+  0 search. RTL: shell actions direction-aware; header `Row`
+  direction-aware; 320/1.3x/ar/dark covered by recaptured matrix.
+- Tests: 16 testWidgets unchanged in count (updated 2 loci pins:
+  `>5` now asserts filter-only + 0 search in tab; search-sheet opens via
+  `CustomerBookingsTabState.openSearch()` same sheet). After-frames
+  recaptured in `after-customer-bookings/` (idle header filter-only, search
+  sheets same content) and compared back-to-back GREEN. No new ARB keys.
+  STOPs: none (no logic/data/predicate change needed).

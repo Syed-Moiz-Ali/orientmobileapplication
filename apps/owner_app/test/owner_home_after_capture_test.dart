@@ -32,7 +32,6 @@ import 'package:owner_app/features/dashboard/data/datasources/owner_remote_datas
 import 'package:owner_app/features/dashboard/presentation/providers/dashboard_ui_providers.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/team_providers.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/dashboard_body.dart';
-import 'package:owner_app/features/dashboard/presentation/widgets/owner_dashboard_page.dart';
 import 'package:owner_app/features/dashboard/presentation/widgets/owner_activity_feed_tab.dart';
 import 'package:owner_app/l10n/gen/owner_localizations.dart';
 
@@ -365,14 +364,13 @@ void _drainExpected(WidgetTester tester, String name) {
   }
 }
 
-/// Opens the existing command palette via the home header search action.
+/// Opens the existing command palette via the shell AppBar search action.
 Future<void> _openSearch(WidgetTester tester) async {
-  // Round-2 fix: header search sits on the SAME row as the title (plain
-  // Row, not AppPageHeader which stacked it below the subtitle) — scope
-  // to OwnerDashboardPage so the finder stays unambiguous vs the shell
-  // WorkspaceAppBar trigger (same palette contract).
+  // Ruling (a) relocation (ui/fix-rulings): the shell AppBar owns the single
+  // visible search path (top-right action cluster); the page header shows
+  // none — scope to AppAppBar (same palette contract).
   final search = find.descendant(
-    of: find.byType(OwnerDashboardPage),
+    of: find.byType(AppAppBar),
     matching: find.byIcon(Icons.search_rounded),
   );
   expect(search, findsOneWidget);

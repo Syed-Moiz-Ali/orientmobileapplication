@@ -350,8 +350,11 @@ Future<void> _capture(
   await tester.pump(const Duration(milliseconds: 300));
 
   if (openSearch) {
-    // Locale-independent: search icon (tooltip is localized in ar).
-    await tester.tap(find.byIcon(Icons.search_rounded));
+    // Ruling (a): shell owns the single search trigger — open the SAME sheet
+    // via the tab state's shell entry point (same predicate/target/reveal).
+    tester
+        .state<CustomerBookingsTabState>(find.byType(CustomerBookingsTab))
+        .openSearch();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(milliseconds: 300));

@@ -5246,6 +5246,30 @@ abstract class StaffLocalizations {
   /// **'No jobs match your search and filter.'**
   String get techJobsNoMatchHint;
 
+  /// Task find sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Search tasks'**
+  String get techTaskSearch;
+
+  /// Task find sheet field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search by task name'**
+  String get techTaskSearchHint;
+
+  /// Task find no-match title
+  ///
+  /// In en, this message translates to:
+  /// **'No matching tasks'**
+  String get techTaskNoMatch;
+
+  /// Task find no-match hint
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks match your search.'**
+  String get techTaskNoMatchHint;
+
   /// Jobs clear action
   ///
   /// In en, this message translates to:

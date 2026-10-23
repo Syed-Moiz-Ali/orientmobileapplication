@@ -239,3 +239,17 @@ owner. No silent filtering.
 - Proposed owner: state owners — surface refresh failures on the list
   state; frontend adds error+retry only then.
 - Status: open.
+
+## 16. CRM stage/priority/role codes have no Arabic glossary (render English in ar)
+
+- Feed/copy: CRM stage codes, task priority labels and team role names
+  arrive without localized variants (same family as entry 9); no ARB role
+  or stage glossary exists, and inventing an Arabic glossary in
+  presentation is prohibited.
+- Evidence: adversarial CRM reviews (ui/list-crm + ui/fix-rulings) —
+  `Active` pills, `High`/`Medium`/`Low` (tasks now map existing `tkHigh`
+  keys; CRM stage codes and `Closer`-style roles stay verbatim),
+  ar frames show Latin codes inside mirrored chrome.
+- Proposed owner: backend/product + native review — return locale-aware
+  codes or an approved Arabic glossary; frontend maps via ARB only then.
+- Status: open. Presentation renders feed codes verbatim; no invented Arabic.

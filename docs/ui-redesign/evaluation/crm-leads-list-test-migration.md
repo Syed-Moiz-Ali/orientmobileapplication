@@ -11,7 +11,11 @@ after the rebuild (13 testWidgets, all structural). Counts never down
 `adversarial-crm-leads-review.md`) migrated the same file to **14
 testWidgets**, all structural. WAVE-2 fixes (F6 header, F9 shell guard)
 migrated the same file to **15 testWidgets**, all structural. Counts
-never down (8 -> 13 -> 14 -> 15).
+never down (8 -> 13 -> 14 -> 15). Ruling (a) shell relocation keeps the
+same file at **15 testWidgets** (assertions updated verbatim below, none
+added/removed) + **8 new shell relocation tests** in
+`apps/crm_app/test/crm_shell_search_relocation_test.dart` (all
+structural). Counts never down (8 -> 13 -> 14 -> 15 -> 15 + 8 shell).
 
 ## Inventory (existing CRM tests before this change)
 
@@ -302,3 +306,41 @@ reuses `navLeads`, `leadsSearchTitle/FilterTitle`, `leadsAdd`,
 `tkCountN`, `chromeRefresh`). The 4 new keys (`tmRevenue`,
 `tmSearchTitle/Hint/NoMatch`) belong to the sales-team surface; EN/AR
 parity holds (`flutter gen-l10n` ran clean from `apps/crm_app`).
+
+## Ruling (a) search relocation (presentation/flow-wiring only)
+
+- Shell (`crm_dashboard_view.dart` `_CrmChrome`): the AppBar search
+  trigger is the SINGLE visible icon on the leads tab — contextual,
+  opening the EXISTING `showCrmLeadsSearchSheet` (same widget, same
+  provider list, same `LeadDetailSheet.show` dossier route), gated by the
+  same `totalLoaded > 5` condition relocated from the list header. ≤ 5 →
+  no trigger (sanctioned exception holds). Non-list tabs keep the palette
+  (`_openSearch`, jump-to-dossier over the first 50) untouched; Ctrl+K
+  (`WorkspaceSearchShortcuts`) untouched.
+- List (`crm_leads_page.dart`): header search icon REMOVED (filter +
+  kanban + Add stay where they are); `crm_leads_search_sheet.dart`
+  import + `_revealLead` removed (page scroll anchors stay as row keys).
+  No logic/data/predicate change (local agent/sort presentation state is
+  page-owned — the shell sheet reads the provider list; STOP below).
+- Changed assertions (same 15 testWidgets, verbatim): `>5` now asserts
+  `Filter leads` present + `Search leads` absent; same-row test now pins
+  filter-title Row + no search; search-sheet test opens the same sheet
+  directly (shell owns the trigger) with identical no-match + Clear pins.
+- Tap table (AFTER ≤ BEFORE): Open list ≤ 1; Find + open lead ≤ 2
+  (shell icon + result → dossier, vs header icon + reveal + record tap);
+  Add ≤ 2 (same sheet); Call ≤ 1 from list; Move stage ≤ 3; Retry ≤ 1.
+- Frames recaptured in the living dir `after-crm-leads/` (11 PNGs) with
+  `--update-goldens` limited to `crm_after_leads_capture_test.dart`
+  (search-open now opens the same sheet directly), compared back-to-back
+  GREEN. RTL mirror, 320/1.3x clean (capture matrix + shell RTL test).
+- STOPs: (1) compact list-mode scroll-reveal needs the page scroll
+  anchors — the shell leads path goes straight to the dossier (same
+  destination, fewer taps, no regression); (2) the shell sheet reads the
+  provider list without the page-local agent/sort presentation state —
+  replicating it in the shell would be logic; filed, not changed.
+- R1 gate check (ui/fix-rulings, no change needed): the shell leads gate
+  already reads the SAME source the page renders —
+  `ref.watch(crmLeadProvider).length` vs page
+  `ref.watch(crmLeadProvider).length` (`crm_leads_page.dart:110`); sheet
+  reads `ref.read(crmLeadProvider)` (same provider list). No defect, no
+  edit. Counts never down (8 -> 13 -> 14 -> 15 -> 15 + 8 shell).

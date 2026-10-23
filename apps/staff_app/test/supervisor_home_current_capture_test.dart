@@ -1,6 +1,7 @@
 // CURRENT-STATE capture for the supervisor home (phase-5 home + 4+More nav +
-// single-affordance shell: shell search trigger hidden on the floor tab,
-// header search kept, same sheet).
+// single-affordance shell: the shell AppBar search trigger is the single
+// search path on every tab (floor scope here, same sheet); the floor header
+// glyph is removed.
 //
 // Pumps the FULL SupervisorScaffold (greeting header + AppAppBar shell bar +
 // floor tab + 4-primary+More AppBottomNav frame) with deterministic fakes and
@@ -351,9 +352,9 @@ Future<void> _capture(
   debugDisableShadows = oldShadows;
 }
 
-/// Search-open variant: same shell pump as [_capture], then taps the floor
-/// header search trigger (the single search path on the floor tab — the shell
-/// bar trigger stays hidden there) and golden-captures with the floor search
+/// Search-open variant: same shell pump as [_capture], then taps the shell
+/// AppBar search trigger (the single search path on the floor tab — the floor
+/// header glyph is removed) and golden-captures with the floor search
 /// sheet open.
 Future<void> _captureSearchOpen(
   WidgetTester tester, {
@@ -447,8 +448,8 @@ Future<void> _captureSearchOpen(
   await tester.pump(const Duration(milliseconds: 300));
   _drainExpected(tester, name);
 
-  // Single search affordance on the floor tab: the shell bar trigger is
-  // hidden (index 0), so exactly one search glyph renders (floor header).
+  // Single search affordance on the floor tab: the shell AppBar owns the one
+  // search glyph (floor scope); the floor header keeps title + subtitle only.
   final search = find.byIcon(Icons.search_rounded);
   expect(search, findsOneWidget);
   await tester.tap(search);

@@ -108,6 +108,13 @@ PARTIAL — two sanctioned deviations, each with its reason:
   saving any tap on any top-3 task, violating U0 (fewer steps) and C16 (one
   path per task). The > 5-item U1 exception therefore does NOT apply here —
   this screen has no find-aid by design, recorded here.
+- OVERRIDE (ruling a, ui/fix-rulings): ruling (a) ("EVERY screen") overrides
+  DEVIATION 1 above — the inbox now exposes the SAME > 5-gated search path as
+  the vehicles/bookings/lists family (visible ONLY when loaded > 5; ≤5/empty
+  show none; single AppBar action, same sheet/predicates/targets/routes). The
+  deviation text stays for history; the no-search exception no longer applies.
+  Taps: find ≤1+keys (new capability); all budgeted tasks unchanged (open ≤1,
+  open destination ≤1 from list, mark-all ≤1 from list, mark-one ≤2).
 - DEVIATION 2 — NO filter sheet: the honest category facets already ARE the
   group sections (service / approvals / invoices / general, stable order); a
   filter sheet over the same facets would duplicate the sections (two paths to

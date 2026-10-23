@@ -17,8 +17,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/supervisor/data/datasources/supervisor_remote_datasource.dart';
+import 'package:staff_app/features/supervisor/domain/entities/supervisor_entities.dart';
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_jobs_tab.dart';
+import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_register_search.dart';
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
 // ---------------------------------------------------------------- fixtures
@@ -169,10 +171,26 @@ Future<void> _pumpJobs(
   expect(tester.takeException(), isNull);
 }
 
-Finder _searchBox() => find.descendant(
+Finder _sheetSearchBox() => find.descendant(
   of: find.byType(AppSearchField),
   matching: find.byType(TextField),
 );
+
+/// Opens the shell-owned register search sheet over the tab's loaded jobs.
+/// The sheet is scaffold-owned (ruling (a) scope unification); the tab pumps
+/// alone here, so the test opens the same sheet the Jobs-tab AppBar icon
+/// opens, over the same `notifier.jobs` scope.
+Future<void> _openRegisterSheet(
+  WidgetTester tester,
+  void Function(AssignedJobEntity) onSelect,
+) async {
+  final ctx = tester.element(find.byType(SupervisorJobsTab));
+  final container = ProviderScope.containerOf(ctx);
+  final jobs = container.read(supervisorDashboardProvider.notifier).jobs;
+  showSupervisorRegisterSearch(ctx, jobs: jobs, onSelect: onSelect);
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 300));
+}
 
 /// Taps a status chip inside the shared filter bar (the summary strip repeats
 /// the same labels, so the bar scope keeps the finder unambiguous).
@@ -225,24 +243,39 @@ void main() {
     expect(find.text('1/4 tasks'), findsOneWidget);
   });
 
-  testWidgets('inline search narrows by job card, customer, vehicle, status', (
+  testWidgets('register search sheet narrows by job card, customer, vehicle, status', (
     tester,
   ) async {
     await _pumpJobs(tester);
+    final selected = <AssignedJobEntity>[];
+    await _openRegisterSheet(tester, selected.add);
 
-    await tester.enterText(_searchBox(), 'sara');
+    // The tab keeps no inline field (ruling (a) single path): the sheet owns
+    // the only search box on this surface.
+    expect(_sheetSearchBox(), findsOneWidget);
+
+    await tester.enterText(_sheetSearchBox(), 'sara');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
-    expect(find.text('JC-102'), findsOneWidget);
-    expect(find.text('JC-101'), findsNothing);
-    expect(find.text('JC-900'), findsNothing);
+    // Sheet filters to Sara's record; the background tab behind the modal
+    // still lists every row (sheet scope only). JC-102 reads in both trees,
+    // the filtered-out refs read only behind the modal.
+    expect(find.text('JC-102'), findsWidgets);
+    expect(find.text('JC-101'), findsOneWidget);
+    expect(find.text('JC-900'), findsOneWidget);
 
-    await tester.enterText(_searchBox(), 'JC-900');
+    await tester.enterText(_sheetSearchBox(), 'JC-900');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     // The query itself stays in the field, so the ref reads twice.
     expect(find.text('JC-900'), findsWidgets);
-    expect(find.text('JC-101'), findsNothing);
+    expect(find.text('JC-101'), findsOneWidget);
+
+    // A result opens the same assign contract the register entry opens.
+    await tester.tap(find.text('JC-900').last);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(selected.map((j) => j.jobCard), ['JC-900']);
   });
 
   testWidgets('status rail filters by bucket and re-tap clears', (
@@ -265,12 +298,13 @@ void main() {
     expect(find.text('JC-101'), findsNothing);
   });
 
-  testWidgets('no match offers a clear action that resets the list', (
+  testWidgets('no match offers a clear action that resets the sheet', (
     tester,
   ) async {
     await _pumpJobs(tester);
+    await _openRegisterSheet(tester, (_) {});
 
-    await tester.enterText(_searchBox(), 'zzz-no-such-job');
+    await tester.enterText(_sheetSearchBox(), 'zzz-no-such-job');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
@@ -279,15 +313,15 @@ void main() {
     // current EmptyState/AppInfoPanel UI and on the recomposed atoms.
     expect(find.textContaining('No matching jobs'), findsOneWidget);
 
-    // The no-match panel's clear restores all three rows.
+    // The sheet's clear restores all three register rows.
     final clears = find.textContaining('Clear');
     expect(clears, findsWidgets);
     await tester.tap(clears.first);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
-    expect(find.text('JC-101'), findsOneWidget);
-    expect(find.text('JC-102'), findsOneWidget);
-    expect(find.text('JC-900'), findsOneWidget);
+    expect(find.text('JC-101'), findsWidgets);
+    expect(find.text('JC-102'), findsWidgets);
+    expect(find.text('JC-900'), findsWidgets);
   });
 
   testWidgets('empty register shows the empty state with assign', (

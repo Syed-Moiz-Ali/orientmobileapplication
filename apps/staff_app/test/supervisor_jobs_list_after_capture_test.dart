@@ -4,9 +4,10 @@
 // and writes viewport PNGs into docs/ui-redesign/baseline/after-supervisor-jobs/
 // for before/after review. Staff light-only (en + ar 360x800, empty/error/
 // loading 360x800, filter + search 360x800, 320x568 data, 1.3x data, tablet
-// data). The shell bar bay-search sheet is scaffold-owned (off-floor guard
-// untouched) — the tab's own search path is the inline filter captured here
-// (single-search rule: inline register vs bay lookup are different targets).
+// data). The shell bar register sheet is scaffold-owned (ruling (a) scope
+// unification — same 4-field predicate over AssignedJobEntity); the tab keeps
+// the status rail only, so the `search` frame captures the register sheet
+// open with a query (single search path per screen).
 //
 // Run (from apps/staff_app):
 //   flutter test --tags baseline --update-goldens test/supervisor_jobs_list_after_capture_test.dart   (generate)
@@ -28,6 +29,7 @@ import 'package:shared_core/shared_core.dart';
 import 'package:staff_app/features/supervisor/data/datasources/supervisor_remote_datasource.dart';
 import 'package:staff_app/features/supervisor/presentation/providers/supervisor_providers.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_jobs_tab.dart';
+import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_register_search.dart';
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
 const _outDir = 'after-supervisor-jobs';
@@ -286,7 +288,7 @@ Future<void> _capture(
 String _name(String state, double scale, String locale, Size size) =>
     '${state}_light_${scale.toStringAsFixed(1)}_${locale}_${size.width.toInt()}x${size.height.toInt()}.png';
 
-Finder _searchBox() => find.descendant(
+Finder _sheetSearchBox() => find.descendant(
   of: find.byType(AppSearchField),
   matching: find.byType(TextField),
 );
@@ -381,7 +383,17 @@ void main() {
       tester,
       name: _name('search', 1.0, 'en', const Size(360, 800)),
       interact: (t) async {
-        await t.enterText(_searchBox(), 'sara');
+        // Ruling (a) scope unification: the register sheet (shell-owned)
+        // replaces the removed inline filter; capture it with a query.
+        final ctx = t.element(find.byType(SupervisorJobsTab));
+        final container = ProviderScope.containerOf(ctx);
+        final jobs = container
+            .read(supervisorDashboardProvider.notifier)
+            .jobs;
+        showSupervisorRegisterSearch(ctx, jobs: jobs, onSelect: (_) {});
+        await t.pump();
+        await t.pump(const Duration(milliseconds: 300));
+        await t.enterText(_sheetSearchBox(), 'sara');
         await t.pump();
         await t.pump(const Duration(milliseconds: 100));
       },

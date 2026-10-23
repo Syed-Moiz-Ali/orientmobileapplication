@@ -132,3 +132,19 @@ REBUTTED (no code change; evidence):
 
 Tap walk AFTER-fix: open ≤1 ✓ · start QC 2 ✓ · retry 1 ✓. The `OH/SA`
 pixels are unchanged (tooltip is long-press/SR only) — no golden churn.
+
+## Ruling (d) fix (ui/fix-rulings — presentation only, isolated to row widget)
+
+Ruling (d) overrides the D1-rebuttal binding above: sv-review rows lead with
+vehicle/customer (human-recognizable title), JC ref is small mono meta LAST —
+consistent with owner cards. Applied to `_QcRow` only
+(`supervisor_review_tab.dart`): title = `vehicleInfo` (fallback `customerName`,
+`titleSmall` w700) + same `AppStatusChip` pill → meta = `customerName` +
+tech initials (same `Tooltip`) → JC ref small mono (`supervisorMono`, 11,
+`onSurfaceVariant`, LTR-locked) LAST. Tokens only; same data/predicates/routes/
+sheets (same `awaitingCompletions`, same progress math, same
+`showQcChecklistSheet` args, same Start-QC/Retry seats and taps ≤ before).
+Verbatim behavior: header/empty/error/loading copy, sheet entry, provider quirk
+all unchanged; characterization counts 6 -> 6 (never down); zero new ARB keys.
+`after-supervisor-review/` idle frames (en/ar/320/1.3x/tablet) recaptured for
+the new order; back-to-back green.

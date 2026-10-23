@@ -14,12 +14,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/support/crm_l10n.dart';
-import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_sales_team_search_sheet.dart';
 
 /// Display-only revenue mapping (F7, same class as the leads fix): the
 /// String feed field renders through the existing `AppFormatters.moneyAED`
-/// so figures group (`AED 12,000` en / `12,000 د.إ` ar, Latin digits per
-/// the frozen policy). Digits are extracted for display only — feed order,
+/// so figures group (`AED 12,000` both locales, Latin digits + Latin code
+/// per the frozen money ruling, LTR-locked). Digits are extracted for
+/// display only — feed order,
 /// rank math and the raw field are untouched (no parsing semantics change).
 /// Unparseable values render verbatim, never invented.
 String _displayRevenue(BuildContext context, String revenue) {
@@ -42,7 +42,9 @@ class CrmSalesTeamPage extends ConsumerStatefulWidget {
 }
 
 class _CrmSalesTeamPageState extends ConsumerState<CrmSalesTeamPage> {
-  /// Scroll anchors for search-result reveals (presentation only).
+  /// Row keys (presentation only; the search-result reveal that consumed
+  /// them moved to the shell AppBar per ruling (a) — see STOP in the shell
+  /// helper; no reveal closure remains here).
   final Map<String, GlobalKey> _scrollKeys = {};
 
   GlobalKey _scrollKeyFor(String id) =>
@@ -57,28 +59,10 @@ class _CrmSalesTeamPageState extends ConsumerState<CrmSalesTeamPage> {
       (id, _) => !team.asMap().entries.any((e) => 'row_${e.key}' == id),
     );
 
-    // Family > 5 search rule (F8): the brief's no-search exception covered
-    // the 3-row idle; a 6-row roster scrolls (scrolled golden proves
-    // overflow), so the list-scoped search sheet applies — same threshold
-    // as the leads/tasks lists.
-    final showFindAids = team.length > 5;
-
-    void reveal(int index) {
-      final ctx = _scrollKeys['row_$index']?.currentContext;
-      if (ctx != null) {
-        Scrollable.ensureVisible(
-          ctx,
-          duration: const Duration(milliseconds: 300),
-          alignment: 0.1,
-        );
-      }
-    }
-
-    Future<void> openSearch() => showCrmSalesTeamSearchSheet(
-          context,
-          team: team,
-          onSelect: (member) => reveal(team.indexOf(member)),
-        );
+    // Ruling (a): the family >5 search relocated to the shell AppBar
+    // (contextual per tab, same >5 condition, same team sheet) — the list
+    // header shows no search icon; the shell trigger is the single visible
+    // search path. Rows stay view-only (search reveals, never navigates).
 
     if (team.isEmpty) {
       // Empty keeps the header (U0 orientation) above the calm
@@ -87,12 +71,7 @@ class _CrmSalesTeamPageState extends ConsumerState<CrmSalesTeamPage> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: _TeamHeader(
-              title: t.tmTitle,
-              subtitle: t.tmSub,
-              showSearch: false,
-              onSearch: openSearch,
-            ),
+            child: _TeamHeader(title: t.tmTitle, subtitle: t.tmSub),
           ),
           Expanded(
             child: ListView(
@@ -115,12 +94,7 @@ class _CrmSalesTeamPageState extends ConsumerState<CrmSalesTeamPage> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: _TeamHeader(
-            title: t.tmTitle,
-            subtitle: t.tmSub,
-            showSearch: showFindAids,
-            onSearch: openSearch,
-          ),
+          child: _TeamHeader(title: t.tmTitle, subtitle: t.tmSub),
         ),
         Expanded(
           child: ListView.separated(
@@ -150,27 +124,18 @@ class _CrmSalesTeamPageState extends ConsumerState<CrmSalesTeamPage> {
   }
 }
 
-/// Plain-Row header (F6 pattern shared with the leads/tasks lists): title
-/// and the find-aid share ONE Row so the search icon stays top-end
-/// same-row on compact. Row mirrors in RTL (search lands top-start in
-/// Arabic — correct end side). Same >5 condition, same sheet — placement
-/// only.
+/// Plain-Row header (F6 pattern shared with the leads/tasks lists, ruling
+/// (a): no search icon here — the shell AppBar owns the single visible
+/// search path). Row mirrors in RTL. Same >5 condition lives in the shell,
+/// same sheet — placement only.
 class _TeamHeader extends StatelessWidget {
   final String title;
   final String subtitle;
-  final bool showSearch;
-  final VoidCallback onSearch;
 
-  const _TeamHeader({
-    required this.title,
-    required this.subtitle,
-    required this.showSearch,
-    required this.onSearch,
-  });
+  const _TeamHeader({required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
-    final t = context.cx;
     final theme = Theme.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,14 +167,6 @@ class _TeamHeader extends StatelessWidget {
             ),
           ),
         ),
-        if (showSearch) ...[
-          const SizedBox(width: AppDimensions.s12),
-          AppIconButton(
-            icon: Icons.search_rounded,
-            tooltip: t.tmSearchTitle,
-            onPressed: onSearch,
-          ),
-        ],
       ],
     );
   }

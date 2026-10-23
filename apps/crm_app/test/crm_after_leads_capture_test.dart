@@ -12,6 +12,7 @@ import 'package:crm_app/features/crm_dashboard/domain/entities/crm_entities.dart
 import 'package:crm_app/features/crm_dashboard/domain/repositories/crm_repository.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_leads_page.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_leads_search_sheet.dart';
 import 'package:crm_app/l10n/gen/crm_localizations.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -305,12 +306,16 @@ void main() {
   });
 
   testWidgets('search sheet open light en', (tester) async {
+    final leads = [for (var i = 0; i < 6; i++) _lead(i)];
     await _capture(
       tester,
       name: 'leads_search-open_light_1.0_en_360x800.png',
-      repo: leadsRepo(leads: [for (var i = 0; i < 6; i++) _lead(i)]),
+      repo: leadsRepo(leads: leads),
       interact: () async {
-        await tester.tap(find.byTooltip('Search leads'));
+        // Ruling (a): the shell AppBar owns the trigger; the capture pumps
+        // the page alone, so the same sheet opens directly here.
+        final ctx = tester.element(find.byType(CrmLeadsPage));
+        showCrmLeadsSearchSheet(ctx, leads: leads, onSelect: (_) {});
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 400));
       },
