@@ -162,3 +162,28 @@ all structural). Counts never down (8 -> 15).
 `vhDeleteFail*`, `vhInService`, `vhFallbackName`, `vhKeepCta`,
 `vhRemoveNoName/Title/Body*`, `stRefreshFail`, `stRetry`. No ALL CAPS
 strings added (C16/C17).
+
+## Ruling (a) search relocation (ui/fix-rulings — presentation/flow-wiring only)
+
+- Before locus: `_VehiclesHeader` search icon top-right of the page header
+  (with filter + Add). After locus: shell `WorkspaceAppBar.onSearch`
+  top-right adjacent to bell/avatar; page header shows filter + Add only,
+  zero search icons. Same sheet/predicate/target/reveal
+  (`showCustomerVehiclesSearchSheet`, display-name/plate/specs substring +
+  normalized plate, `ensureVisible` reveal via tab scroll keys, same
+  routes) — only WHICH visible icon opens it moved. `>5` gating relocated
+  verbatim: shell icon visible ONLY when loaded vehicles > 5 (same
+  `showFindAids` condition); `≤5` shows no search anywhere.
+- Taps: unchanged (Book/Edit/Remove/View/Track/Retry/Add budgets per tap
+  table above; search was never a budgeted top-task, find ≤1+keys preserved
+  via same sheet). Single visible search path verified by pumping: 6 via
+  shell = exactly 1 search icon; 2 via shell = 0; tab alone (>5) = filter
+  only, 0 search. RTL: shell actions direction-aware (`AppBar` mirrors;
+  avatar padding `EdgeInsetsDirectional.end`); header `Row` already
+  direction-aware; 320/1.3x/ar/dark covered by recaptured matrix.
+- Tests: 16 testWidgets unchanged in count (updated 2 loci pins:
+  `>5` now asserts filter-only + 0 search in tab; search-sheet opens via
+  `CustomerVehiclesTabState.openSearch()` same sheet). After-frames
+  recaptured in `after-vehicles-list/` (idle-6 header filter-only, search
+  sheets same content) and compared back-to-back GREEN. No new ARB keys.
+  STOPs: none (no logic/data/predicate change needed).

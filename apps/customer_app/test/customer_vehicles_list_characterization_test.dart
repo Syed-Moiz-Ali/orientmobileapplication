@@ -248,11 +248,18 @@ void main() {
       expect(find.text('Toyota Camry · 2021'), findsOneWidget);
     });
 
-    testWidgets('>5: search + filter icons appear together', (tester) async {
+    testWidgets('>5: filter icon in header, search lives in shell only', (
+      tester,
+    ) async {
       await _pumpList(tester, state: _state(vehicles: _six()));
       expect(find.text('6 registered vehicles'), findsOneWidget);
-      expect(find.byTooltip('Search vehicles'), findsOneWidget);
+      // Ruling (a): single visible search path lives in the shell AppBar,
+      // not in the page header. The tab shows filter only (>5 gating kept).
+      expect(find.byTooltip('Search vehicles'), findsNothing);
       expect(find.byTooltip('Filter vehicles'), findsOneWidget);
+      // Exactly one filter affordance in the tab (no duplicate search path).
+      expect(find.byIcon(Icons.filter_list_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.search_rounded), findsNothing);
       for (var i = 0; i < 6; i++) {
         expect(find.byKey(ValueKey('vehicle-v$i')), findsOneWidget);
       }
@@ -263,7 +270,11 @@ void main() {
       tester,
     ) async {
       await _pumpList(tester, state: _state(vehicles: _six()));
-      await tester.tap(find.byTooltip('Search vehicles'));
+      // Shell owns the single search trigger: open the SAME sheet via the
+      // tab state's shell entry point (same predicate/target/reveal).
+      tester
+          .state<CustomerVehiclesTabState>(find.byType(CustomerVehiclesTab))
+          .openSearch();
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.byType(AppSearchField), findsOneWidget);

@@ -14,7 +14,6 @@ import 'package:customer_app/features/customer/presentation/widgets/customer_hom
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_header.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_hero.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_quick_actions.dart';
-import 'package:customer_app/features/customer/presentation/widgets/customer_home_search_sheet.dart';
 
 /// Customer Home — an Airbnb-grade garage feed answering four questions in
 /// the first viewport: who am I, which car needs me, what is happening with
@@ -175,16 +174,6 @@ class CustomerHomeTab extends ConsumerWidget {
             CustomerHomeHeader(
               firstName: state.profile?.firstName ?? '',
               isNewCustomer: isNewCustomer,
-              onSearch: () => _showSearch(
-                context,
-                vehicles: vehicles,
-                bookings: bookings,
-                onSelectVehicle: bookVehicle,
-                onSelectBooking: (booking) => context.push(
-                  AppRoutes.customerBookingDetail,
-                  extra: booking,
-                ),
-              ),
             ),
             const SizedBox(height: AppSpacing.screenPaddingPhone),
             if (wide)
@@ -262,9 +251,10 @@ class CustomerHomeTab extends ConsumerWidget {
   }
 }
 
-/// Skeleton mirroring the loaded home layout: greeting header + search icon
-/// block, hero card + full-width CTA block, 2x2 quick-action tiles, garage
-/// pair, then activity rows — no full-screen spinner.
+/// Skeleton mirroring the loaded home layout: greeting header (no search icon
+/// here — shell AppBar owns the single search path per ruling a), hero card +
+/// full-width CTA block, 2x2 quick-action tiles, garage pair, then activity
+/// rows — no full-screen spinner.
 class _HomeLoadingSkeleton extends StatelessWidget {
   const _HomeLoadingSkeleton();
 
@@ -273,15 +263,7 @@ class _HomeLoadingSkeleton extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: const [
-            Expanded(
-              child: AppShimmerSkeleton.textBlock(lines: 2, lineHeight: 14),
-            ),
-            SizedBox(width: AppSpacing.lg),
-            AppShimmerSkeleton.circle(size: 48),
-          ],
-        ),
+        const AppShimmerSkeleton.textBlock(lines: 2, lineHeight: 14),
         const SizedBox(height: AppSpacing.screenPaddingPhone),
         const AppShimmerSkeleton.card(height: 190),
         const SizedBox(height: AppSpacing.md),
@@ -315,52 +297,6 @@ class _HomeLoadingSkeleton extends StatelessWidget {
       ],
     );
   }
-}
-
-/// Opens the full-screen search sheet over the home's existing vehicles +
-/// bookings (U1 — same full-screen modal mechanism as the advisor home).
-/// No new routes: result taps reuse the home's own destinations.
-void _showSearch(
-  BuildContext context, {
-  required List<CustomerVehicleEntity> vehicles,
-  required List<CustomerBookingEntity> bookings,
-  required void Function(CustomerVehicleEntity vehicle) onSelectVehicle,
-  required void Function(CustomerBookingEntity booking) onSelectBooking,
-}) {
-  final size = MediaQuery.sizeOf(context);
-  showModalBottomSheet(
-    context: context,
-    backgroundColor: Colors.transparent,
-    isScrollControlled: true,
-    builder: (sheetContext) => Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
-      ),
-      // Tight full-size box: the sheet route sizes to content, so the
-      // content itself claims the screen (U1 full-screen search). The box
-      // carries the surface token (the route Material is transparent).
-      child: SizedBox.fromSize(
-        size: size,
-        child: ColoredBox(
-          color: Theme.of(sheetContext).colorScheme.surface,
-          child: SingleChildScrollView(
-            child: CustomerHomeSearchSheet(
-              vehicles: vehicles,
-              bookings: bookings,
-              onSelectVehicle: (vehicle) {
-                Navigator.pop(sheetContext);
-                onSelectVehicle(vehicle);
-              },
-              onSelectBooking: (booking) {
-                Navigator.pop(sheetContext);
-                onSelectBooking(booking);
-              },
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
 }
 
 /// Most recent finished work, used for a compact activity summary. Provider

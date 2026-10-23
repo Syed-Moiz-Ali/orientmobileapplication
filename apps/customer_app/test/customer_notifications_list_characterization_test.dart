@@ -39,6 +39,44 @@ const _general = CustomerNotificationEntity(
   isRead: true,
 );
 
+// D3 fixtures (>5 rule): search-visible cases need a loaded inbox of 6 so the
+// AppBar action appears; titles/bodies stay verbatim stored-field style.
+const _service2 = CustomerNotificationEntity(
+  id: 'n5',
+  title: 'Technician assigned',
+  body: 'Ali will handle your Camry service today.',
+  time: '5h ago',
+  type: NotifType.bookingAssigned,
+  isRead: true,
+);
+
+const _approval2 = CustomerNotificationEntity(
+  id: 'n6',
+  title: 'Estimate approved',
+  body: 'The brake estimate was approved. Work resumes today.',
+  time: '8h ago',
+  type: NotifType.estimateApproved,
+  isRead: true,
+);
+
+const _invoice = CustomerNotificationEntity(
+  id: 'n7',
+  title: 'Invoice ready',
+  body: 'Invoice INV-2041 is ready for payment.',
+  time: '1d ago',
+  type: NotifType.invoiceReady,
+  isRead: true,
+);
+
+const _inbox6 = <CustomerNotificationEntity>[
+  _service,
+  _approval,
+  _general,
+  _service2,
+  _approval2,
+  _invoice,
+];
+
 class _FixedDashNotifier extends CustomerDashboardNotifier {
   final CustomerDashboardState fixed;
   _FixedDashNotifier(this.fixed);
@@ -112,9 +150,11 @@ void main() {
       expect(find.text('Notifications'), findsOneWidget);
       expect(find.text('1 unread'), findsOneWidget);
       expect(find.text('Mark all read'), findsOneWidget);
-      // No find-aids by design (brief deviations): triage is recency-based,
-      // categories already are the group sections.
+      // D3 (ui/fix-rulings): ONE rule (>5 loaded) everywhere — ≤5 shows NO
+      // search icon (this 2-item inbox), same as vehicles/bookings family.
+      // No filter by design.
       expect(find.byTooltip('Search notifications'), findsNothing);
+      expect(find.byIcon(Icons.search_rounded), findsNothing);
       expect(find.byTooltip('Filter notifications'), findsNothing);
     });
 
@@ -177,6 +217,47 @@ void main() {
       expect(find.byType(FilledButton), findsNothing);
       expect(find.byType(AppPillButton), findsNothing);
       expect(find.byType(RefreshIndicator), findsNothing);
+      // No data to find: single search path hidden when inbox empty.
+      expect(find.byTooltip('Search notifications'), findsNothing);
+      expect(find.byIcon(Icons.search_rounded), findsNothing);
+    });
+
+    testWidgets('search visible only when loaded >5 + sheet filters', (
+      tester,
+    ) async {
+      await _pumpList(tester, state: _state(notifications: _inbox6));
+
+      // D3 ONE rule: 6 loaded → exactly 1 search icon, top-right.
+      expect(find.byTooltip('Search notifications'), findsOneWidget);
+      await tester.tap(find.byTooltip('Search notifications'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(AppSearchField), findsOneWidget);
+      expect(find.text('Search by title or message'), findsOneWidget);
+      // D4: result rows render whole — primary titles wrap ≤2 (no 1-line cut).
+      final sheetTitles = tester.widgetList<Text>(
+        find.text('Estimate needs approval'),
+      );
+      expect(sheetTitles, isNotEmpty);
+      for (final w in sheetTitles) {
+        expect(w.maxLines, 2);
+      }
+      await tester.enterText(find.byType(TextField), 'Booking confirmed');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      // Sheet opens over the inbox ListView, so the background row stays in
+      // the tree (plus the field value itself): the filtered sheet adds hits,
+      // the unfiltered row stays at one (background only).
+      expect(find.text('Booking confirmed'), findsWidgets);
+      expect(find.text('Estimate needs approval'), findsOneWidget);
+      await tester.enterText(find.byType(TextField), 'zzz-no-match');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(
+        find.text('No notifications match your search.'),
+        findsOneWidget,
+      );
+      expect(find.text('Clear'), findsOneWidget);
     });
 
     testWidgets('loading: mirroring skeleton, no rows', (tester) async {

@@ -178,3 +178,52 @@ keep the bar trigger. No logic changes.
   uppercase styling.
 - Audit counts: characterization still **10 tests / 36 expects** — no test
   added or removed, no expect added or removed (counts never down).
+
+## Search relocation ruling (a) (ui/fix-rulings, single visible path in shell)
+
+Ruling (a) flips the owner dashboard home to shell-kept: the shell
+`_OwnerChrome` AppBar owns the ONE visible search path on every tab
+including the dashboard (same `openOwnerSearch` palette, top-right action
+cluster adjacent to bell/avatar); the home `_HomeHeader` page icon is
+removed. Presentation/flow-wiring only (same palettes/sheets/routes/targets);
+no logic, no data, no predicate changes. Taps unchanged (2 via palette).
+
+### Changed test assertions (additive rows)
+
+| Test | Old | New | Kind |
+|---|---|---|---|
+| palette search path reaches approvals in two taps (`owner_dashboard_characterization_test.dart`) | Finder scoped to `OwnerDashboardPage` (header U1; shell trigger hidden on tab 0) | Finder scoped to `AppAppBar` (shell trigger; page header shows none) | structural (same palette, same 2 taps, same triage route) |
+| after-capture search-open (`owner_home_after_capture_test.dart` `_openSearch`) | Finder scoped to `OwnerDashboardPage` descendant (header U1) | Finder scoped to `AppAppBar` descendant (shell trigger; page header shows none) | structural (same palette/route; only which affordance is visible) |
+
+### Behavior assertions (verbatim, unchanged)
+
+- Tap counts (brief BEFORE, verified from code): glance hero + pods =
+  **0 taps** (hero + first pods above the fold at launch); register row (or
+  section View-all) -> `AppRoutes.jobCards` = **1 tap**; approvals tile ->
+  `AppRoutes.pendingApprovals` = **1 tap + scroll**; shell search icon ->
+  palette destination = **2 taps**. AFTER: identical (hero + first pods
+  above the fold; row tap 1; tile 1 + scroll; shell search icon -> same
+  palette destination 2; Show-all expand + destination 2).
+- Provider reads identical: `dashboardUiProvider` (+ notifier `kpis` /
+  `registerItems` / `salesTrend` / `profitTrend` / `expensesTrend` /
+  `selectTab` / `refresh`) untouched; shell providers untouched.
+- Figures derivation identical: `_findKpi` (revenue/sales/turnover,
+  margin, occupancy/occupan/bay, approval, open/active, new/today) and
+  `_trendOf` moved verbatim; all figures render verbatim with the same
+  LTR locks (`AED 84K`-style values); zero renders as `0`; missing
+  families omitted, never zero-filled.
+- No new routes, no dropped routes: 10 pushes + 2 `selectTab` targets
+  unchanged; palette ids/labels/hints/icons/ordering unchanged (shared via
+  `owner_search.dart`, now opened from the shell trigger); Show-all rows push
+  the same `jobCards` route; view-all trailing kept (`ownerRegisterAll`).
+- No Approve/Reject buttons anywhere (pinned `findsNothing`); the
+  approvals drill lands on the read-only triage; the blocker banner is
+  warning-kind with a View drill, no decision affordance.
+- Pills: `Live operations` (accent) + active/today (info/success) rebuilt
+  on `AppStatusChip` with verbatim labels. Providers/state/logic untouched —
+  same derivation, same strings.
+- Copy identical: no new keys, no changed keys. No ALL CAPS added.
+- Ruling (a) counts: characterization still **10 tests / 36 expects** — no
+  test added or removed, no expect added or removed (counts never down).
+  Shared guard `app_search_affordance_guard_test.dart` still **13 count
+  tests green** plus **8 new locus tests** (21 total) — counts never down.

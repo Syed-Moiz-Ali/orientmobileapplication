@@ -9,6 +9,7 @@ import 'package:crm_app/features/crm_dashboard/domain/entities/crm_entities.dart
 import 'package:crm_app/features/crm_dashboard/domain/repositories/crm_repository.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_tasks_page.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_tasks_search_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -229,35 +230,28 @@ void main() {
       expect(find.byType(AppEmptyState), findsOneWidget);
     });
 
-    testWidgets('header is a plain same-row Row (no AppPageHeader stacking)', (tester) async {
+    testWidgets('header is a plain Row with no search (shell owns search)', (tester) async {
       await _pumpTasks(
         tester,
         tasks: [for (var i = 0; i < 6; i++) _task(i)],
       );
-      // F6: same placement fix as the leads list — title + search share one
-      // Row top-end on compact. Same >5 condition, same sheet, same target.
+      // F6 + ruling (a): title-only row 1 on compact (search relocated to
+      // the shell AppBar, same >5 gate, same sheet); refresh + Add stay.
       expect(find.byType(AppPageHeader), findsNothing);
       expect(find.text('Tasks'), findsOneWidget);
-      expect(find.byTooltip('Search tasks'), findsOneWidget);
-      final searchRow = find.ancestor(
-        of: find.byTooltip('Search tasks'),
-        matching: find.byType(Row),
-      );
-      expect(searchRow, findsWidgets);
-      expect(
-        find.descendant(of: searchRow.first, matching: find.text('Tasks')),
-        findsOneWidget,
-      );
+      expect(find.byTooltip('Search tasks'), findsNothing);
+      expect(find.byTooltip('Refresh workspace'), findsOneWidget);
+      expect(find.text('Add Task'), findsOneWidget);
     });
 
-    testWidgets('>5: search icon appears; sheet filters tasks', (tester) async {
-      await _pumpTasks(
-        tester,
-        tasks: [for (var i = 0; i < 6; i++) _task(i)],
-      );
+    testWidgets('>5: no search in header; sheet filters tasks when opened', (tester) async {
+      final tasks = [for (var i = 0; i < 6; i++) _task(i)];
+      await _pumpTasks(tester, tasks: tasks);
       expect(find.text('6 tasks'), findsOneWidget);
-      expect(find.byTooltip('Search tasks'), findsOneWidget);
-      await tester.tap(find.byTooltip('Search tasks'));
+      // Ruling (a): the shell AppBar owns the single visible search path.
+      expect(find.byTooltip('Search tasks'), findsNothing);
+      final ctx = tester.element(find.byType(CrmTasksPage));
+      showCrmTasksSearchSheet(ctx, tasks: tasks, onSelect: (_) {});
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('Search tasks'), findsWidgets);

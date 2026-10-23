@@ -6,6 +6,7 @@
 
 import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_home_search_sheet.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_tab.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -223,7 +224,7 @@ void main() {
     );
 
     // U6/U7: nothing is due, so the hero is a calm status row — no media
-    // card, no duplicate Book-service CTA (the tile keeps the one path).
+    // card, no duplicate `Book service` CTA (the tile keeps the one path).
     expect(find.byType(AppMediaCard), findsNothing);
     expect(
       find.text('Your vehicle is not in the workshop right now.'),
@@ -234,8 +235,10 @@ void main() {
     expect(find.text('Your vehicle'), findsOneWidget);
     expect(find.text('Show all'), findsNothing);
     expect(find.byType(VehicleSilhouetteArt), findsOneWidget);
-    // Search icon sits top-right of the greeting header (U1/U9).
-    expect(find.byTooltip('Search'), findsOneWidget);
+    // Ruling (a): single visible search path lives in the shell AppBar,
+    // not in the greeting header. The header shows no search icon.
+    expect(find.byTooltip('Search'), findsNothing);
+    expect(find.byIcon(Icons.search_rounded), findsNothing);
     // One row of tiles with accessible labels.
     expect(find.text('Breakdown help'), findsOneWidget);
     expect(find.text('Invoices'), findsOneWidget);
@@ -281,15 +284,28 @@ void main() {
     expect(find.byType(AppCarousel), findsNothing);
   });
 
-  testWidgets('header search opens a sheet over existing data', (tester) async {
-    await _pumpHome(
-      tester,
-      state: _state(vehicles: const [_vehicle, _vehicle2]),
-      bookings: const [_completed],
+  testWidgets('home search sheet filters existing data (shell entry)', (
+    tester,
+  ) async {
+    // Ruling (a): the header shows no search icon; the shell AppBar owns the
+    // single trigger opening the SAME sheet (same predicate/targets). Pump
+    // the sheet directly over the home's existing vehicles + bookings.
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(BrandConfig.orient),
+        home: Scaffold(
+          body: CustomerHomeSearchSheet(
+            vehicles: const [_vehicle, _vehicle2],
+            bookings: const [_completed],
+            onSelectVehicle: (_) {},
+            onSelectBooking: (_) {},
+          ),
+        ),
+      ),
     );
-
-    await tester.tap(find.byTooltip('Search'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(tester.takeException(), isNull);
 
     // Empty query: hint only — the app keeps no recents to show.
     expect(
@@ -302,11 +318,11 @@ void main() {
     );
 
     // Filtering reads the lists the home already holds — no new logic.
-    // (The home cards stay in the tree behind the sheet overlay.)
+    // (Sheet pumped directly: only sheet hits, no home cards behind.)
     await tester.enterText(find.byType(TextField), 'camry');
     await tester.pump();
-    expect(find.text('Toyota Camry'), findsNWidgets(2));
-    expect(find.text('Honda Civic'), findsOneWidget);
+    expect(find.text('Toyota Camry'), findsOneWidget);
+    expect(find.text('Honda Civic'), findsNothing);
 
     await tester.enterText(find.byType(TextField), 'zzz-no-match');
     await tester.pump();

@@ -142,8 +142,9 @@ class AppChartTheme {
   }
 
   /// Formats a currency axis/tooltip value through the locale-aware
-  /// [AppFormatters.moneyAED] (Latin digits in both locales, `AED` prefix in
-  /// EN / `د.إ` suffix in AR). Keeps number formatting in one authority.
+  /// [AppFormatters.moneyAED] (Latin digits + Latin `AED` prefix in both
+  /// locales, LTR-locked at call sites). Keeps number formatting in one
+  /// authority.
   String formatCurrency(num value, AppFormatters formatters) =>
       formatters.moneyAED(value);
 

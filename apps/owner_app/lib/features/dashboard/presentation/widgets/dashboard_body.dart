@@ -209,16 +209,16 @@ class _OwnerChrome extends ConsumerWidget implements PreferredSizeWidget {
             },
       showDivider: true,
       actions: [
-        // U1/C16 search-affordance audit (ui/integration-1): the dashboard
-        // tab owns the ONE search path on the home header (same palette) —
-        // the bar trigger renders only on drill tabs so the home never
-        // shows two search icons. Route/sheet/logic untouched (Ctrl+K kept).
-        if (selectedIndex != 0)
-          AppIconButton(
-            icon: Icons.search_rounded,
-            tooltip: t.ownerSearchHint,
-            onPressed: onSearch,
-          ),
+        // Ruling (a) relocation (ui/fix-rulings): the shell AppBar owns the
+        // ONE visible search path on every tab including the dashboard
+        // (same palette via openOwnerSearch, adjacent to bell/avatar in the
+        // top-right action cluster); the home page header shows none.
+        // Route/sheet/logic untouched (Ctrl+K kept).
+        AppIconButton(
+          icon: Icons.search_rounded,
+          tooltip: t.ownerSearchHint,
+          onPressed: onSearch,
+        ),
         if (selectedIndex == 0) const PeriodDropdown(),
         const NotificationBell(),
         SizedBox(

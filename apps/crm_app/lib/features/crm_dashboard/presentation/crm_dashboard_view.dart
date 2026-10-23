@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_lead_provider.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_task_provider.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/support/crm_l10n.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_leads_search_sheet.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_sales_team_search_sheet.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_tasks_search_sheet.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_drawer.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_dashboard_page.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_leads_page.dart';
@@ -193,6 +197,49 @@ Future<void> _openSearch(BuildContext context, WidgetRef ref) async {
   );
 }
 
+/// Ruling (a) contextual list search (presentation/flow-wiring only):
+/// the shell AppBar trigger opens the tab's EXISTING list-scoped sheet
+/// (same widget, same provider predicate, same routes — no logic, no data,
+/// no predicate changes). Leads goes straight to the dossier (the same
+/// `LeadDetailSheet.show` the kanban/palette paths use): the compact
+/// list-mode scroll-reveal needs the page's scroll anchors (page-owned
+/// presentation state), so the shell path skips the extra record tap
+/// (≤ taps, no regression). Tasks/team STOP (see below): no dossier route
+/// exists and the scroll-reveal needs the page's scroll anchors, so the
+/// shell `onSelect` only re-selects the tab (existing route, no-op when
+/// already there) — the sheet already popped; manual scroll is unchanged.
+/// Same sheets, same ≤ budgets.
+Future<void> _openLeadsSearch(BuildContext context, WidgetRef ref) async {
+  final leads = ref.read(crmLeadProvider);
+  await showCrmLeadsSearchSheet(
+    context,
+    leads: leads,
+    onSelect: (lead) {
+      if (context.mounted) LeadDetailSheet.show(context, lead);
+    },
+  );
+}
+
+Future<void> _openTasksSearch(BuildContext context, WidgetRef ref) async {
+  final tasks = ref.read(crmTaskProvider).tasks;
+  final notifier = ref.read(crmUiProvider.notifier);
+  await showCrmTasksSearchSheet(
+    context,
+    tasks: tasks,
+    onSelect: (_) => notifier.selectTab(4),
+  );
+}
+
+Future<void> _openTeamSearch(BuildContext context, WidgetRef ref) async {
+  final team = ref.read(crmUiProvider.notifier).salesTeam;
+  final notifier = ref.read(crmUiProvider.notifier);
+  await showCrmSalesTeamSearchSheet(
+    context,
+    team: team,
+    onSelect: (_) => notifier.selectTab(3),
+  );
+}
+
 /// Phase 07.1 centralized chrome: the bespoke `CrmAppBar` is deleted — tab
 /// titles, workspace subtitle, rail/drawer leading, search trigger, offline
 /// pill and the refresh / notification / profile actions now compose the
@@ -223,14 +270,35 @@ class _CrmChrome extends ConsumerWidget implements PreferredSizeWidget {
     final notifier = ref.read(crmUiProvider.notifier);
     final adaptive = context.adaptive;
     final useRail = adaptive.useNavigationRail;
-      // F9 single-path (owner/tech/supervisor `selectedIndex` precedent):
-      // the shell search trigger is hidden on the Leads tab (index 1),
-      // where the list header owns the find-aid (list-scoped sheet when
-      // > 5). The palette target (jump-to-dossier over the first 50) would
-      // otherwise sit alongside the list icon for the same "find a lead"
-      // task (C16 duplicate entry). The Ctrl+K shortcut above stays wired
-      // for keyboards — only the visible trigger is scoped out.
-      final shellSearchOnLeads = selectedIndex == 1;
+      // Ruling (a) single-path (presentation/flow-wiring only): the shell
+      // search trigger is the SINGLE visible icon on the leads (1), sales
+      // team (3) and tasks (4) tabs — contextual per tab, opening the tab's
+      // EXISTING list search sheet (leads/tasks/team sheets from F8),
+      // gated by the same >5 loaded condition relocated from the list
+      // headers (same predicates: raw loaded counts, no logic change).
+      // List page headers show no search icon (filter + Add stay where
+      // they are). Non-list tabs keep the shell palette
+      // (jump-to-dossier over the first 50) untouched. The Ctrl+K shortcut
+      // above stays wired to the palette on all tabs — only the visible
+      // trigger is contextual.
+      final leadsCount = ref.watch(crmLeadProvider).length;
+      final tasksCount = ref.watch(crmTaskProvider).tasks.length;
+      // R1 (stale-gate fix, presentation wiring only): the gate reads the
+      // SAME list object the team page renders
+      // (`crm_sales_team_page.dart`: `ref.read(crmUiProvider.notifier).salesTeam`),
+      // not a separate `crmRepositoryProvider` watch — same provider/selector,
+      // same >5 predicate, no logic/data change.
+      final teamCount = ref.watch(crmUiProvider.notifier).salesTeam.length;
+      final VoidCallback? contextualSearch;
+      if (selectedIndex == 1) {
+        contextualSearch = leadsCount > 5 ? () => _openLeadsSearch(context, ref) : null;
+      } else if (selectedIndex == 3) {
+        contextualSearch = teamCount > 5 ? () => _openTeamSearch(context, ref) : null;
+      } else if (selectedIndex == 4) {
+        contextualSearch = tasksCount > 5 ? () => _openTasksSearch(context, ref) : null;
+      } else {
+        contextualSearch = () => _openSearch(context, ref);
+      }
       return WorkspaceAppBar(
         title: _titles(t)[selectedIndex],
         subtitle: '${t.shellSubtitle} · ${t.shellBranchName}',
@@ -239,7 +307,7 @@ class _CrmChrome extends ConsumerWidget implements PreferredSizeWidget {
         // where translucency is reduced.
         frosted: !adaptive.isCompact,
         showOfflineStatus: true,
-        onSearch: shellSearchOnLeads ? null : () => _openSearch(context, ref),
+        onSearch: contextualSearch,
       // The kbd hint only fits non-compact bars.
       searchShortcutLabel: adaptive.isCompact ? null : t.chromeShortcut,
       leading: useRail

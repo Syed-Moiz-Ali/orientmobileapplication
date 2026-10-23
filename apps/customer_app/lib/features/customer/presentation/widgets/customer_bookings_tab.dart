@@ -32,10 +32,23 @@ class CustomerBookingsTab extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<CustomerBookingsTab> createState() =>
-      _CustomerBookingsTabState();
+      CustomerBookingsTabState();
 }
 
-class _CustomerBookingsTabState extends ConsumerState<CustomerBookingsTab> {
+/// State is public so the shell AppBar search trigger can open the SAME
+/// bookings search sheet (same predicate/target/reveal) — only WHICH visible
+/// icon opens it moved (ruling a). No logic/data/predicate changes.
+class CustomerBookingsTabState extends ConsumerState<CustomerBookingsTab> {
+  /// Shell entry point: opens the existing bookings search sheet over the
+  /// currently loaded bookings (same sheet, same reveal targets).
+  void openSearch() {
+    final bookingsAsync = ref.read(customerBookingsProvider);
+    final bookings =
+        bookingsAsync.valueOrNull ?? const <CustomerBookingEntity>[];
+    if (bookings.isEmpty) return;
+    _openSearch(bookings);
+  }
+
   /// List-scoped lifecycle filter (presentation state only; the group
   /// derivation stays in `CustomerBookingsPresentation.groupOf`).
   CustomerBookingFilter _filter = CustomerBookingFilter.all;
@@ -231,10 +244,8 @@ class _CustomerBookingsTabState extends ConsumerState<CustomerBookingsTab> {
               subtitle: subtitle,
               showFindAids: showFindAids,
               showBook: bookings.isNotEmpty,
-              searchTooltip: t.bkSearchTitle,
               filterTooltip: t.bkFilterTitle,
               bookLabel: t.bkBookCta,
-              onSearch: () => _openSearch(bookings),
               onFilter: _openFilter,
               onBook: () => context.push(AppRoutes.customerBookService),
             ),
@@ -459,19 +470,20 @@ class _FilterNoMatch extends StatelessWidget {
   }
 }
 
-/// List header: title + count subtitle start-side, find-aids + Book end-side
+/// List header: title + count subtitle start-side, filter + Book end-side
 /// on the SAME row (plain Row, not AppPageHeader whose compact layout stacks
 /// actions below the subtitle). Same strings, styles, AppIconButton contract.
 /// Presentation only.
+///
+/// Ruling (a): the search icon lives in the shell AppBar (adjacent to
+/// bell/avatar) — this header shows NO search icon (filter + Book only).
 class _BookingsHeader extends StatelessWidget {
   final String title;
   final String subtitle;
   final bool showFindAids;
   final bool showBook;
-  final String searchTooltip;
   final String filterTooltip;
   final String bookLabel;
-  final VoidCallback onSearch;
   final VoidCallback onFilter;
   final VoidCallback onBook;
 
@@ -480,10 +492,8 @@ class _BookingsHeader extends StatelessWidget {
     required this.subtitle,
     required this.showFindAids,
     required this.showBook,
-    required this.searchTooltip,
     required this.filterTooltip,
     required this.bookLabel,
-    required this.onSearch,
     required this.onFilter,
     required this.onBook,
   });
@@ -514,12 +524,6 @@ class _BookingsHeader extends StatelessWidget {
                 ),
               ),
               if (showFindAids) ...[
-                const SizedBox(width: AppDimensions.s8),
-                AppIconButton(
-                  icon: Icons.search_rounded,
-                  tooltip: searchTooltip,
-                  onPressed: onSearch,
-                ),
                 const SizedBox(width: AppDimensions.s8),
                 AppIconButton(
                   icon: Icons.filter_list_rounded,

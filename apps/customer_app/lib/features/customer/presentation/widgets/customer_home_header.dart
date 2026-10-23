@@ -1,26 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:shared_core/shared_core.dart';
 
 import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 
 /// Greeting header for the Customer Home, composed from [AppPageHeader].
 ///
-/// Top row: the greeting eyebrow with the ONE search icon at the end side
-/// (U1/U9 — same placement as the advisor home header; the bell and avatar
-/// live in the shell bar, so this row never duplicates that chrome).
-/// Tapping search opens the full-screen search sheet over the home's
-/// existing vehicles + bookings — no new routes, no new logic.
+/// Ruling (a): the search icon lives in the shell AppBar (adjacent to
+/// bell/avatar) — this header shows NO search icon. Greeting eyebrow + name
+/// headline only; tapping search in the shell opens the same home search
+/// sheet over the existing vehicles + bookings — no new routes, no new logic.
 class CustomerHomeHeader extends StatelessWidget {
   final String firstName;
   final bool isNewCustomer;
-  final VoidCallback onSearch;
 
   const CustomerHomeHeader({
     super.key,
     required this.firstName,
     required this.isNewCustomer,
-    required this.onSearch,
   });
 
   @override
@@ -41,25 +37,9 @@ class CustomerHomeHeader extends StatelessWidget {
     );
 
     if (name.isEmpty) {
-      // No name yet: the page title itself is the greeting, so the search
-      // icon docks beside it instead of adding a second greeting line.
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: AppPageHeader(title: welcome, subtitle: t.garBrandSub),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          AppIconButton(
-            icon: Icons.search_rounded,
-            onPressed: () {
-              HapticFeedback.selectionClick();
-              onSearch();
-            },
-            tooltip: t.garSearchTitle,
-          ),
-        ],
-      );
+      // No name yet: the page title itself is the greeting (no search icon
+      // here — shell AppBar owns the single search path per ruling a).
+      return AppPageHeader(title: welcome, subtitle: t.garBrandSub);
     }
     // Sentence-case greeting (C3): AppPageHeader upper-cases its eyebrow
     // slot, so the greeting renders as its own muted line above the name
@@ -68,20 +48,7 @@ class CustomerHomeHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(child: eyebrow),
-            AppIconButton(
-              icon: Icons.search_rounded,
-              onPressed: () {
-                HapticFeedback.selectionClick();
-                onSearch();
-              },
-              tooltip: t.garSearchTitle,
-            ),
-          ],
-        ),
+        eyebrow,
         const SizedBox(height: AppSpacing.xs),
         AppPageHeader(title: name, subtitle: t.garBrandSub),
       ],

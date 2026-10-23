@@ -66,6 +66,7 @@ class _TodaySearchSheetState extends State<_TodaySearchSheet> {
   @override
   Widget build(BuildContext context) {
     final t = StaffLocalizations.of(context)!;
+    final coreT = SharedCoreL10n.of(context);
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final results = _results();
@@ -111,6 +112,14 @@ class _TodaySearchSheetState extends State<_TodaySearchSheet> {
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colors.onSurfaceVariant,
                         ),
+                      ),
+                      SizedBox(height: AppSpacing.md),
+                      AppPillButton.secondary(
+                        label: coreT.filterBarClear,
+                        onPressed: () => setState(() {
+                          _ctrl.clear();
+                          _query = '';
+                        }),
                       ),
                     ],
                   ),

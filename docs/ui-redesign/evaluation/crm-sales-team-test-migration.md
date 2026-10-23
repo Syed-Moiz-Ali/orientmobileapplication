@@ -6,7 +6,11 @@ untouched. Characterization tests were written against the CURRENT list
 FIRST (4 testWidgets, GREEN before touching UI) and migrated after the
 rebuild (7 testWidgets, all structural). WAVE-2 fixes (F7 revenue
 display, F8 roster search) migrated the same file to **10 testWidgets**,
-all structural. Counts never down (4 -> 7 -> 10).
+all structural. Counts never down (4 -> 7 -> 10). Ruling (a) shell
+relocation keeps the same file at **10 testWidgets** (assertions updated
+verbatim below, none added/removed) + **8 new shell relocation tests** in
+`apps/crm_app/test/crm_shell_search_relocation_test.dart` (all
+structural). Counts never down (4 -> 7 -> 10 -> 10 + 8 shell).
 
 ## Inventory (existing CRM tests before this change)
 
@@ -104,3 +108,44 @@ same 8 PNGs refreshed + **1 new frame**
 GREEN. F10 verification (no code change): team empty keeps the
 `Leaderboard` header; ar cards show `الإيراد` + grouped `12,000 د.إ`
 with mirrored layout.
+
+## Ruling (a) search relocation (presentation/flow-wiring only)
+
+- Shell (`crm_dashboard_view.dart` `_CrmChrome`): the AppBar search
+  trigger is the SINGLE visible icon on the sales-team tab — contextual,
+  opening the EXISTING `showCrmSalesTeamSearchSheet` (same widget, same
+  `salesTeam` feed), gated by the same `team.length > 5` family condition
+  relocated from the list header. ≤ 5 → no trigger (fully scannable).
+  Non-list tabs keep the palette untouched; Ctrl+K untouched.
+- List (`crm_sales_team_page.dart`): `_TeamHeader` search params
+  (`showSearch`/`onSearch`) + `openSearch`/`reveal` + search-sheet import
+  REMOVED — header is title-only (rows stay view-only). Row keys stay. No
+  logic/data/predicate change.
+- Changed assertions (same 10 testWidgets, verbatim): `>5` test pins no
+  header search + the same sheet opened directly (identical no-match +
+  Clear pins, Sara restores); result-tap test pins clean sheet dismissal
+  with no exception (no destinations invented).
+- Tap table (AFTER ≤ BEFORE): Open standings ≤ 1; Compare scroll only;
+  Find member (6-row) = scroll unchanged + ≤ 2 via shell search (> 5).
+- Frames recaptured in the living dir `after-crm-sales-team/` (9 PNGs)
+  with `--update-goldens` limited to `crm_after_team_capture_test.dart`
+  (search-open now opens the same sheet directly), compared back-to-back
+  GREEN. RTL mirror, 320/1.3x clean.
+- STOPs: scroll-reveal needs the page scroll anchors (page-owned
+  presentation state) and rows stay view-only by design — the shell
+  `onSelect` only re-selects the tab (existing route, no-op when already
+  there); manual scroll is unchanged (taps still ≤ 2). Replicating the
+  anchors in the shell would be logic; filed, not changed.
+- R1 stale-gate fix (ui/fix-rulings, presentation wiring only): the shell
+  gate now reads the SAME list object the page renders —
+  `ref.watch(crmUiProvider.notifier).salesTeam.length` (was
+  `ref.watch(crmRepositoryProvider).salesTeam.length`); page reads
+  `ref.read(crmUiProvider.notifier).salesTeam` (`crm_sales_team_page.dart:56-57`).
+  Same `> 5` predicate, same sheet, same routes — no logic/data change.
+  Relocation pins still hold (≤5 → 0 icons, >5 → 1 icon + same sheet);
+  counts never down (4 -> 7 -> 10 -> 10 + 8 shell).
+
+Ruling (a) ARB delta: **zero new keys on all three surfaces** (shell +
+lists reuse `leadsSearchTitle/tasksSearchTitle/tmSearchTitle`,
+`chromeSearchHint/chromeShortcut`, `leadsFilterClear`; EN/AR parity
+untouched, no `gen-l10n` run needed).

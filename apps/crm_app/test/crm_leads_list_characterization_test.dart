@@ -10,6 +10,7 @@ import 'package:crm_app/features/crm_dashboard/domain/repositories/crm_repositor
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_kanban_view.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_leads_page.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_leads_search_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -268,14 +269,16 @@ void main() {
       expect(find.byType(AppSurfaceCard), findsNothing);
     });
 
-    testWidgets('>5: search + filter icons appear together', (tester) async {
+    testWidgets('>5: filter icon in header, no search (shell owns search)', (tester) async {
       await _pumpLeads(
         tester,
         leads: [for (var i = 0; i < 6; i++) _lead(i)],
         integrations: [_integration(connected: true)],
       );
       expect(find.text('6 leads'), findsOneWidget);
-      expect(find.byTooltip('Search leads'), findsOneWidget);
+      // Ruling (a): the search find-aid relocated to the shell AppBar
+      // (same >5 gate, same sheet) — the list header shows no search icon.
+      expect(find.byTooltip('Search leads'), findsNothing);
       expect(find.byTooltip('Filter leads'), findsOneWidget);
     });
 
@@ -285,32 +288,36 @@ void main() {
         leads: [for (var i = 0; i < 6; i++) _lead(i)],
         integrations: [_integration(connected: true)],
       );
-      // F6: the shared atom stacked actions below the title on compact
-      // (read as a body toolbar row); the plain Row keeps title + search
-      // icons top-end same-row. Same tooltips, same sheets, same targets.
+      // F6 + ruling (a): the shared atom stacked actions below the title
+      // on compact; the plain Row keeps title + filter top-end same-row.
+      // Search lives in the shell AppBar (single visible path).
       expect(find.byType(AppPageHeader), findsNothing);
       expect(find.text('Leads'), findsOneWidget);
-      expect(find.byTooltip('Search leads'), findsOneWidget);
+      expect(find.byTooltip('Search leads'), findsNothing);
       expect(find.byTooltip('Filter leads'), findsOneWidget);
-      // Search shares its Row with the title (compact row 1).
-      final searchRow = find.ancestor(
-        of: find.byTooltip('Search leads'),
+      // Filter shares its Row with the title (compact row 1).
+      final filterRow = find.ancestor(
+        of: find.byTooltip('Filter leads'),
         matching: find.byType(Row),
       );
-      expect(searchRow, findsWidgets);
+      expect(filterRow, findsWidgets);
       expect(
-        find.descendant(of: searchRow.first, matching: find.text('Leads')),
+        find.descendant(of: filterRow.first, matching: find.text('Leads')),
         findsOneWidget,
       );
     });
 
     testWidgets('search sheet filters loaded leads; no-match + Clear', (tester) async {
+      final leads = [for (var i = 0; i < 6; i++) _lead(i)];
       await _pumpLeads(
         tester,
-        leads: [for (var i = 0; i < 6; i++) _lead(i)],
+        leads: leads,
         integrations: [_integration(connected: true)],
       );
-      await tester.tap(find.byTooltip('Search leads'));
+      // Ruling (a): the header shows no search icon; the shell AppBar owns
+      // the single visible path (same sheet). Open the same sheet directly.
+      final ctx = tester.element(find.byType(CrmLeadsPage));
+      showCrmLeadsSearchSheet(ctx, leads: leads, onSelect: (_) {});
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('Search leads'), findsWidgets);

@@ -20,7 +20,6 @@ import 'package:crm_app/features/crm_dashboard/presentation/support/lead_contact
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/connect_integration_sheet.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_kanban_view.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_leads_filter_sheet.dart';
-import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_leads_search_sheet.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/lead_detail_sheet.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/lead_form_sheet.dart';
 import 'package:crm_app/features/crm_dashboard/domain/entities/crm_entities.dart';
@@ -87,7 +86,10 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
   bool _sortAscending = true;
   String _agentFilter = '';
 
-  /// Scroll anchors for search-result reveals (presentation only).
+  /// Scroll anchors for row keys (presentation only; the search-result
+  /// reveal that consumed them moved to the shell AppBar per ruling (a) —
+  /// the shell leads path opens the same sheet and goes straight to the
+  /// dossier, so no reveal closure remains here).
   final Map<String, GlobalKey> _scrollKeys = {};
 
   GlobalKey _scrollKeyFor(String id) =>
@@ -113,14 +115,12 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
     );
 
     // Progressive disclosure (the ONE sanctioned U1 exception on this
-    // screen, same as the vehicles list): the search + filter find-aids
-    // appear ONLY when the loaded list has MORE THAN 5 items.
-    // Scope note (round-2 fix #4): this icon opens the LIST-scoped sheet
-    // (filters the loaded leads in place). The shell command palette
-    // (WorkspaceAppBar search trigger -> jump-to-dossier over the first 50)
-    // is app-chrome in a different scope with a different target, so the
-    // pair is not a same-target duplicate and is not collapsed.
-    final showFindAids = totalLoaded > 5;
+    // screen, same as the vehicles list): the filter find-aid appears ONLY
+    // when the loaded list has MORE THAN 5 items. Ruling (a): the search
+    // find-aid relocated to the shell AppBar (contextual per tab, same >5
+    // condition, same leads sheet) — the list header shows no search icon;
+    // the shell trigger is the single visible search path.
+    final showFilterAid = totalLoaded > 5;
     final filtersActive =
         sourceFilter.isNotEmpty || stageFilter.isNotEmpty || _agentFilter.isNotEmpty;
     final subtitle = filtersActive
@@ -183,17 +183,7 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
                 ),
               );
               List<Widget> findAids() => [
-                    if (showFindAids) ...[
-                      AppIconButton(
-                        icon: Icons.search_rounded,
-                        tooltip: t.leadsSearchTitle,
-                        onPressed: () => showCrmLeadsSearchSheet(
-                          context,
-                          leads: leads,
-                          onSelect: (lead) => _revealLead(
-                              lead, adaptive.isCompact && !_kanbanMode),
-                        ),
-                      ),
+                    if (showFilterAid)
                       AppIconButton(
                         icon: Icons.filter_list_rounded,
                         tooltip: t.leadsFilterTitle,
@@ -213,7 +203,6 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
                           leadNotifier.refresh();
                         },
                       ),
-                    ],
                   ];
               List<Widget> utilityActions() => [
                     AppIconButton(
@@ -366,26 +355,6 @@ class _CrmLeadsPageState extends ConsumerState<CrmLeadsPage> {
       return _sortAscending ? cmp : -cmp;
     });
     return result;
-  }
-
-  void _revealLead(CrmLeadEntity lead, bool listMode) {
-    if (listMode) {
-      final ctx = _scrollKeys[lead.id]?.currentContext;
-      if (ctx != null) {
-        Scrollable.ensureVisible(
-          ctx,
-          duration: const Duration(milliseconds: 300),
-          alignment: 0.1,
-        );
-        return;
-      }
-    }
-    if (!mounted) return;
-    if (_kanbanMode) {
-      LeadDetailSheet.show(context, lead);
-    } else {
-      setState(() => _selectedLeadId = lead.id);
-    }
   }
 
   Widget _buildList(List<CrmLeadEntity> leads) {

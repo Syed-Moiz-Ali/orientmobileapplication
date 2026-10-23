@@ -814,6 +814,18 @@ class CustomerLocalizationsEn extends CustomerLocalizations {
   String get ntTypeUpdate => 'Update';
 
   @override
+  String get ntSearchTitle => 'Search notifications';
+
+  @override
+  String get ntSearchHint => 'Search by title or message';
+
+  @override
+  String get ntSearchNoMatch => 'No notifications match your search.';
+
+  @override
+  String get ntSearchClear => 'Clear';
+
+  @override
   String get wizTitle => 'Book a service';
 
   @override

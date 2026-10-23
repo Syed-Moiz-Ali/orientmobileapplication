@@ -350,18 +350,23 @@ abstract final class AppTableCell {
     );
   }
 
-  /// Money / quantity cell: tabular figures, reading-end aligned (mirrors RTL).
+  /// Money / quantity cell: tabular figures, reading-end aligned (mirrors
+  /// RTL). The value is LTR-locked so Latin money (`AED 2,450.00`) renders
+  /// intact inside RTL paragraphs.
   static Widget numeric(BuildContext context, String value) {
     return Align(
       alignment: AlignmentDirectional.centerEnd,
-      child: Text(
-        value,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.end,
-        style: AppTextStyles.mono(
-          color: Theme.of(context).colorScheme.onSurface,
-          arabic: AppTypography.isArabic(Localizations.maybeLocaleOf(context)),
+      child: Directionality(
+        textDirection: TextDirection.ltr,
+        child: Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.end,
+          style: AppTextStyles.mono(
+            color: Theme.of(context).colorScheme.onSurface,
+            arabic: AppTypography.isArabic(Localizations.maybeLocaleOf(context)),
+          ),
         ),
       ),
     );

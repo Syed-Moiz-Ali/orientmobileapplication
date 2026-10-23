@@ -2759,6 +2759,18 @@ class StaffLocalizationsAr extends StaffLocalizations {
   String get techJobsNoMatchHint => 'لا توجد مهام تطابق البحث والتصفية.';
 
   @override
+  String get techTaskSearch => 'ابحث في مهام الإصلاح';
+
+  @override
+  String get techTaskSearchHint => 'ابحث باسم مهمة الإصلاح';
+
+  @override
+  String get techTaskNoMatch => 'لا توجد مهام إصلاح مطابقة';
+
+  @override
+  String get techTaskNoMatchHint => 'لا توجد مهام إصلاح تطابق بحثك.';
+
+  @override
   String get techJobsClearFilters => 'مسح التصفية';
 
   @override

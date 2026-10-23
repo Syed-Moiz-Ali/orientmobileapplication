@@ -46,11 +46,14 @@ class AdvisorApprovalRow extends StatelessWidget {
                 ),
                 if (pa.isEstimate) ...[
                   const SizedBox(width: AppDimensions.s8),
-                  Text(
-                    money,
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: colors.primary,
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      money,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: colors.primary,
+                      ),
                     ),
                   ),
                 ],

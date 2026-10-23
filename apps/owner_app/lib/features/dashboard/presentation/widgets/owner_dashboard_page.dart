@@ -6,7 +6,6 @@ import 'package:shared_core/shared_core.dart';
 import 'package:owner_app/core/router/app_router.dart';
 import 'package:owner_app/features/dashboard/domain/entities/dashboard_entities.dart';
 import 'package:owner_app/features/dashboard/presentation/providers/dashboard_ui_providers.dart';
-import 'package:owner_app/features/dashboard/presentation/widgets/owner_search.dart';
 import 'package:owner_app/l10n/gen/owner_localizations.dart';
 
 /// Presentation-only derivation over the frozen adapter figures.
@@ -191,25 +190,24 @@ class _HomeSkeleton extends StatelessWidget {
   }
 }
 
-/// Home wayfinding: ops title + branch subtitle with the end-side search
-/// action opening the existing command palette (U1, same destination set as
-/// the shell trigger), then live/count pills rebuilt on shared atoms.
+/// Home wayfinding: ops title + branch subtitle, then live/count pills
+/// rebuilt on shared atoms.
 ///
-/// The search glyph sits on the SAME row as the title on EVERY breakpoint
-/// (plain Row, not AppPageHeader whose compact layout stacks actions below
-/// the subtitle) — the Row mirrors in RTL so the action stays end-side.
-/// Same strings, same text styles, same AppIconButton contract.
+/// Ruling (a) relocation (ui/fix-rulings): the page header shows NO search
+/// action — the shell AppBar owns the single visible search path (same
+/// palette via openOwnerSearch, top-right action cluster). Same strings,
+/// same text styles; no logic changes.
 ///
 /// The KPI lists arrive from the notifier (frozen derivation below); the
 /// header itself takes them as plain parameters so it rebuilds with the
 /// data instead of freezing on the first content frame.
-class _HomeHeader extends ConsumerWidget {
+class _HomeHeader extends StatelessWidget {
   final List<OwnerKpi> kpis;
 
   const _HomeHeader({required this.kpis});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final t = OwnerLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
@@ -221,40 +219,21 @@ class _HomeHeader extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    t.ownerOpsTitle,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: colors.onSurface,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                  const SizedBox(height: AppDimensions.s4),
-                  Text(
-                    t.ownerOpsSubtitle,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colors.onSurfaceVariant,
-                      height: 1.35,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: AppDimensions.s8),
-            AppIconButton(
-              icon: Icons.search_rounded,
-              tooltip: t.ownerSearchHint,
-              onPressed: () => openOwnerSearch(context, ref),
-            ),
-          ],
+        Text(
+          t.ownerOpsTitle,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: colors.onSurface,
+            letterSpacing: -0.2,
+          ),
+        ),
+        const SizedBox(height: AppDimensions.s4),
+        Text(
+          t.ownerOpsSubtitle,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: colors.onSurfaceVariant,
+            height: 1.35,
+          ),
         ),
         const SizedBox(height: AppDimensions.s12),
         Wrap(

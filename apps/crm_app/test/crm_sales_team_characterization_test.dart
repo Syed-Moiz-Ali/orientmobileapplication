@@ -7,6 +7,7 @@ import 'package:crm_app/features/crm_dashboard/domain/entities/crm_entities.dart
 import 'package:crm_app/features/crm_dashboard/domain/repositories/crm_repository.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_ui_provider.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_sales_team_page.dart';
+import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_sales_team_search_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -199,30 +200,23 @@ void main() {
       expect(find.byType(AppSurfaceCard), findsNWidgets(2));
     });
 
-    testWidgets('>5: search icon appears; sheet filters roster', (tester) async {
-      await _pumpTeam(tester, [
+    testWidgets('>5: no search in header; sheet filters roster when opened', (tester) async {
+      final team = [
         _member('Sara', 4, 3),
         _member('John', 2, 1),
         _member('Mia', 6, 2),
         _member('Omar', 4, 0),
         _member('Lina', 5, 4),
         _member('Kris', 3, 1),
-      ]);
-      expect(find.byTooltip('Search team'), findsOneWidget);
-      // Search shares its header Row with the title (same-row end-side).
-      final searchRow = find.ancestor(
-        of: find.byTooltip('Search team'),
-        matching: find.byType(Row),
-      );
-      expect(searchRow, findsWidgets);
-      expect(
-        find.descendant(
-          of: searchRow.first,
-          matching: find.text('Leaderboard'),
-        ),
-        findsOneWidget,
-      );
-      await tester.tap(find.byTooltip('Search team'));
+      ];
+      await _pumpTeam(tester, team);
+      // Ruling (a): the shell AppBar owns the single visible search path
+      // (same >5 gate, same sheet) — the list header shows no search icon.
+      // (ListView builds lazily, so no exact card count is pinned here.)
+      expect(find.byTooltip('Search team'), findsNothing);
+      expect(find.byType(AppSurfaceCard), findsWidgets);
+      final ctx = tester.element(find.byType(CrmSalesTeamPage));
+      showCrmSalesTeamSearchSheet(ctx, team: team, onSelect: (_) {});
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('Search team'), findsWidgets);
@@ -234,25 +228,32 @@ void main() {
       expect(find.text('Sara'), findsWidgets);
     });
 
-    testWidgets('search result tap reveals the row', (tester) async {
-      await _pumpTeam(tester, [
+    testWidgets('search result tap closes the sheet cleanly', (tester) async {
+      final team = [
         _member('Sara', 4, 3),
         _member('John', 2, 1),
         _member('Mia', 6, 2),
         _member('Omar', 4, 0),
         _member('Lina', 5, 4),
         _member('Kris', 3, 1),
-      ]);
-      await tester.tap(find.byTooltip('Search team'));
+      ];
+      await _pumpTeam(tester, team);
+      // Ruling (a): shell owns the trigger; the sheet opens directly here.
+      // Rows stay view-only (search reveals, never navigates) — the shell
+      // STOP documents the scroll-reveal gap; this pin keeps the ≤ taps.
+      final ctx = tester.element(find.byType(CrmSalesTeamPage));
+      showCrmSalesTeamSearchSheet(ctx, team: team, onSelect: (_) {});
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       await tester.enterText(find.byType(TextField), 'lina');
       await tester.pump();
-      // Sheet lists the match; tapping closes + reveals (no destinations).
+      // Sheet lists the match; tapping closes (no destinations, no
+      // exception). No scroll-reveal is pinned here (shell STOP — the
+      // page-owned anchors moved with the trigger); the ≤ tap budget holds.
       await tester.tap(find.text('Lina').first);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.text('Lina'), findsWidgets);
+      expect(find.byType(TextField), findsNothing);
       expect(tester.takeException(), isNull);
     });
   });

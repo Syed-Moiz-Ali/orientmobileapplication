@@ -1607,6 +1607,30 @@ abstract class CustomerLocalizations {
   /// **'Update'**
   String get ntTypeUpdate;
 
+  /// Notifications search sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Search notifications'**
+  String get ntSearchTitle;
+
+  /// Notifications search field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search by title or message'**
+  String get ntSearchHint;
+
+  /// Notifications search no-match
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications match your search.'**
+  String get ntSearchNoMatch;
+
+  /// Notifications search clear CTA
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get ntSearchClear;
+
   /// Wizard app bar title
   ///
   /// In en, this message translates to:

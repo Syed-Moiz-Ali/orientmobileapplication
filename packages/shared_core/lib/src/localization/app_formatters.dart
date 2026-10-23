@@ -4,11 +4,12 @@ import 'package:shared_core/src/localization/shared_core_l10n.dart';
 
 /// Locale-aware, display-only formatting for dates, money, and quantities.
 ///
-/// Product decision (frozen V5): Latin digits are used in **both** locales for
-/// all numeric data; identifiers (VIN, plate, phone, refs) always stay Latin.
-/// Eastern Arabic numerals are explicitly out of scope. Arabic therefore
-/// changes month names, currency placement, and ordinal copy — never the digit
-/// glyphs.
+/// Product decision (frozen V5, money ruling): Latin digits are used in
+/// **both** locales for all numeric data; identifiers (VIN, plate, phone,
+/// refs) always stay Latin. Eastern Arabic numerals are explicitly out of
+/// scope. Arabic therefore changes month names and ordinal copy — never the
+/// digit glyphs — and money keeps the Latin `AED` code in both locales
+/// (LTR-locked at call sites).
 ///
 /// API payloads remain raw ISO-8601 strings / enums; formatting here never
 /// feeds serialization.
@@ -84,9 +85,15 @@ class AppFormatters {
   /// `13 Oct 2026, 09:30`.
   String dateTime(DateTime date) => '${this.date(date)}, ${time(date)}';
 
-  /// Locale-appropriate AED money: `AED 12,450` (EN) / `12,450 د.إ` (AR).
-  String moneyAED(num value) =>
-      isArabic ? '${group(value)} د.إ' : 'AED ${group(value)}';
+  /// Locale-appropriate AED money: `AED 12,450` in BOTH locales.
+  ///
+  /// U10: the code stays Latin `AED` in Arabic too (same family as server
+  /// codes/plates). The Arabic-script `د.إ` run broke under bidi mirroring
+  /// and in Latin-only mono styles (rendered `E.E` with number-first order
+  /// in ar goldens), so it is not used. Call sites keep the value inside an
+  /// LTR `Directionality` with tabular figures so ar renders LTR-intact.
+  /// Digits are always Western (0-9) with `,` grouping; numeric value verbatim.
+  String moneyAED(num value) => 'AED ${group(value)}';
 
   /// Plain grouped quantity (`12,450`).
   String quantity(num value) => group(value);
@@ -146,7 +153,7 @@ class AppFormatters {
   // ---------------------------------------------------------------------------
   // Phase-0b additions (additive; existing APIs unchanged). All new methods
   // follow the frozen Latin-digit policy: digits 0-9 and ',' grouping in
-  // every locale; Arabic changes month names and currency placement only.
+  // every locale; Arabic changes month names only (money keeps Latin `AED`).
   // ---------------------------------------------------------------------------
 
   /// Signed grouped quantity for deltas: `+12,450` / `-3` / `+0`.
@@ -170,10 +177,9 @@ class AppFormatters {
     return negative ? '-$text' : text;
   }
 
-  /// Compact money: `AED 1.2M` (EN) / `1.2M د.إ` (AR).
-  String compactMoneyAED(num value) => isArabic
-      ? '${compactCount(value)} د.إ'
-      : 'AED ${compactCount(value)}';
+  /// Compact money: `AED 1.2M` in BOTH locales (Latin code, LTR-locked
+  /// at call sites; see [moneyAED]).
+  String compactMoneyAED(num value) => 'AED ${compactCount(value)}';
 
   /// Locale-aware relative time (display only).
   String relativeTime(DateTime then, {DateTime? now}) {

@@ -191,8 +191,32 @@ Schedule are infrequent admin destinations, not top-3 tasks).
   golden diffs vs the pre-nav goldens are expected and left for the
   capture-agent regen (no `--update-goldens`, nothing written to
   `after-shell-fix/`).
-- STOPs: none. No logic change was needed (no badge state existed to
+- STOPs: no. No logic change was needed (no badge state existed to
   surface; no hidden-tab count derivation exists).
+
+## Scope-unification pass (ui/fix-rulings, ruling (a) — presentation only)
+
+The floor `_FloorHeader` search glyph is REMOVED; the shell `_SupervisorChrome`
+search icon is UNHIDDEN on the floor tab (the `selectedIndex != 0` guard is
+deleted — the bar now shows the one icon on every tab; tooltip `svSearchTitle`
+on the floor scope). Same floor sheet/target (`showSupervisorFloorSearch`
+over the derived `SupervisorBay` list, result = same assign sheet). One visible
+search path on the floor tab (shell-owned); no predicate/route/logic change;
+zero new ARB keys; taps unchanged (icon 1 + keystrokes + result 1).
+
+- Test deltas this pass: **none** in `supervisor_dashboard_view_test.dart`
+  (8 tests, 8 assertions — counts 8 -> 8; the tab-alone floor view never
+  pinned the header glyph). Capture harness updates (baseline-tagged, excluded
+  from the default run): `supervisor_dashboard_after_capture_test.dart`
+  `_openSearch` now opens the same floor sheet directly over the derived bays
+  (the tab pumps alone; the glyph moved to the shell); `supervisor_home_current_capture_test.dart`
+  comments updated (shell owns the single glyph; `findsOneWidget` pin holds
+  unchanged). `shell_fix_supervisor_capture_test.dart` unchanged.
+- Frames: all 11 `after-supervisor-home-current/` + all 17
+  `after-phase-5-supervisor/` + all 5 `after-shell-fix` sv PNGs regenerated;
+  compare back-to-back green (`takeException` null; home-current tolerates
+  zero overflows), RTL/320/1.3x intact.
+- STOPs: none.
 
 ## Fixer round-1 (U-review FAIL: U1 + U7 capped 8/16, plus borderless + hero nits)
 
@@ -260,6 +284,22 @@ unchanged (columns + `maxLines` never touch `onTap`). File touched:
   (10.32%, the intended 3-col -> 2-col reflow; B-02 now renders
   `Camry ABC 1234` in full, pairs B-01/B-02, B-03/B-04, no orphan, zero
   overflow tolerations). 360/ar/320/1.3x/1180/empty/loading/error/search/
-  more all still match (fold intact at 360x800, no 320/1.3x/ar overflow).
-  No `--update-goldens` — 768 regen belongs to the capture agent.
-  `test/failures/` debris deleted.
+   more all still match (fold intact at 360x800, no 320/1.3x/ar overflow).
+   No `--update-goldens` — 768 regen belongs to the capture agent.
+   `test/failures/` debris deleted.
+
+## Adversarial D1 close-out (ui/fix-rulings — presentation only)
+
+- D1 scoping: `_SupervisorChrome` now guards the shell icon to
+  `selectedIndex == 0 || selectedIndex == 1` (Floor + Jobs only; same
+  `selectedIndex` guard pattern as before). Queue/Review/Reports/Staff/
+  Schedule (incl. More overflow) show NO icon — those tabs never had a list
+  search, so nothing that existed is removed; taps unchanged (Floor:
+  icon 1 + keystrokes + result 1). `_openSearch` branches untouched (same
+  floor/register sheets, same predicates/targets/routes, no logic change).
+- Counts: `supervisor_dashboard_view_test.dart` still 8 tests, 8 assertions
+  — counts did not go down (no test edits this pass). Frames: all 11
+  `after-supervisor-home-current/` + all 17 `after-phase-5-supervisor/` +
+  all 5 `after-shell-fix` sv PNGs compare back-to-back green with NO regen
+  (Floor keeps the icon, so no pixels change), `takeException` null,
+  RTL/320/1.3x intact. `test/failures/` debris absent.

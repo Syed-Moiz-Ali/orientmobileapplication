@@ -5,10 +5,12 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
 
 import 'package:customer_app/core/router/app_router.dart';
+import 'package:customer_app/features/customer/domain/entities/customer_entities.dart';
 import 'package:customer_app/features/customer/presentation/providers/customer_providers.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_l10n.dart';
 import 'package:customer_app/features/customer/presentation/support/customer_destination.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_bookings_tab.dart';
+import 'package:customer_app/features/customer/presentation/widgets/customer_home_search_sheet.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_home_tab.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_profile_tab.dart';
 import 'package:customer_app/features/customer/presentation/widgets/customer_vehicles_tab.dart';
@@ -60,6 +62,12 @@ class CustomerScaffold extends ConsumerStatefulWidget {
 }
 
 class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
+  /// Keys let the shell AppBar search trigger open the SAME list-scoped
+  /// sheets the tabs own (same predicate/target/reveal) — only WHICH visible
+  /// icon opens them moved (ruling a). No logic/data/predicate changes.
+  final _bookingsKey = GlobalKey<CustomerBookingsTabState>();
+  final _vehiclesKey = GlobalKey<CustomerVehiclesTabState>();
+
   @override
   void initState() {
     super.initState();
@@ -90,12 +98,16 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
     final state = ref.watch(customerDashboardProvider);
     final notifier = ref.read(customerDashboardProvider.notifier);
     final items = _navItems(t);
+    final bookings =
+        ref.watch(customerBookingsProvider).valueOrNull ??
+        const <CustomerBookingEntity>[];
+    final vehicles = state.vehicles;
 
     // Must stay in [CustomerDestination] order.
     final pages = <Widget>[
       const CustomerHomeTab(),
-      const CustomerBookingsTab(),
-      const CustomerVehiclesTab(),
+      CustomerBookingsTab(key: _bookingsKey),
+      CustomerVehiclesTab(key: _vehiclesKey),
       const CustomerProfileTab(),
     ];
 
@@ -119,6 +131,28 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
       null,
     ];
 
+    // Ruling (a): shell AppBar WITH search trigger — the icon lives HERE
+    // (top-right, adjacent to bell/avatar); pages show none. Same
+    // sheets/predicates/targets — only WHICH visible icon opens them moved.
+    // >5 gating relocated verbatim: vehicles/bookings shell icons visible
+    // ONLY when loaded >5; home always (no threshold ever existed there).
+    final VoidCallback? shellSearch = switch (state.selectedIndex) {
+      0 => () => _openHomeSearch(context, vehicles: vehicles, bookings: bookings),
+      1 => bookings.length > 5
+          ? () {
+              HapticFeedback.selectionClick();
+              _bookingsKey.currentState?.openSearch();
+            }
+          : null,
+      2 => vehicles.length > 5
+          ? () {
+              HapticFeedback.selectionClick();
+              _vehiclesKey.currentState?.openSearch();
+            }
+          : null,
+      _ => null,
+    };
+
     return DashboardShell(
       // The bar pill owns offline state; the banner stays off.
       showOfflineBanner: false,
@@ -127,10 +161,13 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
         subtitle: subtitles[state.selectedIndex],
         showOfflineStatus: true,
         offlinePendingCount: pending,
+        // Shell search trigger (ruling a): direction-aware AppBar actions
+        // mirror in RTL; bell/avatar stay end-side adjacent.
+        onSearch: shellSearch,
         actions: [
           _BellButton(unreadCount: state.unreadCount),
           Padding(
-            padding: const EdgeInsets.only(right: AppDimensions.s14),
+            padding: const EdgeInsetsDirectional.only(end: AppDimensions.s14),
             child: _ProfileAvatar(
               initials: state.profile?.avatarInitials.trim() ?? '',
               onTap: () {
@@ -153,6 +190,57 @@ class _CustomerScaffoldState extends ConsumerState<CustomerScaffold> {
       ),
     );
   }
+}
+
+/// Opens the full-screen home search sheet over the home's existing vehicles +
+/// bookings (same sheet/predicate/targets as the removed header icon — only
+/// WHICH visible icon opens it moved to the shell AppBar per ruling a).
+/// No new routes: result taps reuse the home's own destinations.
+void _openHomeSearch(
+  BuildContext context, {
+  required List<CustomerVehicleEntity> vehicles,
+  required List<CustomerBookingEntity> bookings,
+}) {
+  HapticFeedback.selectionClick();
+  final size = MediaQuery.sizeOf(context);
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (sheetContext) => Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
+      ),
+      // Tight full-size box: the sheet route sizes to content, so the
+      // content itself claims the screen (U1 full-screen search). The box
+      // carries the surface token (the route Material is transparent).
+      child: SizedBox.fromSize(
+        size: size,
+        child: ColoredBox(
+          color: Theme.of(sheetContext).colorScheme.surface,
+          child: SingleChildScrollView(
+            child: CustomerHomeSearchSheet(
+              vehicles: vehicles,
+              bookings: bookings,
+              onSelectVehicle: (vehicle) {
+                Navigator.pop(sheetContext);
+                context.push(
+                  AppRoutes.customerBookServiceLocation(vehicleId: vehicle.id),
+                );
+              },
+              onSelectBooking: (booking) {
+                Navigator.pop(sheetContext);
+                context.push(
+                  AppRoutes.customerBookingDetail,
+                  extra: booking,
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 /// Bell with the real unread badge. Opens the pushed notifications inbox.

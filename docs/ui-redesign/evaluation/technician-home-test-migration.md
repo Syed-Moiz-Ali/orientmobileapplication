@@ -184,6 +184,32 @@ logic untouched):
   the brief + DESIGN_SPEC/DESIGN_SYSTEM + the supervisor-home precedent
   (migration doc + U-review), noted here per instructions.
 
+## Scope-unification pass (ui/fix-rulings, ruling (a) — presentation only)
+
+The Today `_TodayHeader` search glyph is REMOVED; the shell `_TechChrome`
+search icon is UNHIDDEN on the Today tab (the `selectedIndex != 0` guard is
+deleted — the bar now shows the one icon on every tab, tooltip
+`techJobsSearch` everywhere). Same today sheet/target
+(`showTechnicianTodaySearch` over `notifier.allJobs`, result = same dossier
+contract). One visible search path on the Today tab (shell-owned); no
+predicate/route/logic change; zero new ARB keys; taps unchanged (icon 1 +
+keystrokes + result 1, ≤ same scroll).
+
+- Test deltas this pass: **none** in
+  `technician_today_characterization_test.dart` (11 tests, 11 assertions —
+  counts 11 -> 11; the tab view never pinned the header glyph) and
+  `technician_jobs_list_characterization_test.dart` (9 -> 9, rail-only pins
+  hold). Capture harness update (baseline-tagged, excluded from the default
+  run): `technician_home_after_capture_test.dart` `_openSearch` now opens the
+  same today sheet directly over the loaded jobs (the tab pumps alone; the
+  glyph moved to the shell). `shell_fix_technician_capture_test.dart`
+  unchanged.
+- Frames: all 10 `after-technician-home/` + all 4 `after-shell-fix` tech PNGs
+  regenerated; compare back-to-back green (`takeException` null),
+  RTL/320/1.3x intact (search sheet reuses `techJobsNoMatch(Hint)`; no new
+  keys).
+- STOPs: none.
+
 ## Addendum — ui/integration-1 Jobs-tab single-search audit (2026-10-22)
 
 - Finding: `TechnicianJobsView` showed an inline `AppSearchField`
@@ -212,3 +238,26 @@ logic untouched):
   no dropped routes; copy identical, zero new keys.
 - Counts: characterization file still 11 tests, 11 assertions — counts did
   not go down (no test edits needed; no test pins the Jobs inline field).
+
+## Adversarial D1/D4 close-out (ui/fix-rulings — presentation only)
+
+- D1 scoping: `_TechChrome` now guards the shell icon to
+  `selectedIndex == 0 || selectedIndex == 1` (Today + Jobs only; same
+  `selectedIndex` guard pattern as before). Productivity/Profile show NO
+  icon — those tabs never had a list search, so nothing that existed is
+  removed; taps unchanged (Today: icon 1 + keystrokes + result 1).
+  `_openSearch` untouched (same today sheet over `notifier.allJobs`, same
+  dossier contract, no logic change).
+- D4 Clear: `technician_today_search.dart` no-match now adds the same
+  secondary Clear pill as the register/task sheets (`filterBarClear` →
+  clears `_ctrl` + `_query`, restoring all rows; presentation only, same
+  contract as the register sheet's Clear). Predicate/sheet/target/route
+  untouched.
+- Counts: `technician_today_characterization_test.dart` still 11 tests, 11
+  assertions; `technician_jobs_list_characterization_test.dart` still 9 — counts
+  did not go down (no test edits this pass; temp D4 Clear verification ran
+  green and was deleted). Frames: all 10 `after-technician-home/` + all 4
+  `after-shell-fix` tech PNGs compare back-to-back green with NO regen
+  (Today keeps the icon; Clear lives only in the no-match branch, so no
+  pixels change), `takeException` null, RTL/320/1.3x intact (ar/320/1.3x
+  temp pump clean, then deleted). `test/failures/` debris absent.

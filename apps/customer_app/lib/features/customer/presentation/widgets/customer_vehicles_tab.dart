@@ -33,11 +33,22 @@ class CustomerVehiclesTab extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<CustomerVehiclesTab> createState() =>
-      _CustomerVehiclesTabState();
+      CustomerVehiclesTabState();
 }
 
-class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
+/// State is public so the shell AppBar search trigger can open the SAME
+/// vehicles search sheet (same predicate/target/reveal) — only WHICH visible
+/// icon opens it moved (ruling a). No logic/data/predicate changes.
+class CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
   String _removingId = '';
+
+  /// Shell entry point: opens the existing vehicles search sheet over the
+  /// currently loaded vehicles (same sheet, same reveal targets).
+  void openSearch() {
+    final vehicles = ref.read(customerDashboardProvider).vehicles;
+    if (vehicles.isEmpty) return;
+    _openSearch(vehicles);
+  }
 
   /// Server vehicle ids whose canonical reload has already been requested, so a
   /// failed refresh cannot turn the restore into an endless reload loop.
@@ -165,10 +176,8 @@ class _CustomerVehiclesTabState extends ConsumerState<CustomerVehiclesTab> {
                 subtitle: subtitle,
                 showFindAids: showFindAids,
                 showAdd: vehicles.isNotEmpty,
-                searchTooltip: t.vhSearchTitle,
                 filterTooltip: t.vhFilterTitle,
                 addLabel: t.vhAdd,
-                onSearch: () => _openSearch(vehicles),
                 onFilter: _openFilter,
                 onAdd: () => context.push(AppRoutes.customerAddVehicle),
               ),
@@ -479,20 +488,21 @@ class _FilterNoMatch extends StatelessWidget {
   }
 }
 
-/// List header: title + count subtitle start-side, find-aids + Add end-side
+/// List header: title + count subtitle start-side, filter + Add end-side
 /// on the SAME row (plain Row, not AppPageHeader whose compact layout stacks
 /// actions below the subtitle). Technician-today / supervisor-floor precedent:
 /// Expanded(title+subtitle) + end-side actions, RTL-mirrored. Same strings,
 /// same text styles, same AppIconButton contract. Presentation only.
+///
+/// Ruling (a): the search icon lives in the shell AppBar (adjacent to
+/// bell/avatar) — this header shows NO search icon (filter + Add only).
 class _VehiclesHeader extends StatelessWidget {
   final String title;
   final String subtitle;
   final bool showFindAids;
   final bool showAdd;
-  final String searchTooltip;
   final String filterTooltip;
   final String addLabel;
-  final VoidCallback onSearch;
   final VoidCallback onFilter;
   final VoidCallback onAdd;
 
@@ -501,10 +511,8 @@ class _VehiclesHeader extends StatelessWidget {
     required this.subtitle,
     required this.showFindAids,
     required this.showAdd,
-    required this.searchTooltip,
     required this.filterTooltip,
     required this.addLabel,
-    required this.onSearch,
     required this.onFilter,
     required this.onAdd,
   });
@@ -537,12 +545,6 @@ class _VehiclesHeader extends StatelessWidget {
                 ),
               ),
               if (showFindAids) ...[
-                const SizedBox(width: AppDimensions.s8),
-                AppIconButton(
-                  icon: Icons.search_rounded,
-                  tooltip: searchTooltip,
-                  onPressed: onSearch,
-                ),
                 const SizedBox(width: AppDimensions.s8),
                 AppIconButton(
                   icon: Icons.filter_list_rounded,

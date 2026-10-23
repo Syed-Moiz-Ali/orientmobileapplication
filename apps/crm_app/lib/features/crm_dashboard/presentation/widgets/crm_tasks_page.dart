@@ -17,7 +17,6 @@ import 'package:crm_app/features/crm_dashboard/domain/entities/crm_entities.dart
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_task_provider.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/providers/crm_team_provider.dart';
 import 'package:crm_app/features/crm_dashboard/presentation/support/crm_l10n.dart';
-import 'package:crm_app/features/crm_dashboard/presentation/widgets/crm_tasks_search_sheet.dart';
 
 /// Priority display kind by the stored English name (labels render via the
 /// existing `tkHigh/Medium/Low` keys — same mapping as the form sheet —
@@ -57,7 +56,9 @@ class CrmTasksPage extends ConsumerStatefulWidget {
 }
 
 class _CrmTasksPageState extends ConsumerState<CrmTasksPage> {
-  /// Scroll anchors for search-result reveals (presentation only).
+  /// Row keys (presentation only; the search-result reveal that consumed
+  /// them moved to the shell AppBar per ruling (a) — see STOP in the shell
+  /// helper; no reveal closure remains here).
   final Map<String, GlobalKey> _scrollKeys = {};
 
   GlobalKey _scrollKeyFor(String id) =>
@@ -71,24 +72,21 @@ class _CrmTasksPageState extends ConsumerState<CrmTasksPage> {
     final tasks = ref.watch(crmTaskProvider).tasks;
     _scrollKeys.removeWhere((id, _) => !tasks.any((task) => task.id == id));
 
-    // Progressive disclosure (the ONE sanctioned U1 exception — same as the
-    // leads list): the search find-aid appears ONLY when MORE THAN 5 tasks
-    // are loaded; ≤ 5 tasks are fully scannable without find-aids.
-    final showFindAids = tasks.length > 5;
+    // Ruling (a): the search find-aid relocated to the shell AppBar
+    // (contextual per tab, same >5 condition, same tasks sheet) — the list
+    // header shows no search icon; the shell trigger is the single visible
+    // search path. Refresh + Add stay where they are.
 
     return Column(
       children: [
         Padding(
-          // Plain-Row header (F6, owner/supervisor precedent): the title and
-          // the search find-aid share ONE Row so the icon stays top-end
-          // same-row on compact. AppPageHeader stacked every action below
-          // the title on compact, which read as a body toolbar row. Three
-          // trailing actions cannot share one 360px row with the title, so
-          // on compact refresh + Add sit in an end-aligned second header
-          // row (still header chrome, never body); on wide screens
-          // everything shares one row as before. Rows mirror in RTL, so the
-          // icon lands top-start in Arabic (correct end side). Same >5
-          // condition, same sheet, same target — placement only.
+          // Plain-Row header (F6, owner/supervisor precedent, ruling (a):
+          // no search icon here — the shell AppBar owns the single visible
+          // search path). The title shares ONE Row with refresh + Add on
+          // wide; on compact the title sits in row 1 and refresh + Add in
+          // an end-aligned second header row (still header chrome, never
+          // body). Rows mirror in RTL. Same sheets/targets — placement
+          // only (search relocated to shell, same >5 gate, same sheet).
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -121,27 +119,6 @@ class _CrmTasksPageState extends ConsumerState<CrmTasksPage> {
                   ),
                 ),
               );
-              List<Widget> findAids() => [
-                    if (showFindAids)
-                      AppIconButton(
-                        icon: Icons.search_rounded,
-                        tooltip: t.tasksSearchTitle,
-                        onPressed: () => showCrmTasksSearchSheet(
-                          context,
-                          tasks: tasks,
-                          onSelect: (task) {
-                            final ctx = _scrollKeys[task.id]?.currentContext;
-                            if (ctx != null) {
-                              Scrollable.ensureVisible(
-                                ctx,
-                                duration: const Duration(milliseconds: 300),
-                                alignment: 0.1,
-                              );
-                            }
-                          },
-                        ),
-                      ),
-                  ];
               List<Widget> utilityActions() => [
                     AppIconButton(
                       icon: Icons.refresh_rounded,
@@ -161,8 +138,6 @@ class _CrmTasksPageState extends ConsumerState<CrmTasksPage> {
                   children: [
                     titleBlock,
                     const SizedBox(width: AppDimensions.s12),
-                    ...findAids(),
-                    const SizedBox(width: AppDimensions.s8),
                     ...utilityActions(),
                   ],
                 );
@@ -173,11 +148,7 @@ class _CrmTasksPageState extends ConsumerState<CrmTasksPage> {
                 children: [
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      titleBlock,
-                      const SizedBox(width: AppDimensions.s12),
-                      ...findAids(),
-                    ],
+                    children: [titleBlock],
                   ),
                   const SizedBox(height: AppDimensions.s8),
                   Align(

@@ -81,9 +81,11 @@ Frequent task (start QC) stays single-screen; the checklist sheet is the existin
   filter rail would be a fake control, U3). Rebuild keeps borderless rows with shared atoms.
 
 ## U-laws application (U0–U14, C17)
-- U0 (one read): row = jobCardRef (what the supervisor recognizes) → progress pill → customer·vehicle →
-  tech → Start QC. CARD HIERARCHY (binding): title = jobCardRef (mono, LTR, verbatim); pill ONLY from
-  existing done/total (`svReviewProgress` — never invented); customer·vehicle = meta.
+- U0 (one read): row = vehicle/customer (human-recognizable title) → progress pill → customer meta +
+  tech → JC ref small mono LAST → Start QC. CARD HIERARCHY (binding, ruling (d)): title =
+  `vehicleInfo` (fallback `customerName`, `titleSmall` w700, verbatim, 1-line ellipsis); pill ONLY from
+  existing done/total (`svReviewProgress` — never invented); `customerName` = meta; JC ref = small mono
+  (`supervisorMono`, 11, `onSurfaceVariant`, LTR-locked) LAST — consistent with owner cards.
 - U1 (find fast): rows fully visible, scan-first; bar icon owns lookup (single search path — deviation
   B). No inline added (would duplicate the bar path's scope, which includes awaiting records).
 - U2 (fit the content): heterogeneous rows (identity + pill + meter + full-width action) — grouped
@@ -94,8 +96,8 @@ Frequent task (start QC) stays single-screen; the checklist sheet is the existin
   rail (nothing honest to facet — inventing one would be a fake control).
 - U4 (no invention): refs/customer/vehicle/tech verbatim via existing fields; zero as `0`; counts from
   loaded lists only.
-- U5 (reachable + legible): 48dp targets on Start QC/Retry; ref LTR-locked; customer·vehicle ellipsizes
-  (1 line) at 320px / 1.3x, action wraps full-width (never clips).
+- U5 (reachable + legible): 48dp targets on Start QC/Retry; JC ref LTR-locked; title + customer meta
+  ellipsize (1 line each) at 320px / 1.3x, action wraps full-width (never clips).
 - U6 (states): skeleton mirrors the rows (`AppShimmerSkeleton`); honest empty (`AppEmptyState`: EXACTLY
   one icon + one sentence + NO action — nothing to create, QC fills from completions); error
   (`AppErrorState` + Try again, same refresh); pull-to-refresh kept.
@@ -104,7 +106,7 @@ Frequent task (start QC) stays single-screen; the checklist sheet is the existin
 - U8 (no dead ends): every row offers Start QC; empty offers nothing-to-do honestly (no dead CTA);
   error offers Retry.
 - U9 (consistency): `AppPageHeader`, divider rows, sheet — same atoms as staff precedent + screens 1–2.
-- U10 (RTL): full mirror; ref/progress figures LTR-locked (`Directionality` kept).
+- U10 (RTL): full mirror; JC ref/progress figures LTR-locked (`Directionality` kept).
 - U11 (a11y): row `Semantics` kept; header `Semantics(header: true)`; live-region on error kept.
 - U12 (density): 1-col compact; wider canvas keeps single-column register (grid chunking N/A by design).
 - U13 (offline): bar banner owns offline state; stale list kept + refresh notice; retries inline.
@@ -137,12 +139,12 @@ Frequent task (start QC) stays single-screen; the checklist sheet is the existin
 | Quality control            [↻]   |  <- AppPageHeader + refresh (1 tap)
 | Verify completed repairs…        |  <- static subtitle (no count key — deviation A)
 |----------------------------------|
-| JC-207                  [4/4 done]|  <- row 1: ref + pill (above fold)
-| Layla · Yaris XYZ 5678      (OH) |
+| Yaris XYZ 5678          [4/4 done]|  <- row 1: vehicle/customer title + pill (above fold)
+| Layla                (OH)  JC-207 |  <- meta + tech + JC small mono LAST
 | ━━━━━━━━━━━━                     |
 | [Start QC                     ]  |  <- frequent action ON the card (1 tap from list)
 |----------------------------------|  <- fold line (nav below)
-| JC-208                  [3/5 done]|  <- row 2 PEEKING
+| Camry ABC 1234          [3/5 done]|  <- row 2 PEEKING
 +----------------------------------+
 | Floor | Jobs | Queue | Review |⋯ |
 ```
@@ -166,7 +168,7 @@ keys expected (phase-9 list: none). No ALL CAPS strings added.
 - U0–U14 walk (ANY U-law fail caps at 8/16); C16 hard-reject checklist (ANY violation caps at 10/16):
   borderless light rows, one filled accent per row (Start QC only), one path per task (single search
   path = bar), no permanent pills, no ALL CAPS, first row above fold + next peeking, card hierarchy
-  (title → pill → meta), taps never regress.
+  (vehicle/customer title → pill → meta → JC small mono last, ruling (d)), taps never regress.
 - Airbnb rubric ≥ 12/16 to pass.
 - Gates: characterization tests on the CURRENT list first, before-images captured, migration table
   (current → shared atoms), reviewer process per redesign mandate, NO logic changes.

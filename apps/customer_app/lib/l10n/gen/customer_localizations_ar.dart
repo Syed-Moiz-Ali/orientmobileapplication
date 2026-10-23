@@ -805,6 +805,18 @@ class CustomerLocalizationsAr extends CustomerLocalizations {
   String get ntTypeUpdate => 'تحديث';
 
   @override
+  String get ntSearchTitle => 'البحث في التنبيهات';
+
+  @override
+  String get ntSearchHint => 'ابحث بالعنوان أو الرسالة';
+
+  @override
+  String get ntSearchNoMatch => 'لا توجد تنبيهات مطابقة لبحثك.';
+
+  @override
+  String get ntSearchClear => 'مسح';
+
+  @override
   String get wizTitle => 'احجز خدمة';
 
   @override

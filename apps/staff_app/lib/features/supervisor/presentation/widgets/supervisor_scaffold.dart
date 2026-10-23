@@ -13,6 +13,7 @@ import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_as
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_components.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_dashboard_tab.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_floor_search.dart';
+import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_register_search.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_jobs_tab.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_queue_tab.dart';
 import 'package:staff_app/features/supervisor/presentation/widgets/supervisor_reports_tab.dart';
@@ -86,12 +87,23 @@ class _SupervisorScaffoldState extends ConsumerState<SupervisorScaffold> {
 
   void _openAssign() => showSupervisorAssignSheet(context);
 
-  /// Bar search (U1): floor-wide bay lookup over the same derived board data
-  /// the floor tab renders — no new routes, no logic changes. A result opens
-  /// the same assign sheet a bay tap opens.
+  /// Bar search (U1): per-tab scope over already-derived data — the floor
+  /// tab opens the floor-wide bay lookup, the Jobs tab opens the register
+  /// lookup over the same inline predicate. Same sheets, same targets, no
+  /// new routes, no logic changes. A result opens the same assign sheet the
+  /// corresponding entry opens.
   void _openSearch() {
     HapticFeedback.selectionClick();
     final notifier = ref.read(supervisorDashboardProvider.notifier);
+    if (_navIndex == 1) {
+      final jobs = notifier.jobs;
+      showSupervisorRegisterSearch(
+        context,
+        jobs: jobs,
+        onSelect: (_) => showSupervisorAssignSheet(context),
+      );
+      return;
+    }
     final bays = buildSupervisorBays(
       awaiting: notifier.awaitingCompletions,
       jobs: notifier.jobs,
@@ -394,14 +406,18 @@ class _SupervisorChrome extends ConsumerWidget implements PreferredSizeWidget {
       title: titles[selectedIndex],
       showDivider: true,
       actions: [
-        // U1/C16 search-affordance audit (ui/integration-1): the floor tab
-        // owns the ONE search path on the floor header (same floor sheet) —
-        // the bar trigger renders only off the floor tab so floor home never
-        // shows two search icons. Route/sheet/logic untouched.
-        if (selectedIndex != 0)
+        // U1/C16 search-affordance audit (ruling (a) scope unification, D1
+        // scoping): the shell bar owns the ONE search path ONLY on tabs with
+        // a search target — floor scope on the floor tab (same floor sheet),
+        // register scope on the Jobs tab (same register predicate/sheet).
+        // Queue/Review/Reports/Staff/Schedule (incl. More overflow) show NO
+        // icon: those tabs never had a list search, and a floor lookup there
+        // would be the wrong scope (U8/U1). Same `selectedIndex` guard
+        // pattern as before — presentation only. Route/sheet/logic untouched.
+        if (selectedIndex == 0 || selectedIndex == 1)
           AppIconButton(
             icon: Icons.search_rounded,
-            tooltip: t.svSearchTitle,
+            tooltip: selectedIndex == 1 ? t.svJobsSearchHint : t.svSearchTitle,
             onPressed: onSearch,
           ),
         const StaffNotificationBell(),

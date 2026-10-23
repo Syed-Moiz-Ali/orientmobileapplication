@@ -18,7 +18,6 @@ class SupervisorJobsTab extends ConsumerStatefulWidget {
 }
 
 class _SupervisorJobsTabState extends ConsumerState<SupervisorJobsTab> {
-  String _query = '';
   String? _filter;
 
   @override
@@ -28,21 +27,13 @@ class _SupervisorJobsTabState extends ConsumerState<SupervisorJobsTab> {
     final notifier = ref.read(supervisorDashboardProvider.notifier);
     final allJobs = notifier.jobs;
 
-    final q = _query.trim().toLowerCase();
-    final searched = q.isEmpty
-        ? allJobs
-        : allJobs
-              .where(
-                (j) =>
-                    j.jobCard.toLowerCase().contains(q) ||
-                    j.customer.toLowerCase().contains(q) ||
-                    j.vehicle.toLowerCase().contains(q) ||
-                    j.status.toLowerCase().contains(q),
-              )
-              .toList();
+    // Ruling (a) scope unification: text search lives in the shell AppBar
+    // register sheet (same 4-field predicate over AssignedJobEntity); the
+    // tab keeps only the status rail. No logic change — same fields, same
+    // sheet target, same assign contract.
     final filtered = _filter == null
-        ? searched
-        : searched.where((j) => _bucket(j.status) == _filter).toList();
+        ? allJobs
+        : allJobs.where((j) => _bucket(j.status) == _filter).toList();
 
     final inProgress = allJobs
         .where((j) => _bucket(j.status) == t.svJobsInProgress)
@@ -56,9 +47,7 @@ class _SupervisorJobsTabState extends ConsumerState<SupervisorJobsTab> {
 
     final loading = state.isDashboardLoading && allJobs.isEmpty;
     final isNoMatch =
-        (_query.trim().isNotEmpty || _filter != null) &&
-        filtered.isEmpty &&
-        allJobs.isNotEmpty;
+        _filter != null && filtered.isEmpty && allJobs.isNotEmpty;
     // U6/C16 one-primary-CTA: when the register is confirmed empty the
     // empty-state Assign is the single entry point (the brief's "never both
     // at once") — the header action is shown only while jobs may exist.
@@ -103,11 +92,8 @@ class _SupervisorJobsTabState extends ConsumerState<SupervisorJobsTab> {
               waiting: waiting,
             ),
             const SizedBox(height: AppDimensions.s16),
-            AppSearchField(
-              hintText: t.svJobsSearchHint,
-              onChanged: (v) => setState(() => _query = v),
-            ),
-            const SizedBox(height: AppDimensions.s12),
+            // Register text search moved to the shell AppBar icon (same
+            // predicate/sheet); the rail below is the only in-tab filter.
             AppFilterBar(
               options: [
                 t.svJobsInProgress,
@@ -140,10 +126,7 @@ class _SupervisorJobsTabState extends ConsumerState<SupervisorJobsTab> {
                 isNoMatch: isNoMatch,
                 isEmpty: !loading && allJobs.isEmpty,
                 jobs: filtered,
-                onClear: () => setState(() {
-                  _query = '';
-                  _filter = null;
-                }),
+                onClear: () => setState(() => _filter = null),
                 onAssign: widget.onOpenAssign,
               ),
           ],

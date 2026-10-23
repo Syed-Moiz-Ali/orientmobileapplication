@@ -8,6 +8,7 @@ import 'package:staff_app/features/technician/presentation/providers/technician_
 import 'package:staff_app/features/technician/presentation/widgets/escalation_sheet.dart';
 import 'package:staff_app/features/technician/presentation/widgets/parts_request_sheet.dart';
 import 'package:staff_app/features/technician/presentation/widgets/technician_components.dart';
+import 'package:staff_app/features/technician/presentation/widgets/technician_task_search.dart';
 import 'package:staff_app/l10n/gen/staff_localizations.dart';
 
 /// Technician Job Detail — "how do I execute THIS job correctly?".
@@ -141,6 +142,29 @@ class _TechnicianJobDetailViewState
         frosted: !context.isCompact,
         showOfflineStatus: true,
         offlinePendingCount: pendingSync,
+        // Ruling (a): task find sits top-right in the shell bar (same
+        // placement as the list screens) — substring over the detail's
+        // loaded task titles; a result reveals the detail and drives the
+        // existing start/complete toggle contract. No-match + Clear live in
+        // the sheet. Sticky bar + keyboard-safe intact.
+        onSearch: () {
+          HapticFeedback.selectionClick();
+          showTechnicianTaskSearch(
+            context,
+            tasks: liveJob.tasks,
+            onSelect: (task) {
+              if (!isActionable ||
+                  task.status == TaskStatus.completed) {
+                return;
+              }
+              if (task.status == TaskStatus.inProgress) {
+                complete(task);
+              } else {
+                start(task);
+              }
+            },
+          );
+        },
       ),
       bottomNavigationBar: wide || !canComplete
           ? null
