@@ -253,3 +253,25 @@ owner. No silent filtering.
 - Proposed owner: backend/product + native review — return locale-aware
   codes or an approved Arabic glossary; frontend maps via ARB only then.
 - Status: open. Presentation renders feed codes verbatim; no invented Arabic.
+
+## 20. Owner notifiers read `state` inside `build()` — crash on cold start (device-proven)
+
+- Feed/state: `PendingApprovalsNotifier.build()` calls `load()`, which
+  reads `state` before the provider is initialized
+  (`dashboard_providers.dart:78-82`); `AccountsReceivableNotifier.build()`
+  calls `loadData()` with the same read (`ar_providers.dart:64-69`,
+  entry 19 instance). The shared `ListNotifierMixin.load()`
+  (`shared_core/.../presentation/list_state.dart:32-35`) reads `state`
+  too, so `JobStatusNotifier.build()` and
+  `PendingJobCardsNotifier.build()` (`dashboard_providers.dart:64, 98`)
+  carry the identical crash — four notifiers, one pattern.
+- Evidence: device log (owner_app, emulator) — `Bad state: Tried to
+  read the state of an uninitialized provider` at `load:80` via
+  `build:78` (pending approvals) and at `loadData:69` via `build:64`
+  (AR), plus `OnBackInvokedCallback` manifest warnings (pre-existing,
+  all apps, cosmetic).
+- Proposed owner: state owners — never read `state` in `build()`/`load()`;
+  initialize synchronously and fetch in an event/microtask (or use
+  `AsyncNotifier`); fix all four notifiers + audit for the same pattern.
+  Frontend must not paper over it (no try/catch-and-empty).
+- Status: open. Crashes in production on the affected surfaces.
