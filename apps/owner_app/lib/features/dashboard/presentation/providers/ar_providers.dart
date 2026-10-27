@@ -50,18 +50,20 @@ class AccountsReceivableState {
   List<ARRecord> get filteredRecords {
     if (searchQuery.isEmpty) return records;
     final q = searchQuery.toLowerCase();
-    return records.where((r) =>
-      r.arId.toLowerCase().contains(q) ||
-      r.customer.toLowerCase().contains(q)
-    ).toList();
+    return records
+        .where(
+          (r) =>
+              r.arId.toLowerCase().contains(q) ||
+              r.customer.toLowerCase().contains(q),
+        )
+        .toList();
   }
 }
 
-class AccountsReceivableNotifier
-    extends Notifier<AccountsReceivableState> {
+class AccountsReceivableNotifier extends Notifier<AccountsReceivableState> {
   @override
   AccountsReceivableState build() {
-    loadData();
+    Future.microtask(loadData);
     return const AccountsReceivableState();
   }
 
@@ -82,7 +84,7 @@ class AccountsReceivableNotifier
   }
 }
 
-final accountsReceivableProvider = NotifierProvider<
-    AccountsReceivableNotifier, AccountsReceivableState>(
-  AccountsReceivableNotifier.new,
-);
+final accountsReceivableProvider =
+    NotifierProvider<AccountsReceivableNotifier, AccountsReceivableState>(
+      AccountsReceivableNotifier.new,
+    );

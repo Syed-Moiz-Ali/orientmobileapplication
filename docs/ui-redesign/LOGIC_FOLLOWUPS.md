@@ -274,4 +274,8 @@ owner. No silent filtering.
   initialize synchronously and fetch in an event/microtask (or use
   `AsyncNotifier`); fix all four notifiers + audit for the same pattern.
   Frontend must not paper over it (no try/catch-and-empty).
-- Status: open. Crashes in production on the affected surfaces.
+- Status: fixed 2026-10-27. Every `Notifier.build()` now returns its initial
+  state synchronously and schedules the fetch in `Future.microtask`
+  (document expiry, job status, pending approvals, pending job cards, active
+  job cards, sales invoices, accounts receivable) — no `state` read before
+  the provider is initialized.

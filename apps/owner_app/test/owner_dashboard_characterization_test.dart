@@ -35,11 +35,7 @@ import 'package:owner_app/l10n/gen/owner_localizations.dart';
 const _kpis = <KpiCardResponse>[
   KpiCardResponse(label: 'Revenue', value: 'AED 84K', sub: '+2.1% Ahead'),
   KpiCardResponse(label: 'Margin', value: '18.4%', sub: '+1.2% vs last week'),
-  KpiCardResponse(
-    label: 'Bay occupancy',
-    value: '12/16',
-    sub: '4 bays free',
-  ),
+  KpiCardResponse(label: 'Bay occupancy', value: '12/16', sub: '4 bays free'),
   KpiCardResponse(
     label: 'Pending approvals',
     value: '3',
@@ -68,7 +64,12 @@ const _expenses = <TrendPointResponse>[
 ];
 
 const _register = <JobCardRegisterResponse>[
-  JobCardRegisterResponse(label: 'Engine repair', open: 3, completed: 5, total: 8),
+  JobCardRegisterResponse(
+    label: 'Engine repair',
+    open: 3,
+    completed: 5,
+    total: 8,
+  ),
   JobCardRegisterResponse(label: 'AC service', open: 0, completed: 4, total: 4),
 ];
 
@@ -171,8 +172,7 @@ class _FakeOwnerRemote implements OwnerRemoteDataSource {
       _gate(const <OwnerJobCardResponse>[]);
 
   @override
-  Future<bool> updateJobCardStatus(String id, String status) =>
-      _gate(true);
+  Future<bool> updateJobCardStatus(String id, String status) => _gate(true);
 }
 
 // ---------------------------------------------------------------- harness
@@ -257,10 +257,7 @@ Future<({ProviderContainer container, GoRouter router})> _pump(
   await tester.runAsync(() async {
     await Hive.box<dynamic>('owner_messages').clear();
     await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: _app(router),
-      ),
+      UncontrolledProviderScope(container: container, child: _app(router)),
     );
     for (var i = 0; i < 40; i++) {
       if (!container.read(dashboardUiProvider).isLoading) break;
@@ -455,27 +452,12 @@ void main() {
       await _settle(tester);
     }
 
-    // Top-row tiles are one tap away with no expansion.
+    // Every destination is a visible tile — nothing hides behind an
+    // overflow/Show-all row, so each stays one tap away.
     await tapPush('Job cards', AppRoutes.jobCards);
     await tapPush('Inventory', AppRoutes.inventory);
     await tapPush('Receivables', AppRoutes.accountsReceivable);
     await tapPush('Approvals', AppRoutes.pendingApprovals);
-
-    // The remaining eight sit behind the inline Show-all (preview subtitle
-    // names the first three); expanding keeps every destination one tap
-    // away and drops no route.
-    final preview = find.text('Job status · Compliance · Reviews');
-    expect(preview, findsOneWidget);
-    final showAll = find.ancestor(
-      of: preview,
-      matching: find.byType(InkWell),
-    );
-    expect(showAll, findsWidgets);
-    await tester.ensureVisible(preview);
-    await tester.tap(showAll.first);
-    await _settle(tester);
-    expect(preview, findsNothing);
-
     await tapPush('Job status', AppRoutes.jobStatus);
     await tapPush('Compliance', AppRoutes.documentExpiry);
     await tapPush('Reviews', AppRoutes.feedbackModeration);

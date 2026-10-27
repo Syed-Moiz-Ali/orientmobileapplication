@@ -53,7 +53,8 @@ class OwnerDashboardPage extends ConsumerWidget {
     final profit = notifier.profitTrend;
     final expenses = notifier.expensesTrend;
     final register = notifier.registerItems;
-    final hasAnyData = kpis.isNotEmpty ||
+    final hasAnyData =
+        kpis.isNotEmpty ||
         sales.isNotEmpty ||
         profit.isNotEmpty ||
         expenses.isNotEmpty ||
@@ -117,15 +118,9 @@ class OwnerDashboardPage extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: AppDimensions.s24),
-                  Expanded(
-                    flex: 4,
-                    child: _JobRegister(items: register),
-                  ),
+                  Expanded(flex: 4, child: _JobRegister(items: register)),
                   const SizedBox(width: AppDimensions.s24),
-                  const Expanded(
-                    flex: 3,
-                    child: _QuickActions(),
-                  ),
+                  const Expanded(flex: 3, child: _QuickActions()),
                 ],
               )
             else if (medium) ...[
@@ -213,7 +208,8 @@ class _HomeHeader extends StatelessWidget {
     final colors = theme.colorScheme;
 
     final active =
-        _findKpi(kpis, ['open', 'active']) ?? (kpis.isEmpty ? null : kpis.first);
+        _findKpi(kpis, ['open', 'active']) ??
+        (kpis.isEmpty ? null : kpis.first);
     final fresh = _findKpi(kpis, ['new', 'today']) ?? active;
 
     return Column(
@@ -240,10 +236,7 @@ class _HomeHeader extends StatelessWidget {
           spacing: AppDimensions.s8,
           runSpacing: AppDimensions.s8,
           children: [
-            AppStatusChip(
-              label: t.ownerPillLive,
-              kind: AppStatusKind.accent,
-            ),
+            AppStatusChip(label: t.ownerPillLive, kind: AppStatusKind.accent),
             if (active != null)
               AppStatusChip(
                 label: t.ownerPillActive(active.value),
@@ -272,7 +265,8 @@ class _RevenueHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = OwnerLocalizations.of(context)!;
-    final hero = _findKpi(kpis, ['revenue', 'sales', 'turnover']) ??
+    final hero =
+        _findKpi(kpis, ['revenue', 'sales', 'turnover']) ??
         (kpis.isEmpty ? null : kpis.first);
 
     if (hero == null) {
@@ -332,8 +326,7 @@ class _MicroPods extends StatelessWidget {
     // verified in the shell-fix captures), so the 2-col tiles fit with no
     // overflow and no dead square space; hero + pod row + banner stay
     // above the fold (U2: the first pod row never moves).
-    final textScale =
-        MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 2.0);
+    final textScale = MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 2.0);
     // R1 (U5/U14): at 1.3x the 2-col cell (~88px label slot after the icon)
     // cannot fit the verbatim server word "occupancy" even on 2 lines, so
     // the overline cut mid-word ("occupan…"). On compact phones fall to a
@@ -594,23 +587,23 @@ class _JobRegister extends StatelessWidget {
     final compact = context.adaptive.isCompact;
 
     Widget section(Widget body) => Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SectionHeader(
-              title: t.ownerRegisterTitle,
-              trailing: items.isEmpty
-                  ? null
-                  : TextButton(
-                      onPressed: () {
-                        HapticFeedback.selectionClick();
-                        context.push(AppRoutes.jobCards);
-                      },
-                      child: Text(t.ownerRegisterAll),
-                    ),
-            ),
-            body,
-          ],
-        );
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SectionHeader(
+          title: t.ownerRegisterTitle,
+          trailing: items.isEmpty
+              ? null
+              : TextButton(
+                  onPressed: () {
+                    HapticFeedback.selectionClick();
+                    context.push(AppRoutes.jobCards);
+                  },
+                  child: Text(t.ownerRegisterAll),
+                ),
+        ),
+        body,
+      ],
+    );
 
     if (compact) {
       if (items.isEmpty) {
@@ -691,29 +684,16 @@ class _ActionDef {
   });
 }
 
-/// Quick actions: the twelve real destinations — the top four as equal tiles
-/// in one row (two-by-two on compact so labels never clip at 1.3x), the
-/// remaining eight behind an inline Show-all list group. No destination is
-/// dropped or invented; routes and tab targets are unchanged.
-class _QuickActions extends ConsumerStatefulWidget {
+/// Quick actions: all twelve real destinations as compact tiles in one
+/// responsive grid — nothing is hidden behind an overflow menu. No
+/// destination is dropped or invented; routes and tab targets are unchanged.
+class _QuickActions extends ConsumerWidget {
   const _QuickActions();
 
   @override
-  ConsumerState<_QuickActions> createState() => _QuickActionsState();
-}
-
-class _QuickActionsState extends ConsumerState<_QuickActions> {
-  /// Inline expansion for the overflow destinations (presentation-only local
-  /// state; the destinations themselves are unchanged).
-  var _expanded = false;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = OwnerLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
     final notifier = ref.read(dashboardUiProvider.notifier);
-    final compact = context.adaptive.isCompact;
 
     void push(String route) => context.push(route);
 
@@ -792,78 +772,7 @@ class _QuickActionsState extends ConsumerState<_QuickActions> {
       ),
     ];
 
-    const topCount = 4;
-    final top = actions.take(topCount).toList();
-    final rest = actions.skip(topCount).toList();
-
-    Widget tile(_ActionDef action) {
-      final body = Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: colors.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(
-                AppDimensions.radiusSm,
-              ),
-            ),
-            alignment: Alignment.center,
-            child: Icon(
-              action.icon,
-              color: colors.primary,
-              size: AppDimensions.iconMd,
-            ),
-          ),
-          const SizedBox(height: AppDimensions.s8),
-          Text(
-            action.label,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: colors.onSurface,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      );
-
-      return Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            action.run(context, notifier);
-          },
-          borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 72),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.s8,
-                vertical: AppDimensions.s10,
-              ),
-              child: Center(child: body),
-            ),
-          ),
-        ),
-      );
-    }
-
-    Widget topRow(List<_ActionDef> row) => IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (var i = 0; i < row.length; i++) ...[
-                if (i > 0) const SizedBox(width: AppDimensions.s10),
-                Expanded(child: tile(row[i])),
-              ],
-            ],
-          ),
-        );
-
+    const gap = AppDimensions.s10;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -871,44 +780,86 @@ class _QuickActionsState extends ConsumerState<_QuickActions> {
           header: true,
           child: SectionHeader(title: t.ownerActionsTitle),
         ),
-        if (compact)
-          for (var i = 0; i < top.length; i += 2) ...[
-            topRow(top.sublist(i, (i + 2).clamp(0, top.length))),
-            const SizedBox(height: AppDimensions.s10),
-          ]
-        else
-          topRow(top),
-        const SizedBox(height: AppDimensions.s10),
-        if (rest.isNotEmpty && !_expanded)
-          AppListGroup(
-            items: [
-              AppListGroupItem(
-                leadingIcon: Icons.expand_more_rounded,
-                title: t.ownerRegisterAll,
-                subtitle: rest.map((a) => a.label).take(3).join(' · '),
-                showChevron: false,
-                onTap: () => setState(() => _expanded = true),
-              ),
-            ],
-          )
-        else if (rest.isNotEmpty)
-          AppListGroup(
-            items: [
-              for (final action in rest)
-                AppListGroupItem(
-                  leadingIcon: action.icon,
-                  accentLeading: true,
-                  title: action.label,
-                  subtitle: action.hint,
-                  showChevron: true,
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    action.run(context, notifier);
-                  },
-                ),
-            ],
-          ),
+        const SizedBox(height: AppDimensions.s12),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = constraints.maxWidth >= 520 ? 4 : 3;
+            final tileWidth = constraints.maxWidth.isFinite
+                ? (constraints.maxWidth - gap * (columns - 1)) / columns
+                : 112.0;
+            return Wrap(
+              spacing: gap,
+              runSpacing: gap,
+              children: [
+                for (final action in actions)
+                  SizedBox(
+                    width: tileWidth,
+                    child: _QuickActionTile(
+                      action: action,
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        action.run(context, notifier);
+                      },
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
       ],
+    );
+  }
+}
+
+class _QuickActionTile extends StatelessWidget {
+  final _ActionDef action;
+  final VoidCallback onTap;
+
+  const _QuickActionTile({required this.action, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Tooltip(
+      message: action.hint,
+      child: AppCard.subtle(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.s8,
+          vertical: AppDimensions.s12,
+        ),
+        onTap: onTap,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: colors.primary.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                action.icon,
+                color: colors.primary,
+                size: AppDimensions.iconMd,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.s8),
+            Text(
+              action.label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: colors.onSurface,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

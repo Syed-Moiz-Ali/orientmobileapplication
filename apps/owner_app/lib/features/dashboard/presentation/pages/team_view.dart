@@ -11,10 +11,7 @@ import 'package:owner_app/l10n/gen/owner_localizations.dart';
 /// absent record is not proof of absence.
 enum _ClockState { onShift, offShift }
 
-_ClockState? _clockFor(
-  StaffMember member,
-  OwnerAttendanceState attendance,
-) {
+_ClockState? _clockFor(StaffMember member, OwnerAttendanceState attendance) {
   if (attendance.isLoading) return null;
   for (final record in attendance.records) {
     if (record.staffId.isNotEmpty && record.staffId == member.id) {
@@ -61,9 +58,11 @@ class _TeamViewState extends ConsumerState<TeamView> {
 
     final query = _searchCtrl.text.trim().toLowerCase();
     final filteredStaff = state.staff.where((m) {
-      final matchesRole = _selectedRole == 'all' ||
+      final matchesRole =
+          _selectedRole == 'all' ||
           m.role.toLowerCase() == _selectedRole.toLowerCase();
-      final matchesQuery = query.isEmpty ||
+      final matchesQuery =
+          query.isEmpty ||
           m.name.toLowerCase().contains(query) ||
           m.empId.toLowerCase().contains(query) ||
           m.phone.toLowerCase().contains(query) ||
@@ -82,7 +81,11 @@ class _TeamViewState extends ConsumerState<TeamView> {
     final techCount = state.staff
         .where((m) => m.role.toLowerCase() == 'technician')
         .length;
-    final roles = <String>[t.ownerTmAdvisors, t.ownerTmSupervisors, t.ownerTmTechnicians];
+    final roles = <String>[
+      t.ownerTmAdvisors,
+      t.ownerTmSupervisors,
+      t.ownerTmTechnicians,
+    ];
     final roleValues = <String>['advisor', 'supervisor', 'technician'];
     final counts = <String, int>{
       SharedCoreL10n.of(context).filterBarAll: state.staff.length,
@@ -108,8 +111,9 @@ class _TeamViewState extends ConsumerState<TeamView> {
           showOfflineStatus: true,
           actions: [
             IconButton(
-              tooltip: MaterialLocalizations.of(context)
-                  .refreshIndicatorSemanticLabel,
+              tooltip: MaterialLocalizations.of(
+                context,
+              ).refreshIndicatorSemanticLabel,
               icon: const Icon(Icons.refresh_rounded),
               onPressed: () {
                 HapticFeedback.selectionClick();
@@ -122,7 +126,8 @@ class _TeamViewState extends ConsumerState<TeamView> {
           backgroundColor: colors.primary,
           foregroundColor: colors.onPrimary,
           elevation: 3,
-          onPressed: () => _showAddStaffSheet(context, notifier, state.branches),
+          onPressed: () =>
+              _showAddStaffSheet(context, notifier, state.branches),
           icon: const Icon(Icons.person_add_alt_1_rounded),
           label: Text(
             t.ownerTmAdd,
@@ -133,91 +138,108 @@ class _TeamViewState extends ConsumerState<TeamView> {
           child: state.isLoading && state.staff.isEmpty
               ? const AppSkeleton.page()
               : state.error.isNotEmpty && state.staff.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(AppDimensions.s20),
-                        child: ErrorView(
-                          message: state.error,
-                          onRetry: notifier.load,
-                        ),
-                      ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: () async => notifier.load(),
-                      color: colors.primary,
-                      child: AppResponsivePage(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _DirectoryHeader(
-                              activeCount: activeCount,
-                              total: state.staff.length,
-                              advisors: advisorCount,
-                              supervisors: supervisorCount,
-                              technicians: techCount,
-                            ),
-                            const SizedBox(height: AppDimensions.s12),
-                            AppSearchField(
-                              controller: _searchCtrl,
-                              focusNode: _searchFocus,
-                              hintText: t.ownerTmSearchHint,
-                              onChanged: (_) => setState(() {}),
-                              onClear: () {
-                                _searchCtrl.clear();
-                                setState(() {});
-                              },
-                            ),
-                            const SizedBox(height: AppDimensions.s12),
-                            AppFilterBar(
-                              options: roles,
-                              selected: _selectedRole == 'all'
-                                  ? null
-                                  : roles[roleValues.indexOf(_selectedRole)],
-                              counts: counts,
-                              onSelected: (label) => setState(() {
-                                if (label == null) {
-                                  _selectedRole = 'all';
-                                } else {
-                                  final i = roles.indexOf(label);
-                                  _selectedRole =
-                                      i < 0 ? 'all' : roleValues[i];
-                                }
-                              }),
-                            ),
-                            const SizedBox(height: AppDimensions.s12),
-                            if (filteredStaff.isEmpty)
-                              EmptyState(
-                                icon: Icons.person_off_outlined,
-                                message: t.ownerTmEmpty,
-                              )
-                            else
-                              _RosterList(
-                                staff: filteredStaff,
-                                attendance: attendance,
-                                notifier: notifier,
-                              ),
-                            const SizedBox(height: 96),
-                          ],
-                        ),
-                      ),
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppDimensions.s20),
+                    child: ErrorView(
+                      message: state.error,
+                      onRetry: notifier.load,
                     ),
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: () async => notifier.load(),
+                  color: colors.primary,
+                  child: AppResponsivePage(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _DirectoryHeader(
+                          activeCount: activeCount,
+                          total: state.staff.length,
+                          advisors: advisorCount,
+                          supervisors: supervisorCount,
+                          technicians: techCount,
+                        ),
+                        const SizedBox(height: AppDimensions.s12),
+                        AppSearchField(
+                          controller: _searchCtrl,
+                          focusNode: _searchFocus,
+                          hintText: t.ownerTmSearchHint,
+                          onChanged: (_) => setState(() {}),
+                          onClear: () {
+                            _searchCtrl.clear();
+                            setState(() {});
+                          },
+                        ),
+                        const SizedBox(height: AppDimensions.s12),
+                        AppFilterBar(
+                          options: roles,
+                          selected: _selectedRole == 'all'
+                              ? null
+                              : roles[roleValues.indexOf(_selectedRole)],
+                          counts: counts,
+                          onSelected: (label) => setState(() {
+                            if (label == null) {
+                              _selectedRole = 'all';
+                            } else {
+                              final i = roles.indexOf(label);
+                              _selectedRole = i < 0 ? 'all' : roleValues[i];
+                            }
+                          }),
+                        ),
+                        const SizedBox(height: AppDimensions.s12),
+                        if (filteredStaff.isEmpty)
+                          EmptyState(
+                            icon: Icons.person_off_outlined,
+                            message: t.ownerTmEmpty,
+                          )
+                        else
+                          _RosterList(
+                            staff: filteredStaff,
+                            attendance: attendance,
+                            notifier: notifier,
+                          ),
+                        const SizedBox(height: 96),
+                      ],
+                    ),
+                  ),
+                ),
         ),
       ),
     );
   }
 
-  void _showAddStaffSheet(
+  Future<void> _showAddStaffSheet(
     BuildContext context,
     TeamNotifier notifier,
     List<BranchOption> branches,
-  ) {
+  ) async {
     HapticFeedback.selectionClick();
-    showAppModalSheet<void>(
+    final createdName = await showAppModalSheet<String>(
       context: context,
-      builder: (sheetContext) => _AddMemberSheet(
-        notifier: notifier,
-        branches: branches,
+      builder: (sheetContext) =>
+          _AddMemberSheet(notifier: notifier, branches: branches),
+    );
+    if (!context.mounted) return;
+    if (createdName == null || createdName.isEmpty) return;
+    final t = OwnerLocalizations.of(context)!;
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        icon: const Icon(Icons.verified_user_rounded, size: 38),
+        title: Text(t.ownerTmCreated),
+        content: Text(
+          '$createdName\n\n${t.ownerTmCreatedBody}',
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(t.ownerTmDone),
+          ),
+        ],
       ),
     );
   }
@@ -258,8 +280,7 @@ class _DirectoryHeader extends StatelessWidget {
                 padding: const EdgeInsets.all(AppDimensions.s8),
                 decoration: BoxDecoration(
                   color: colors.primary.withValues(alpha: 0.1),
-                  borderRadius:
-                      BorderRadius.circular(AppDimensions.radiusSm),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
                 ),
                 child: Icon(
                   Icons.badge_rounded,
@@ -346,10 +367,10 @@ class _RosterList extends StatelessWidget {
     );
 
     Widget card(StaffMember m) => _StaffCard(
-          member: m,
-          clock: _clockFor(m, attendance),
-          notifier: notifier,
-        );
+      member: m,
+      clock: _clockFor(m, attendance),
+      notifier: notifier,
+    );
 
     if (wide || medium) {
       const columns = 2;
@@ -503,11 +524,9 @@ class _StaffCard extends StatelessWidget {
                     textDirection: TextDirection.ltr,
                     child: Text(
                       member.phone,
-                      style: AppTextStyles.mono(color: colors.primary)
-                          .copyWith(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 11,
-                          ),
+                      style: AppTextStyles.mono(
+                        color: colors.primary,
+                      ).copyWith(fontWeight: FontWeight.w700, fontSize: 11),
                     ),
                   ),
                 ],
@@ -523,10 +542,10 @@ class _StaffCard extends StatelessWidget {
 /// Frozen role values stay English in state; only the rendered labels
 /// localize — presentation-only mapping.
 String _roleLabel(OwnerLocalizations t, String value) => switch (value) {
-      'supervisor' => t.ownerTmSupervisors,
-      'technician' => t.ownerTmTechnicians,
-      _ => t.ownerTmAdvisors,
-    };
+  'supervisor' => t.ownerTmSupervisors,
+  'technician' => t.ownerTmTechnicians,
+  _ => t.ownerTmAdvisors,
+};
 
 String _roleValue(OwnerLocalizations t, String label) {
   if (label == t.ownerTmSupervisors) return 'supervisor';
@@ -560,6 +579,8 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
   String _role = 'advisor';
   String? _branchId;
   bool _busy = false;
+  String? _error;
+  final _scroll = ScrollController();
   final _errors = <String, String?>{};
 
   @override
@@ -573,11 +594,23 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
     _shift.dispose();
     _designation.dispose();
     _department.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
   String? _required(OwnerLocalizations t, String value) =>
       value.trim().isEmpty ? t.ownerReqRequired : null;
+
+  void _scrollToEnd() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scroll.hasClients) return;
+      _scroll.animateTo(
+        _scroll.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+      );
+    });
+  }
 
   Future<void> _submit() async {
     final t = OwnerLocalizations.of(context)!;
@@ -593,21 +626,27 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
             ? t.ownerReqEmail
             : null;
       }(),
-      'password':
-          _password.text.length < 8 ? t.ownerReqPassword : null,
-      'confirm':
-          _confirm.text != _password.text ? t.ownerReqMatch : null,
+      'password': _password.text.length < 8 ? t.ownerReqPassword : null,
+      'confirm': _confirm.text != _password.text ? t.ownerReqMatch : null,
       'branch': widget.branches.isNotEmpty && _branchId == null
           ? t.ownerReqRequired
           : null,
     };
+    final firstError = errors.values.whereType<String>().firstOrNull;
     setState(() {
       _errors
         ..clear()
         ..addAll(errors);
+      _error = firstError;
     });
-    if (errors.values.any((e) => e != null)) return;
-    setState(() => _busy = true);
+    if (firstError != null) {
+      _scrollToEnd();
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
     final branchName = widget.branches
         .where((b) => b.id == _branchId)
         .map((b) => b.name)
@@ -626,32 +665,15 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
       'department': _department.text.trim(),
     });
     if (!mounted) return;
-    setState(() => _busy = false);
+    setState(() {
+      _busy = false;
+      _error = error;
+    });
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error), behavior: SnackBarBehavior.floating),
-      );
+      _scrollToEnd();
       return;
     }
-    Navigator.pop(context);
-    if (!mounted) return;
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        icon: const Icon(Icons.verified_user_rounded, size: 38),
-        title: Text(t.ownerTmCreated),
-        content: Text(
-          '${_name.text.trim()}\n\n${t.ownerTmCreatedBody}',
-          textAlign: TextAlign.center,
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(t.ownerTmDone),
-          ),
-        ],
-      ),
-    );
+    Navigator.pop(context, _name.text.trim());
   }
 
   @override
@@ -664,9 +686,10 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
           AppDimensions.s20,
           AppDimensions.s8,
           AppDimensions.s20,
-          AppDimensions.s20 + MediaQuery.viewInsetsOf(context).bottom,
+          AppDimensions.s20,
         ),
         child: SingleChildScrollView(
+          controller: _scroll,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -676,8 +699,7 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
                 child: SectionHeader(
                   title: t.ownerTmAddTitle,
                   subtitle: t.ownerTmAddSubtitle,
-                  padding:
-                      const EdgeInsets.only(bottom: AppDimensions.s12),
+                  padding: const EdgeInsets.only(bottom: AppDimensions.s12),
                 ),
               ),
               AppTextField(
@@ -707,9 +729,9 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
               const SizedBox(height: AppDimensions.s16),
               Text(
                 t.ownerTmLogin,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: AppDimensions.s10),
               AppTextField(
@@ -747,15 +769,15 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
               Text(
                 t.ownerTmOtpNote,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: AppDimensions.s16),
               Text(
                 t.ownerTmWork,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: AppDimensions.s10),
               AppTextField(
@@ -771,10 +793,13 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
               ),
               const SizedBox(height: AppDimensions.s12),
               AppDropdownButton(
-                value: _branchId ?? '',
-                items: [
-                  for (final b in widget.branches) b.name,
-                ],
+                value:
+                    widget.branches
+                        .where((b) => b.id == _branchId)
+                        .map((b) => b.name)
+                        .firstOrNull ??
+                    '',
+                items: [for (final b in widget.branches) b.name],
                 label: t.ownerTmBranch,
                 hint: widget.branches.isEmpty
                     ? t.ownerTmNoBranches
@@ -792,8 +817,8 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
                 Text(
                   _errors['branch']!,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                 ),
               ],
               const SizedBox(height: AppDimensions.s12),
@@ -803,6 +828,14 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
                 hint: t.ownerTmShift,
               ),
               const SizedBox(height: AppDimensions.s20),
+              if (_error != null) ...[
+                AppBanner(
+                  kind: AppBannerKind.error,
+                  message: _error!,
+                  onDismiss: () => setState(() => _error = null),
+                ),
+                const SizedBox(height: AppDimensions.s12),
+              ],
               PrimaryButton(
                 label: t.ownerTmSubmit,
                 icon: Icons.person_add_alt_1_rounded,
